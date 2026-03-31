@@ -1,0 +1,63 @@
+# Claude AI
+CLAUDE.md
+.claude/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Spring Boot
+*.log
+application-local.properties
+application-dev.properties
+application-prod.properties
+
+# Environnement (ne jamais versionner les secrets !)
+.env
+*.env
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+docker-compose.override.yml
+
+# Node.js / React (frontend)
+node_modules/
+dist/
+build/
+.next/
+.cache/
+*.tsbuildinfo
+
+# Logs
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tests / Coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.tmp
+*.bak
+*.swp
