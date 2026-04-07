@@ -45,4 +45,9 @@ public class JpaUserRepository implements UserRepository {
     public boolean existsByPhone(String phone) {
         return delegate.existsByPhone(phone);
     }
+
+    @Override
+    public boolean existsByInpe(String inpe) {
+        return delegate.existsByInpe(inpe);
+    }
 }

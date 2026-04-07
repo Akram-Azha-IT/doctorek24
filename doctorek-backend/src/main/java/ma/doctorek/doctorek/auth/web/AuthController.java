@@ -1,8 +1,11 @@
 package ma.doctorek.doctorek.auth.web;
 
 import jakarta.validation.Valid;
+import ma.doctorek.doctorek.auth.application.RegisterMedecinUseCase;
 import ma.doctorek.doctorek.auth.application.RegisterPatientUseCase;
+import ma.doctorek.doctorek.auth.application.dto.MedecinRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.PatientRegisteredResponse;
+import ma.doctorek.doctorek.auth.application.dto.RegisterMedecinRequest;
 import ma.doctorek.doctorek.auth.application.dto.RegisterPatientRequest;
 import ma.doctorek.doctorek.shared.web.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -14,9 +17,12 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final RegisterPatientUseCase registerPatientUseCase;
+    private final RegisterMedecinUseCase registerMedecinUseCase;
 
-    public AuthController(RegisterPatientUseCase registerPatientUseCase) {
+    public AuthController(RegisterPatientUseCase registerPatientUseCase,
+                          RegisterMedecinUseCase registerMedecinUseCase) {
         this.registerPatientUseCase = registerPatientUseCase;
+        this.registerMedecinUseCase = registerMedecinUseCase;
     }
 
     /**
@@ -28,6 +34,18 @@ public class AuthController {
         @Valid @RequestBody RegisterPatientRequest request
     ) {
         PatientRegisteredResponse response = registerPatientUseCase.execute(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
+    }
+
+    /**
+     * POST /api/v1/auth/register/medecin
+     * Inscription d'un nouveau médecin.
+     */
+    @PostMapping("/register/medecin")
+    public ResponseEntity<ApiResponse<MedecinRegisteredResponse>> registerMedecin(
+        @Valid @RequestBody RegisterMedecinRequest request
+    ) {
+        MedecinRegisteredResponse response = registerMedecinUseCase.execute(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 }

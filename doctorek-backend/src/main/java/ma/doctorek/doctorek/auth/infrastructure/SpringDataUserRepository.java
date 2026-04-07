@@ -11,4 +11,5 @@ interface SpringDataUserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByPhone(String phone);
     boolean existsByEmail(String email);
     boolean existsByPhone(String phone);
+    boolean existsByInpe(String inpe);
 }

@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.shared.web;
 
 import ma.doctorek.doctorek.auth.domain.EmailAlreadyExistsException;
+import ma.doctorek.doctorek.auth.domain.InpeAlreadyExistsException;
 import ma.doctorek.doctorek.auth.domain.PhoneAlreadyExistsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PhoneAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handlePhoneConflict(PhoneAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InpeAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInpeConflict(InpeAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
     }
 
