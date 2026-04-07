@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.shared.web;
 
+import ma.doctorek.doctorek.annuaire.domain.MedecinNotFoundException;
 import ma.doctorek.doctorek.auth.domain.EmailAlreadyExistsException;
 import ma.doctorek.doctorek.auth.domain.InpeAlreadyExistsException;
 import ma.doctorek.doctorek.auth.domain.PhoneAlreadyExistsException;
@@ -40,6 +41,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InpeAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Void>> handleInpeConflict(InpeAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MedecinNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMedecinNotFound(MedecinNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
