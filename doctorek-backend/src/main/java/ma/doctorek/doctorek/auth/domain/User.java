@@ -83,6 +83,18 @@ public class User {
         this.updatedAt = Instant.now();
     }
 
+    // ── Mutators ─────────────────────────────────────────────
+    public void updateProfile(String firstName, String lastName, String phone,
+                              String specialite, String ville, String adresse, String lang) {
+        this.firstName  = firstName;
+        this.lastName   = lastName;
+        this.phone      = phone;
+        this.specialite = specialite;
+        this.ville      = ville;
+        this.adresse    = adresse;
+        if (lang != null) this.lang = lang;
+    }
+
     // ── Getters ──────────────────────────────────────────────
     public UUID getId()          { return id; }
     public String getEmail()     { return email; }
