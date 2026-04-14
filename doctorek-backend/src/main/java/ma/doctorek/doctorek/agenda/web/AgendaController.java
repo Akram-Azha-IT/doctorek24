@@ -4,9 +4,13 @@ import jakarta.validation.Valid;
 import ma.doctorek.doctorek.agenda.application.DefineDisponibiliteUseCase;
 import ma.doctorek.doctorek.agenda.application.GetCreneauxDisponiblesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetDisponibilitesUseCase;
+import ma.doctorek.doctorek.agenda.application.GetRdvsPatientUseCase;
+import ma.doctorek.doctorek.agenda.application.PrendreRdvUseCase;
 import ma.doctorek.doctorek.agenda.application.dto.CreneauResponse;
 import ma.doctorek.doctorek.agenda.application.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.agenda.application.dto.DisponibiliteResponse;
+import ma.doctorek.doctorek.agenda.application.dto.PrendreRdvRequest;
+import ma.doctorek.doctorek.agenda.application.dto.RendezVousResponse;
 import ma.doctorek.doctorek.shared.web.ApiResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -21,16 +25,22 @@ import java.util.UUID;
 @RequestMapping("/api/v1/agenda")
 public class AgendaController {
 
-    private final DefineDisponibiliteUseCase defineDisponibiliteUseCase;
-    private final GetDisponibilitesUseCase getDisponibilitesUseCase;
+    private final DefineDisponibiliteUseCase    defineDisponibiliteUseCase;
+    private final GetDisponibilitesUseCase      getDisponibilitesUseCase;
     private final GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase;
+    private final PrendreRdvUseCase             prendreRdvUseCase;
+    private final GetRdvsPatientUseCase         getRdvsPatientUseCase;
 
     public AgendaController(DefineDisponibiliteUseCase defineDisponibiliteUseCase,
                              GetDisponibilitesUseCase getDisponibilitesUseCase,
-                             GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase) {
+                             GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase,
+                             PrendreRdvUseCase prendreRdvUseCase,
+                             GetRdvsPatientUseCase getRdvsPatientUseCase) {
         this.defineDisponibiliteUseCase    = defineDisponibiliteUseCase;
         this.getDisponibilitesUseCase      = getDisponibilitesUseCase;
         this.getCreneauxDisponiblesUseCase = getCreneauxDisponiblesUseCase;
+        this.prendreRdvUseCase             = prendreRdvUseCase;
+        this.getRdvsPatientUseCase         = getRdvsPatientUseCase;
     }
 
     /**
@@ -72,6 +82,31 @@ public class AgendaController {
         List<CreneauResponse> responses = getCreneauxDisponiblesUseCase.execute(medecinId, date)
             .stream()
             .map(CreneauResponse::from)
+            .toList();
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
+    /**
+     * POST /api/v1/agenda/rdv
+     * Prend un rendez-vous pour un patient chez un médecin.
+     */
+    @PostMapping("/rdv")
+    public ResponseEntity<ApiResponse<RendezVousResponse>> prendreRdv(
+            @Valid @RequestBody PrendreRdvRequest request) {
+        RendezVousResponse response = RendezVousResponse.from(prendreRdvUseCase.execute(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
+    }
+
+    /**
+     * GET /api/v1/agenda/patients/{patientId}/rdv
+     * Retourne tous les rendez-vous d'un patient.
+     */
+    @GetMapping("/patients/{patientId}/rdv")
+    public ResponseEntity<ApiResponse<List<RendezVousResponse>>> getRdvsPatient(
+            @PathVariable UUID patientId) {
+        List<RendezVousResponse> responses = getRdvsPatientUseCase.execute(patientId)
+            .stream()
+            .map(RendezVousResponse::from)
             .toList();
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
