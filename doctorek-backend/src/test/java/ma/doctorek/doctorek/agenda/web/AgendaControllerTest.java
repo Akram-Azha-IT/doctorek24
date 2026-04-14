@@ -1,11 +1,19 @@
 package ma.doctorek.doctorek.agenda.web;
 
+import ma.doctorek.doctorek.agenda.application.AnnulerRendezVousUseCase;
 import ma.doctorek.doctorek.agenda.application.DefineDisponibiliteUseCase;
 import ma.doctorek.doctorek.agenda.application.GetCreneauxDisponiblesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetDisponibilitesUseCase;
+import ma.doctorek.doctorek.agenda.application.GetRdvsPatientUseCase;
+import ma.doctorek.doctorek.agenda.application.PrendreRdvUseCase;
 import ma.doctorek.doctorek.agenda.domain.Creneau;
+import ma.doctorek.doctorek.agenda.domain.CreneauIndisponibleException;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
 import ma.doctorek.doctorek.agenda.domain.MedecinSansAgendaException;
+import ma.doctorek.doctorek.agenda.domain.RendezVous;
+import ma.doctorek.doctorek.agenda.domain.RendezVousNotFoundException;
+import ma.doctorek.doctorek.agenda.domain.RdvNonAnnulableException;
+import ma.doctorek.doctorek.agenda.domain.StatutRdv;
 import ma.doctorek.doctorek.auth.infrastructure.SecurityConfig;
 import ma.doctorek.doctorek.shared.web.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AgendaController.class)
@@ -48,8 +57,19 @@ class AgendaControllerTest {
     @MockBean
     private GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase;
 
+    @MockBean
+    private PrendreRdvUseCase prendreRdvUseCase;
+
+    @MockBean
+    private GetRdvsPatientUseCase getRdvsPatientUseCase;
+
+    @MockBean
+    private AnnulerRendezVousUseCase annulerRendezVousUseCase;
+
     private final UUID medecinId = UUID.randomUUID();
+    private final UUID patientId = UUID.randomUUID();
     private final UUID dispoId   = UUID.randomUUID();
+    private final UUID rdvId     = UUID.randomUUID();
 
     @Nested
     @DisplayName("POST /api/v1/agenda/medecins/{medecinId}/disponibilites")
@@ -173,6 +193,166 @@ class AgendaControllerTest {
             mockMvc.perform(get("/api/v1/agenda/medecins/" + medecinId + "/creneaux")
                     .param("date", "2026-04-13"))
                 .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/v1/agenda/rdv")
+    class PrendreRdv {
+
+        private final String validBody = """
+            {
+              "medecinId":  "%s",
+              "patientId":  "%s",
+              "dateRdv":    "2027-06-02",
+              "heureRdv":   "10:00:00",
+              "motif":      "Consultation générale"
+            }
+            """.formatted(medecinId, patientId);
+
+        @Test
+        @DisplayName("returns 201 with created rendez-vous")
+        void returns201WithRendezVous() throws Exception {
+            RendezVous rdv = new RendezVous(
+                rdvId, medecinId, patientId,
+                LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
+                30, StatutRdv.EN_ATTENTE, "Consultation générale",
+                java.time.LocalDateTime.now()
+            );
+            when(prendreRdvUseCase.execute(any())).thenReturn(rdv);
+
+            mockMvc.perform(post("/api/v1/agenda/rdv")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(validBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(rdvId.toString()))
+                .andExpect(jsonPath("$.data.statut").value("EN_ATTENTE"))
+                .andExpect(jsonPath("$.data.motif").value("Consultation générale"));
+        }
+
+        @Test
+        @DisplayName("returns 409 when creneau is already taken")
+        void returns409WhenCreneauIndisponible() throws Exception {
+            when(prendreRdvUseCase.execute(any()))
+                .thenThrow(new CreneauIndisponibleException("Créneau indisponible"));
+
+            mockMvc.perform(post("/api/v1/agenda/rdv")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(validBody))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false));
+        }
+
+        @Test
+        @DisplayName("returns 404 when medecin has no agenda for that day")
+        void returns404WhenNoAgenda() throws Exception {
+            when(prendreRdvUseCase.execute(any()))
+                .thenThrow(new MedecinSansAgendaException(medecinId));
+
+            mockMvc.perform(post("/api/v1/agenda/rdv")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(validBody))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+        }
+
+        @Test
+        @DisplayName("returns 400 when medecinId is missing")
+        void returns400WhenMedecinIdMissing() throws Exception {
+            String invalidBody = """
+                {
+                  "patientId": "%s",
+                  "dateRdv":   "2027-06-02",
+                  "heureRdv":  "10:00:00"
+                }
+                """.formatted(patientId);
+
+            mockMvc.perform(post("/api/v1/agenda/rdv")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(invalidBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/v1/agenda/patients/{patientId}/rdv")
+    class GetRdvsPatient {
+
+        @Test
+        @DisplayName("returns 200 with list of rendez-vous")
+        void returns200WithList() throws Exception {
+            RendezVous rdv = new RendezVous(
+                rdvId, medecinId, patientId,
+                LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
+                30, StatutRdv.EN_ATTENTE, "Consultation",
+                java.time.LocalDateTime.now()
+            );
+            when(getRdvsPatientUseCase.execute(patientId)).thenReturn(List.of(rdv));
+
+            mockMvc.perform(get("/api/v1/agenda/patients/" + patientId + "/rdv"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].id").value(rdvId.toString()))
+                .andExpect(jsonPath("$.data[0].statut").value("EN_ATTENTE"));
+        }
+
+        @Test
+        @DisplayName("returns 200 with empty list when no rdv")
+        void returns200WithEmptyList() throws Exception {
+            when(getRdvsPatientUseCase.execute(patientId)).thenReturn(List.of());
+
+            mockMvc.perform(get("/api/v1/agenda/patients/" + patientId + "/rdv"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /api/v1/agenda/rdv/{id}/annuler")
+    class AnnulerRdv {
+
+        @Test
+        @DisplayName("returns 200 with cancelled rendez-vous")
+        void returns200WithAnnulledRdv() throws Exception {
+            RendezVous cancelled = new RendezVous(
+                rdvId, medecinId, patientId,
+                LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
+                30, StatutRdv.ANNULE, "Consultation",
+                java.time.LocalDateTime.now()
+            );
+            when(annulerRendezVousUseCase.execute(rdvId)).thenReturn(cancelled);
+
+            mockMvc.perform(put("/api/v1/agenda/rdv/" + rdvId + "/annuler"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(rdvId.toString()))
+                .andExpect(jsonPath("$.data.statut").value("ANNULE"));
+        }
+
+        @Test
+        @DisplayName("returns 404 when rdv not found")
+        void returns404WhenRdvNotFound() throws Exception {
+            when(annulerRendezVousUseCase.execute(rdvId))
+                .thenThrow(new RendezVousNotFoundException(rdvId));
+
+            mockMvc.perform(put("/api/v1/agenda/rdv/" + rdvId + "/annuler"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+        }
+
+        @Test
+        @DisplayName("returns 422 when rdv cannot be cancelled")
+        void returns422WhenRdvNonAnnulable() throws Exception {
+            when(annulerRendezVousUseCase.execute(rdvId))
+                .thenThrow(new RdvNonAnnulableException(rdvId, StatutRdv.ANNULE));
+
+            mockMvc.perform(put("/api/v1/agenda/rdv/" + rdvId + "/annuler"))
+                .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.success").value(false));
         }
     }
