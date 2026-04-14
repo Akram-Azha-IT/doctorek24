@@ -7,8 +7,10 @@ import { Header } from '@/components/Header'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useCreneaux } from '@/features/agenda/hooks'
 import { CreneauxGrid } from '@/features/agenda/components/CreneauxGrid'
+import { ConfirmRdvForm } from '@/features/agenda/components/ConfirmRdvForm'
+import { RdvSuccessCard } from '@/features/agenda/components/RdvSuccessCard'
 import { Badge } from '@/components/ui/badge'
-import type { Creneau } from '@/lib/types'
+import type { Creneau, RendezVous } from '@/lib/types'
 
 function todayISO(): string {
   return new Date().toISOString().split('T')[0]
@@ -18,9 +20,24 @@ export default function RdvPage() {
   const { id } = useParams<{ id: string }>()
   const [date, setDate] = useState<string>(todayISO())
   const [selected, setSelected] = useState<Creneau | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
 
   const { data: medecin, isLoading: loadingMedecin } = useMedecin(id)
   const { data: creneaux, isLoading: loadingCreneaux, isError } = useCreneaux(id, date)
+
+  function handleSelectCreneau(c: Creneau) {
+    setSelected(c)
+    setShowForm(false)
+    setConfirmedRdv(null)
+  }
+
+  function handleDateChange(newDate: string) {
+    setDate(newDate)
+    setSelected(null)
+    setShowForm(false)
+    setConfirmedRdv(null)
+  }
 
   return (
     <>
@@ -59,10 +76,7 @@ export default function RdvPage() {
             type="date"
             value={date}
             min={todayISO()}
-            onChange={(e) => {
-              setDate(e.target.value)
-              setSelected(null)
-            }}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
           />
         </section>
@@ -91,13 +105,13 @@ export default function RdvPage() {
             <CreneauxGrid
               creneaux={creneaux}
               selected={selected?.debut ?? null}
-              onSelect={setSelected}
+              onSelect={handleSelectCreneau}
             />
           )}
         </section>
 
-        {/* Récapitulatif sélection */}
-        {selected && (
+        {/* Bouton → formulaire de confirmation */}
+        {selected && !showForm && !confirmedRdv && (
           <div className="mt-8 p-4 border border-zinc-200 rounded-xl bg-zinc-50">
             <p className="text-sm text-zinc-600 mb-1">Créneau sélectionné</p>
             <p className="font-semibold text-zinc-900">
@@ -108,14 +122,35 @@ export default function RdvPage() {
             </p>
             <button
               className="mt-4 w-full sm:w-auto bg-zinc-900 hover:bg-zinc-700 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors"
-              onClick={() => {
-                // US-F06 : formulaire de confirmation
-                alert(`RDV le ${date} à ${selected.debut} — formulaire US-F06 à venir`)
-              }}
+              onClick={() => setShowForm(true)}
             >
               Confirmer ce créneau
             </button>
           </div>
+        )}
+
+        {/* Formulaire de confirmation US-F06 */}
+        {selected && showForm && !confirmedRdv && medecin && (
+          <ConfirmRdvForm
+            medecinId={id}
+            medecinName={`Dr. ${medecin.firstName} ${medecin.lastName}`}
+            dateRdv={date}
+            heureRdv={selected.debut}
+            heureFin={selected.fin}
+            onSuccess={(rdv) => {
+              setConfirmedRdv(rdv)
+              setShowForm(false)
+            }}
+            onCancel={() => setShowForm(false)}
+          />
+        )}
+
+        {/* Carte de succès */}
+        {confirmedRdv && medecin && (
+          <RdvSuccessCard
+            rdv={confirmedRdv}
+            medecinName={`Dr. ${medecin.firstName} ${medecin.lastName}`}
+          />
         )}
       </main>
     </>
