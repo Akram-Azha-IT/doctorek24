@@ -1,5 +1,10 @@
 package ma.doctorek.doctorek.shared.web;
 
+import ma.doctorek.doctorek.agenda.domain.CreneauIndisponibleException;
+import ma.doctorek.doctorek.agenda.domain.DisponibiliteNotFoundException;
+import ma.doctorek.doctorek.agenda.domain.MedecinSansAgendaException;
+import ma.doctorek.doctorek.agenda.domain.RendezVousNotFoundException;
+import ma.doctorek.doctorek.agenda.domain.RdvNonAnnulableException;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNotFoundException;
 import ma.doctorek.doctorek.auth.domain.EmailAlreadyExistsException;
 import ma.doctorek.doctorek.auth.domain.InpeAlreadyExistsException;
@@ -46,6 +51,31 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MedecinNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleMedecinNotFound(MedecinNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DisponibiliteNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDisponibiliteNotFound(DisponibiliteNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(MedecinSansAgendaException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMedecinSansAgenda(MedecinSansAgendaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RendezVousNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRendezVousNotFound(RendezVousNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(CreneauIndisponibleException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCreneauIndisponible(CreneauIndisponibleException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RdvNonAnnulableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRdvNonAnnulable(RdvNonAnnulableException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
