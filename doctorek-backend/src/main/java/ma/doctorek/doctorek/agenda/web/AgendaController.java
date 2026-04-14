@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.agenda.web;
 
 import jakarta.validation.Valid;
+import ma.doctorek.doctorek.agenda.application.AnnulerRendezVousUseCase;
 import ma.doctorek.doctorek.agenda.application.DefineDisponibiliteUseCase;
 import ma.doctorek.doctorek.agenda.application.GetCreneauxDisponiblesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetDisponibilitesUseCase;
@@ -30,17 +31,20 @@ public class AgendaController {
     private final GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase;
     private final PrendreRdvUseCase             prendreRdvUseCase;
     private final GetRdvsPatientUseCase         getRdvsPatientUseCase;
+    private final AnnulerRendezVousUseCase      annulerRendezVousUseCase;
 
     public AgendaController(DefineDisponibiliteUseCase defineDisponibiliteUseCase,
                              GetDisponibilitesUseCase getDisponibilitesUseCase,
                              GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase,
                              PrendreRdvUseCase prendreRdvUseCase,
-                             GetRdvsPatientUseCase getRdvsPatientUseCase) {
+                             GetRdvsPatientUseCase getRdvsPatientUseCase,
+                             AnnulerRendezVousUseCase annulerRendezVousUseCase) {
         this.defineDisponibiliteUseCase    = defineDisponibiliteUseCase;
         this.getDisponibilitesUseCase      = getDisponibilitesUseCase;
         this.getCreneauxDisponiblesUseCase = getCreneauxDisponiblesUseCase;
         this.prendreRdvUseCase             = prendreRdvUseCase;
         this.getRdvsPatientUseCase         = getRdvsPatientUseCase;
+        this.annulerRendezVousUseCase      = annulerRendezVousUseCase;
     }
 
     /**
@@ -109,5 +113,16 @@ public class AgendaController {
             .map(RendezVousResponse::from)
             .toList();
         return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
+    /**
+     * PUT /api/v1/agenda/rdv/{id}/annuler
+     * Annule un rendez-vous existant.
+     */
+    @PutMapping("/rdv/{id}/annuler")
+    public ResponseEntity<ApiResponse<RendezVousResponse>> annulerRdv(
+            @PathVariable UUID id) {
+        RendezVousResponse response = RendezVousResponse.from(annulerRendezVousUseCase.execute(id));
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

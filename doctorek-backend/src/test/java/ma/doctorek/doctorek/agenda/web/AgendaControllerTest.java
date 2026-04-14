@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.agenda.web;
 
+import ma.doctorek.doctorek.agenda.application.AnnulerRendezVousUseCase;
 import ma.doctorek.doctorek.agenda.application.DefineDisponibiliteUseCase;
 import ma.doctorek.doctorek.agenda.application.GetCreneauxDisponiblesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetDisponibilitesUseCase;
@@ -10,6 +11,8 @@ import ma.doctorek.doctorek.agenda.domain.CreneauIndisponibleException;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
 import ma.doctorek.doctorek.agenda.domain.MedecinSansAgendaException;
 import ma.doctorek.doctorek.agenda.domain.RendezVous;
+import ma.doctorek.doctorek.agenda.domain.RendezVousNotFoundException;
+import ma.doctorek.doctorek.agenda.domain.RdvNonAnnulableException;
 import ma.doctorek.doctorek.agenda.domain.StatutRdv;
 import ma.doctorek.doctorek.auth.infrastructure.SecurityConfig;
 import ma.doctorek.doctorek.shared.web.GlobalExceptionHandler;
@@ -34,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AgendaController.class)
@@ -58,6 +62,9 @@ class AgendaControllerTest {
 
     @MockBean
     private GetRdvsPatientUseCase getRdvsPatientUseCase;
+
+    @MockBean
+    private AnnulerRendezVousUseCase annulerRendezVousUseCase;
 
     private final UUID medecinId = UUID.randomUUID();
     private final UUID patientId = UUID.randomUUID();
@@ -302,6 +309,51 @@ class AgendaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /api/v1/agenda/rdv/{id}/annuler")
+    class AnnulerRdv {
+
+        @Test
+        @DisplayName("returns 200 with cancelled rendez-vous")
+        void returns200WithAnnulledRdv() throws Exception {
+            RendezVous cancelled = new RendezVous(
+                rdvId, medecinId, patientId,
+                LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
+                30, StatutRdv.ANNULE, "Consultation",
+                java.time.LocalDateTime.now()
+            );
+            when(annulerRendezVousUseCase.execute(rdvId)).thenReturn(cancelled);
+
+            mockMvc.perform(put("/api/v1/agenda/rdv/" + rdvId + "/annuler"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(rdvId.toString()))
+                .andExpect(jsonPath("$.data.statut").value("ANNULE"));
+        }
+
+        @Test
+        @DisplayName("returns 404 when rdv not found")
+        void returns404WhenRdvNotFound() throws Exception {
+            when(annulerRendezVousUseCase.execute(rdvId))
+                .thenThrow(new RendezVousNotFoundException(rdvId));
+
+            mockMvc.perform(put("/api/v1/agenda/rdv/" + rdvId + "/annuler"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false));
+        }
+
+        @Test
+        @DisplayName("returns 422 when rdv cannot be cancelled")
+        void returns422WhenRdvNonAnnulable() throws Exception {
+            when(annulerRendezVousUseCase.execute(rdvId))
+                .thenThrow(new RdvNonAnnulableException(rdvId, StatutRdv.ANNULE));
+
+            mockMvc.perform(put("/api/v1/agenda/rdv/" + rdvId + "/annuler"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.success").value(false));
         }
     }
 }
