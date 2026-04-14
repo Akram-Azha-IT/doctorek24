@@ -1,0 +1,31 @@
+import { apiFetch } from '@/lib/api-client'
+import type { Creneau, RendezVous } from '@/lib/types'
+
+export function getCreneaux(medecinId: string, date: string): Promise<Creneau[]> {
+  return apiFetch<Creneau[]>(
+    `/api/v1/agenda/medecins/${medecinId}/creneaux?date=${date}`,
+  )
+}
+
+export function getRdvsPatient(patientId: string): Promise<RendezVous[]> {
+  return apiFetch<RendezVous[]>(`/api/v1/agenda/patients/${patientId}/rdv`)
+}
+
+export function prendreRdv(payload: {
+  medecinId: string
+  patientId: string
+  dateRdv: string
+  heureRdv: string
+  motif?: string
+}): Promise<RendezVous> {
+  return apiFetch<RendezVous>('/api/v1/agenda/rdv', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function annulerRdv(id: string): Promise<RendezVous> {
+  return apiFetch<RendezVous>(`/api/v1/agenda/rdv/${id}/annuler`, {
+    method: 'PUT',
+  })
+}
