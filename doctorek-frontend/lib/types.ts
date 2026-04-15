@@ -50,3 +50,34 @@ export interface MedecinRegisteredResponse {
   lastName: string
   inpe: string
 }
+
+// ── Agenda ──────────────────────────────────────────────────────────────────
+
+export interface Creneau {
+  debut: string   // "HH:mm"
+  fin: string     // "HH:mm"
+  disponible: boolean
+}
+
+export interface Disponibilite {
+  id: string
+  medecinId: string
+  jourSemaine: string   // "LUNDI" | "MARDI" | …
+  heureDebut: string
+  heureFin: string
+  dureeConsultation: number
+}
+
+export type StatutRdv = 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE'
+
+export interface RendezVous {
+  id: string
+  medecinId: string
+  patientId: string
+  dateRdv: string    // "YYYY-MM-DD"
+  heureRdv: string   // "HH:mm"
+  duree: number
+  statut: StatutRdv
+  motif: string | null
+  createdAt: string
+}

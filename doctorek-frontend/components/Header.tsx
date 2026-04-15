@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { HeaderAuth } from './HeaderAuth'
 
 export function Header() {
   return (
@@ -11,12 +12,13 @@ export function Header() {
           <Link href="/recherche" className="hover:text-zinc-900 transition-colors">
             Rechercher
           </Link>
-          <Link
-            href="/inscription"
-            className="rounded-full bg-blue-600 px-4 py-1.5 text-white hover:bg-blue-700 transition-colors"
-          >
+          <Link href="/dashboard/medecin" className="hover:text-zinc-900 transition-colors">
+            Mon Agenda
+          </Link>
+          <Link href="/inscription" className="hover:text-zinc-900 transition-colors">
             S&apos;inscrire
           </Link>
+          <HeaderAuth />
         </nav>
       </div>
     </header>

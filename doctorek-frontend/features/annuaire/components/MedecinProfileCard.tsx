@@ -1,5 +1,8 @@
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { MedecinProfile } from '@/lib/types'
 
 interface MedecinProfileCardProps {
@@ -24,6 +27,14 @@ export function MedecinProfileCard({ medecin }: MedecinProfileCardProps) {
         <InfoRow label="Ville" value={medecin.ville} />
         <InfoRow label="Adresse" value={medecin.adresse} />
         <InfoRow label="INPE" value={medecin.inpe} />
+        <div className="pt-2">
+          <Link
+            href={`/medecins/${medecin.id}/rdv`}
+            className={cn(buttonVariants({ size: 'lg' }), 'w-full sm:w-auto')}
+          >
+            Prendre rendez-vous
+          </Link>
+        </div>
       </CardContent>
     </Card>
   )
