@@ -7,6 +7,8 @@ import { getSession } from '@/lib/session'
 import { toast } from 'sonner'
 import type { StatutRdv } from '@/lib/types'
 
+const CANCELLABLE: StatutRdv[] = ['EN_ATTENTE', 'CONFIRME']
+
 const STATUT_LABELS: Record<StatutRdv, string> = {
   EN_ATTENTE: 'En attente',
   CONFIRME: 'Confirme',
@@ -24,6 +26,7 @@ const STATUT_COLORS: Record<StatutRdv, string> = {
 export default function PatientRdvsPage() {
   const [patientId, setPatientId] = useState('')
   const [inputId, setInputId] = useState('')
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   useEffect(() => {
     const session = getSession()
@@ -44,7 +47,10 @@ export default function PatientRdvsPage() {
 
   function handleAnnuler(id: string) {
     annuler(id, {
-      onSuccess: () => toast.success('Rendez-vous annule'),
+      onSuccess: () => {
+        toast.success('Rendez-vous annulé')
+        setConfirmingId(null)
+      },
       onError: () => toast.error("Erreur lors de l'annulation"),
     })
   }
@@ -134,14 +140,35 @@ export default function PatientRdvsPage() {
                       >
                         {STATUT_LABELS[rdv.statut]}
                       </span>
-                      {rdv.statut === 'EN_ATTENTE' && (
+
+                      {CANCELLABLE.includes(rdv.statut) && confirmingId !== rdv.id && (
                         <button
-                          onClick={() => handleAnnuler(rdv.id)}
+                          onClick={() => setConfirmingId(rdv.id)}
                           disabled={isAnnuling}
                           className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                         >
                           Annuler
                         </button>
+                      )}
+
+                      {confirmingId === rdv.id && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-zinc-500">Confirmer ?</span>
+                          <button
+                            onClick={() => handleAnnuler(rdv.id)}
+                            disabled={isAnnuling}
+                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {isAnnuling ? '…' : 'Oui'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmingId(null)}
+                            disabled={isAnnuling}
+                            className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50"
+                          >
+                            Non
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
