@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
 import { useRdvsPatient, useAnnulerRdv } from '@/features/agenda/hooks'
 import { getSession } from '@/lib/session'
+import { useRoleGuard } from '@/lib/useRoleGuard'
 import { toast } from 'sonner'
 import type { StatutRdv } from '@/lib/types'
 
@@ -24,26 +25,20 @@ const STATUT_COLORS: Record<StatutRdv, string> = {
 }
 
 export default function PatientRdvsPage() {
+  useRoleGuard('PATIENT')
+
   const [patientId, setPatientId] = useState('')
-  const [inputId, setInputId] = useState('')
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   useEffect(() => {
     const session = getSession()
     if (session?.role === 'PATIENT' && session.id) {
-      setInputId(session.id)
       setPatientId(session.id)
     }
   }, [])
 
   const { data: rdvs, isLoading, isError } = useRdvsPatient(patientId)
   const { mutate: annuler, isPending: isAnnuling } = useAnnulerRdv(patientId)
-
-  function handleLoad() {
-    const trimmed = inputId.trim()
-    if (!trimmed) return
-    setPatientId(trimmed)
-  }
 
   function handleAnnuler(id: string) {
     annuler(id, {
@@ -66,30 +61,9 @@ export default function PatientRdvsPage() {
           </p>
         </div>
 
-        {/* ID input */}
-        <div className="mb-8 flex gap-2">
-          <input
-            type="text"
-            value={inputId}
-            onChange={(e) => setInputId(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
-            placeholder="Votre identifiant patient (UUID)"
-            className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
-          />
-          <button
-            onClick={handleLoad}
-            disabled={!inputId.trim()}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-40"
-          >
-            Charger
-          </button>
-        </div>
-
         {!patientId && (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
-            <p className="text-sm text-zinc-400">
-              Entrez votre identifiant patient pour voir vos rendez-vous
-            </p>
+            <p className="text-sm text-zinc-400">Chargement de vos rendez-vous…</p>
           </div>
         )}
 

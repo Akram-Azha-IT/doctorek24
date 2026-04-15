@@ -12,9 +12,6 @@ export function Header() {
           <Link href="/recherche" className="hover:text-zinc-900 transition-colors">
             Rechercher
           </Link>
-          <Link href="/dashboard/medecin" className="hover:text-zinc-900 transition-colors">
-            Mon Agenda
-          </Link>
           <Link href="/inscription" className="hover:text-zinc-900 transition-colors">
             S&apos;inscrire
           </Link>

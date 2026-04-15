@@ -32,6 +32,8 @@ export function HeaderAuth() {
 
   const dashboardHref =
     session.role === 'MEDECIN' ? '/dashboard/medecin' : '/patient/rdvs'
+  const dashboardLabel =
+    session.role === 'MEDECIN' ? 'Mon Agenda' : 'Mes Rendez-vous'
   const displayName =
     session.firstName
       ? `${session.firstName}${session.lastName ? ' ' + session.lastName : ''}`
@@ -39,6 +41,12 @@ export function HeaderAuth() {
 
   return (
     <div className="flex items-center gap-3">
+      <Link
+        href={dashboardHref}
+        className="hover:text-zinc-900 transition-colors"
+      >
+        {dashboardLabel}
+      </Link>
       <Link
         href={dashboardHref}
         className="text-sm text-zinc-700 hover:text-zinc-900 transition-colors"

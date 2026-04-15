@@ -7,29 +7,22 @@ import { WeeklyGrid } from '@/features/agenda/components/WeeklyGrid'
 import { DisponibiliteForm } from '@/features/agenda/components/DisponibiliteForm'
 import type { Disponibilite } from '@/lib/types'
 import { getSession } from '@/lib/session'
+import { useRoleGuard } from '@/lib/useRoleGuard'
 
 export default function MedecinDashboardPage() {
-  const [inputId, setInputId] = useState('')
+  useRoleGuard('MEDECIN')
+
   const [medecinId, setMedecinId] = useState('')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  // Pre-fill from session if logged in
   useEffect(() => {
     const session = getSession()
     if (session?.role === 'MEDECIN' && session.id) {
-      setInputId(session.id)
       setMedecinId(session.id)
     }
   }, [])
 
   const { data: disponibilites, isLoading, isError } = useDisponibilites(medecinId)
-
-  function handleLoad() {
-    const trimmed = inputId.trim()
-    if (!trimmed) return
-    setMedecinId(trimmed)
-    setSelectedDay(null)
-  }
 
   // Group disponibilites by day — up to 2 slots per day
   const byDay = new Map<string, Disponibilite[]>()
@@ -50,30 +43,9 @@ export default function MedecinDashboardPage() {
           </p>
         </div>
 
-        {/* UUID input */}
-        <div className="mb-8 flex gap-2">
-          <input
-            type="text"
-            value={inputId}
-            onChange={(e) => setInputId(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
-            placeholder="Votre identifiant medecin (UUID)"
-            className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
-          />
-          <button
-            onClick={handleLoad}
-            disabled={!inputId.trim()}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-40"
-          >
-            Charger
-          </button>
-        </div>
-
         {!medecinId && (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
-            <p className="text-sm text-zinc-400">
-              Entrez votre identifiant medecin pour gerer votre agenda
-            </p>
+            <p className="text-sm text-zinc-400">Chargement de votre agenda…</p>
           </div>
         )}
 

@@ -31,13 +31,14 @@ export default function LoginPage() {
   })
 
   function onSubmit(values: LoginValues) {
+    // Use `role` state directly — the hidden input never fires RHF onChange
     saveSession({
-      role: values.role,
+      role,
       id: values.userId,
       email: values.email,
     })
 
-    if (values.role === 'MEDECIN') {
+    if (role === 'MEDECIN') {
       router.push('/dashboard/medecin')
     } else {
       router.push('/patient/rdvs')

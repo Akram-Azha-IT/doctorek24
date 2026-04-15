@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -8,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { PrendreRdvSchema, type PrendreRdvFormValues } from '../schemas'
 import { usePrendreRdv } from '../hooks'
+import { getSession } from '@/lib/session'
 import type { RendezVous } from '@/lib/types'
 
 interface ConfirmRdvFormProps {
@@ -30,14 +32,24 @@ export function ConfirmRdvForm({
   onCancel,
 }: ConfirmRdvFormProps) {
   const { mutate, isPending } = usePrendreRdv(medecinId, dateRdv)
+  const [sessionPatientId, setSessionPatientId] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<PrendreRdvFormValues>({
     resolver: zodResolver(PrendreRdvSchema),
   })
+
+  useEffect(() => {
+    const session = getSession()
+    if (session?.role === 'PATIENT' && session.id) {
+      setSessionPatientId(session.id)
+      setValue('patientId', session.id)
+    }
+  }, [setValue])
 
   function onSubmit(values: PrendreRdvFormValues) {
     mutate(
@@ -75,18 +87,20 @@ export function ConfirmRdvForm({
 
       {/* Formulaire */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-        <Field label="Votre identifiant patient (UUID)" id="patientId" error={errors.patientId?.message}>
-          <Input
-            id="patientId"
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            {...register('patientId')}
-            aria-invalid={!!errors.patientId}
-            className="font-mono text-sm"
-          />
-          <p className="text-xs text-zinc-400 mt-1">
-            Obtenez votre UUID sur votre profil après inscription.
-          </p>
-        </Field>
+        {!sessionPatientId && (
+          <Field label="Votre identifiant patient (UUID)" id="patientId" error={errors.patientId?.message}>
+            <Input
+              id="patientId"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              {...register('patientId')}
+              aria-invalid={!!errors.patientId}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-zinc-400 mt-1">
+              Obtenez votre UUID sur votre profil après inscription.
+            </p>
+          </Field>
+        )}
 
         <Field label="Motif de consultation (optionnel)" id="motif" error={errors.motif?.message}>
           <textarea
