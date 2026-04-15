@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { annulerRdv, getCreneaux, getRdvsPatient, prendreRdv } from './api'
+import {
+  annulerRdv,
+  defineDisponibilite,
+  getCreneaux,
+  getDisponibilites,
+  getRdvsPatient,
+  prendreRdv,
+} from './api'
 
 export function useCreneaux(medecinId: string, date: string) {
   return useQuery({
@@ -34,6 +41,29 @@ export function useAnnulerRdv(patientId: string) {
     mutationFn: annulerRdv,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rdvs', patientId] })
+    },
+  })
+}
+
+export function useDisponibilites(medecinId: string) {
+  return useQuery({
+    queryKey: ['disponibilites', medecinId],
+    queryFn: () => getDisponibilites(medecinId),
+    enabled: !!medecinId,
+  })
+}
+
+export function useDefineDisponibilite(medecinId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: {
+      jourSemaine: string
+      heureDebut: string
+      heureFin: string
+      dureeConsultation: number
+    }) => defineDisponibilite(medecinId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['disponibilites', medecinId] })
     },
   })
 }

@@ -12,13 +12,15 @@ import { RdvSuccessCard } from '@/features/agenda/components/RdvSuccessCard'
 import { Badge } from '@/components/ui/badge'
 import type { Creneau, RendezVous } from '@/lib/types'
 
-function todayISO(): string {
-  return new Date().toISOString().split('T')[0]
+function tomorrowISO(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().split('T')[0]
 }
 
 export default function RdvPage() {
   const { id } = useParams<{ id: string }>()
-  const [date, setDate] = useState<string>(todayISO())
+  const [date, setDate] = useState<string>(tomorrowISO())
   const [selected, setSelected] = useState<Creneau | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
@@ -75,7 +77,7 @@ export default function RdvPage() {
           <input
             type="date"
             value={date}
-            min={todayISO()}
+            min={tomorrowISO()}
             onChange={(e) => handleDateChange(e.target.value)}
             className="border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
           />
