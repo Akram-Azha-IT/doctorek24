@@ -6,37 +6,59 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useCreneaux } from '@/features/agenda/hooks'
-import { CreneauxGrid } from '@/features/agenda/components/CreneauxGrid'
+import { CalendarPicker } from '@/features/agenda/components/CalendarPicker'
+import { TimeSlotList } from '@/features/agenda/components/TimeSlotList'
 import { ConfirmRdvForm } from '@/features/agenda/components/ConfirmRdvForm'
 import { RdvSuccessCard } from '@/features/agenda/components/RdvSuccessCard'
 import { Badge } from '@/components/ui/badge'
 import type { Creneau, RendezVous } from '@/lib/types'
 
-function tomorrowISO(): string {
+function toISO(d: Date): string {
+  return d.toISOString().split('T')[0]
+}
+
+function tomorrow(): Date {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().split('T')[0]
+  return d
+}
+
+function isPastOrToday(date: Date): boolean {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return date < today
+}
+
+function formatDateLabel(date: Date): string {
+  return new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
 }
 
 export default function RdvPage() {
   const { id } = useParams<{ id: string }>()
-  const [date, setDate] = useState<string>(tomorrowISO())
-  const [selected, setSelected] = useState<Creneau | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(tomorrow())
+  const [selectedCreneau, setSelectedCreneau] = useState<Creneau | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
 
-  const { data: medecin, isLoading: loadingMedecin } = useMedecin(id)
-  const { data: creneaux, isLoading: loadingCreneaux, isError } = useCreneaux(id, date)
+  const dateISO = selectedDate ? toISO(selectedDate) : ''
 
-  function handleSelectCreneau(c: Creneau) {
-    setSelected(c)
+  const { data: medecin, isLoading: loadingMedecin } = useMedecin(id)
+  const { data: creneaux = [], isLoading: loadingCreneaux, isError } = useCreneaux(id, dateISO)
+
+  function handleSelectDate(date: Date | undefined) {
+    setSelectedDate(date)
+    setSelectedCreneau(null)
     setShowForm(false)
     setConfirmedRdv(null)
   }
 
-  function handleDateChange(newDate: string) {
-    setDate(newDate)
-    setSelected(null)
+  function handleSelectCreneau(c: Creneau) {
+    setSelectedCreneau(c)
     setShowForm(false)
     setConfirmedRdv(null)
   }
@@ -44,8 +66,8 @@ export default function RdvPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-        {/* Retour */}
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
+        {/* Back link */}
         <Link
           href={`/medecins/${id}`}
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 mb-8 transition-colors"
@@ -53,7 +75,7 @@ export default function RdvPage() {
           ← Retour au profil
         </Link>
 
-        {/* En-tête médecin */}
+        {/* Doctor header */}
         {loadingMedecin ? (
           <div className="h-8 w-48 bg-zinc-100 animate-pulse rounded mb-6" />
         ) : medecin ? (
@@ -69,61 +91,50 @@ export default function RdvPage() {
           </div>
         ) : null}
 
-        {/* Sélection de date */}
-        <section className="mb-8">
-          <label className="block text-sm font-medium text-zinc-700 mb-2">
-            Choisir une date
-          </label>
-          <input
-            type="date"
-            value={date}
-            min={tomorrowISO()}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
-          />
-        </section>
-
-        {/* Créneaux disponibles */}
-        <section>
-          <h2 className="text-base font-semibold text-zinc-900 mb-4">
-            Créneaux disponibles — {formatDate(date)}
-          </h2>
-
-          {loadingCreneaux && (
-            <div className="grid grid-cols-4 gap-2">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-9 bg-zinc-100 animate-pulse rounded-md" />
-              ))}
+        {/* Two-column booking widget */}
+        <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1px_260px]">
+            {/* Left — calendar */}
+            <div className="p-6">
+              <p className="text-sm font-semibold text-zinc-900 mb-4">Choisir une date</p>
+              <CalendarPicker
+                selected={selectedDate}
+                onSelect={handleSelectDate}
+                disabledDays={isPastOrToday}
+              />
             </div>
-          )}
 
-          {isError && (
-            <p className="text-sm text-red-500 py-4">
-              Impossible de charger les créneaux. Vérifiez que le médecin a configuré son agenda.
-            </p>
-          )}
+            {/* Divider */}
+            <div className="hidden md:block bg-zinc-100" />
 
-          {!loadingCreneaux && !isError && creneaux && (
-            <CreneauxGrid
-              creneaux={creneaux}
-              selected={selected?.debut ?? null}
-              onSelect={handleSelectCreneau}
-            />
-          )}
-        </section>
+            {/* Right — time slots */}
+            <div className="p-6 md:overflow-y-auto md:max-h-[480px]">
+              <TimeSlotList
+                creneaux={creneaux}
+                selected={selectedCreneau?.debut ?? null}
+                onSelect={handleSelectCreneau}
+                isLoading={loadingCreneaux}
+                isError={isError}
+                dateLabel={selectedDate ? formatDateLabel(selectedDate) : ''}
+              />
+            </div>
+          </div>
+        </div>
 
-        {/* Bouton → formulaire de confirmation */}
-        {selected && !showForm && !confirmedRdv && (
-          <div className="mt-8 p-4 border border-zinc-200 rounded-xl bg-zinc-50">
-            <p className="text-sm text-zinc-600 mb-1">Créneau sélectionné</p>
-            <p className="font-semibold text-zinc-900">
-              {formatDate(date)} à {selected.debut}
-            </p>
-            <p className="text-sm text-zinc-500 mt-0.5">
-              Durée estimée : jusqu&apos;à {selected.fin}
-            </p>
+        {/* Selected slot summary + confirm button */}
+        {selectedCreneau && !showForm && !confirmedRdv && (
+          <div className="mt-6 p-4 border border-zinc-200 rounded-xl bg-zinc-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-sm text-zinc-500">Créneau sélectionné</p>
+              <p className="font-semibold text-zinc-900 capitalize">
+                {selectedDate ? formatDateLabel(selectedDate) : ''} à {selectedCreneau.debut}
+              </p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Durée estimée : jusqu&apos;à {selectedCreneau.fin}
+              </p>
+            </div>
             <button
-              className="mt-4 w-full sm:w-auto bg-zinc-900 hover:bg-zinc-700 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors"
+              className="shrink-0 bg-zinc-900 hover:bg-zinc-700 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors"
               onClick={() => setShowForm(true)}
             >
               Confirmer ce créneau
@@ -131,14 +142,14 @@ export default function RdvPage() {
           </div>
         )}
 
-        {/* Formulaire de confirmation US-F06 */}
-        {selected && showForm && !confirmedRdv && medecin && (
+        {/* Confirmation form */}
+        {selectedCreneau && showForm && !confirmedRdv && medecin && (
           <ConfirmRdvForm
             medecinId={id}
             medecinName={`Dr. ${medecin.firstName} ${medecin.lastName}`}
-            dateRdv={date}
-            heureRdv={selected.debut}
-            heureFin={selected.fin}
+            dateRdv={dateISO}
+            heureRdv={selectedCreneau.debut}
+            heureFin={selectedCreneau.fin}
             onSuccess={(rdv) => {
               setConfirmedRdv(rdv)
               setShowForm(false)
@@ -147,7 +158,7 @@ export default function RdvPage() {
           />
         )}
 
-        {/* Carte de succès */}
+        {/* Success card */}
         {confirmedRdv && medecin && (
           <RdvSuccessCard
             rdv={confirmedRdv}
@@ -157,13 +168,4 @@ export default function RdvPage() {
       </main>
     </>
   )
-}
-
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(iso + 'T00:00:00'))
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
 import { useDisponibilites } from '@/features/agenda/hooks'
-import { WeeklyGrid } from '@/features/agenda/components/WeeklyGrid'
+import { AgendaView } from '@/features/agenda/components/AgendaView'
 import { DisponibiliteForm } from '@/features/agenda/components/DisponibiliteForm'
 import type { Disponibilite } from '@/lib/types'
 import { getSession } from '@/lib/session'
@@ -65,15 +65,15 @@ export default function MedecinDashboardPage() {
 
         {medecinId && !isLoading && !isError && disponibilites && (
           <>
-            <div className="mb-4 flex items-center gap-2">
+            <div className="mb-6 flex items-center gap-2">
               <span className="text-sm text-zinc-500">
                 {disponibilites.length === 0
-                  ? 'Aucun jour configure — cliquez sur un jour pour commencer'
-                  : `${disponibilites.length} creneau${disponibilites.length > 1 ? 'x' : ''} configure${disponibilites.length > 1 ? 's' : ''}`}
+                  ? 'Aucun jour configuré — cliquez sur un jour pour commencer'
+                  : `${disponibilites.length} créneau${disponibilites.length > 1 ? 'x' : ''} configuré${disponibilites.length > 1 ? 's' : ''}`}
               </span>
             </div>
 
-            <WeeklyGrid
+            <AgendaView
               disponibilites={disponibilites}
               selectedDay={selectedDay}
               onSelectDay={(day) =>
