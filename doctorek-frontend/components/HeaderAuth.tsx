@@ -31,9 +31,9 @@ export function HeaderAuth() {
   }
 
   const dashboardHref =
-    session.role === 'MEDECIN' ? '/dashboard/medecin' : '/patient/rdvs'
+    session.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient'
   const dashboardLabel =
-    session.role === 'MEDECIN' ? 'Mon Agenda' : 'Mes Rendez-vous'
+    session.role === 'MEDECIN' ? 'Mon Agenda' : 'Mon Dashboard'
   const displayName =
     session.firstName
       ? `${session.firstName}${session.lastName ? ' ' + session.lastName : ''}`

@@ -12,7 +12,7 @@ export function useRoleGuard(requiredRole: 'MEDECIN' | 'PATIENT') {
       return
     }
     if (session.role !== requiredRole) {
-      router.replace(session.role === 'MEDECIN' ? '/dashboard/medecin' : '/patient/rdvs')
+      router.replace(session.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient')
     }
   }, [router, requiredRole])
 }

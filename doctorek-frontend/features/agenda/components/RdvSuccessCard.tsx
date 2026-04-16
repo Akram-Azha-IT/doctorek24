@@ -26,7 +26,7 @@ export function RdvSuccessCard({ rdv, medecinName }: RdvSuccessCardProps) {
       </div>
       <div className="mt-5 flex flex-col sm:flex-row gap-3">
         <Link
-          href={`/rdv`}
+          href="/patient/rdvs"
           className="text-sm font-medium text-green-800 hover:text-green-950 underline underline-offset-2 transition-colors"
         >
           Voir mes rendez-vous →

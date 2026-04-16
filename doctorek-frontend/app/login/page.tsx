@@ -41,7 +41,7 @@ export default function LoginPage() {
     if (role === 'MEDECIN') {
       router.push('/dashboard/medecin')
     } else {
-      router.push('/patient/rdvs')
+      router.push('/dashboard/patient')
     }
   }
 
