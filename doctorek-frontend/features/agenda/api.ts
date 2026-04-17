@@ -11,12 +11,17 @@ export function getRdvsPatient(patientId: string): Promise<RendezVous[]> {
   return apiFetch<RendezVous[]>(`/api/v1/agenda/patients/${patientId}/rdv`)
 }
 
+export function getRdvsMedecin(medecinId: string): Promise<RendezVous[]> {
+  return apiFetch<RendezVous[]>(`/api/v1/agenda/medecins/${medecinId}/rdv`)
+}
+
 export function prendreRdv(payload: {
   medecinId: string
   patientId: string
   dateRdv: string
   heureRdv: string
   motif?: string
+  questionnaire?: import('@/lib/types').QuestionnairePreConsult
 }): Promise<RendezVous> {
   return apiFetch<RendezVous>('/api/v1/agenda/rdv', {
     method: 'POST',

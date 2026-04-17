@@ -12,6 +12,10 @@ export interface MedecinProfile {
   ville: string
   adresse: string
   inpe: string
+  secteurTarifaire?: 1 | 2 | 3
+  langues?: string[]
+  presentation?: string
+  acceptNouveauxPatients?: boolean
 }
 
 export interface PatientRegistrationPayload {
@@ -70,6 +74,14 @@ export interface Disponibilite {
 
 export type StatutRdv = 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE'
 
+export interface QuestionnairePreConsult {
+  motif: string
+  premierConsultation: boolean
+  intensiteDouleur?: 1 | 2 | 3 | 4 | 5
+  dureeSymptoomes?: 'moins_7j' | '1_4sem' | 'plus_1mois' | null
+  notesComplementaires?: string
+}
+
 export interface RendezVous {
   id: string
   medecinId: string
@@ -79,5 +91,6 @@ export interface RendezVous {
   duree: number
   statut: StatutRdv
   motif: string | null
+  questionnaire?: QuestionnairePreConsult | null
   createdAt: string
 }

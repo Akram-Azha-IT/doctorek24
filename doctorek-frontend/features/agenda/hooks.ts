@@ -5,6 +5,7 @@ import {
   getCreneaux,
   getDisponibilites,
   getRdvsPatient,
+  getRdvsMedecin,
   prendreRdv,
 } from './api'
 
@@ -42,6 +43,14 @@ export function useAnnulerRdv(patientId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rdvs', patientId] })
     },
+  })
+}
+
+export function useRdvsMedecin(medecinId: string) {
+  return useQuery({
+    queryKey: ['rdvs', 'medecin', medecinId],
+    queryFn: () => getRdvsMedecin(medecinId),
+    enabled: !!medecinId,
   })
 }
 

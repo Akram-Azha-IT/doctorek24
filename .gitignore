@@ -4,6 +4,7 @@ CLAUDE.md
 everything-claude/
 PFE_CONTEXT.md
 context.md
+.claude.json
 
 # Java / Maven
 target/
