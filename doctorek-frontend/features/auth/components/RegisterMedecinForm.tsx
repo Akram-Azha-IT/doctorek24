@@ -25,9 +25,9 @@ export function RegisterMedecinForm() {
   function onSubmit(values: RegisterMedecinFormValues) {
     const { confirmPassword: _, ...payload } = values
     mutate(payload, {
-      onSuccess: () => {
-        toast.success('Inscription réussie ! Bienvenue Dr. sur Doctorek.')
-        router.push('/recherche')
+      onSuccess: (data) => {
+        toast.success('Inscription réussie ! Vérifiez votre email.')
+        router.push(`/inscription/verification?userId=${data.id}&email=${encodeURIComponent(data.email)}`)
       },
       onError: (err) => {
         toast.error(err.message || "Erreur lors de l'inscription")

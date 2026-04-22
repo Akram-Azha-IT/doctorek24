@@ -55,6 +55,11 @@ export interface MedecinRegisteredResponse {
   inpe: string
 }
 
+export interface VerifyEmailPayload {
+  userId: string
+  code: string
+}
+
 // ── Agenda ──────────────────────────────────────────────────────────────────
 
 export interface Creneau {
@@ -86,6 +91,8 @@ export interface RendezVous {
   id: string
   medecinId: string
   patientId: string
+  patientPrenom?: string | null
+  patientNom?: string | null
   dateRdv: string    // "YYYY-MM-DD"
   heureRdv: string   // "HH:mm"
   duree: number

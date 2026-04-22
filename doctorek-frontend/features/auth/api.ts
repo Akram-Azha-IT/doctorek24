@@ -4,6 +4,7 @@ import type {
   PatientRegistrationPayload,
   MedecinRegisteredResponse,
   MedecinRegistrationPayload,
+  VerifyEmailPayload,
 } from '@/lib/types'
 
 export function registerPatient(
@@ -19,6 +20,13 @@ export function registerMedecin(
   payload: MedecinRegistrationPayload
 ): Promise<MedecinRegisteredResponse> {
   return apiFetch<MedecinRegisteredResponse>('/api/v1/auth/register/medecin', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function verifyEmail(payload: VerifyEmailPayload): Promise<void> {
+  return apiFetch<void>('/api/v1/auth/verify-email', {
     method: 'POST',
     body: JSON.stringify(payload),
   })

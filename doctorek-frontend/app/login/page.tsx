@@ -12,7 +12,7 @@ const LoginSchema = z.object({
   role: z.enum(['MEDECIN', 'PATIENT']),
   email: z.string().email('Email invalide'),
   password: z.string().min(1, 'Mot de passe requis'),
-  userId: z.string().min(1, 'Identifiant requis'),
+  userId: z.string().uuid('Format UUID invalide (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)'),
 })
 
 type LoginValues = z.infer<typeof LoginSchema>

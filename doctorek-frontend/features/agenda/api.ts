@@ -35,6 +35,18 @@ export function annulerRdv(id: string): Promise<RendezVous> {
   })
 }
 
+export function confirmerRdv(id: string): Promise<RendezVous> {
+  return apiFetch<RendezVous>(`/api/v1/agenda/rdv/${id}/confirmer`, {
+    method: 'PUT',
+  })
+}
+
+export function terminerRdv(id: string): Promise<RendezVous> {
+  return apiFetch<RendezVous>(`/api/v1/agenda/rdv/${id}/terminer`, {
+    method: 'PUT',
+  })
+}
+
 export function getDisponibilites(medecinId: string): Promise<Disponibilite[]> {
   return apiFetch<Disponibilite[]>(
     `/api/v1/agenda/medecins/${medecinId}/disponibilites`,

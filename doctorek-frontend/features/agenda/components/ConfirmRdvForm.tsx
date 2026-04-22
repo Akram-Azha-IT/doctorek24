@@ -75,6 +75,7 @@ export function ConfirmRdvForm({
         patientId: values.patientId,
         dateRdv,
         heureRdv,
+        motif: values.questionnaire.motif,
         questionnaire: {
           ...values.questionnaire,
           intensiteDouleur: values.questionnaire.intensiteDouleur ?? undefined,

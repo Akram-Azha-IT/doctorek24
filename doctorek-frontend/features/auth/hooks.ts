@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
-import { registerPatient, registerMedecin } from './api'
-import type { PatientRegistrationPayload, MedecinRegistrationPayload } from '@/lib/types'
+import { registerPatient, registerMedecin, verifyEmail } from './api'
+import type { PatientRegistrationPayload, MedecinRegistrationPayload, VerifyEmailPayload } from '@/lib/types'
 
 export function useRegisterPatient() {
   return useMutation({
@@ -11,5 +11,11 @@ export function useRegisterPatient() {
 export function useRegisterMedecin() {
   return useMutation({
     mutationFn: (payload: MedecinRegistrationPayload) => registerMedecin(payload),
+  })
+}
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: (payload: VerifyEmailPayload) => verifyEmail(payload),
   })
 }

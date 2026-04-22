@@ -21,6 +21,10 @@ export function RdvSuccessCard({ rdv, medecinName }: RdvSuccessCardProps) {
               Motif : {rdv.motif}
             </p>
           )}
+          <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-green-700 bg-white/60 border border-green-200 rounded-full px-2.5 py-1">
+            <span aria-hidden>✉</span>
+            Un email de confirmation vous a été envoyé.
+          </p>
           <p className="text-xs text-green-600 mt-2">Référence : {rdv.id}</p>
         </div>
       </div>

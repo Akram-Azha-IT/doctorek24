@@ -4,16 +4,28 @@ import { useState } from 'react'
 import { Header } from '@/components/Header'
 import { SearchForm } from '@/features/annuaire/components/SearchForm'
 import { MedecinCard } from '@/features/annuaire/components/MedecinCard'
-import { useSearchMedecins } from '@/features/annuaire/hooks'
+import { useSearchMedecinsDisponibles } from '@/features/annuaire/hooks'
 import type { SearchFormValues } from '@/features/annuaire/schemas'
+import type { DisponibiliteFilter } from '@/lib/disponibilite'
+
+const FILTERS: ReadonlyArray<{ value: DisponibiliteFilter; label: string }> = [
+  { value: 'all', label: 'Toutes dates' },
+  { value: 'today', label: "Aujourd'hui" },
+  { value: 'week', label: 'Cette semaine' },
+]
 
 export default function RecherchePage() {
   const [query, setQuery] = useState<SearchFormValues>({ specialite: '', ville: '' })
+  const [filter, setFilter] = useState<DisponibiliteFilter>('all')
 
-  const { data, isLoading, isError, error } = useSearchMedecins(
+  const { data, isLoading, isError, error } = useSearchMedecinsDisponibles(
     query.specialite,
-    query.ville
+    query.ville,
+    filter,
   )
+
+  const medecins = data?.medecins ?? []
+  const availableTodayIds = data?.availableTodayIds ?? new Set<string>()
 
   return (
     <>
@@ -22,12 +34,36 @@ export default function RecherchePage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-zinc-900 mb-1">Trouver un médecin</h1>
           <p className="text-zinc-500 text-sm">
-            {data ? `${data.length} médecin${data.length !== 1 ? 's' : ''} trouvé${data.length !== 1 ? 's' : ''}` : 'Chargement...'}
+            {data
+              ? `${medecins.length} médecin${medecins.length !== 1 ? 's' : ''} trouvé${medecins.length !== 1 ? 's' : ''}`
+              : 'Chargement...'}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5 shadow-sm mb-8">
+        <div className="rounded-xl border bg-white p-5 shadow-sm mb-4">
           <SearchForm onSearch={setQuery} isLoading={isLoading} />
+        </div>
+
+        <div className="mb-8 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+            Disponibilité
+          </span>
+          <div className="inline-flex rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setFilter(f.value)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  filter === f.value
+                    ? 'bg-blue-600 text-white'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {isError && (
@@ -37,19 +73,31 @@ export default function RecherchePage() {
         )}
 
         {isLoading && (
-          <p className="text-center text-sm text-zinc-400 py-8">Chargement...</p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-24 animate-pulse rounded-xl bg-zinc-100" />
+            ))}
+          </div>
         )}
 
-        {!isLoading && data && data.length === 0 && (
+        {!isLoading && data && medecins.length === 0 && (
           <p className="text-center text-sm text-zinc-500 py-8">
-            Aucun médecin trouvé pour cette recherche.
+            {filter === 'today'
+              ? "Aucun médecin disponible aujourd'hui."
+              : filter === 'week'
+              ? 'Aucun médecin disponible cette semaine.'
+              : 'Aucun médecin trouvé pour cette recherche.'}
           </p>
         )}
 
-        {data && data.length > 0 && (
+        {!isLoading && medecins.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {data.map((medecin) => (
-              <MedecinCard key={medecin.id} medecin={medecin} />
+            {medecins.map((medecin) => (
+              <MedecinCard
+                key={medecin.id}
+                medecin={medecin}
+                availableToday={availableTodayIds.has(medecin.id)}
+              />
             ))}
           </div>
         )}
