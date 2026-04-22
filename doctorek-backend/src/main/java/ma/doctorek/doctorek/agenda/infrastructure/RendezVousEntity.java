@@ -38,6 +38,9 @@ class RendezVousEntity {
     @Column(columnDefinition = "TEXT")
     private String motif;
 
+    @Column(name = "questionnaire_json", columnDefinition = "TEXT")
+    private String questionnaireJson;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -53,21 +56,23 @@ class RendezVousEntity {
             duree,
             StatutRdv.valueOf(statut),
             motif,
+            questionnaireJson,
             createdAt
         );
     }
 
     static RendezVousEntity fromDomain(RendezVous rdv) {
         RendezVousEntity e = new RendezVousEntity();
-        e.id        = rdv.id();
-        e.medecinId = rdv.medecinId();
-        e.patientId = rdv.patientId();
-        e.dateRdv   = rdv.dateRdv();
-        e.heureRdv  = rdv.heureRdv();
-        e.duree     = rdv.duree();
-        e.statut    = rdv.statut().name();
-        e.motif     = rdv.motif();
-        e.createdAt = rdv.createdAt() != null ? rdv.createdAt() : LocalDateTime.now();
+        e.id                = rdv.id();
+        e.medecinId         = rdv.medecinId();
+        e.patientId         = rdv.patientId();
+        e.dateRdv           = rdv.dateRdv();
+        e.heureRdv          = rdv.heureRdv();
+        e.duree             = rdv.duree();
+        e.statut            = rdv.statut().name();
+        e.motif             = rdv.motif();
+        e.questionnaireJson = rdv.questionnaireJson();
+        e.createdAt         = rdv.createdAt() != null ? rdv.createdAt() : LocalDateTime.now();
         return e;
     }
 }

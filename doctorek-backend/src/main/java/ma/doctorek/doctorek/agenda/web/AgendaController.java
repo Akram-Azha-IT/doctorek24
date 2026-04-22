@@ -2,16 +2,20 @@ package ma.doctorek.doctorek.agenda.web;
 
 import jakarta.validation.Valid;
 import ma.doctorek.doctorek.agenda.application.AnnulerRendezVousUseCase;
+import ma.doctorek.doctorek.agenda.application.ConfirmerRendezVousUseCase;
 import ma.doctorek.doctorek.agenda.application.DefineDisponibiliteUseCase;
 import ma.doctorek.doctorek.agenda.application.GetCreneauxDisponiblesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetDisponibilitesUseCase;
+import ma.doctorek.doctorek.agenda.application.GetRdvsMedecinUseCase;
 import ma.doctorek.doctorek.agenda.application.GetRdvsPatientUseCase;
 import ma.doctorek.doctorek.agenda.application.PrendreRdvUseCase;
+import ma.doctorek.doctorek.agenda.application.TerminerRendezVousUseCase;
 import ma.doctorek.doctorek.agenda.application.dto.CreneauResponse;
 import ma.doctorek.doctorek.agenda.application.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.agenda.application.dto.DisponibiliteResponse;
 import ma.doctorek.doctorek.agenda.application.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.agenda.application.dto.RendezVousResponse;
+import ma.doctorek.doctorek.auth.domain.UserRepository;
 import ma.doctorek.doctorek.shared.web.ApiResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -32,19 +36,31 @@ public class AgendaController {
     private final PrendreRdvUseCase             prendreRdvUseCase;
     private final GetRdvsPatientUseCase         getRdvsPatientUseCase;
     private final AnnulerRendezVousUseCase      annulerRendezVousUseCase;
+    private final ConfirmerRendezVousUseCase    confirmerRendezVousUseCase;
+    private final TerminerRendezVousUseCase     terminerRendezVousUseCase;
+    private final GetRdvsMedecinUseCase         getRdvsMedecinUseCase;
+    private final UserRepository                userRepository;
 
     public AgendaController(DefineDisponibiliteUseCase defineDisponibiliteUseCase,
                              GetDisponibilitesUseCase getDisponibilitesUseCase,
                              GetCreneauxDisponiblesUseCase getCreneauxDisponiblesUseCase,
                              PrendreRdvUseCase prendreRdvUseCase,
                              GetRdvsPatientUseCase getRdvsPatientUseCase,
-                             AnnulerRendezVousUseCase annulerRendezVousUseCase) {
+                             AnnulerRendezVousUseCase annulerRendezVousUseCase,
+                             ConfirmerRendezVousUseCase confirmerRendezVousUseCase,
+                             TerminerRendezVousUseCase terminerRendezVousUseCase,
+                             GetRdvsMedecinUseCase getRdvsMedecinUseCase,
+                             UserRepository userRepository) {
         this.defineDisponibiliteUseCase    = defineDisponibiliteUseCase;
         this.getDisponibilitesUseCase      = getDisponibilitesUseCase;
         this.getCreneauxDisponiblesUseCase = getCreneauxDisponiblesUseCase;
         this.prendreRdvUseCase             = prendreRdvUseCase;
         this.getRdvsPatientUseCase         = getRdvsPatientUseCase;
         this.annulerRendezVousUseCase      = annulerRendezVousUseCase;
+        this.confirmerRendezVousUseCase    = confirmerRendezVousUseCase;
+        this.terminerRendezVousUseCase     = terminerRendezVousUseCase;
+        this.getRdvsMedecinUseCase         = getRdvsMedecinUseCase;
+        this.userRepository                = userRepository;
     }
 
     /**
@@ -116,6 +132,22 @@ public class AgendaController {
     }
 
     /**
+     * GET /api/v1/agenda/medecins/{medecinId}/rdv
+     * Retourne tous les rendez-vous d'un médecin.
+     */
+    @GetMapping("/medecins/{medecinId}/rdv")
+    public ResponseEntity<ApiResponse<List<RendezVousResponse>>> getRdvsMedecin(
+            @PathVariable UUID medecinId) {
+        List<RendezVousResponse> responses = getRdvsMedecinUseCase.execute(medecinId)
+            .stream()
+            .map(rdv -> userRepository.findById(rdv.patientId())
+                .map(u -> RendezVousResponse.from(rdv, u.getFirstName(), u.getLastName()))
+                .orElseGet(() -> RendezVousResponse.from(rdv)))
+            .toList();
+        return ResponseEntity.ok(ApiResponse.ok(responses));
+    }
+
+    /**
      * PUT /api/v1/agenda/rdv/{id}/annuler
      * Annule un rendez-vous existant.
      */
@@ -123,6 +155,28 @@ public class AgendaController {
     public ResponseEntity<ApiResponse<RendezVousResponse>> annulerRdv(
             @PathVariable UUID id) {
         RendezVousResponse response = RendezVousResponse.from(annulerRendezVousUseCase.execute(id));
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * PUT /api/v1/agenda/rdv/{id}/confirmer
+     * Confirme un rendez-vous en attente.
+     */
+    @PutMapping("/rdv/{id}/confirmer")
+    public ResponseEntity<ApiResponse<RendezVousResponse>> confirmerRdv(
+            @PathVariable UUID id) {
+        RendezVousResponse response = RendezVousResponse.from(confirmerRendezVousUseCase.execute(id));
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * PUT /api/v1/agenda/rdv/{id}/terminer
+     * Marque un rendez-vous confirmé comme terminé.
+     */
+    @PutMapping("/rdv/{id}/terminer")
+    public ResponseEntity<ApiResponse<RendezVousResponse>> terminerRdv(
+            @PathVariable UUID id) {
+        RendezVousResponse response = RendezVousResponse.from(terminerRendezVousUseCase.execute(id));
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

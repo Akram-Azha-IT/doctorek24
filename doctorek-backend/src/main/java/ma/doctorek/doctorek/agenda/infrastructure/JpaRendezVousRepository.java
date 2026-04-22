@@ -13,5 +13,9 @@ interface JpaRendezVousRepository extends JpaRepository<RendezVousEntity, UUID> 
 
     List<RendezVousEntity> findByPatientId(UUID patientId);
 
+    List<RendezVousEntity> findByMedecinId(UUID medecinId);
+
+    List<RendezVousEntity> findByDateRdvAndStatutNot(LocalDate dateRdv, String statut);
+
     boolean existsByMedecinIdAndDateRdvAndHeureRdv(UUID medecinId, LocalDate dateRdv, LocalTime heureRdv);
 }

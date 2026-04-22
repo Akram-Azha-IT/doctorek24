@@ -5,10 +5,15 @@ import ma.doctorek.doctorek.agenda.domain.DisponibiliteNotFoundException;
 import ma.doctorek.doctorek.agenda.domain.MedecinSansAgendaException;
 import ma.doctorek.doctorek.agenda.domain.RendezVousNotFoundException;
 import ma.doctorek.doctorek.agenda.domain.RdvNonAnnulableException;
+import ma.doctorek.doctorek.agenda.domain.RdvNonConfirmableException;
+import ma.doctorek.doctorek.agenda.domain.RdvNonTerminableException;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNotFoundException;
 import ma.doctorek.doctorek.auth.domain.EmailAlreadyExistsException;
 import ma.doctorek.doctorek.auth.domain.InpeAlreadyExistsException;
+import ma.doctorek.doctorek.auth.domain.InvalidVerificationCodeException;
 import ma.doctorek.doctorek.auth.domain.PhoneAlreadyExistsException;
+import ma.doctorek.doctorek.auth.domain.UserNotFoundException;
+import ma.doctorek.doctorek.auth.domain.VerificationCodeExpiredException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,6 +22,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -76,6 +83,43 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RdvNonAnnulableException.class)
     public ResponseEntity<ApiResponse<Void>> handleRdvNonAnnulable(RdvNonAnnulableException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RdvNonConfirmableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRdvNonConfirmable(RdvNonConfirmableException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RdvNonTerminableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRdvNonTerminable(RdvNonTerminableException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidCode(InvalidVerificationCodeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(VerificationCodeExpiredException.class)
+    public ResponseEntity<ApiResponse<Void>> handleExpiredCode(VerificationCodeExpiredException ex) {
+        return ResponseEntity.status(HttpStatus.GONE).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+            .body(ApiResponse.error("Méthode HTTP non supportée : " + ex.getMethod()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = "Paramètre invalide: '" + ex.getName() + "' doit être un UUID valide";
+        return ResponseEntity.badRequest().body(ApiResponse.error(message));
     }
 
     @ExceptionHandler(Exception.class)

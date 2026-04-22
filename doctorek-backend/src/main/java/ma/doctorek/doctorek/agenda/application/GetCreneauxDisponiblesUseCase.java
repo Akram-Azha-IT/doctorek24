@@ -3,7 +3,6 @@ package ma.doctorek.doctorek.agenda.application;
 import ma.doctorek.doctorek.agenda.domain.Creneau;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
 import ma.doctorek.doctorek.agenda.domain.DisponibiliteRepository;
-import ma.doctorek.doctorek.agenda.domain.MedecinSansAgendaException;
 import ma.doctorek.doctorek.agenda.domain.RendezVous;
 import ma.doctorek.doctorek.agenda.domain.RendezVousRepository;
 import org.springframework.stereotype.Service;
@@ -29,9 +28,9 @@ public class GetCreneauxDisponiblesUseCase {
     }
 
     public List<Creneau> execute(UUID medecinId, LocalDate date) {
-        Disponibilite dispo = dispoRepo
-            .findByMedecinIdAndJour(medecinId, date.getDayOfWeek())
-            .orElseThrow(() -> new MedecinSansAgendaException(medecinId));
+        var dispoOpt = dispoRepo.findByMedecinIdAndJour(medecinId, date.getDayOfWeek());
+        if (dispoOpt.isEmpty()) return List.of();
+        Disponibilite dispo = dispoOpt.get();
 
         Set<LocalTime> heuresPrises = rdvRepo
             .findByMedecinIdAndDate(medecinId, date)

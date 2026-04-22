@@ -49,6 +49,15 @@ public class User {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
+    @Column(name = "verification_code", length = 6)
+    private String verificationCode;
+
+    @Column(name = "verification_code_expires_at")
+    private Instant verificationCodeExpiresAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -95,22 +104,39 @@ public class User {
         if (lang != null) this.lang = lang;
     }
 
+    public void setVerificationCode(String code) {
+        this.verificationCode = code;
+    }
+
+    public void setVerificationCodeExpiresAt(Instant expiresAt) {
+        this.verificationCodeExpiresAt = expiresAt;
+    }
+
+    public void markEmailVerified() {
+        this.emailVerified = true;
+        this.verificationCode = null;
+        this.verificationCodeExpiresAt = null;
+    }
+
     // ── Getters ──────────────────────────────────────────────
-    public UUID getId()          { return id; }
-    public String getEmail()     { return email; }
-    public String getPhone()     { return phone; }
-    public String getPassword()  { return password; }
-    public String getFirstName() { return firstName; }
-    public String getLastName()  { return lastName; }
-    public Role getRole()        { return role; }
-    public String getLang()      { return lang; }
-    public boolean isActive()    { return active; }
-    public Instant getCreatedAt(){ return createdAt; }
-    public Instant getUpdatedAt(){ return updatedAt; }
-    public String getInpe()      { return inpe; }
-    public String getSpecialite(){ return specialite; }
-    public String getVille()     { return ville; }
-    public String getAdresse()   { return adresse; }
+    public UUID getId()                           { return id; }
+    public String getEmail()                      { return email; }
+    public String getPhone()                      { return phone; }
+    public String getPassword()                   { return password; }
+    public String getFirstName()                  { return firstName; }
+    public String getLastName()                   { return lastName; }
+    public Role getRole()                         { return role; }
+    public String getLang()                       { return lang; }
+    public boolean isActive()                     { return active; }
+    public boolean isEmailVerified()              { return emailVerified; }
+    public String getVerificationCode()           { return verificationCode; }
+    public Instant getVerificationCodeExpiresAt() { return verificationCodeExpiresAt; }
+    public Instant getCreatedAt()                 { return createdAt; }
+    public Instant getUpdatedAt()                 { return updatedAt; }
+    public String getInpe()                       { return inpe; }
+    public String getSpecialite()                 { return specialite; }
+    public String getVille()                      { return ville; }
+    public String getAdresse()                    { return adresse; }
 
     // ── Builder ───────────────────────────────────────────────
     public static Builder builder() { return new Builder(); }

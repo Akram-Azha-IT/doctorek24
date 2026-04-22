@@ -14,10 +14,21 @@ public record RendezVous(
     int           duree,
     StatutRdv     statut,
     String        motif,
+    String        questionnaireJson,
     LocalDateTime createdAt
 ) {
     public RendezVous annuler() {
         return new RendezVous(id, medecinId, patientId, dateRdv, heureRdv,
-                              duree, StatutRdv.ANNULE, motif, createdAt);
+                              duree, StatutRdv.ANNULE, motif, questionnaireJson, createdAt);
+    }
+
+    public RendezVous confirmer() {
+        return new RendezVous(id, medecinId, patientId, dateRdv, heureRdv,
+                              duree, StatutRdv.CONFIRME, motif, questionnaireJson, createdAt);
+    }
+
+    public RendezVous terminer() {
+        return new RendezVous(id, medecinId, patientId, dateRdv, heureRdv,
+                              duree, StatutRdv.TERMINE, motif, questionnaireJson, createdAt);
     }
 }

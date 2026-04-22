@@ -3,10 +3,12 @@ package ma.doctorek.doctorek.auth.web;
 import jakarta.validation.Valid;
 import ma.doctorek.doctorek.auth.application.RegisterMedecinUseCase;
 import ma.doctorek.doctorek.auth.application.RegisterPatientUseCase;
+import ma.doctorek.doctorek.auth.application.VerifyEmailUseCase;
 import ma.doctorek.doctorek.auth.application.dto.MedecinRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.PatientRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.RegisterMedecinRequest;
 import ma.doctorek.doctorek.auth.application.dto.RegisterPatientRequest;
+import ma.doctorek.doctorek.auth.application.dto.VerifyEmailRequest;
 import ma.doctorek.doctorek.shared.web.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +20,14 @@ public class AuthController {
 
     private final RegisterPatientUseCase registerPatientUseCase;
     private final RegisterMedecinUseCase registerMedecinUseCase;
+    private final VerifyEmailUseCase     verifyEmailUseCase;
 
     public AuthController(RegisterPatientUseCase registerPatientUseCase,
-                          RegisterMedecinUseCase registerMedecinUseCase) {
+                          RegisterMedecinUseCase registerMedecinUseCase,
+                          VerifyEmailUseCase verifyEmailUseCase) {
         this.registerPatientUseCase = registerPatientUseCase;
         this.registerMedecinUseCase = registerMedecinUseCase;
+        this.verifyEmailUseCase     = verifyEmailUseCase;
     }
 
     /**
@@ -47,5 +52,17 @@ public class AuthController {
     ) {
         MedecinRegisteredResponse response = registerMedecinUseCase.execute(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
+    }
+
+    /**
+     * POST /api/v1/auth/verify-email
+     * Vérification du code reçu par email après inscription.
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+        @Valid @RequestBody VerifyEmailRequest request
+    ) {
+        verifyEmailUseCase.execute(request);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

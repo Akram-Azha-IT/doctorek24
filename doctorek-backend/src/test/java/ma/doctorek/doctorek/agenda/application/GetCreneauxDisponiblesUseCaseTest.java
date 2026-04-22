@@ -105,7 +105,7 @@ class GetCreneauxDisponiblesUseCaseTest {
             RendezVous rdvAt9 = new RendezVous(
                 UUID.randomUUID(), medecinId, UUID.randomUUID(),
                 monday, LocalTime.of(9, 0), 60,
-                StatutRdv.EN_ATTENTE, null, LocalDateTime.now()
+                StatutRdv.EN_ATTENTE, null, null, LocalDateTime.now()
             );
 
             when(dispoRepo.findByMedecinIdAndJour(medecinId, DayOfWeek.MONDAY))
@@ -126,12 +126,12 @@ class GetCreneauxDisponiblesUseCaseTest {
             RendezVous rdvAt9 = new RendezVous(
                 UUID.randomUUID(), medecinId, UUID.randomUUID(),
                 monday, LocalTime.of(9, 0), 60,
-                StatutRdv.EN_ATTENTE, null, LocalDateTime.now()
+                StatutRdv.EN_ATTENTE, null, null, LocalDateTime.now()
             );
             RendezVous rdvAt10 = new RendezVous(
                 UUID.randomUUID(), medecinId, UUID.randomUUID(),
                 monday, LocalTime.of(10, 0), 60,
-                StatutRdv.EN_ATTENTE, null, LocalDateTime.now()
+                StatutRdv.EN_ATTENTE, null, null, LocalDateTime.now()
             );
 
             when(dispoRepo.findByMedecinIdAndJour(medecinId, DayOfWeek.MONDAY))

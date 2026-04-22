@@ -2,6 +2,7 @@ package ma.doctorek.doctorek.agenda.infrastructure;
 
 import ma.doctorek.doctorek.agenda.domain.RendezVous;
 import ma.doctorek.doctorek.agenda.domain.RendezVousRepository;
+import ma.doctorek.doctorek.agenda.domain.StatutRdv;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -36,6 +37,22 @@ class SpringDataRendezVousRepository implements RendezVousRepository {
     @Override
     public List<RendezVous> findByPatientId(UUID patientId) {
         return jpa.findByPatientId(patientId)
+                  .stream()
+                  .map(RendezVousEntity::toDomain)
+                  .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RendezVous> findByMedecinId(UUID medecinId) {
+        return jpa.findByMedecinId(medecinId)
+                  .stream()
+                  .map(RendezVousEntity::toDomain)
+                  .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RendezVous> findByDateAndStatutNot(LocalDate date, StatutRdv excludedStatut) {
+        return jpa.findByDateRdvAndStatutNot(date, excludedStatut.name())
                   .stream()
                   .map(RendezVousEntity::toDomain)
                   .collect(Collectors.toList());

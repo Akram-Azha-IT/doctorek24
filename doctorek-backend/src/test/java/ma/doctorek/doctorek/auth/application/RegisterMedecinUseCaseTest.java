@@ -3,6 +3,7 @@ package ma.doctorek.doctorek.auth.application;
 import ma.doctorek.doctorek.auth.application.dto.MedecinRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.RegisterMedecinRequest;
 import ma.doctorek.doctorek.auth.domain.*;
+import ma.doctorek.doctorek.notification.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,15 +27,18 @@ class RegisterMedecinUseCaseTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private EmailService emailService;
+
     private RegisterMedecinUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new RegisterMedecinUseCase(userRepository, passwordEncoder);
+        useCase = new RegisterMedecinUseCase(userRepository, passwordEncoder, emailService);
     }
 
     @Test
-    @DisplayName("valid data → creates médecin with role MEDECIN and returns response")
+    @DisplayName("valid data → creates médecin, sends verification code, returns response")
     void execute_withValidData_createsMedecin() {
         // Arrange
         RegisterMedecinRequest request = new RegisterMedecinRequest(
@@ -57,6 +61,8 @@ class RegisterMedecinUseCaseTest {
         assertThat(response.role()).isEqualTo(Role.MEDECIN);
         assertThat(response.inpe()).isEqualTo("1234567890");
         assertThat(response.specialite()).isEqualTo("Cardiologie");
+        verify(emailService).sendVerificationCode(eq("dr.hassan@example.com"), eq("Hassan"), anyString());
+        verify(emailService, never()).sendBienvenueInscription(any(), any(), any());
     }
 
     @Test

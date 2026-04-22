@@ -42,7 +42,7 @@ class GetRdvsPatientUseCaseTest {
         RendezVous rdv = new RendezVous(
             UUID.randomUUID(), medecinId, patientId,
             LocalDate.of(2026, 4, 20), LocalTime.of(9, 0),
-            30, StatutRdv.EN_ATTENTE, "Consultation", null
+            30, StatutRdv.EN_ATTENTE, "Consultation", null, null
         );
         when(rdvRepo.findByPatientId(patientId)).thenReturn(List.of(rdv));
 

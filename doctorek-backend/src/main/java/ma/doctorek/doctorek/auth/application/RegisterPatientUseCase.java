@@ -3,19 +3,30 @@ package ma.doctorek.doctorek.auth.application;
 import ma.doctorek.doctorek.auth.application.dto.PatientRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.RegisterPatientRequest;
 import ma.doctorek.doctorek.auth.domain.*;
+import ma.doctorek.doctorek.notification.EmailService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 @Service
 public class RegisterPatientUseCase {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
-    public RegisterPatientUseCase(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    private final UserRepository  userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService    emailService;
+
+    public RegisterPatientUseCase(UserRepository userRepository,
+                                  PasswordEncoder passwordEncoder,
+                                  EmailService emailService) {
         this.userRepository  = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService    = emailService;
     }
 
     @Transactional
@@ -40,7 +51,12 @@ public class RegisterPatientUseCase {
             .lang(request.lang())
             .build();
 
+        String code = String.format("%06d", RANDOM.nextInt(1_000_000));
+        user.setVerificationCode(code);
+        user.setVerificationCodeExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
+
         User saved = userRepository.save(user);
+        emailService.sendVerificationCode(saved.getEmail(), saved.getFirstName(), code);
         return PatientRegisteredResponse.from(saved);
     }
 

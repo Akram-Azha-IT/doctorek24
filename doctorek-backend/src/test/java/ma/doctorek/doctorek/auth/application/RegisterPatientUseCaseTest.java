@@ -3,6 +3,7 @@ package ma.doctorek.doctorek.auth.application;
 import ma.doctorek.doctorek.auth.application.dto.PatientRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.RegisterPatientRequest;
 import ma.doctorek.doctorek.auth.domain.*;
+import ma.doctorek.doctorek.notification.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,15 +30,18 @@ class RegisterPatientUseCaseTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private EmailService emailService;
+
     private RegisterPatientUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new RegisterPatientUseCase(userRepository, passwordEncoder);
+        useCase = new RegisterPatientUseCase(userRepository, passwordEncoder, emailService);
     }
 
     @Test
-    @DisplayName("valid data → creates patient and returns response")
+    @DisplayName("valid data → creates patient, sends verification code, returns response")
     void execute_withValidData_createsPatient() {
         // Arrange
         RegisterPatientRequest request = new RegisterPatientRequest(
@@ -57,6 +61,30 @@ class RegisterPatientUseCaseTest {
         assertThat(response.email()).isEqualTo("alice@example.com");
         assertThat(response.role()).isEqualTo(Role.PATIENT);
         assertThat(response.phone()).isEqualTo("+212612345678");
+        verify(emailService).sendVerificationCode(eq("alice@example.com"), eq("Alice"), anyString());
+        verify(emailService, never()).sendBienvenueInscription(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("user is saved with a 6-digit verification code and expiry set")
+    void execute_setsVerificationCodeBeforeSave() {
+        RegisterPatientRequest request = new RegisterPatientRequest(
+            "alice@example.com", "0612345678", "password123", "Alice", "Dupont", "fr"
+        );
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userRepository.existsByPhone(anyString())).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("$2a$hashed");
+
+        User savedUser = mockSavedUser("alice@example.com", "+212612345678", Role.PATIENT);
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        useCase.execute(request);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        User persisted = captor.getValue();
+        assertThat(persisted.getVerificationCode()).matches("\\d{6}");
+        assertThat(persisted.getVerificationCodeExpiresAt()).isAfter(Instant.now());
     }
 
     @Test

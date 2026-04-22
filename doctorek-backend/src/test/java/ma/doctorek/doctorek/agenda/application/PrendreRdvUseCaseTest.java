@@ -8,6 +8,10 @@ import ma.doctorek.doctorek.agenda.domain.MedecinSansAgendaException;
 import ma.doctorek.doctorek.agenda.domain.RendezVous;
 import ma.doctorek.doctorek.agenda.domain.RendezVousRepository;
 import ma.doctorek.doctorek.agenda.domain.StatutRdv;
+import ma.doctorek.doctorek.auth.domain.User;
+import ma.doctorek.doctorek.auth.domain.UserRepository;
+import ma.doctorek.doctorek.notification.EmailService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +30,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +43,12 @@ class PrendreRdvUseCaseTest {
 
     @Mock
     private RendezVousRepository rdvRepo;
+
+    @Mock
+    private UserRepository userRepo;
+
+    @Mock
+    private EmailService emailService;
 
     private PrendreRdvUseCase useCase;
 
@@ -56,7 +67,7 @@ class PrendreRdvUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new PrendreRdvUseCase(dispoRepo, rdvRepo);
+        useCase = new PrendreRdvUseCase(dispoRepo, rdvRepo, userRepo, emailService, new ObjectMapper());
     }
 
     @Nested
@@ -73,12 +84,13 @@ class PrendreRdvUseCaseTest {
 
             RendezVous saved = new RendezVous(
                 UUID.randomUUID(), medecinId, patientId,
-                dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, "Consultation", null
+                dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, "Consultation", null, null
             );
             when(rdvRepo.save(any())).thenReturn(saved);
+            when(userRepo.findById(patientId)).thenReturn(Optional.empty());
 
             PrendreRdvRequest request = new PrendreRdvRequest(
-                medecinId, patientId, dateRdv, heureRdv, "Consultation"
+                medecinId, patientId, dateRdv, heureRdv, "Consultation", null
             );
 
             RendezVous result = useCase.execute(request);
@@ -86,6 +98,52 @@ class PrendreRdvUseCaseTest {
             assertThat(result.statut()).isEqualTo(StatutRdv.EN_ATTENTE);
             assertThat(result.medecinId()).isEqualTo(medecinId);
             assertThat(result.patientId()).isEqualTo(patientId);
+        }
+
+        @Test
+        @DisplayName("sends confirmation email to patient after save")
+        void sendsConfirmationEmailToPatient() {
+            when(dispoRepo.findByMedecinIdAndJour(medecinId, DayOfWeek.MONDAY))
+                .thenReturn(Optional.of(dispo));
+            when(rdvRepo.existsByMedecinIdAndDateAndHeure(medecinId, dateRdv, heureRdv))
+                .thenReturn(false);
+
+            RendezVous saved = new RendezVous(
+                UUID.randomUUID(), medecinId, patientId,
+                dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, "Fièvre", null, null
+            );
+            when(rdvRepo.save(any())).thenReturn(saved);
+
+            User patient = User.builder()
+                .email("patient@example.com")
+                .firstName("Ali")
+                .lastName("Benali")
+                .build();
+            when(userRepo.findById(patientId)).thenReturn(Optional.of(patient));
+
+            useCase.execute(new PrendreRdvRequest(medecinId, patientId, dateRdv, heureRdv, "Fièvre", null));
+
+            verify(emailService).sendConfirmationRdv("patient@example.com", saved);
+        }
+
+        @Test
+        @DisplayName("skips confirmation email when patient not found — does not throw")
+        void skipsEmailWhenPatientNotFound() {
+            when(dispoRepo.findByMedecinIdAndJour(medecinId, DayOfWeek.MONDAY))
+                .thenReturn(Optional.of(dispo));
+            when(rdvRepo.existsByMedecinIdAndDateAndHeure(medecinId, dateRdv, heureRdv))
+                .thenReturn(false);
+
+            RendezVous saved = new RendezVous(
+                UUID.randomUUID(), medecinId, patientId,
+                dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, null, null, null
+            );
+            when(rdvRepo.save(any())).thenReturn(saved);
+            when(userRepo.findById(patientId)).thenReturn(Optional.empty());
+
+            useCase.execute(new PrendreRdvRequest(medecinId, patientId, dateRdv, heureRdv, null, null));
+
+            verify(emailService, never()).sendConfirmationRdv(any(), any());
         }
 
         @Test
@@ -99,15 +157,16 @@ class PrendreRdvUseCaseTest {
             ArgumentCaptor<RendezVous> captor = ArgumentCaptor.forClass(RendezVous.class);
             RendezVous saved = new RendezVous(
                 UUID.randomUUID(), medecinId, patientId,
-                dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, null, null
+                dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, null, null, null
             );
             when(rdvRepo.save(captor.capture())).thenReturn(saved);
 
-            useCase.execute(new PrendreRdvRequest(medecinId, patientId, dateRdv, heureRdv, null));
+            useCase.execute(new PrendreRdvRequest(medecinId, patientId, dateRdv, heureRdv, null, null));
 
             assertThat(captor.getValue().duree()).isEqualTo(30);
             assertThat(captor.getValue().statut()).isEqualTo(StatutRdv.EN_ATTENTE);
         }
+
     }
 
     @Nested
@@ -121,7 +180,7 @@ class PrendreRdvUseCaseTest {
                 .thenReturn(Optional.empty());
 
             PrendreRdvRequest request = new PrendreRdvRequest(
-                medecinId, patientId, dateRdv, heureRdv, null
+                medecinId, patientId, dateRdv, heureRdv, null, null
             );
 
             assertThatThrownBy(() -> useCase.execute(request))
@@ -137,7 +196,7 @@ class PrendreRdvUseCaseTest {
                 .thenReturn(true);
 
             PrendreRdvRequest request = new PrendreRdvRequest(
-                medecinId, patientId, dateRdv, heureRdv, null
+                medecinId, patientId, dateRdv, heureRdv, null, null
             );
 
             assertThatThrownBy(() -> useCase.execute(request))
@@ -154,11 +213,11 @@ class PrendreRdvUseCaseTest {
             .thenReturn(false);
         RendezVous saved = new RendezVous(
             UUID.randomUUID(), medecinId, patientId,
-            dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, null, null
+            dateRdv, heureRdv, 30, StatutRdv.EN_ATTENTE, null, null, null
         );
         when(rdvRepo.save(any())).thenReturn(saved);
 
-        useCase.execute(new PrendreRdvRequest(medecinId, patientId, dateRdv, heureRdv, null));
+        useCase.execute(new PrendreRdvRequest(medecinId, patientId, dateRdv, heureRdv, null, null));
 
         verify(rdvRepo).save(any());
     }

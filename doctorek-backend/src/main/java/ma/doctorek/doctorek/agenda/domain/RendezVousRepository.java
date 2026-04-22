@@ -10,6 +10,8 @@ public interface RendezVousRepository {
     Optional<RendezVous> findById(UUID id);
     List<RendezVous> findByMedecinIdAndDate(UUID medecinId, LocalDate date);
     List<RendezVous> findByPatientId(UUID patientId);
+    List<RendezVous> findByMedecinId(UUID medecinId);
+    List<RendezVous> findByDateAndStatutNot(LocalDate date, StatutRdv excludedStatut);
     boolean existsByMedecinIdAndDateAndHeure(UUID medecinId, LocalDate date, LocalTime heure);
     RendezVous save(RendezVous rdv);
 }

@@ -1,6 +1,6 @@
 package ma.doctorek.doctorek.agenda.application.dto;
 
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
@@ -15,11 +15,13 @@ public record PrendreRdvRequest(
     UUID patientId,
 
     @NotNull(message = "La date du rendez-vous est obligatoire")
-    @Future(message = "La date du rendez-vous doit être dans le futur")
+    @FutureOrPresent(message = "La date du rendez-vous ne peut pas être dans le passé")
     LocalDate dateRdv,
 
     @NotNull(message = "L'heure du rendez-vous est obligatoire")
     LocalTime heureRdv,
 
-    String motif
+    String motif,
+
+    QuestionnaireDto questionnaire
 ) {}

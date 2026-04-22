@@ -218,7 +218,7 @@ class AgendaControllerTest {
                 rdvId, medecinId, patientId,
                 LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
                 30, StatutRdv.EN_ATTENTE, "Consultation générale",
-                java.time.LocalDateTime.now()
+                null, java.time.LocalDateTime.now()
             );
             when(prendreRdvUseCase.execute(any())).thenReturn(rdv);
 
@@ -288,7 +288,7 @@ class AgendaControllerTest {
                 rdvId, medecinId, patientId,
                 LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
                 30, StatutRdv.EN_ATTENTE, "Consultation",
-                java.time.LocalDateTime.now()
+                null, java.time.LocalDateTime.now()
             );
             when(getRdvsPatientUseCase.execute(patientId)).thenReturn(List.of(rdv));
 
@@ -323,7 +323,7 @@ class AgendaControllerTest {
                 rdvId, medecinId, patientId,
                 LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
                 30, StatutRdv.ANNULE, "Consultation",
-                java.time.LocalDateTime.now()
+                null, java.time.LocalDateTime.now()
             );
             when(annulerRendezVousUseCase.execute(rdvId)).thenReturn(cancelled);
 

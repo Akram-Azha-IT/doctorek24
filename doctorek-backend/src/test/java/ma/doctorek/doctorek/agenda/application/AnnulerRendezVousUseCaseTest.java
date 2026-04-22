@@ -48,7 +48,7 @@ class AnnulerRendezVousUseCaseTest {
         return new RendezVous(
             rdvId, medecinId, patientId,
             LocalDate.of(2027, 6, 2), LocalTime.of(10, 0),
-            30, statut, "Consultation", LocalDateTime.now()
+            30, statut, "Consultation", null, LocalDateTime.now()
         );
     }
 
