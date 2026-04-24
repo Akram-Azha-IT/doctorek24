@@ -87,6 +87,22 @@ export interface QuestionnairePreConsult {
   notesComplementaires?: string
 }
 
+export interface PatientSummary {
+  patientId: string
+  firstName: string
+  lastName: string
+  dernierRdvDate: string   // "YYYY-MM-DD"
+  dernierRdvStatut: StatutRdv
+  hasFutureRdv: boolean
+}
+
+export interface PatientSummaryPage {
+  patients: PatientSummary[]
+  total: number
+  page: number
+  size: number
+}
+
 export interface RendezVous {
   id: string
   medecinId: string

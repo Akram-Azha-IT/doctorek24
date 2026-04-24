@@ -12,5 +12,7 @@ interface JpaDisponibiliteRepository extends JpaRepository<DisponibiliteEntity, 
 
     Optional<DisponibiliteEntity> findByMedecinIdAndJourSemaine(UUID medecinId, String jourSemaine);
 
+    List<DisponibiliteEntity> findAllByMedecinIdAndJourSemaine(UUID medecinId, String jourSemaine);
+
     void deleteByMedecinIdAndJourSemaine(UUID medecinId, String jourSemaine);
 }

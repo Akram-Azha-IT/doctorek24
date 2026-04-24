@@ -44,7 +44,7 @@ class GetRdvsPatientUseCaseTest {
             LocalDate.of(2026, 4, 20), LocalTime.of(9, 0),
             30, StatutRdv.EN_ATTENTE, "Consultation", null, null
         );
-        when(rdvRepo.findByPatientId(patientId)).thenReturn(List.of(rdv));
+        when(rdvRepo.findByPatientId(patientId, 0, 200)).thenReturn(List.of(rdv));
 
         List<RendezVous> result = useCase.execute(patientId);
 
@@ -55,7 +55,7 @@ class GetRdvsPatientUseCaseTest {
     @Test
     @DisplayName("returns empty list when patient has no rdvs")
     void returnsEmptyWhenNoRdvs() {
-        when(rdvRepo.findByPatientId(patientId)).thenReturn(List.of());
+        when(rdvRepo.findByPatientId(patientId, 0, 200)).thenReturn(List.of());
 
         List<RendezVous> result = useCase.execute(patientId);
 
@@ -65,10 +65,10 @@ class GetRdvsPatientUseCaseTest {
     @Test
     @DisplayName("delegates to repository")
     void delegatesToRepository() {
-        when(rdvRepo.findByPatientId(patientId)).thenReturn(List.of());
+        when(rdvRepo.findByPatientId(patientId, 0, 200)).thenReturn(List.of());
 
         useCase.execute(patientId);
 
-        verify(rdvRepo).findByPatientId(patientId);
+        verify(rdvRepo).findByPatientId(patientId, 0, 200);
     }
 }

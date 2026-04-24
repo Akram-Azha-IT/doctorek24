@@ -35,9 +35,28 @@ class SpringDataDisponibiliteRepository implements DisponibiliteRepository {
     }
 
     @Override
+    public List<Disponibilite> findAllByMedecinIdAndJour(UUID medecinId, DayOfWeek jour) {
+        return jpa.findAllByMedecinIdAndJourSemaine(medecinId, jour.name())
+                  .stream()
+                  .map(DisponibiliteEntity::toDomain)
+                  .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Disponibilite> findById(UUID id) {
+        return jpa.findById(id).map(DisponibiliteEntity::toDomain);
+    }
+
+    @Override
     public Disponibilite save(Disponibilite dispo) {
         DisponibiliteEntity entity = DisponibiliteEntity.fromDomain(dispo);
         return jpa.save(entity).toDomain();
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(UUID id) {
+        jpa.deleteById(id);
     }
 
     @Override

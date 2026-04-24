@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useMedecin } from '@/features/annuaire/hooks'
+import { useCreneaux } from '@/features/agenda/hooks'
 import type { QuestionnairePreConsult, RendezVous, StatutRdv } from '@/lib/types'
 
 const DUREE_LABELS: Record<string, string> = {
@@ -10,10 +11,10 @@ const DUREE_LABELS: Record<string, string> = {
   plus_1mois: "Plus d'un mois",
 }
 
-const CANCELLABLE: StatutRdv[] = ['EN_ATTENTE', 'CONFIRME']
+const RESCHEDULABLE: StatutRdv[] = ['EN_ATTENTE', 'CONFIRME']
 
 const STATUT_LABELS: Record<StatutRdv, string> = {
-  EN_ATTENTE: 'En attente',
+  EN_ATTENTE: 'En attente de confirmation',
   CONFIRME: 'Confirmé',
   ANNULE: 'Annulé',
   TERMINE: 'Terminé',
@@ -44,33 +45,114 @@ function formatDateFR(dateStr: string): string {
   }).format(date)
 }
 
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+interface RescheduleFormProps {
+  medecinId: string
+  currentRdvId: string
+  currentHeure: string
+  isPending: boolean
+  onSubmit: (date: string, heure: string) => void
+  onCancel: () => void
+}
+
+function RescheduleForm({ medecinId, currentRdvId: _, currentHeure, isPending, onSubmit, onCancel }: RescheduleFormProps) {
+  const [date, setDate] = useState('')
+  const [heure, setHeure] = useState('')
+
+  const { data: creneaux, isLoading } = useCreneaux(medecinId, date)
+  const available = creneaux?.filter((c) => c.disponible && c.debut !== currentHeure) ?? []
+
+  return (
+    <div className="border-t border-zinc-100 bg-zinc-50 px-5 py-4 space-y-3">
+      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+        Modifier la date / heure
+      </p>
+
+      <div>
+        <label className="block text-xs text-zinc-500 mb-1">Nouvelle date</label>
+        <input
+          type="date"
+          min={todayISO()}
+          value={date}
+          onChange={(e) => { setDate(e.target.value); setHeure('') }}
+          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-300"
+        />
+      </div>
+
+      {date && (
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Créneau disponible</label>
+          {isLoading ? (
+            <p className="text-xs text-zinc-400">Chargement…</p>
+          ) : available.length === 0 ? (
+            <p className="text-xs text-zinc-400">Aucun créneau disponible ce jour</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {available.map((c) => (
+                <button
+                  key={c.debut}
+                  type="button"
+                  onClick={() => setHeure(c.debut)}
+                  className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors ${
+                    heure === c.debut
+                      ? 'border-zinc-900 bg-zinc-900 text-white'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400'
+                  }`}
+                >
+                  {c.debut}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-2 pt-1">
+        <button
+          type="button"
+          disabled={!date || !heure || isPending}
+          onClick={() => onSubmit(date, heure)}
+          className="rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-40"
+        >
+          {isPending ? 'Modification…' : 'Confirmer le changement'}
+        </button>
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={onCancel}
+          className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:opacity-40"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  )
+}
+
 interface RdvTimelineItemProps {
   rdv: RendezVous
   isLast: boolean
-  confirmingId: string | null
-  isAnnuling: boolean
-  onConfirmStart: (id: string) => void
-  onConfirmCancel: () => void
-  onAnnuler: (id: string) => void
+  isReprogramming: boolean
+  onReprogrammer: (id: string, date: string, heure: string) => void
 }
 
 export function RdvTimelineItem({
   rdv,
   isLast,
-  confirmingId,
-  isAnnuling,
-  onConfirmStart,
-  onConfirmCancel,
-  onAnnuler,
+  isReprogramming,
+  onReprogrammer,
 }: RdvTimelineItemProps) {
   const { data: medecin } = useMedecin(rdv.medecinId)
   const medecinNom = medecin ? `Dr ${medecin.firstName} ${medecin.lastName}` : 'Médecin…'
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
+  const [showReschedule, setShowReschedule] = useState(false)
   const q = rdv.questionnaire
 
   return (
     <li className="relative pl-10">
-      {/* Vertical rail */}
       {!isLast && (
         <span
           className="absolute left-[15px] top-6 bottom-[-12px] w-px bg-zinc-200"
@@ -78,7 +160,6 @@ export function RdvTimelineItem({
         />
       )}
 
-      {/* Dot */}
       <span
         className={`absolute left-2 top-5 h-3 w-3 rounded-full ring-4 ${DOT_COLORS[rdv.statut]}`}
         aria-hidden
@@ -103,9 +184,7 @@ export function RdvTimelineItem({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${STATUT_COLORS[rdv.statut]}`}
-            >
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUT_COLORS[rdv.statut]}`}>
               {STATUT_LABELS[rdv.statut]}
             </span>
 
@@ -120,37 +199,29 @@ export function RdvTimelineItem({
               </button>
             )}
 
-            {CANCELLABLE.includes(rdv.statut) && confirmingId !== rdv.id && (
+            {RESCHEDULABLE.includes(rdv.statut) && (
               <button
-                onClick={() => onConfirmStart(rdv.id)}
-                disabled={isAnnuling}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                type="button"
+                onClick={() => setShowReschedule((v) => !v)}
+                disabled={isReprogramming}
+                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50"
               >
-                Annuler
+                Modifier date / heure
               </button>
-            )}
-
-            {confirmingId === rdv.id && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">Confirmer ?</span>
-                <button
-                  onClick={() => onAnnuler(rdv.id)}
-                  disabled={isAnnuling}
-                  className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                >
-                  {isAnnuling ? '…' : 'Oui'}
-                </button>
-                <button
-                  onClick={onConfirmCancel}
-                  disabled={isAnnuling}
-                  className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50"
-                >
-                  Non
-                </button>
-              </div>
             )}
           </div>
         </div>
+
+        {showReschedule && RESCHEDULABLE.includes(rdv.statut) && (
+          <RescheduleForm
+            medecinId={rdv.medecinId}
+            currentRdvId={rdv.id}
+            currentHeure={rdv.heureRdv}
+            isPending={isReprogramming}
+            onSubmit={(date, heure) => onReprogrammer(rdv.id, date, heure)}
+            onCancel={() => setShowReschedule(false)}
+          />
+        )}
 
         {q && showQuestionnaire && <QuestionnaireDetails questionnaire={q} />}
       </div>

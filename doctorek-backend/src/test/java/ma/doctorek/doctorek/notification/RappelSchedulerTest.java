@@ -16,9 +16,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -57,7 +57,6 @@ class RappelSchedulerTest {
 
     @BeforeEach
     void stubPatient() {
-        // Lenient mock: some test paths may not resolve a patient.
         org.mockito.Mockito.lenient().when(patient.getEmail()).thenReturn("patient@example.com");
         org.mockito.Mockito.lenient().when(userRepo.findById(patientId)).thenReturn(Optional.of(patient));
     }
@@ -66,13 +65,13 @@ class RappelSchedulerTest {
     @DisplayName("queries repository for J-1 and J-2 dates, excluding ANNULE")
     void queriesBothWindows() {
         LocalDate today = LocalDate.now();
-        when(rdvRepo.findByDateAndStatutNot(any(LocalDate.class), eq(StatutRdv.ANNULE)))
-            .thenReturn(List.of());
+        when(rdvRepo.streamByDateAndStatutNot(any(LocalDate.class), eq(StatutRdv.ANNULE)))
+            .thenAnswer(inv -> Stream.of());
 
         scheduler.envoyerRappelsQuotidiens();
 
-        verify(rdvRepo).findByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE);
-        verify(rdvRepo).findByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE);
+        verify(rdvRepo).streamByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE);
+        verify(rdvRepo).streamByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE);
     }
 
     @Test
@@ -82,10 +81,10 @@ class RappelSchedulerTest {
         RendezVous r1 = rdvAt(today.plusDays(1));
         RendezVous r2 = rdvAt(today.plusDays(1));
 
-        when(rdvRepo.findByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE))
-            .thenReturn(List.of(r1, r2));
-        when(rdvRepo.findByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE))
-            .thenReturn(List.of());
+        when(rdvRepo.streamByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE))
+            .thenAnswer(inv -> Stream.of(r1, r2));
+        when(rdvRepo.streamByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE))
+            .thenAnswer(inv -> Stream.of());
 
         scheduler.envoyerRappelsQuotidiens();
 
@@ -99,10 +98,10 @@ class RappelSchedulerTest {
         LocalDate today = LocalDate.now();
         RendezVous r = rdvAt(today.plusDays(2));
 
-        when(rdvRepo.findByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE))
-            .thenReturn(List.of());
-        when(rdvRepo.findByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE))
-            .thenReturn(List.of(r));
+        when(rdvRepo.streamByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE))
+            .thenAnswer(inv -> Stream.of());
+        when(rdvRepo.streamByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE))
+            .thenAnswer(inv -> Stream.of(r));
 
         scheduler.envoyerRappelsQuotidiens();
 
@@ -115,10 +114,10 @@ class RappelSchedulerTest {
         LocalDate today = LocalDate.now();
         RendezVous orphan = rdvAt(today.plusDays(1));
 
-        when(rdvRepo.findByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE))
-            .thenReturn(List.of(orphan));
-        when(rdvRepo.findByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE))
-            .thenReturn(List.of());
+        when(rdvRepo.streamByDateAndStatutNot(today.plusDays(1), StatutRdv.ANNULE))
+            .thenAnswer(inv -> Stream.of(orphan));
+        when(rdvRepo.streamByDateAndStatutNot(today.plusDays(2), StatutRdv.ANNULE))
+            .thenAnswer(inv -> Stream.of());
         when(userRepo.findById(orphan.patientId())).thenReturn(Optional.empty());
 
         scheduler.envoyerRappelsQuotidiens();
@@ -129,8 +128,8 @@ class RappelSchedulerTest {
     @Test
     @DisplayName("does nothing when no RDVs are found in either window")
     void noRdvsNoEmails() {
-        when(rdvRepo.findByDateAndStatutNot(any(LocalDate.class), eq(StatutRdv.ANNULE)))
-            .thenReturn(List.of());
+        when(rdvRepo.streamByDateAndStatutNot(any(LocalDate.class), eq(StatutRdv.ANNULE)))
+            .thenAnswer(inv -> Stream.of());
 
         scheduler.envoyerRappelsQuotidiens();
 

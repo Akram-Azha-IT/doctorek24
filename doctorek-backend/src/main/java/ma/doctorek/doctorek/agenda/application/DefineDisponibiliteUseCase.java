@@ -5,6 +5,7 @@ import ma.doctorek.doctorek.agenda.domain.Disponibilite;
 import ma.doctorek.doctorek.agenda.domain.DisponibiliteRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,8 +23,17 @@ public class DefineDisponibiliteUseCase {
                 "L'heure de début doit être antérieure à l'heure de fin");
         }
 
-        // Upsert : supprimer l'entrée existante si elle existe, puis recréer
-        dispoRepo.deleteByMedecinIdAndJour(medecinId, req.jourSemaine());
+        // Vérifier les chevauchements avec les blocs existants pour le même jour
+        List<Disponibilite> existing = dispoRepo.findAllByMedecinIdAndJour(medecinId, req.jourSemaine());
+        for (Disponibilite dispo : existing) {
+            boolean overlaps = req.heureDebut().isBefore(dispo.heureFin())
+                            && req.heureFin().isAfter(dispo.heureDebut());
+            if (overlaps) {
+                throw new IllegalArgumentException(
+                    "Ce créneau chevauche une disponibilité existante ("
+                    + dispo.heureDebut() + " – " + dispo.heureFin() + ")");
+            }
+        }
 
         Disponibilite dispo = new Disponibilite(
             null,
@@ -36,3 +46,4 @@ public class DefineDisponibiliteUseCase {
         return dispoRepo.save(dispo);
     }
 }
+

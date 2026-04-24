@@ -31,4 +31,9 @@ public record RendezVous(
         return new RendezVous(id, medecinId, patientId, dateRdv, heureRdv,
                               duree, StatutRdv.TERMINE, motif, questionnaireJson, createdAt);
     }
+
+    public RendezVous reprogrammer(LocalDate newDate, LocalTime newHeure) {
+        return new RendezVous(id, medecinId, patientId, newDate, newHeure,
+                              duree, StatutRdv.EN_ATTENTE, motif, questionnaireJson, createdAt);
+    }
 }

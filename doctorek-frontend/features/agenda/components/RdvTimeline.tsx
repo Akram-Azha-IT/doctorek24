@@ -6,31 +6,22 @@ import { RdvTimelineItem } from './RdvTimelineItem'
 
 interface RdvTimelineProps {
   rdvs: readonly RendezVous[]
-  confirmingId: string | null
-  isAnnuling: boolean
-  onConfirmStart: (id: string) => void
-  onConfirmCancel: () => void
-  onAnnuler: (id: string) => void
+  isReprogramming: boolean
+  onReprogrammer: (id: string, date: string, heure: string) => void
 }
 
 interface TimelineSectionProps {
   title: string
   rdvs: readonly RendezVous[]
-  confirmingId: string | null
-  isAnnuling: boolean
-  onConfirmStart: (id: string) => void
-  onConfirmCancel: () => void
-  onAnnuler: (id: string) => void
+  isReprogramming: boolean
+  onReprogrammer: (id: string, date: string, heure: string) => void
 }
 
 function TimelineSection({
   title,
   rdvs,
-  confirmingId,
-  isAnnuling,
-  onConfirmStart,
-  onConfirmCancel,
-  onAnnuler,
+  isReprogramming,
+  onReprogrammer,
 }: TimelineSectionProps) {
   if (rdvs.length === 0) return null
 
@@ -45,11 +36,8 @@ function TimelineSection({
             key={rdv.id}
             rdv={rdv}
             isLast={index === rdvs.length - 1}
-            confirmingId={confirmingId}
-            isAnnuling={isAnnuling}
-            onConfirmStart={onConfirmStart}
-            onConfirmCancel={onConfirmCancel}
-            onAnnuler={onAnnuler}
+            isReprogramming={isReprogramming}
+            onReprogrammer={onReprogrammer}
           />
         ))}
       </ol>
@@ -59,11 +47,8 @@ function TimelineSection({
 
 export function RdvTimeline({
   rdvs,
-  confirmingId,
-  isAnnuling,
-  onConfirmStart,
-  onConfirmCancel,
-  onAnnuler,
+  isReprogramming,
+  onReprogrammer,
 }: RdvTimelineProps) {
   const { upcoming, today, past } = groupRdvsBySection(rdvs)
 
@@ -75,13 +60,7 @@ export function RdvTimeline({
     )
   }
 
-  const sectionProps = {
-    confirmingId,
-    isAnnuling,
-    onConfirmStart,
-    onConfirmCancel,
-    onAnnuler,
-  }
+  const sectionProps = { isReprogramming, onReprogrammer }
 
   return (
     <div>

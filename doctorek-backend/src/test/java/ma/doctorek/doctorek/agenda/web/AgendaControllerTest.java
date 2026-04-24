@@ -2,6 +2,7 @@ package ma.doctorek.doctorek.agenda.web;
 
 import ma.doctorek.doctorek.agenda.application.AnnulerRendezVousUseCase;
 import ma.doctorek.doctorek.agenda.application.DefineDisponibiliteUseCase;
+import ma.doctorek.doctorek.agenda.application.DeleteDisponibiliteUseCase;
 import ma.doctorek.doctorek.agenda.application.GetCreneauxDisponiblesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetDisponibilitesUseCase;
 import ma.doctorek.doctorek.agenda.application.GetRdvsPatientUseCase;
@@ -14,6 +15,12 @@ import ma.doctorek.doctorek.agenda.domain.RendezVous;
 import ma.doctorek.doctorek.agenda.domain.RendezVousNotFoundException;
 import ma.doctorek.doctorek.agenda.domain.RdvNonAnnulableException;
 import ma.doctorek.doctorek.agenda.domain.StatutRdv;
+import ma.doctorek.doctorek.agenda.application.ConfirmerRendezVousUseCase;
+import ma.doctorek.doctorek.agenda.application.TerminerRendezVousUseCase;
+import ma.doctorek.doctorek.agenda.application.GetRdvsMedecinUseCase;
+import ma.doctorek.doctorek.agenda.application.ReprogrammerRendezVousUseCase;
+import ma.doctorek.doctorek.agenda.application.GetPatientsMedecinUseCase;
+import ma.doctorek.doctorek.auth.domain.UserRepository;
 import ma.doctorek.doctorek.auth.infrastructure.SecurityConfig;
 import ma.doctorek.doctorek.shared.web.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
@@ -65,6 +72,27 @@ class AgendaControllerTest {
 
     @MockBean
     private AnnulerRendezVousUseCase annulerRendezVousUseCase;
+
+    @MockBean
+    private DeleteDisponibiliteUseCase deleteDisponibiliteUseCase;
+
+    @MockBean
+    private ConfirmerRendezVousUseCase confirmerRendezVousUseCase;
+
+    @MockBean
+    private TerminerRendezVousUseCase terminerRendezVousUseCase;
+
+    @MockBean
+    private GetRdvsMedecinUseCase getRdvsMedecinUseCase;
+
+    @MockBean
+    private ReprogrammerRendezVousUseCase reprogrammerRendezVousUseCase;
+
+    @MockBean
+    private GetPatientsMedecinUseCase getPatientsMedecinUseCase;
+
+    @MockBean
+    private UserRepository userRepository;
 
     private final UUID medecinId = UUID.randomUUID();
     private final UUID patientId = UUID.randomUUID();

@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api-client'
-import type { Creneau, Disponibilite, RendezVous } from '@/lib/types'
+import type { Creneau, Disponibilite, PatientSummaryPage, RendezVous } from '@/lib/types'
 
 export function getCreneaux(medecinId: string, date: string): Promise<Creneau[]> {
   return apiFetch<Creneau[]>(
@@ -35,6 +35,17 @@ export function annulerRdv(id: string): Promise<RendezVous> {
   })
 }
 
+export function reprogrammerRdv(
+  id: string,
+  nouvelleDateRdv: string,
+  nouvelleHeureRdv: string,
+): Promise<RendezVous> {
+  return apiFetch<RendezVous>(`/api/v1/agenda/rdv/${id}/reprogrammer`, {
+    method: 'PUT',
+    body: JSON.stringify({ nouvelleDateRdv, nouvelleHeureRdv }),
+  })
+}
+
 export function confirmerRdv(id: string): Promise<RendezVous> {
   return apiFetch<RendezVous>(`/api/v1/agenda/rdv/${id}/confirmer`, {
     method: 'PUT',
@@ -53,6 +64,24 @@ export function getDisponibilites(medecinId: string): Promise<Disponibilite[]> {
   )
 }
 
+export function getPatientsMedecin(
+  medecinId: string,
+  search: string,
+  filtre: string,
+  page: number,
+  size = 20,
+): Promise<PatientSummaryPage> {
+  const params = new URLSearchParams({
+    search,
+    filtre,
+    page: String(page),
+    size: String(size),
+  })
+  return apiFetch<PatientSummaryPage>(
+    `/api/v1/agenda/medecins/${medecinId}/patients?${params}`,
+  )
+}
+
 export function defineDisponibilite(
   medecinId: string,
   payload: {
@@ -68,5 +97,15 @@ export function defineDisponibilite(
       method: 'POST',
       body: JSON.stringify(payload),
     },
+  )
+}
+
+export function deleteDisponibilite(
+  medecinId: string,
+  dispoId: string,
+): Promise<void> {
+  return apiFetch<void>(
+    `/api/v1/agenda/medecins/${medecinId}/disponibilites/${dispoId}`,
+    { method: 'DELETE' },
   )
 }

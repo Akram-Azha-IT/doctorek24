@@ -17,6 +17,10 @@ public class GetRdvsPatientUseCase {
     }
 
     public List<RendezVous> execute(UUID patientId) {
-        return rdvRepo.findByPatientId(patientId);
+        return rdvRepo.findByPatientId(patientId, 0, 200);
+    }
+
+    public List<RendezVous> execute(UUID patientId, int page, int size) {
+        return rdvRepo.findByPatientId(patientId, page, size);
     }
 }

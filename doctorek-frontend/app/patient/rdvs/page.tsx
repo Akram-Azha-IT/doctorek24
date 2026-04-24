@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
-import { useRdvsPatient, useAnnulerRdv } from '@/features/agenda/hooks'
+import { useRdvsPatient, useReprogrammerRdv } from '@/features/agenda/hooks'
 import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
@@ -12,7 +12,6 @@ export default function PatientRdvsPage() {
   useRoleGuard('PATIENT')
 
   const [patientId, setPatientId] = useState('')
-  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   useEffect(() => {
     const session = getSession()
@@ -22,15 +21,12 @@ export default function PatientRdvsPage() {
   }, [])
 
   const { data: rdvs, isLoading, isError } = useRdvsPatient(patientId)
-  const { mutate: annuler, isPending: isAnnuling } = useAnnulerRdv(patientId)
+  const { mutate: reprogrammer, isPending: isReprogramming } = useReprogrammerRdv(patientId)
 
-  function handleAnnuler(id: string) {
-    annuler(id, {
-      onSuccess: () => {
-        toast.success('Rendez-vous annulé')
-        setConfirmingId(null)
-      },
-      onError: () => toast.error("Erreur lors de l'annulation"),
+  function handleReprogrammer(id: string, date: string, heure: string) {
+    reprogrammer({ id, date, heure }, {
+      onSuccess: () => toast.success('Rendez-vous reprogrammé'),
+      onError: () => toast.error('Erreur lors de la reprogrammation'),
     })
   }
 
@@ -68,11 +64,8 @@ export default function PatientRdvsPage() {
         {patientId && !isLoading && !isError && rdvs && (
           <RdvTimeline
             rdvs={rdvs}
-            confirmingId={confirmingId}
-            isAnnuling={isAnnuling}
-            onConfirmStart={setConfirmingId}
-            onConfirmCancel={() => setConfirmingId(null)}
-            onAnnuler={handleAnnuler}
+            isReprogramming={isReprogramming}
+            onReprogrammer={handleReprogrammer}
           />
         )}
       </main>

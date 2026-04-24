@@ -1,8 +1,11 @@
 package ma.doctorek.doctorek.agenda.infrastructure;
 
+import ma.doctorek.doctorek.agenda.domain.PatientSummary;
 import ma.doctorek.doctorek.agenda.domain.RendezVous;
 import ma.doctorek.doctorek.agenda.domain.RendezVousRepository;
 import ma.doctorek.doctorek.agenda.domain.StatutRdv;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -10,7 +13,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Repository
 class SpringDataRendezVousRepository implements RendezVousRepository {
@@ -31,36 +34,54 @@ class SpringDataRendezVousRepository implements RendezVousRepository {
         return jpa.findByMedecinIdAndDateRdv(medecinId, date)
                   .stream()
                   .map(RendezVousEntity::toDomain)
-                  .collect(Collectors.toList());
+                  .toList();
     }
 
     @Override
-    public List<RendezVous> findByPatientId(UUID patientId) {
-        return jpa.findByPatientId(patientId)
-                  .stream()
+    public List<RendezVous> findByPatientId(UUID patientId, int page, int size) {
+        return jpa.findByPatientId(patientId,
+                    PageRequest.of(page, size, Sort.by("dateRdv").descending()))
                   .map(RendezVousEntity::toDomain)
-                  .collect(Collectors.toList());
+                  .getContent();
     }
 
     @Override
-    public List<RendezVous> findByMedecinId(UUID medecinId) {
-        return jpa.findByMedecinId(medecinId)
-                  .stream()
+    public List<RendezVous> findByMedecinId(UUID medecinId, int page, int size) {
+        return jpa.findByMedecinId(medecinId,
+                    PageRequest.of(page, size, Sort.by("dateRdv").descending()))
                   .map(RendezVousEntity::toDomain)
-                  .collect(Collectors.toList());
+                  .getContent();
     }
 
     @Override
-    public List<RendezVous> findByDateAndStatutNot(LocalDate date, StatutRdv excludedStatut) {
-        return jpa.findByDateRdvAndStatutNot(date, excludedStatut.name())
-                  .stream()
-                  .map(RendezVousEntity::toDomain)
-                  .collect(Collectors.toList());
+    public Stream<RendezVous> streamByDateAndStatutNot(LocalDate date, StatutRdv excludedStatut) {
+        return jpa.streamByDateRdvAndStatutNot(date, excludedStatut.name())
+                  .map(RendezVousEntity::toDomain);
     }
 
     @Override
     public boolean existsByMedecinIdAndDateAndHeure(UUID medecinId, LocalDate date, LocalTime heure) {
         return jpa.existsByMedecinIdAndDateRdvAndHeureRdv(medecinId, date, heure);
+    }
+
+    @Override
+    public List<PatientSummary> findPatientsByMedecinId(UUID medecinId, String search, String filtre, int page, int size) {
+        return jpa.findPatientsByMedecinId(medecinId, search, filtre, size, page * size)
+                  .stream()
+                  .map(p -> new PatientSummary(
+                      UUID.fromString(p.getPatientId()),
+                      p.getFirstName(),
+                      p.getLastName(),
+                      p.getDernierRdvDate(),
+                      StatutRdv.valueOf(p.getDernierRdvStatut()),
+                      p.isHasFutureRdv()
+                  ))
+                  .toList();
+    }
+
+    @Override
+    public long countPatientsByMedecinId(UUID medecinId, String search, String filtre) {
+        return jpa.countPatientsByMedecinId(medecinId, search, filtre);
     }
 
     @Override

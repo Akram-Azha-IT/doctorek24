@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
-import { useRdvsMedecin } from '@/features/agenda/hooks'
+import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import { AgendaMedecinView } from '@/features/agenda/components/AgendaMedecinView'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
@@ -20,13 +20,16 @@ export default function AgendaMedecinPage() {
     }
   }, [])
 
-  const { data: rdvs, isLoading, isError } = useRdvsMedecin(medecinId)
+  const { data: rdvs, isLoading: loadingRdvs, isError: errorRdvs } = useRdvsMedecin(medecinId)
+  const { data: disponibilites, isLoading: loadingDispos } = useDisponibilites(medecinId)
+
+  const isLoading = loadingRdvs || loadingDispos
 
   return (
     <>
       <Header />
       <MedecinNav />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 space-y-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Mon agenda</h1>
           <p className="mt-1 text-sm text-zinc-500">
@@ -49,12 +52,16 @@ export default function AgendaMedecinPage() {
               <div key={i} className="h-16 animate-pulse rounded-xl bg-zinc-100" />
             ))}
           </div>
-        ) : isError ? (
+        ) : errorRdvs ? (
           <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             Impossible de charger les rendez-vous.
           </p>
         ) : (
-          <AgendaMedecinView medecinId={medecinId} rdvs={rdvs ?? []} />
+          <AgendaMedecinView
+            medecinId={medecinId}
+            rdvs={rdvs ?? []}
+            disponibilites={disponibilites ?? []}
+          />
         )}
       </main>
     </>

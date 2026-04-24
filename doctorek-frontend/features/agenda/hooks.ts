@@ -3,11 +3,14 @@ import {
   annulerRdv,
   confirmerRdv,
   defineDisponibilite,
+  deleteDisponibilite,
   getCreneaux,
   getDisponibilites,
+  getPatientsMedecin,
   getRdvsPatient,
   getRdvsMedecin,
   prendreRdv,
+  reprogrammerRdv,
   terminerRdv,
 } from './api'
 
@@ -94,6 +97,31 @@ export function useAnnulerRdvMedecin(medecinId: string) {
   })
 }
 
+export function useReprogrammerRdv(patientId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, date, heure }: { id: string; date: string; heure: string }) =>
+      reprogrammerRdv(id, date, heure),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rdvs', patientId] })
+    },
+  })
+}
+
+export function usePatientsMedecin(
+  medecinId: string,
+  search: string,
+  filtre: string,
+  page: number,
+) {
+  return useQuery({
+    queryKey: ['patients', 'medecin', medecinId, search, filtre, page],
+    queryFn: () => getPatientsMedecin(medecinId, search, filtre, page),
+    enabled: !!medecinId,
+    staleTime: 30 * 1000,
+  })
+}
+
 export function useDefineDisponibilite(medecinId: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -103,6 +131,16 @@ export function useDefineDisponibilite(medecinId: string) {
       heureFin: string
       dureeConsultation: number
     }) => defineDisponibilite(medecinId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['disponibilites', medecinId] })
+    },
+  })
+}
+
+export function useDeleteDisponibilite(medecinId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (dispoId: string) => deleteDisponibilite(medecinId, dispoId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['disponibilites', medecinId] })
     },

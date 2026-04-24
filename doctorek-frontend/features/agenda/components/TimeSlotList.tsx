@@ -12,6 +12,34 @@ interface TimeSlotListProps {
   dateLabel: string
 }
 
+// Group creneaux by contiguous blocks (detects gaps between availability blocks)
+function groupByBlock(creneaux: Creneau[]): Creneau[][] {
+  if (creneaux.length === 0) return []
+
+  const groups: Creneau[][] = [[creneaux[0]]]
+
+  for (let i = 1; i < creneaux.length; i++) {
+    const prev = creneaux[i - 1]
+    const curr = creneaux[i]
+
+    // If current slot doesn't start where previous ends, it's a new block
+    if (curr.debut !== prev.fin) {
+      groups.push([curr])
+    } else {
+      groups[groups.length - 1].push(curr)
+    }
+  }
+
+  return groups
+}
+
+function getBlockLabel(index: number, total: number): string {
+  if (total <= 1) return ''
+  if (index === 0) return 'Matin'
+  if (index === 1 && total === 2) return 'Après-midi'
+  return `Bloc ${index + 1}`
+}
+
 export function TimeSlotList({
   creneaux,
   selected,
@@ -40,6 +68,7 @@ export function TimeSlotList({
   }
 
   const available = creneaux.filter((c) => c.disponible)
+  const groups = groupByBlock(available)
 
   return (
     <div>
@@ -66,35 +95,55 @@ export function TimeSlotList({
           <p className="text-xs text-zinc-400 mt-1">Essayez une autre date</p>
         </div>
       ) : (
-        <ul className="space-y-1.5">
-          {available.map((c) => (
-            <li key={c.debut}>
-              <button
-                onClick={() => onSelect(c)}
-                className={clsx(
-                  'w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1',
-                  selected === c.debut
-                    ? 'bg-zinc-900 text-white'
-                    : 'bg-zinc-50 text-zinc-800 hover:bg-zinc-100',
+        <div className="space-y-4">
+          {groups.map((group, groupIdx) => {
+            const label = getBlockLabel(groupIdx, groups.length)
+            return (
+              <div key={groupIdx}>
+                {label && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                      {label}
+                    </span>
+                    <span className="flex-1 h-px bg-zinc-100" />
+                    <span className="text-[10px] text-zinc-300">
+                      {group[0].debut} – {group[group.length - 1].fin}
+                    </span>
+                  </div>
                 )}
-              >
-                <span>{c.debut}</span>
-                {selected === c.debut && (
-                  <svg
-                    className="w-4 h-4 shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                  </svg>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                <ul className="space-y-1.5">
+                  {group.map((c) => (
+                    <li key={c.debut}>
+                      <button
+                        onClick={() => onSelect(c)}
+                        className={clsx(
+                          'w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1',
+                          selected === c.debut
+                            ? 'bg-zinc-900 text-white'
+                            : 'bg-zinc-50 text-zinc-800 hover:bg-zinc-100',
+                        )}
+                      >
+                        <span>{c.debut}</span>
+                        {selected === c.debut && (
+                          <svg
+                            className="w-4 h-4 shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                          </svg>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+        </div>
       )}
     </div>
   )
