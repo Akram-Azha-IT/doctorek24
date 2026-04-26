@@ -1,7 +1,7 @@
 'use client'
 
 import { Header } from '@/components/Header'
-import { MedecinNav } from '@/components/MedecinNav'
+import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 
 export default function ProfilPage() {

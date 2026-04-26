@@ -1,7 +1,7 @@
 'use client'
 
 import type { RendezVous } from '@/lib/types'
-import { groupRdvsBySection } from '@/lib/rdv-timeline'
+import { groupRdvsBySection } from '../rdv-timeline'
 import { RdvTimelineItem } from './RdvTimelineItem'
 
 interface RdvTimelineProps {

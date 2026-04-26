@@ -6,13 +6,14 @@ function getAvatarColor(name: string): string {
 interface MedecinAvatarProps {
   firstName: string
   lastName: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 const SIZE_CLASSES = {
   sm: 'w-9 h-9 text-sm',
   md: 'w-12 h-12 text-base',
   lg: 'w-16 h-16 text-xl',
+  xl: 'w-24 h-24 text-3xl',
 }
 
 export function MedecinAvatar({ firstName, lastName, size = 'lg' }: MedecinAvatarProps) {

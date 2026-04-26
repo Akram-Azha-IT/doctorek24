@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
-import { MedecinNav } from '@/components/MedecinNav'
+import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { usePatientsMedecin } from '@/features/agenda/hooks'
 import { PatientListItem } from '@/features/agenda/components/PatientListItem'
 import { getSession } from '@/lib/session'

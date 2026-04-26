@@ -1,4 +1,4 @@
-import type { RendezVous } from './types'
+import type { RendezVous } from '@/lib/types'
 
 export interface GroupedRdvs {
   upcoming: RendezVous[]

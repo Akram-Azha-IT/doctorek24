@@ -6,7 +6,7 @@ import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import { AgendaMedecinView } from '@/features/agenda/components/AgendaMedecinView'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import { MedecinNav } from '@/components/MedecinNav'
+import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 
 export default function AgendaMedecinPage() {
   useRoleGuard('MEDECIN')

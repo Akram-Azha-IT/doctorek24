@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
-import { MedecinNav } from '@/components/MedecinNav'
+import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { useDisponibilites, useDeleteDisponibilite, useRdvsMedecin } from '@/features/agenda/hooks'
 import { AvailabilityWeekGrid, DAYS } from '@/features/agenda/components/AvailabilityWeekGrid'
 import { DisponibiliteForm } from '@/features/agenda/components/DisponibiliteForm'

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
-import { MedecinNav } from '@/components/MedecinNav'
+import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import type { Disponibilite, RendezVous, StatutRdv } from '@/lib/types'
 import { getSession } from '@/lib/session'
