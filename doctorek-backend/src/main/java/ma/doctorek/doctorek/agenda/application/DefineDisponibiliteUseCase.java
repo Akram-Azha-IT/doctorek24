@@ -3,8 +3,11 @@ package ma.doctorek.doctorek.agenda.application;
 import ma.doctorek.doctorek.agenda.application.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
 import ma.doctorek.doctorek.agenda.domain.DisponibiliteRepository;
+import ma.doctorek.doctorek.agenda.domain.FrequenceDisponibilite;
+import ma.doctorek.doctorek.agenda.domain.TypeFinRecurrence;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,7 +26,6 @@ public class DefineDisponibiliteUseCase {
                 "L'heure de début doit être antérieure à l'heure de fin");
         }
 
-        // Vérifier les chevauchements avec les blocs existants pour le même jour
         List<Disponibilite> existing = dispoRepo.findAllByMedecinIdAndJour(medecinId, req.jourSemaine());
         for (Disponibilite dispo : existing) {
             boolean overlaps = req.heureDebut().isBefore(dispo.heureFin())
@@ -35,15 +37,35 @@ public class DefineDisponibiliteUseCase {
             }
         }
 
+        FrequenceDisponibilite frequence = req.frequence() != null
+            ? req.frequence()
+            : FrequenceDisponibilite.TOUTES_LES_SEMAINES;
+
+        int intervalSemaines = (req.intervalSemaines() != null && req.intervalSemaines() > 0)
+            ? req.intervalSemaines()
+            : 1;
+
+        LocalDate dateDebut = req.dateDebut() != null
+            ? req.dateDebut()
+            : LocalDate.now();
+
+        TypeFinRecurrence typeFinRecurrence = req.typeFinRecurrence() != null
+            ? req.typeFinRecurrence()
+            : TypeFinRecurrence.JAMAIS;
+
         Disponibilite dispo = new Disponibilite(
             null,
             medecinId,
             req.jourSemaine(),
             req.heureDebut(),
             req.heureFin(),
-            req.dureeConsultation()
+            req.dureeConsultation(),
+            frequence,
+            intervalSemaines,
+            dateDebut,
+            typeFinRecurrence,
+            req.dateFin()
         );
         return dispoRepo.save(dispo);
     }
 }
-

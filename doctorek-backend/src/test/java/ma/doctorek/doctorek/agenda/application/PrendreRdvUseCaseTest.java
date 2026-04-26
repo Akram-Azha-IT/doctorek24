@@ -62,7 +62,9 @@ class PrendreRdvUseCaseTest {
     private final Disponibilite dispo = new Disponibilite(
         UUID.randomUUID(), medecinId,
         DayOfWeek.MONDAY,
-        LocalTime.of(9, 0), LocalTime.of(17, 0), 30
+        LocalTime.of(9, 0), LocalTime.of(17, 0), 30,
+        ma.doctorek.doctorek.agenda.domain.FrequenceDisponibilite.TOUTES_LES_SEMAINES, 1,
+        java.time.LocalDate.now(), ma.doctorek.doctorek.agenda.domain.TypeFinRecurrence.JAMAIS, null
     );
 
     @BeforeEach

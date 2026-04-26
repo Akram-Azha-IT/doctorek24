@@ -15,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import ma.doctorek.doctorek.agenda.domain.FrequenceDisponibilite;
+import ma.doctorek.doctorek.agenda.domain.TypeFinRecurrence;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,7 +51,9 @@ class GetCreneauxDisponiblesUseCaseTest {
         UUID.randomUUID(), medecinId,
         DayOfWeek.MONDAY,
         LocalTime.of(9, 0), LocalTime.of(11, 0),
-        60  // 2 créneaux : 09:00 et 10:00
+        60,  // 2 créneaux : 09:00 et 10:00
+        FrequenceDisponibilite.TOUTES_LES_SEMAINES, 1,
+        LocalDate.now(), TypeFinRecurrence.JAMAIS, null
     );
 
     @BeforeEach

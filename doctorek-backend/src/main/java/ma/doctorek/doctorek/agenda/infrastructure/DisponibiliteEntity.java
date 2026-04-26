@@ -2,8 +2,11 @@ package ma.doctorek.doctorek.agenda.infrastructure;
 
 import jakarta.persistence.*;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
+import ma.doctorek.doctorek.agenda.domain.FrequenceDisponibilite;
+import ma.doctorek.doctorek.agenda.domain.TypeFinRecurrence;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -30,6 +33,21 @@ class DisponibiliteEntity {
     @Column(name = "duree_consultation", nullable = false)
     private int dureeConsultation;
 
+    @Column(name = "frequence", nullable = false, length = 20)
+    private String frequence;
+
+    @Column(name = "interval_semaines", nullable = false)
+    private int intervalSemaines;
+
+    @Column(name = "date_debut", nullable = false)
+    private LocalDate dateDebut;
+
+    @Column(name = "type_fin", nullable = false, length = 10)
+    private String typeFinRecurrence;
+
+    @Column(name = "date_fin")
+    private LocalDate dateFin;
+
     protected DisponibiliteEntity() {}
 
     Disponibilite toDomain() {
@@ -39,7 +57,12 @@ class DisponibiliteEntity {
             DayOfWeek.valueOf(jourSemaine),
             heureDebut,
             heureFin,
-            dureeConsultation
+            dureeConsultation,
+            FrequenceDisponibilite.valueOf(frequence),
+            intervalSemaines,
+            dateDebut,
+            TypeFinRecurrence.valueOf(typeFinRecurrence),
+            dateFin
         );
     }
 
@@ -51,6 +74,11 @@ class DisponibiliteEntity {
         e.heureDebut         = d.heureDebut();
         e.heureFin           = d.heureFin();
         e.dureeConsultation  = d.dureeConsultation();
+        e.frequence          = d.frequence().name();
+        e.intervalSemaines   = d.intervalSemaines();
+        e.dateDebut          = d.dateDebut();
+        e.typeFinRecurrence  = d.typeFinRecurrence().name();
+        e.dateFin            = d.dateFin();
         return e;
     }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { SearchForm } from '@/features/annuaire/components/SearchForm'
 import { MedecinCard } from '@/features/annuaire/components/MedecinCard'
@@ -15,7 +16,11 @@ const FILTERS: ReadonlyArray<{ value: DisponibiliteFilter; label: string }> = [
 ]
 
 export default function RecherchePage() {
-  const [query, setQuery] = useState<SearchFormValues>({ specialite: '', ville: '' })
+  const searchParams = useSearchParams()
+  const [query, setQuery] = useState<SearchFormValues>({
+    specialite: searchParams.get('specialite') ?? '',
+    ville: searchParams.get('ville') ?? '',
+  })
   const [filter, setFilter] = useState<DisponibiliteFilter>('all')
 
   const { data, isLoading, isError, error } = useSearchMedecinsDisponibles(

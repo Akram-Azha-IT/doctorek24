@@ -68,6 +68,9 @@ export interface Creneau {
   disponible: boolean
 }
 
+export type FrequenceDisponibilite = 'UNE_SEULE_FOIS' | 'TOUTES_LES_SEMAINES' | 'PERSONNALISE'
+export type TypeFinRecurrence = 'JAMAIS' | 'DATE'
+
 export interface Disponibilite {
   id: string
   medecinId: string
@@ -75,6 +78,11 @@ export interface Disponibilite {
   heureDebut: string
   heureFin: string
   dureeConsultation: number
+  frequence: FrequenceDisponibilite
+  intervalSemaines: number
+  dateDebut: string     // "YYYY-MM-DD"
+  typeFinRecurrence: TypeFinRecurrence
+  dateFin: string | null
 }
 
 export type StatutRdv = 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE'

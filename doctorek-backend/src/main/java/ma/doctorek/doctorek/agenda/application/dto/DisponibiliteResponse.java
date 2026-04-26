@@ -9,7 +9,12 @@ public record DisponibiliteResponse(
     String jourSemaine,
     String heureDebut,
     String heureFin,
-    int    dureeConsultation
+    int    dureeConsultation,
+    String frequence,
+    int    intervalSemaines,
+    String dateDebut,
+    String typeFinRecurrence,
+    String dateFin
 ) {
     public static DisponibiliteResponse from(Disponibilite d) {
         return new DisponibiliteResponse(
@@ -17,7 +22,12 @@ public record DisponibiliteResponse(
             d.jourSemaine().name(),
             d.heureDebut().toString(),
             d.heureFin().toString(),
-            d.dureeConsultation()
+            d.dureeConsultation(),
+            d.frequence().name(),
+            d.intervalSemaines(),
+            d.dateDebut() != null ? d.dateDebut().toString() : null,
+            d.typeFinRecurrence().name(),
+            d.dateFin() != null ? d.dateFin().toString() : null
         );
     }
 }

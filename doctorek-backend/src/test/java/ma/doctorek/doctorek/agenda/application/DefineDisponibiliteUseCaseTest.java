@@ -3,6 +3,8 @@ package ma.doctorek.doctorek.agenda.application;
 import ma.doctorek.doctorek.agenda.application.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
 import ma.doctorek.doctorek.agenda.domain.DisponibiliteRepository;
+import ma.doctorek.doctorek.agenda.domain.FrequenceDisponibilite;
+import ma.doctorek.doctorek.agenda.domain.TypeFinRecurrence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -36,6 +39,19 @@ class DefineDisponibiliteUseCaseTest {
         useCase = new DefineDisponibiliteUseCase(repo);
     }
 
+    private static Disponibilite fakeDispo(UUID id, UUID medecinId, DayOfWeek jour,
+                                           LocalTime debut, LocalTime fin) {
+        return new Disponibilite(
+            id, medecinId, jour, debut, fin, 30,
+            FrequenceDisponibilite.TOUTES_LES_SEMAINES, 1,
+            LocalDate.now(), TypeFinRecurrence.JAMAIS, null
+        );
+    }
+
+    private static DefineDisponibiliteRequest simpleReq(DayOfWeek jour, LocalTime debut, LocalTime fin) {
+        return new DefineDisponibiliteRequest(jour, debut, fin, 30, null, null, null, null, null);
+    }
+
     @Nested
     @DisplayName("Validation heures")
     class HeureValidation {
@@ -44,9 +60,7 @@ class DefineDisponibiliteUseCaseTest {
         @DisplayName("throws when heureDebut equals heureFin")
         void execute_heureDebutEqualsHeureFin_throws() {
             LocalTime same = LocalTime.of(9, 0);
-            DefineDisponibiliteRequest req = new DefineDisponibiliteRequest(
-                DayOfWeek.MONDAY, same, same, 30
-            );
+            DefineDisponibiliteRequest req = simpleReq(DayOfWeek.MONDAY, same, same);
 
             assertThatThrownBy(() -> useCase.execute(medecinId, req))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -56,12 +70,8 @@ class DefineDisponibiliteUseCaseTest {
         @Test
         @DisplayName("throws when heureDebut is after heureFin")
         void execute_heureDebutAfterHeureFin_throws() {
-            DefineDisponibiliteRequest req = new DefineDisponibiliteRequest(
-                DayOfWeek.TUESDAY,
-                LocalTime.of(18, 0),
-                LocalTime.of(9, 0),
-                30
-            );
+            DefineDisponibiliteRequest req = simpleReq(
+                DayOfWeek.TUESDAY, LocalTime.of(18, 0), LocalTime.of(9, 0));
 
             assertThatThrownBy(() -> useCase.execute(medecinId, req))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -72,25 +82,17 @@ class DefineDisponibiliteUseCaseTest {
     @DisplayName("Comportement d'ajout (multi-blocs)")
     class AddBehavior {
 
-        private final DefineDisponibiliteRequest req = new DefineDisponibiliteRequest(
-            DayOfWeek.WEDNESDAY,
-            LocalTime.of(9, 0),
-            LocalTime.of(12, 0),
-            30
-        );
+        private final DefineDisponibiliteRequest req = simpleReq(
+            DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(12, 0));
 
         @Test
         @DisplayName("saves new block if no overlap")
         void execute_noOverlap_saves() {
             when(repo.findAllByMedecinIdAndJour(medecinId, DayOfWeek.WEDNESDAY))
                 .thenReturn(java.util.List.of());
-            
-            Disponibilite saved = new Disponibilite(
-                UUID.randomUUID(), medecinId,
-                DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(12, 0), 30
-            );
-            when(repo.save(any())).thenReturn(saved);
+            when(repo.save(any())).thenReturn(
+                fakeDispo(UUID.randomUUID(), medecinId, DayOfWeek.WEDNESDAY,
+                    LocalTime.of(9, 0), LocalTime.of(12, 0)));
 
             useCase.execute(medecinId, req);
 
@@ -101,18 +103,15 @@ class DefineDisponibiliteUseCaseTest {
         @Test
         @DisplayName("throws IllegalArgumentException when overlapping block exists")
         void execute_withOverlap_throws() {
-            Disponibilite existing = new Disponibilite(
-                UUID.randomUUID(), medecinId,
-                DayOfWeek.WEDNESDAY,
-                LocalTime.of(10, 0), LocalTime.of(14, 0), 30
-            );
+            Disponibilite existing = fakeDispo(UUID.randomUUID(), medecinId,
+                DayOfWeek.WEDNESDAY, LocalTime.of(10, 0), LocalTime.of(14, 0));
             when(repo.findAllByMedecinIdAndJour(medecinId, DayOfWeek.WEDNESDAY))
                 .thenReturn(java.util.List.of(existing));
 
             assertThatThrownBy(() -> useCase.execute(medecinId, req))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("chevauche");
-            
+
             verify(repo, never()).save(any());
         }
 
@@ -120,11 +119,8 @@ class DefineDisponibiliteUseCaseTest {
         @DisplayName("returns saved disponibilite")
         void execute_validRequest_returnsSavedDispo() {
             UUID savedId = UUID.randomUUID();
-            Disponibilite saved = new Disponibilite(
-                savedId, medecinId,
-                DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(12, 0), 30
-            );
+            Disponibilite saved = fakeDispo(savedId, medecinId,
+                DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(12, 0));
             when(repo.findAllByMedecinIdAndJour(medecinId, DayOfWeek.WEDNESDAY))
                 .thenReturn(java.util.List.of());
             when(repo.save(any())).thenReturn(saved);
@@ -142,11 +138,8 @@ class DefineDisponibiliteUseCaseTest {
         @Test
         @DisplayName("saves with null id for new entity generation")
         void execute_savesWithNullId() {
-            Disponibilite saved = new Disponibilite(
-                UUID.randomUUID(), medecinId,
-                DayOfWeek.WEDNESDAY,
-                LocalTime.of(9, 0), LocalTime.of(12, 0), 30
-            );
+            Disponibilite saved = fakeDispo(UUID.randomUUID(), medecinId,
+                DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(12, 0));
             when(repo.findAllByMedecinIdAndJour(medecinId, DayOfWeek.WEDNESDAY))
                 .thenReturn(java.util.List.of());
             when(repo.save(any())).thenReturn(saved);

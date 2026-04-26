@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
 import { MedecinNav } from '@/components/MedecinNav'
-import { useDisponibilites, useDeleteDisponibilite } from '@/features/agenda/hooks'
+import { useDisponibilites, useDeleteDisponibilite, useRdvsMedecin } from '@/features/agenda/hooks'
 import { AvailabilityWeekGrid, DAYS } from '@/features/agenda/components/AvailabilityWeekGrid'
 import { DisponibiliteForm } from '@/features/agenda/components/DisponibiliteForm'
 import type { Disponibilite } from '@/lib/types'
@@ -16,7 +16,7 @@ export default function DisponibilitesPage() {
 
   const [medecinId, setMedecinId] = useState('')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
+  const [addingDay, setAddingDay] = useState<string | null>(null)
 
   useEffect(() => {
     const session = getSession()
@@ -26,9 +26,9 @@ export default function DisponibilitesPage() {
   }, [])
 
   const { data: disponibilites, isLoading, isError } = useDisponibilites(medecinId)
+  const { data: rendezVous } = useRdvsMedecin(medecinId)
   const deleteMutation = useDeleteDisponibilite(medecinId)
 
-  // Group disponibilites by day
   const byDay = new Map<string, Disponibilite[]>()
   ;(disponibilites ?? []).forEach((d) => {
     const arr = byDay.get(d.jourSemaine) ?? []
@@ -38,7 +38,12 @@ export default function DisponibilitesPage() {
 
   function handleSelectDay(day: string) {
     setSelectedDay((prev) => (prev === day ? null : day))
-    setShowForm(false)
+    setAddingDay(null)
+  }
+
+  function handleOpenAdd(day: string) {
+    setAddingDay((prev) => (prev === day ? null : day))
+    setSelectedDay(day)
   }
 
   function handleDeleteBlock(dispoId: string) {
@@ -84,12 +89,20 @@ export default function DisponibilitesPage() {
       >
         {/* LEFT — settings panel */}
         <div className="w-80 shrink-0 border-r border-gray-200 flex flex-col overflow-hidden">
+
           {/* Panel header */}
           <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
-              Disponibilités habituelles
-            </p>
-            <p className="mt-0.5 text-xs text-gray-500">Toutes les semaines · Blocs multiples par jour</p>
+            <div className="flex items-start gap-3">
+              <svg className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Disponibilités habituelles</p>
+                <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
+                  Définissez vos disponibilités habituelles pour les rendez-vous.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Day rows */}
@@ -104,111 +117,94 @@ export default function DisponibilitesPage() {
               <ul>
                 {DAYS.map((day) => {
                   const slots = byDay.get(day.key) ?? []
-                  const selected = selectedDay === day.key
                   const dayShort = day.short.charAt(0) + day.short.slice(1).toLowerCase() + '.'
+                  const isAddingHere = addingDay === day.key
+                  const sortedSlots = [...slots].sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
 
                   return (
-                    <li key={day.key}>
-                      {/* Day header button */}
-                      <button
-                        type="button"
-                        onClick={() => handleSelectDay(day.key)}
-                        className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors border-b border-gray-50 ${
-                          selected ? 'bg-blue-50' : 'hover:bg-gray-50'
-                        }`}
-                      >
-                        <span
-                          className={`w-8 shrink-0 text-xs font-semibold ${
-                            selected ? 'text-blue-600' : 'text-gray-500'
-                          }`}
-                        >
-                          {dayShort}
-                        </span>
-
-                        <span className="flex-1 text-xs text-gray-700">
-                          {slots.length === 0 ? (
-                            <span className="italic text-gray-400">Indisponible</span>
-                          ) : (
-                            <span>{slots.length} bloc{slots.length > 1 ? 's' : ''}</span>
-                          )}
-                        </span>
-
-                        {/* Add button */}
-                        <span className={`shrink-0 transition-transform duration-150 ${selected ? 'rotate-90' : ''}`}>
-                          {slots.length > 0 ? (
-                            <svg
-                              className={`h-3.5 w-3.5 ${selected ? 'text-blue-500' : 'text-gray-300'}`}
-                              fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    <li key={day.key} className="border-b border-gray-50">
+                      {slots.length === 0 ? (
+                        /* Indisponible row */
+                        <div className="flex items-center gap-2 px-4 py-2.5">
+                          <span className="w-9 shrink-0 text-xs font-semibold text-gray-400">{dayShort}</span>
+                          <span className="flex-1 text-xs italic text-gray-400">Indisponible</span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAdd(day.key)}
+                            className="rounded p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Ajouter un bloc"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
-                          ) : (
-                            <svg className="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                          )}
-                        </span>
-                      </button>
+                          </button>
+                        </div>
+                      ) : (
+                        /* Slot rows */
+                        sortedSlots.map((slot, i) => (
+                          <div key={slot.id} className="flex items-center gap-2 px-4 py-2.5 group">
+                            <span className="w-9 shrink-0 text-xs font-semibold text-gray-600">
+                              {i === 0 ? dayShort : ''}
+                            </span>
+                            <span className="flex-1 text-xs font-medium text-gray-900 tabular-nums">
+                              {slot.heureDebut} – {slot.heureFin}
+                            </span>
 
-                      {/* Expanded: existing blocks + add form */}
-                      {selected && (
-                        <div className="bg-blue-50/50 border-b border-blue-100">
-                          {/* Existing blocks */}
-                          {slots
-                            .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
-                            .map((slot) => (
-                              <div key={slot.id} className="flex items-center gap-2 px-5 py-2.5 border-b border-blue-100/50">
-                                <div className="flex-1">
-                                  <span className="text-xs font-semibold text-zinc-700">
-                                    {slot.heureDebut} – {slot.heureFin}
-                                  </span>
-                                  <span className="ml-2 text-[10px] text-zinc-500">
-                                    {slot.dureeConsultation} min / rdv
-                                  </span>
-                                </div>
-
-                                {/* Delete button */}
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteBlock(slot.id)}
-                                  disabled={deleteMutation.isPending}
-                                  className="rounded-md p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
-                                  title="Supprimer ce bloc"
-                                >
-                                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                  </svg>
-                                </button>
-                              </div>
-                            ))}
-
-                          {/* Add new block button or form */}
-                          {!showForm ? (
+                            {/* Delete */}
                             <button
                               type="button"
-                              onClick={() => setShowForm(true)}
-                              className="w-full flex items-center gap-2 px-5 py-3 text-xs font-medium text-blue-600 hover:bg-blue-100/50 transition-colors"
+                              onClick={() => handleDeleteBlock(slot.id)}
+                              disabled={deleteMutation.isPending}
+                              className="rounded p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                              title="Supprimer"
                             >
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
                               </svg>
-                              Ajouter un bloc horaire
                             </button>
-                          ) : (
-                            <div className="px-5 py-4">
-                              <p className="mb-3 text-xs font-semibold text-blue-700">
-                                Nouveau bloc — {day.long}
-                              </p>
-                              <DisponibiliteForm
-                                medecinId={medecinId}
-                                selectedDay={day.key}
-                                dayLabel={day.long}
-                                existing={undefined}
-                                onSaved={() => setShowForm(false)}
-                                onCancel={() => setShowForm(false)}
-                              />
-                            </div>
-                          )}
+
+                            {/* Add (only on last slot of that day) */}
+                            {i === sortedSlots.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenAdd(day.key)}
+                                className="rounded p-1 text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Ajouter un bloc"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                              </button>
+                            )}
+
+                            {/* Copy (decorative) */}
+                            <button
+                              type="button"
+                              className="rounded p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                              title="Copier vers d'autres jours"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))
+                      )}
+
+                      {/* Inline add form */}
+                      {isAddingHere && (
+                        <div className="px-4 pt-2 pb-4 bg-blue-50/60 border-t border-blue-100">
+                          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                            Nouveau bloc — {day.long}
+                          </p>
+                          <DisponibiliteForm
+                            medecinId={medecinId}
+                            selectedDay={day.key}
+                            dayLabel={day.long}
+                            existing={undefined}
+                            onSaved={() => setAddingDay(null)}
+                            onCancel={() => setAddingDay(null)}
+                          />
                         </div>
                       )}
                     </li>
@@ -223,11 +219,13 @@ export default function DisponibilitesPage() {
         <div className="flex-1 overflow-hidden">
           <AvailabilityWeekGrid
             disponibilites={disponibilites ?? []}
+            rendezVous={rendezVous ?? []}
             selectedDay={selectedDay}
             onSelectDay={handleSelectDay}
           />
         </div>
       </main>
+
     </>
   )
 }

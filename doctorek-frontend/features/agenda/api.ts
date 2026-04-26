@@ -89,6 +89,11 @@ export function defineDisponibilite(
     heureDebut: string
     heureFin: string
     dureeConsultation: number
+    frequence?: string
+    intervalSemaines?: number
+    dateDebut?: string
+    typeFinRecurrence?: string
+    dateFin?: string | null
   },
 ): Promise<Disponibilite> {
   return apiFetch<Disponibilite>(

@@ -33,6 +33,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import ma.doctorek.doctorek.agenda.domain.FrequenceDisponibilite;
+import ma.doctorek.doctorek.agenda.domain.TypeFinRecurrence;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -118,7 +121,9 @@ class AgendaControllerTest {
             Disponibilite dispo = new Disponibilite(
                 dispoId, medecinId,
                 DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(17, 0), 30
+                LocalTime.of(9, 0), LocalTime.of(17, 0), 30,
+                FrequenceDisponibilite.TOUTES_LES_SEMAINES, 1,
+                LocalDate.now(), TypeFinRecurrence.JAMAIS, null
             );
             when(defineDisponibiliteUseCase.execute(eq(medecinId), any()))
                 .thenReturn(dispo);
@@ -164,7 +169,9 @@ class AgendaControllerTest {
             Disponibilite dispo = new Disponibilite(
                 dispoId, medecinId,
                 DayOfWeek.MONDAY,
-                LocalTime.of(9, 0), LocalTime.of(17, 0), 30
+                LocalTime.of(9, 0), LocalTime.of(17, 0), 30,
+                FrequenceDisponibilite.TOUTES_LES_SEMAINES, 1,
+                LocalDate.now(), TypeFinRecurrence.JAMAIS, null
             );
             when(getDisponibilitesUseCase.execute(medecinId)).thenReturn(List.of(dispo));
 
