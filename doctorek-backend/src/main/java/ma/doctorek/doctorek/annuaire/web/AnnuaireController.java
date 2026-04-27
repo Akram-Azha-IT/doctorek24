@@ -3,8 +3,10 @@ package ma.doctorek.doctorek.annuaire.web;
 import jakarta.validation.Valid;
 import ma.doctorek.doctorek.annuaire.application.GetMedecinProfileUseCase;
 import ma.doctorek.doctorek.annuaire.application.SearchMedecinsUseCase;
+import ma.doctorek.doctorek.annuaire.application.SearchNearbyMedecinsUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinProfileUseCase;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
+import ma.doctorek.doctorek.annuaire.domain.MedecinNearbyResult;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfile;
 import ma.doctorek.doctorek.shared.web.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -19,14 +21,32 @@ public class AnnuaireController {
 
     private final GetMedecinProfileUseCase getMedecinProfileUseCase;
     private final SearchMedecinsUseCase searchMedecinsUseCase;
+    private final SearchNearbyMedecinsUseCase searchNearbyMedecinsUseCase;
     private final UpdateMedecinProfileUseCase updateMedecinProfileUseCase;
 
     public AnnuaireController(GetMedecinProfileUseCase getMedecinProfileUseCase,
                                SearchMedecinsUseCase searchMedecinsUseCase,
+                               SearchNearbyMedecinsUseCase searchNearbyMedecinsUseCase,
                                UpdateMedecinProfileUseCase updateMedecinProfileUseCase) {
         this.getMedecinProfileUseCase = getMedecinProfileUseCase;
         this.searchMedecinsUseCase = searchMedecinsUseCase;
+        this.searchNearbyMedecinsUseCase = searchNearbyMedecinsUseCase;
         this.updateMedecinProfileUseCase = updateMedecinProfileUseCase;
+    }
+
+    /**
+     * GET /api/v1/annuaire/medecins/nearby?lat=&lng=&radius=&specialite=
+     * Médecins à proximité, triés par distance croissante.
+     * Must be declared before /{id} to avoid Spring matching "nearby" as a UUID.
+     */
+    @GetMapping("/medecins/nearby")
+    public ResponseEntity<ApiResponse<List<MedecinNearbyResult>>> searchNearby(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "20") double radius,
+            @RequestParam(required = false) String specialite) {
+        List<MedecinNearbyResult> results = searchNearbyMedecinsUseCase.execute(lat, lng, radius, specialite);
+        return ResponseEntity.ok(ApiResponse.ok(results));
     }
 
     /**

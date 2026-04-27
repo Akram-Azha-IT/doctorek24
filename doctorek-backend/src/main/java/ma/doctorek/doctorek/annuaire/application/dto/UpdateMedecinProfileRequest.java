@@ -9,5 +9,7 @@ public record UpdateMedecinProfileRequest(
     @NotBlank String specialite,
     @NotBlank String ville,
     String adresse,
-    String lang
+    String lang,
+    Double latitude,
+    Double longitude
 ) {}

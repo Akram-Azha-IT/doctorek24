@@ -12,10 +12,17 @@ export interface MedecinProfile {
   ville: string
   adresse: string
   inpe: string
+  latitude?: number | null
+  longitude?: number | null
   secteurTarifaire?: 1 | 2 | 3
   langues?: string[]
   presentation?: string
   acceptNouveauxPatients?: boolean
+}
+
+export interface MedecinNearbyResult {
+  medecin: MedecinProfile
+  distanceKm: number
 }
 
 export interface PatientRegistrationPayload {

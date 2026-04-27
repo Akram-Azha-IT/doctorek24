@@ -21,9 +21,12 @@ function formatDayLabel(iso: string) {
 interface MedecinCardListProps {
   medecin: MedecinProfile
   availableToday: boolean
+  distanceKm?: number
+  onMouseEnter?: () => void
+  onMouseLeave?: () => void
 }
 
-export function MedecinCardList({ medecin, availableToday }: MedecinCardListProps) {
+export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEnter, onMouseLeave }: MedecinCardListProps) {
   const dates = nextNDaysISO(5)
   const accepte = medecin.acceptNouveauxPatients !== false
 
@@ -37,7 +40,11 @@ export function MedecinCardList({ medecin, availableToday }: MedecinCardListProp
   const availableSlots = todayCreneaux?.filter((c) => c.disponible).slice(0, 3) ?? []
 
   return (
-    <div className="group mb-3 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div
+      className="group mb-3 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <div className="flex">
         {/* Doctor info */}
         <Link
@@ -54,6 +61,17 @@ export function MedecinCardList({ medecin, availableToday }: MedecinCardListProp
               {medecin.secteurTarifaire && (
                 <span className="rounded-full bg-[#DFEFFE] px-2 py-0.5 text-[11px] font-semibold text-[#1863A9]">
                   Secteur {medecin.secteurTarifaire}
+                </span>
+              )}
+              {distanceKm !== undefined && (
+                <span className="flex items-center gap-1 rounded-full bg-[#E8EFF6] px-2 py-0.5 text-[11px] font-semibold text-[#064178]">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c-4.418 0-8-4.03-8-9a8 8 0 1116 0c0 4.97-3.582 9-8 9z" />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+                  </svg>
+                  {distanceKm < 1
+                    ? `${Math.round(distanceKm * 1000)} m`
+                    : `${distanceKm.toFixed(1)} km`}
                 </span>
               )}
             </div>

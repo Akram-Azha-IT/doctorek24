@@ -29,7 +29,7 @@ class SearchMedecinsUseCaseTest {
     @DisplayName("returns matching medecins for given specialite and ville")
     void execute_withSpecialiteAndVille_returnsList() {
         MedecinProfile profile = new MedecinProfile(
-            UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890"
+            UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
         );
         when(repo.searchMedecins("Cardiologie", "Casablanca")).thenReturn(List.of(profile));
 
@@ -64,8 +64,8 @@ class SearchMedecinsUseCaseTest {
     @DisplayName("returns all active medecins when both params are null")
     void execute_nullParams_returnsAllMedecins() {
         List<MedecinProfile> all = List.of(
-            new MedecinProfile(UUID.randomUUID(), "A", "B", "Cardio", "Rabat", "Rue 1", "0000000001"),
-            new MedecinProfile(UUID.randomUUID(), "C", "D", "Dermato", "Fes", "Rue 2", "0000000002")
+            new MedecinProfile(UUID.randomUUID(), "A", "B", "Cardio", "Rabat", "Rue 1", "0000000001", null, null),
+            new MedecinProfile(UUID.randomUUID(), "C", "D", "Dermato", "Fes", "Rue 2", "0000000002", null, null)
         );
         when(repo.searchMedecins(null, null)).thenReturn(all);
 

@@ -11,6 +11,10 @@ import java.util.UUID;
 
 interface SpringDataMedecinRepository extends JpaRepository<User, UUID> {
 
+    @Query("SELECT u FROM User u WHERE u.role = 'MEDECIN' AND u.active = true AND u.latitude IS NOT NULL AND u.longitude IS NOT NULL AND (:specialite IS NULL OR lower(u.specialite) LIKE %:specialite%)")
+    List<User> findActiveMedecinsWithCoords(@Param("specialite") String specialite);
+
+
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.role = 'MEDECIN' AND u.active = true")
     Optional<User> findActiveMedecinById(@Param("id") UUID id);
 

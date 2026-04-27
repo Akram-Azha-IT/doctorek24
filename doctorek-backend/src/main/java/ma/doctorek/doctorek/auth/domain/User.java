@@ -46,6 +46,12 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String adresse;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -78,6 +84,8 @@ public class User {
         this.specialite = builder.specialite;
         this.ville      = builder.ville;
         this.adresse    = builder.adresse;
+        this.latitude   = builder.latitude;
+        this.longitude  = builder.longitude;
     }
 
     @PrePersist
@@ -94,14 +102,17 @@ public class User {
 
     // ── Mutators ─────────────────────────────────────────────
     public void updateProfile(String firstName, String lastName, String phone,
-                              String specialite, String ville, String adresse, String lang) {
+                              String specialite, String ville, String adresse, String lang,
+                              Double latitude, Double longitude) {
         this.firstName  = firstName;
         this.lastName   = lastName;
         this.phone      = phone;
         this.specialite = specialite;
         this.ville      = ville;
         this.adresse    = adresse;
-        if (lang != null) this.lang = lang;
+        if (lang != null)      this.lang      = lang;
+        if (latitude != null)  this.latitude  = latitude;
+        if (longitude != null) this.longitude = longitude;
     }
 
     public void setVerificationCode(String code) {
@@ -137,6 +148,8 @@ public class User {
     public String getSpecialite()                 { return specialite; }
     public String getVille()                      { return ville; }
     public String getAdresse()                    { return adresse; }
+    public Double getLatitude()                   { return latitude; }
+    public Double getLongitude()                  { return longitude; }
 
     // ── Builder ───────────────────────────────────────────────
     public static Builder builder() { return new Builder(); }
@@ -153,6 +166,8 @@ public class User {
         private String specialite;
         private String ville;
         private String adresse;
+        private Double latitude;
+        private Double longitude;
 
         private Builder() {}
 
@@ -166,7 +181,9 @@ public class User {
         public Builder inpe(String inpe)             { this.inpe = inpe;             return this; }
         public Builder specialite(String specialite) { this.specialite = specialite; return this; }
         public Builder ville(String ville)           { this.ville = ville;           return this; }
-        public Builder adresse(String adresse)       { this.adresse = adresse;       return this; }
+        public Builder adresse(String adresse)           { this.adresse    = adresse;    return this; }
+        public Builder latitude(Double latitude)         { this.latitude   = latitude;   return this; }
+        public Builder longitude(Double longitude)       { this.longitude  = longitude;  return this; }
 
         public User build() { return new User(this); }
     }

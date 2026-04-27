@@ -9,5 +9,7 @@ public record MedecinProfile(
     String specialite,
     String ville,
     String adresse,
-    String inpe
+    String inpe,
+    Double latitude,
+    Double longitude
 ) {}

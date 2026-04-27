@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.UUID;
 
+import ma.doctorek.doctorek.annuaire.application.SearchNearbyMedecinsUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinProfileUseCase;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
 import org.springframework.http.MediaType;
@@ -44,6 +45,9 @@ class AnnuaireControllerTest {
     private SearchMedecinsUseCase searchMedecinsUseCase;
 
     @MockBean
+    private SearchNearbyMedecinsUseCase searchNearbyMedecinsUseCase;
+
+    @MockBean
     private UpdateMedecinProfileUseCase updateMedecinProfileUseCase;
 
     private final UUID existingId = UUID.randomUUID();
@@ -56,7 +60,7 @@ class AnnuaireControllerTest {
         @DisplayName("returns 200 with medecin profile")
         void returns200WithProfile() throws Exception {
             MedecinProfile profile = new MedecinProfile(
-                existingId, "Youssef", "Bakkali", "Cardiologie", "Casablanca", "123 Rue Hassan II", "1234567890"
+                existingId, "Youssef", "Bakkali", "Cardiologie", "Casablanca", "123 Rue Hassan II", "1234567890", null, null
             );
             when(getMedecinProfileUseCase.execute(existingId)).thenReturn(profile);
 
@@ -98,7 +102,7 @@ class AnnuaireControllerTest {
         @DisplayName("returns 200 with matching medecins")
         void returns200WithResults() throws Exception {
             MedecinProfile profile = new MedecinProfile(
-                UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890"
+                UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
             );
             when(searchMedecinsUseCase.execute("Cardiologie", "Casablanca"))
                 .thenReturn(List.of(profile));
@@ -149,7 +153,7 @@ class AnnuaireControllerTest {
         @DisplayName("returns 200 with updated profile")
         void returns200WithUpdatedProfile() throws Exception {
             MedecinProfile updated = new MedecinProfile(
-                existingId, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890"
+                existingId, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
             );
             when(updateMedecinProfileUseCase.execute(eq(existingId), any(UpdateMedecinProfileRequest.class)))
                 .thenReturn(updated);

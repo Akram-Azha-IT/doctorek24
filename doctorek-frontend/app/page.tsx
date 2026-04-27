@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MapPin, Search, Calendar, ShieldCheck, Clock, UserRound, HelpCircle, Activity, ChevronRight, Navigation } from 'lucide-react'
+import { MapPin, Search, Calendar, ShieldCheck, Clock, UserRound, HelpCircle, Activity, ChevronRight, Loader2 } from 'lucide-react'
 
 const POPULAR_SPECIALTIES = [
   { name: 'Médecin généraliste', icon: <Activity className="h-6 w-6 text-[#007DFF]" /> },
@@ -20,6 +20,7 @@ const POPULAR_SPECIALTIES = [
 export default function HomePage() {
   const [specialite, setSpecialite] = useState('')
   const [ville, setVille] = useState('')
+  const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'done'>('idle')
   const router = useRouter()
 
   function handleSearch(e: React.FormEvent) {
@@ -28,6 +29,36 @@ export default function HomePage() {
     if (specialite) params.set('specialite', specialite)
     if (ville) params.set('ville', ville)
     router.push(`/recherche?${params.toString()}`)
+  }
+
+  function handleVilleFocus() {
+    if (geoStatus !== 'idle' || !navigator.geolocation) return
+    setGeoStatus('loading')
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`,
+            { headers: { 'Accept-Language': 'fr' } },
+          )
+          const data = await res.json()
+          const city =
+            data.address?.city ??
+            data.address?.town ??
+            data.address?.village ??
+            data.address?.county ??
+            ''
+          if (city) setVille(city)
+          setGeoStatus('done')
+        } catch {
+          setGeoStatus('idle')
+        }
+      },
+      () => {
+        setGeoStatus('idle')
+      },
+      { timeout: 10_000, maximumAge: 60_000 },
+    )
   }
 
   return (
@@ -97,16 +128,19 @@ export default function HomePage() {
                 </div>
 
                 {/* Location Input */}
-                <div className="flex flex-1 items-center gap-3 px-4 py-4 md:py-3 relative">
-                  <MapPin className="h-5 w-5 text-gray-500 shrink-0" />
+                <div className="flex flex-1 items-center gap-3 px-4 py-4 md:py-3">
+                  {geoStatus === 'loading'
+                    ? <Loader2 className="h-5 w-5 shrink-0 text-[#007DFF] animate-spin" />
+                    : <MapPin className="h-5 w-5 text-gray-500 shrink-0" />
+                  }
                   <input
                     type="text"
                     value={ville}
                     onChange={(e) => setVille(e.target.value)}
-                    placeholder="Où ? (ex: Casablanca)"
-                    className="w-full bg-transparent text-base text-gray-900 placeholder:text-gray-500 focus:outline-none pr-8"
+                    onFocus={handleVilleFocus}
+                    placeholder={geoStatus === 'loading' ? 'Localisation…' : 'Où ? (ex: Casablanca)'}
+                    className="w-full bg-transparent text-base text-gray-900 placeholder:text-gray-500 focus:outline-none"
                   />
-                  <Navigation className="h-4 w-4 text-gray-400 absolute right-4 cursor-pointer hover:text-gray-600" />
                 </div>
 
                 {/* Search Button */}

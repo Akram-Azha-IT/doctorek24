@@ -32,10 +32,10 @@ class UpdateMedecinProfileUseCaseTest {
         UUID id = UUID.randomUUID();
         UpdateMedecinProfileRequest request = new UpdateMedecinProfileRequest(
             "Hassan", "Alaoui", "+212600000001",
-            "Cardiologie", "Casablanca", "Rue 10", "fr"
+            "Cardiologie", "Casablanca", "Rue 10", "fr", null, null
         );
         MedecinProfile updated = new MedecinProfile(
-            id, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890"
+            id, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
         );
         when(repo.updateProfile(id, request)).thenReturn(updated);
 
@@ -51,7 +51,7 @@ class UpdateMedecinProfileUseCaseTest {
         UUID unknownId = UUID.randomUUID();
         UpdateMedecinProfileRequest request = new UpdateMedecinProfileRequest(
             "Hassan", "Alaoui", "+212600000001",
-            "Cardiologie", "Casablanca", "Rue 10", "fr"
+            "Cardiologie", "Casablanca", "Rue 10", "fr", null, null
         );
         when(repo.updateProfile(unknownId, request))
             .thenThrow(new MedecinNotFoundException(unknownId));

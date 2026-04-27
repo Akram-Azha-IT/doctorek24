@@ -1,6 +1,26 @@
 import { apiFetch } from '@/lib/api-client'
 import { getCreneaux } from '@/features/agenda/api'
-import type { MedecinProfile } from '@/lib/types'
+import type { MedecinNearbyResult, MedecinProfile } from '@/lib/types'
+
+export interface UpdateMedecinProfilePayload {
+  firstName: string
+  lastName: string
+  phone?: string
+  specialite: string
+  ville: string
+  adresse?: string
+  lang?: string
+  latitude?: number | null
+  longitude?: number | null
+}
+
+export function updateMedecin(id: string, data: UpdateMedecinProfilePayload): Promise<MedecinProfile> {
+  return apiFetch<MedecinProfile>(`/api/v1/annuaire/medecins/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+}
 import {
   type DisponibiliteFilter,
   nextNDaysISO,
@@ -17,6 +37,21 @@ export function searchMedecins(specialite: string, ville: string): Promise<Medec
 
 export function getMedecin(id: string): Promise<MedecinProfile> {
   return apiFetch<MedecinProfile>(`/api/v1/annuaire/medecins/${id}`)
+}
+
+export function searchMedecinsNearby(
+  lat: number,
+  lng: number,
+  radiusKm: number,
+  specialite?: string,
+): Promise<MedecinNearbyResult[]> {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lng: String(lng),
+    radius: String(radiusKm),
+  })
+  if (specialite?.trim()) params.set('specialite', specialite.trim())
+  return apiFetch<MedecinNearbyResult[]>(`/api/v1/annuaire/medecins/nearby?${params}`)
 }
 
 export interface SearchMedecinsResult {
