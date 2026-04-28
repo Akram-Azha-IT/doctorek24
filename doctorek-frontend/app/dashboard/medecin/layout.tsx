@@ -1,0 +1,154 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut, Search, Sun, Moon, Bell, Mail, Settings, Activity } from 'lucide-react'
+import { getSession, clearSession } from '@/lib/session'
+
+const NAV_ITEMS = [
+  { href: '/dashboard/medecin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/medecin/agenda', label: 'Agenda', icon: Calendar },
+  { href: '/dashboard/medecin/patients', label: 'Patients', icon: Users },
+  { href: '/dashboard/medecin/disponibilites', label: 'Disponibilités', icon: Clock },
+  { href: '/dashboard/medecin/profil', label: 'Profil', icon: UserCircle },
+]
+
+function getInitials(firstName: string, lastName: string): string {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
+
+export default function MedecinLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+
+  useEffect(() => {
+    const session = getSession()
+    if (session) {
+      setFirstName(session.firstName ?? '')
+      setLastName(session.lastName ?? '')
+    }
+  }, [])
+
+  function handleLogout() {
+    clearSession()
+    router.push('/login')
+  }
+
+  function isActive(item: (typeof NAV_ITEMS)[number]): boolean {
+    if (item.exact) return pathname === item.href
+    return pathname.startsWith(item.href)
+  }
+
+  const initials = firstName || lastName ? getInitials(firstName, lastName) : 'Dr'
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Médecin'
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#F8F9FB]">
+      {/* Sidebar */}
+      <aside className="flex w-[260px] shrink-0 flex-col bg-[#F8F9FA] border-r border-zinc-200">
+        {/* Logo */}
+        <div className="flex h-24 items-center gap-3 px-8">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1863A9] text-white shadow-md shadow-blue-500/20">
+            <Activity className="h-5 w-5" />
+          </div>
+          <span className="text-xl font-extrabold text-[#010C2D] tracking-tight">Doctorek<span className="text-[#1863A9] font-medium">Pro</span></span>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-2 px-4 space-y-1">
+          <p className="px-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-4">Applications</p>
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item)
+            return (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => router.push(item.href)}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                  active
+                    ? 'bg-[#E8F2FC] text-[#1863A9]'
+                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-[#010C2D]'
+                }`}
+              >
+                <item.icon className={`h-5 w-5 shrink-0 ${active ? 'text-[#1863A9]' : 'text-zinc-400'}`} />
+                {item.label}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Logout */}
+        <div className="px-4 py-8">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <LogOut className="h-5 w-5 shrink-0" />
+            Déconnexion
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top Navbar */}
+        <header className="flex h-24 shrink-0 items-center justify-between px-8 z-10 mt-2">
+          <div className="flex items-center gap-2 rounded-full bg-white px-5 py-3 shadow-sm border border-zinc-100 focus-within:ring-2 focus-within:ring-[#1863A9]/20 transition-all w-[380px]">
+            <Search className="h-4 w-4 text-zinc-400" />
+            <input
+              type="text"
+              placeholder="Recherche..."
+              className="flex-1 bg-transparent text-sm text-[#010C2D] placeholder:text-zinc-400 outline-none font-medium"
+            />
+          </div>
+
+          <div className="flex items-center gap-6 rounded-full bg-white px-4 py-2 shadow-sm border border-zinc-100">
+            <div className="flex items-center gap-3 text-zinc-500">
+              <div className="flex items-center gap-1 rounded-full bg-[#F8F9FA] border border-zinc-100 p-1">
+                <button className="rounded-full bg-white p-1.5 shadow-sm text-zinc-600">
+                  <Sun className="h-4 w-4" />
+                </button>
+                <button className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-600 transition-colors">
+                  <Moon className="h-4 w-4" />
+                </button>
+              </div>
+              <button className="relative rounded-full p-1.5 hover:text-zinc-600 transition-colors bg-[#F8F9FA] border border-zinc-100">
+                <Bell className="h-4 w-4" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>
+              </button>
+              <button className="rounded-full p-1.5 hover:text-zinc-600 transition-colors bg-[#F8F9FA] border border-zinc-100">
+                <Mail className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="h-8 w-px bg-zinc-200 mx-1"></div>
+
+            <div className="flex items-center gap-3 pl-1 pr-1">
+              <div className="text-right">
+                <p className="text-sm font-bold text-[#010C2D]">{fullName}</p>
+                <div className="flex items-center justify-end gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#01B574]"></span>
+                  <p className="text-[11px] font-semibold text-zinc-500">En ligne</p>
+                </div>
+              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1863A9] text-sm font-bold text-white shadow-sm border-2 border-white cursor-pointer hover:opacity-90 transition-opacity">
+                {initials}
+              </div>
+              <button className="rounded-full p-1 text-zinc-400 hover:text-[#010C2D] transition-colors">
+                <Settings className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto px-8 pb-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}

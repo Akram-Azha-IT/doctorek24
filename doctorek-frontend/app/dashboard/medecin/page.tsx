@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Header } from '@/components/Header'
-import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import type { Disponibilite, RendezVous, StatutRdv } from '@/lib/types'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
+import { CalendarDays, CheckCircle2, Clock4, XCircle, TrendingUp, PenLine, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const STATUT_LABELS: Record<StatutRdv, string> = {
   EN_ATTENTE: 'En attente',
@@ -15,13 +14,12 @@ const STATUT_LABELS: Record<StatutRdv, string> = {
   TERMINE: 'Terminé',
 }
 
-const STATUT_COLORS: Record<StatutRdv, string> = {
-  EN_ATTENTE: 'bg-yellow-100 text-yellow-700',
-  CONFIRME: 'bg-emerald-100 text-emerald-700',
-  ANNULE: 'bg-red-100 text-red-600',
-  TERMINE: 'bg-zinc-100 text-zinc-500',
+const STATUT_BADGE: Record<StatutRdv, string> = {
+  EN_ATTENTE: 'bg-[#FFF8E6] text-[#E59E00]',
+  CONFIRME: 'bg-[#E6F8F0] text-[#009E60]',
+  ANNULE: 'bg-[#FFEBEB] text-[#E01E5A]',
+  TERMINE: 'bg-[#F4F4F5] text-[#71717A]',
 }
-
 
 function todayISO(): string {
   return localDateISO(new Date())
@@ -58,69 +56,128 @@ function patientName(rdv: RendezVous): string {
   return `Patient ${rdv.patientId.slice(0, 8)}…`
 }
 
-function StatCard({ label, value, accent }: { label: string; value: number; accent: string }) {
+function patientInitials(rdv: RendezVous): string {
+  if (rdv.patientPrenom || rdv.patientNom) {
+    const p = rdv.patientPrenom?.charAt(0) ?? ''
+    const n = rdv.patientNom?.charAt(0) ?? ''
+    return (p + n).toUpperCase() || '?'
+  }
+  return rdv.patientId.slice(0, 2).toUpperCase()
+}
+
+// Deterministic hue from string
+function avatarHue(str: string): number {
+  let h = 0
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 360
+  return h
+}
+
+interface StatCardProps {
+  label: string
+  value: number
+  sub: string
+  icon: React.ReactNode
+  iconBg: string
+  active?: boolean
+}
+
+function StatCard({ label, value, sub, icon, iconBg, active }: StatCardProps) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white px-5 py-4">
-      <span className={`text-2xl font-bold ${accent}`}>{value}</span>
-      <span className="text-xs text-zinc-500">{label}</span>
+    <div
+      className={`rounded-2xl px-5 py-5 flex flex-col gap-3 shadow-sm transition-all ${
+        active
+          ? 'bg-[#E2F0FD] border border-transparent'
+          : 'bg-white border border-zinc-100'
+      }`}
+    >
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${active ? 'bg-white shadow-sm' : iconBg}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-3xl font-bold leading-none text-[#010C2D]">{value}</p>
+        <p className={`mt-1 text-xs font-semibold ${active ? 'text-[#1863A9]' : 'text-zinc-500'}`}>{label}</p>
+        <p className={`mt-0.5 text-[11px] ${active ? 'text-[#1863A9]/70' : 'text-zinc-400'}`}>{sub}</p>
+      </div>
     </div>
   )
 }
 
-function ProchainRdvCard({ rdv }: { rdv: RendezVous }) {
-  const motif = rdv.questionnaire?.motif ?? rdv.motif
-  const isToday = rdv.dateRdv === todayISO()
-  const dateLabel = isToday
-    ? "Aujourd'hui"
-    : new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).format(
-        new Date(rdv.dateRdv + 'T00:00:00')
-      )
+function MiniCalendar({ markedDates }: { markedDates: Set<string> }) {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = today.getMonth()
+  const todayStr = localDateISO(today)
+
+  const firstDay = new Date(year, month, 1).getDay()
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const monthLabel = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(today)
+
+  const cells: (number | null)[] = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
 
   return (
-    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 flex items-start justify-between gap-4">
-      <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-emerald-600">{dateLabel}</p>
-          <p className="mt-0.5 text-base font-semibold text-zinc-900">
-            {rdv.heureRdv} — {patientName(rdv)}
-          </p>
-          {motif && (
-            <p className="mt-0.5 max-w-xs truncate text-sm italic text-zinc-500">{motif}</p>
-          )}
+    <div className="rounded-2xl bg-white border border-zinc-100 px-5 py-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm font-semibold text-[#010C2D] capitalize">{monthLabel}</p>
+        <div className="flex items-center gap-1">
+          <button className="p-1 hover:bg-zinc-50 rounded text-zinc-400 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
+          <button className="p-1 hover:bg-zinc-50 rounded text-zinc-400 transition-colors"><ChevronRight className="h-4 w-4" /></button>
         </div>
       </div>
-      <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${STATUT_COLORS[rdv.statut]}`}>
-        {STATUT_LABELS[rdv.statut]}
-      </span>
+      <div className="grid grid-cols-7 gap-y-2 text-center">
+        {['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'].map((d, i) => (
+          <span key={i} className="text-[11px] font-semibold text-zinc-400 pb-2">{d}</span>
+        ))}
+        {cells.map((day, i) => {
+          if (!day) return <span key={i} />
+          const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const isToday = iso === todayStr
+          const hasRdv = markedDates.has(iso)
+          return (
+            <div key={i} className="flex items-center justify-center">
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
+                  isToday
+                    ? 'bg-[#1863A9] text-white shadow-sm shadow-[#1863A9]/20'
+                    : hasRdv
+                    ? 'bg-[#E2F0FD] text-[#1863A9]'
+                    : 'text-zinc-600 hover:bg-zinc-50'
+                }`}
+              >
+                {day}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
-function TauxOccupationBar({ rdvs, disponibilites }: { rdvs: RendezVous[]; disponibilites: Disponibilite[] }) {
+function OccupationBar({ rdvs, disponibilites }: { rdvs: RendezVous[]; disponibilites: Disponibilite[] }) {
   const { monday, sunday } = getWeekRange()
   const totalSlots = computeTotalWeekSlots(disponibilites)
-
   const bookedCount = rdvs.filter(
     (r) => r.dateRdv >= monday && r.dateRdv <= sunday && r.statut !== 'ANNULE'
   ).length
-
   const taux = totalSlots > 0 ? Math.min(Math.round((bookedCount / totalSlots) * 100), 100) : 0
-
-  const barColor =
-    taux >= 80 ? 'bg-red-400' : taux >= 50 ? 'bg-yellow-400' : 'bg-emerald-400'
+  const barColor = taux >= 80 ? 'bg-red-400' : taux >= 50 ? 'bg-amber-400' : 'bg-[#2EB67D]'
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Taux d'occupation — semaine en cours
-        </span>
-        <span className="text-sm font-bold text-zinc-800">{taux}%</span>
+    <div className="rounded-2xl bg-white border border-zinc-100 px-5 py-5 shadow-sm">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E2F0FD]">
+          <TrendingUp className="h-5 w-5 text-[#1863A9]" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold text-[#010C2D]">Occupation de la semaine</p>
+          <p className="text-xs font-medium text-zinc-400 mt-0.5">{bookedCount} sur {totalSlots || '—'} créneaux réservés</p>
+        </div>
+        <span className="text-2xl font-bold text-[#010C2D]">{taux}%</span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-zinc-100">
         <div
@@ -128,13 +185,9 @@ function TauxOccupationBar({ rdvs, disponibilites }: { rdvs: RendezVous[]; dispo
           style={{ width: `${taux}%` }}
         />
       </div>
-      <p className="text-xs text-zinc-400">
-        {bookedCount} RDV réservé{bookedCount > 1 ? 's' : ''} sur {totalSlots || '—'} créneaux disponibles
-      </p>
     </div>
   )
 }
-
 
 export default function MedecinDashboardPage() {
   useRoleGuard('MEDECIN')
@@ -162,66 +215,141 @@ export default function MedecinDashboardPage() {
   const enAttente = todayRdvs.filter((r) => r.statut === 'EN_ATTENTE').length
   const annules = todayRdvs.filter((r) => r.statut === 'ANNULE').length
 
-  const prochainRdv = [...allRdvs]
+  const upcomingRdvs = [...allRdvs]
     .filter((r) => r.dateRdv >= today && r.statut !== 'ANNULE')
-    .sort((a, b) => a.dateRdv.localeCompare(b.dateRdv) || a.heureRdv.localeCompare(b.heureRdv))[0] ?? null
+    .sort((a, b) => a.dateRdv.localeCompare(b.dateRdv) || a.heureRdv.localeCompare(b.heureRdv))
+    .slice(0, 5)
+
+  const markedDates = new Set(allRdvs.filter((r) => r.statut !== 'ANNULE').map((r) => r.dateRdv))
+
+  const dateLabel = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  }).format(new Date())
 
   return (
-    <>
-      <Header />
-      <MedecinNav />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 space-y-10">
+    <main className="px-6 py-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-[#010C2D]">
+          Bonjour{firstName ? `, Dr. ${firstName}` : ''} 👋
+        </h1>
+        <p className="mt-0.5 text-sm text-zinc-500 capitalize">{dateLabel}</p>
+      </div>
 
-        <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">
-            Bonjour{firstName ? `, Dr. ${firstName}` : ''} 👋
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            {new Intl.DateTimeFormat('fr-FR', {
-              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-            }).format(new Date())}
-          </p>
+      {!medecinId ? (
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-20 text-center">
+          <p className="text-sm text-zinc-400">Chargement…</p>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Left column */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Stat cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <StatCard
+                active
+                label="RDVs du jour"
+                value={todayRdvs.length}
+                sub="Tous statuts"
+                iconBg="bg-[#DFEFFE]"
+                icon={<CalendarDays className="h-5 w-5 text-[#1863A9]" />}
+              />
+              <StatCard
+                label="Confirmés"
+                value={confirmes}
+                sub="Aujourd'hui"
+                iconBg="bg-emerald-50"
+                icon={<CheckCircle2 className="h-5 w-5 text-[#2EB67D]" />}
+              />
+              <StatCard
+                label="En attente"
+                value={enAttente}
+                sub="Aujourd'hui"
+                iconBg="bg-amber-50"
+                icon={<Clock4 className="h-5 w-5 text-[#ECB22E]" />}
+              />
+              <StatCard
+                label="Annulés"
+                value={annules}
+                sub="Aujourd'hui"
+                iconBg="bg-red-50"
+                icon={<XCircle className="h-5 w-5 text-[#E01E5A]" />}
+              />
+            </div>
 
-        {!medecinId ? (
-          <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
-            <p className="text-sm text-zinc-400">Chargement…</p>
-          </div>
-        ) : (
-          <>
-            {/* Stats du jour */}
-            <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Aujourd'hui
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard label="RDVs du jour" value={todayRdvs.length} accent="text-zinc-900" />
-                <StatCard label="Confirmés" value={confirmes} accent="text-emerald-600" />
-                <StatCard label="En attente" value={enAttente} accent="text-yellow-600" />
-                <StatCard label="Annulés" value={annules} accent="text-red-500" />
+            {/* Upcoming RDV table */}
+            <div className="rounded-2xl bg-white border border-zinc-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+                <p className="text-sm font-semibold text-[#010C2D]">Prochains rendez-vous</p>
+                <span className="text-xs text-zinc-400">{upcomingRdvs.length} à venir</span>
               </div>
-            </section>
-
-            {/* Prochain RDV */}
-            <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Prochain rendez-vous
-              </h2>
-              {prochainRdv ? (
-                <ProchainRdvCard rdv={prochainRdv} />
-              ) : (
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 py-8 text-center">
+              {upcomingRdvs.length === 0 ? (
+                <div className="py-12 text-center">
                   <p className="text-sm text-zinc-400">Aucun rendez-vous à venir</p>
                 </div>
+              ) : (
+                <div className="divide-y divide-zinc-50">
+                  {upcomingRdvs.map((rdv) => {
+                    const name = patientName(rdv)
+                    const initials = patientInitials(rdv)
+                    const hue = avatarHue(rdv.patientId)
+                    const isToday = rdv.dateRdv === today
+                    const dateStr = isToday
+                      ? "Aujourd'hui"
+                      : new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
+                          new Date(rdv.dateRdv + 'T00:00:00')
+                        )
+                    const motif = rdv.questionnaire?.motif ?? rdv.motif
+
+                    return (
+                      <div key={rdv.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-zinc-50/50 transition-colors">
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
+                          style={{ background: `hsl(${hue} 65% 55%)` }}
+                        >
+                          {initials}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-[#010C2D] truncate">{name}</p>
+                          <p className="text-xs font-medium text-zinc-500 mt-0.5 truncate">{motif || 'Consultation'}</p>
+                        </div>
+                        
+                        <div className="flex items-center gap-6">
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-bold text-[#010C2D]">{rdv.heureRdv}</p>
+                            <p className="text-xs font-medium text-zinc-400 mt-0.5">{dateStr}</p>
+                          </div>
+                          
+                          <span className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold ${STATUT_BADGE[rdv.statut]}`}>
+                            {STATUT_LABELS[rdv.statut]}
+                          </span>
+                          
+                          <div className="flex items-center gap-1 pl-2 border-l border-zinc-100">
+                            <button className="p-1.5 text-zinc-400 hover:text-[#1863A9] hover:bg-[#E2F0FD] rounded-lg transition-colors">
+                              <PenLine className="h-4 w-4" />
+                            </button>
+                            <button className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
-            </section>
+            </div>
 
-            {/* Taux occupation semaine */}
-            <TauxOccupationBar rdvs={allRdvs} disponibilites={allDispos} />
+            {/* Occupation bar */}
+            <OccupationBar rdvs={allRdvs} disponibilites={allDispos} />
+          </div>
 
-          </>
-        )}
-      </main>
-    </>
+          {/* Right column */}
+          <div className="space-y-5">
+            <MiniCalendar markedDates={markedDates} />
+          </div>
+        </div>
+      )}
+    </main>
   )
 }

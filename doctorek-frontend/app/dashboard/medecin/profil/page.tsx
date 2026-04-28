@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Header } from '@/components/Header'
-import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { getSession } from '@/lib/session'
 import { useMedecin, useUpdateMedecin } from '@/features/annuaire/hooks'
@@ -179,25 +177,19 @@ export default function ProfilPage() {
 
   if (profileLoading) {
     return (
-      <>
-        <Header />
-        <MedecinNav />
-        <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
-          <div className="h-8 w-48 animate-pulse rounded bg-zinc-200" />
-          <div className="mt-6 space-y-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100" />
-            ))}
-          </div>
-        </main>
-      </>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
+        <div className="h-8 w-48 animate-pulse rounded bg-zinc-200" />
+        <div className="mt-6 space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100" />
+          ))}
+        </div>
+      </main>
     )
   }
 
   return (
     <>
-      <Header />
-      <MedecinNav />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 space-y-8">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Mon profil</h1>

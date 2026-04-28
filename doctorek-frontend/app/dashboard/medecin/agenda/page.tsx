@@ -1,12 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Header } from '@/components/Header'
 import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import { AgendaMedecinView } from '@/features/agenda/components/AgendaMedecinView'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 
 export default function AgendaMedecinPage() {
   useRoleGuard('MEDECIN')
@@ -27,8 +25,6 @@ export default function AgendaMedecinPage() {
 
   return (
     <>
-      <Header />
-      <MedecinNav />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Mon agenda</h1>

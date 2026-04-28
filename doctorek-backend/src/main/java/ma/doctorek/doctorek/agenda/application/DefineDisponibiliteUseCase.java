@@ -28,12 +28,15 @@ public class DefineDisponibiliteUseCase {
 
         List<Disponibilite> existing = dispoRepo.findAllByMedecinIdAndJour(medecinId, req.jourSemaine());
         for (Disponibilite dispo : existing) {
+            boolean exactMatch = req.heureDebut().equals(dispo.heureDebut())
+                              && req.heureFin().equals(dispo.heureFin());
+            if (exactMatch) {
+                return dispo;
+            }
             boolean overlaps = req.heureDebut().isBefore(dispo.heureFin())
                             && req.heureFin().isAfter(dispo.heureDebut());
             if (overlaps) {
-                throw new IllegalArgumentException(
-                    "Ce créneau chevauche une disponibilité existante ("
-                    + dispo.heureDebut() + " – " + dispo.heureFin() + ")");
+                dispoRepo.deleteById(dispo.id());
             }
         }
 

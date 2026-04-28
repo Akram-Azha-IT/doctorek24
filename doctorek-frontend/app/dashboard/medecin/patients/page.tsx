@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Header } from '@/components/Header'
-import { MedecinNav } from '@/features/medecin/components/MedecinNav'
 import { usePatientsMedecin } from '@/features/agenda/hooks'
 import { PatientListItem } from '@/features/agenda/components/PatientListItem'
 import { getSession } from '@/lib/session'
@@ -47,8 +45,6 @@ export default function PatientsPage() {
 
   return (
     <>
-      <Header />
-      <MedecinNav />
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">Mes patients</h1>

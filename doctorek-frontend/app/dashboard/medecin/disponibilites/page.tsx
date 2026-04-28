@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Header } from '@/components/Header'
-import { MedecinNav } from '@/features/medecin/components/MedecinNav'
+import { useQueryClient } from '@tanstack/react-query'
 import { useDisponibilites, useDeleteDisponibilite, useRdvsMedecin } from '@/features/agenda/hooks'
+import { defineDisponibilite } from '@/features/agenda/api'
 import { AvailabilityWeekGrid, DAYS } from '@/features/agenda/components/AvailabilityWeekGrid'
 import { DisponibiliteForm } from '@/features/agenda/components/DisponibiliteForm'
 import type { Disponibilite } from '@/lib/types'
@@ -17,6 +17,10 @@ export default function DisponibilitesPage() {
   const [medecinId, setMedecinId] = useState('')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [addingDay, setAddingDay] = useState<string | null>(null)
+  const [copyingSlot, setCopyingSlot] = useState<Disponibilite | null>(null)
+  const [copyTargetDays, setCopyTargetDays] = useState<string[]>([])
+  const [isCopying, setIsCopying] = useState(false)
+  const qc = useQueryClient()
 
   useEffect(() => {
     const session = getSession()
@@ -53,39 +57,78 @@ export default function DisponibilitesPage() {
     })
   }
 
+  function handleOpenCopy(slot: Disponibilite) {
+    setCopyingSlot(slot)
+    setCopyTargetDays([])
+  }
+
+  function toggleCopyDay(day: string) {
+    setCopyTargetDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    )
+  }
+
+  async function handleCopyConfirm() {
+    if (!copyingSlot || copyTargetDays.length === 0) return
+    setIsCopying(true)
+    try {
+      const results = await Promise.allSettled(
+        copyTargetDays.map((day) =>
+          defineDisponibilite(medecinId, {
+            jourSemaine: day,
+            heureDebut: copyingSlot.heureDebut,
+            heureFin: copyingSlot.heureFin,
+            dureeConsultation: copyingSlot.dureeConsultation,
+          }),
+        ),
+      )
+      qc.invalidateQueries({ queryKey: ['disponibilites', medecinId] })
+
+      const failedDays = copyTargetDays.filter((_, i) => results[i].status === 'rejected')
+      const ok = results.length - failedDays.length
+
+      if (failedDays.length === 0) {
+        toast.success(`Copié vers ${ok} jour(s)`)
+      } else {
+        const failedLabels = failedDays
+          .map((key) => DAYS.find((d) => d.key === key)?.long ?? key)
+          .join(', ')
+        if (ok > 0) toast.success(`Copié vers ${ok} jour(s)`)
+        toast.error(
+          `Échec sur : ${failedLabels}. Supprimez le créneau existant sur ce(s) jour(s) puis recopiez.`,
+          { duration: 6000 },
+        )
+      }
+      setCopyingSlot(null)
+      setCopyTargetDays([])
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
   if (!medecinId) {
     return (
-      <>
-        <Header />
-        <MedecinNav />
-        <div className="flex items-center justify-center py-24">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
-        </div>
-      </>
+      <div className="flex items-center justify-center py-24">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
+      </div>
     )
   }
 
   if (isError) {
     return (
-      <>
-        <Header />
-        <MedecinNav />
-        <main className="mx-auto w-full max-w-7xl px-4 py-6">
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            Impossible de charger les disponibilités.
-          </p>
-        </main>
-      </>
+      <main className="mx-auto w-full max-w-7xl px-4 py-6">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          Impossible de charger les disponibilités.
+        </p>
+      </main>
     )
   }
 
   return (
     <>
-      <Header />
-      <MedecinNav />
       <main
         className="flex overflow-hidden bg-white"
-        style={{ height: 'calc(100vh - 112px)' }}
+        style={{ height: '100vh' }}
       >
         {/* LEFT — settings panel */}
         <div className="w-80 shrink-0 border-r border-gray-200 flex flex-col overflow-hidden">
@@ -177,9 +220,10 @@ export default function DisponibilitesPage() {
                               </button>
                             )}
 
-                            {/* Copy (decorative) */}
+                            {/* Copy */}
                             <button
                               type="button"
+                              onClick={() => handleOpenCopy(slot)}
                               className="rounded p-1 text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors"
                               title="Copier vers d'autres jours"
                             >
@@ -226,6 +270,63 @@ export default function DisponibilitesPage() {
         </div>
       </main>
 
+      {/* Copy modal */}
+      {copyingSlot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-80 rounded-xl bg-white shadow-2xl ring-1 ring-gray-200">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <p className="text-sm font-semibold text-gray-900">Copier vers d'autres jours</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                {copyingSlot.heureDebut} – {copyingSlot.heureFin} · {copyingSlot.dureeConsultation} min
+              </p>
+            </div>
+            <div className="px-5 py-3 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Jours cibles</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const otherDays = DAYS.filter((d) => d.key !== copyingSlot.jourSemaine).map((d) => d.key)
+                    setCopyTargetDays(copyTargetDays.length === otherDays.length ? [] : otherDays)
+                  }}
+                  className="text-[10px] font-medium text-blue-600 hover:underline"
+                >
+                  {copyTargetDays.length === DAYS.length - 1 ? 'Tout désélectionner' : 'Tout sélectionner'}
+                </button>
+              </div>
+              {DAYS.filter((d) => d.key !== copyingSlot.jourSemaine).map((d) => (
+                <label key={d.key} className="flex items-center gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={copyTargetDays.includes(d.key)}
+                    onChange={() => toggleCopyDay(d.key)}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600"
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">{d.long}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2 px-5 py-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => { setCopyingSlot(null); setCopyTargetDays([]) }}
+                disabled={isCopying}
+                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyConfirm}
+                disabled={isCopying || copyTargetDays.length === 0}
+                className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isCopying ? 'Copie…' : `Copier (${copyTargetDays.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
