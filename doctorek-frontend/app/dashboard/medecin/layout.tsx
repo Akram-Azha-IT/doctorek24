@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut, Search, Sun, Moon, Bell, Mail, Settings, Activity } from 'lucide-react'
 import { getSession, clearSession } from '@/lib/session'
@@ -22,6 +22,11 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   const router = useRouter()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [sidebarWidth, setSidebarWidth] = useState(260)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef(false)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(260)
 
   useEffect(() => {
     const session = getSession()
@@ -30,6 +35,42 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
       setLastName(session.lastName ?? '')
     }
   }, [])
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragRef.current) return
+    const delta = e.clientX - startXRef.current
+    const next = Math.min(400, Math.max(180, startWidthRef.current + delta))
+    setSidebarWidth(next)
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    if (!dragRef.current) return
+    dragRef.current = false
+    setIsDragging(false)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }, [handleMouseMove])
+
+  function handleDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    dragRef.current = true
+    startXRef.current = e.clientX
+    startWidthRef.current = sidebarWidth
+    setIsDragging(true)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [handleMouseMove, handleMouseUp])
 
   function handleLogout() {
     clearSession()
@@ -47,7 +88,10 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F9FB]">
       {/* Sidebar */}
-      <aside className="flex w-[260px] shrink-0 flex-col bg-[#F8F9FA] border-r border-zinc-200">
+      <aside
+        className="flex shrink-0 flex-col bg-[#F8F9FA]"
+        style={{ width: sidebarWidth }}
+      >
         {/* Logo */}
         <div className="flex h-24 items-center gap-3 px-8">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1863A9] text-white shadow-md shadow-blue-500/20">
@@ -91,6 +135,20 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
           </button>
         </div>
       </aside>
+
+      {/* Drag divider */}
+      <div
+        onMouseDown={handleDividerMouseDown}
+        className={`group relative flex w-1 shrink-0 cursor-col-resize items-center justify-center transition-colors ${
+          isDragging ? 'bg-[#1863A9]' : 'bg-zinc-200 hover:bg-[#1863A9]'
+        }`}
+      >
+        <div className={`flex flex-col gap-[3px] opacity-0 transition-opacity group-hover:opacity-100 ${isDragging ? 'opacity-100' : ''}`}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-1 w-1 rounded-full bg-white shadow-sm" />
+          ))}
+        </div>
+      </div>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

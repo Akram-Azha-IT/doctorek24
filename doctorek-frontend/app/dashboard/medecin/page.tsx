@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import type { Disponibilite, RendezVous, StatutRdv } from '@/lib/types'
 import { getSession } from '@/lib/session'
@@ -189,11 +189,54 @@ function OccupationBar({ rdvs, disponibilites }: { rdvs: RendezVous[]; disponibi
   )
 }
 
+const DASH_MIN_LEFT = 360
+const DASH_MAX_LEFT = 900
+const DASH_DEFAULT_LEFT = 680
+
 export default function MedecinDashboardPage() {
   useRoleGuard('MEDECIN')
 
   const [medecinId, setMedecinId] = useState('')
   const [firstName, setFirstName] = useState('')
+  const [leftWidth, setLeftWidth] = useState(DASH_DEFAULT_LEFT)
+  const [isDragging, setIsDragging] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef(false)
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragRef.current || !containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const newWidth = Math.max(DASH_MIN_LEFT, Math.min(DASH_MAX_LEFT, e.clientX - rect.left))
+    setLeftWidth(newWidth)
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    dragRef.current = false
+    setIsDragging(false)
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }, [handleMouseMove])
+
+  function handleDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    dragRef.current = true
+    setIsDragging(true)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [handleMouseMove, handleMouseUp])
 
   useEffect(() => {
     const session = getSession()
@@ -241,9 +284,9 @@ export default function MedecinDashboardPage() {
           <p className="text-sm text-zinc-400">Chargement…</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div ref={containerRef} className="flex items-start gap-0">
           {/* Left column */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="shrink-0 space-y-5 min-w-0" style={{ width: leftWidth }}>
             {/* Stat cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <StatCard
@@ -344,8 +387,24 @@ export default function MedecinDashboardPage() {
             <OccupationBar rdvs={allRdvs} disponibilites={allDispos} />
           </div>
 
+          {/* DIVIDER */}
+          <div
+            onMouseDown={handleDividerMouseDown}
+            className={`group relative mx-3 flex w-1 self-stretch shrink-0 cursor-col-resize select-none items-center justify-center rounded-full transition-colors ${
+              isDragging ? 'bg-[#1863A9]' : 'bg-zinc-100 hover:bg-[#1863A9]/40'
+            }`}
+          >
+            <div className={`absolute z-10 flex flex-col gap-1 rounded-full bg-white px-1 py-2 shadow-sm ring-1 ring-zinc-100 transition-opacity ${
+              isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}>
+              {[0, 1, 2].map((i) => (
+                <span key={i} className="block h-1 w-1 rounded-full bg-[#1863A9]" />
+              ))}
+            </div>
+          </div>
+
           {/* Right column */}
-          <div className="space-y-5">
+          <div className="flex-1 min-w-[260px] space-y-5">
             <MiniCalendar markedDates={markedDates} />
           </div>
         </div>

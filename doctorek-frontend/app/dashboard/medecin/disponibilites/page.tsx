@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDisponibilites, useDeleteDisponibilite, useRdvsMedecin } from '@/features/agenda/hooks'
 import { defineDisponibilite } from '@/features/agenda/api'
@@ -11,11 +11,55 @@ import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { toast } from 'sonner'
 
+const MIN_LEFT = 220
+const MAX_LEFT = 560
+const DEFAULT_LEFT = 320
+
 export default function DisponibilitesPage() {
   useRoleGuard('MEDECIN')
 
   const [medecinId, setMedecinId] = useState('')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT)
+  const [isDragging, setIsDragging] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef(false)
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragRef.current || !containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const newWidth = Math.max(MIN_LEFT, Math.min(MAX_LEFT, e.clientX - rect.left))
+    setLeftWidth(newWidth)
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    dragRef.current = false
+    setIsDragging(false)
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }, [handleMouseMove])
+
+  function handleDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    dragRef.current = true
+    setIsDragging(true)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [handleMouseMove, handleMouseUp])
+
   const [addingDay, setAddingDay] = useState<string | null>(null)
   const [copyingSlot, setCopyingSlot] = useState<Disponibilite | null>(null)
   const [copyTargetDays, setCopyTargetDays] = useState<string[]>([])
@@ -127,11 +171,15 @@ export default function DisponibilitesPage() {
   return (
     <>
       <main
+        ref={containerRef}
         className="flex overflow-hidden bg-white"
         style={{ height: '100vh' }}
       >
         {/* LEFT — settings panel */}
-        <div className="w-80 shrink-0 border-r border-gray-200 flex flex-col overflow-hidden">
+        <div
+          className="shrink-0 border-r border-gray-200 flex flex-col overflow-hidden"
+          style={{ width: leftWidth }}
+        >
 
           {/* Panel header */}
           <div className="px-5 py-4 border-b border-gray-100">
@@ -256,6 +304,23 @@ export default function DisponibilitesPage() {
                 })}
               </ul>
             )}
+          </div>
+        </div>
+
+        {/* DIVIDER — resizable */}
+        <div
+          onMouseDown={handleDividerMouseDown}
+          className={`group relative flex w-1 shrink-0 cursor-col-resize select-none items-center justify-center transition-colors ${
+            isDragging ? 'bg-[#1863A9]' : 'bg-gray-200 hover:bg-[#1863A9]/40'
+          }`}
+        >
+          {/* VS Code-style handle pill */}
+          <div className={`absolute z-10 flex flex-col items-center gap-0.5 rounded-full px-0.5 py-2 transition-opacity ${
+            isDragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}>
+            <svg className="h-3 w-3 text-[#1863A9]" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" transform="rotate(90 8 8)"/>
+            </svg>
           </div>
         </div>
 

@@ -135,7 +135,13 @@ export default function PatientsPage() {
                   <PatientListItem
                     key={patient.patientId}
                     patient={patient}
-                    onClick={() => router.push(`/dashboard/medecin/patients/${patient.patientId}`)}
+                    onClick={() => {
+                      const params = new URLSearchParams({
+                        prenom: patient.firstName,
+                        nom: patient.lastName,
+                      })
+                      router.push(`/dashboard/medecin/patients/${patient.patientId}?${params}`)
+                    }}
                   />
                 ))}
               </ul>
