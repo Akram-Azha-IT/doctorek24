@@ -6,31 +6,48 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Doctorek Design System (Colors)
 
-Agents must strictly adhere to this color palette when building or modifying the UI:
+Agents must strictly adhere to this color palette when building or modifying the UI.
+
+## Color Role Summary
+
+| Role | Color | Hex |
+|------|-------|-----|
+| **Primary brand / hero backgrounds** | Vivid Blue | `#007DFF` |
+| **Dark CTA buttons (on vivid blue bg)** | Deep Teal Navy | `#00263C` |
+| **Small accents, dark badges, footer bg** | Deep Navy | `#010C2D` |
+| **Page background** | Light Grey | `#F0F2F5` |
+| **Body text** | Dark Grey | `#333333` |
+
+**Rule:** `#010C2D` is reserved for small UI elements only (badges, tags, footer strip, icon backgrounds). Do NOT use it as a full section/page background — use `#007DFF` for brand sections and `#F0F2F5` for content sections.
+
+---
 
 ## Primary Brand Colors
-- **Deep Navy (`#010C2D`)**: Primary dark background, text
-- **Brand Blue (`#1863A9`)**: Primary brand color, links, accents
-- **Dark Blue (`#064178`)**: Darker blue variant, sections
-- **Midnight Blue (`#042651`)**: Deep section backgrounds
-- **Rich Blue (`#0C4A83`)**: Button backgrounds (primary CTA)
+- **Vivid Blue (`#007DFF`)**: ★ PRIMARY — hero backgrounds, navbar, brand sections, primary buttons on light bg
+- **Deep Teal Navy (`#00263C`)**: Dark CTA buttons (on vivid blue background), hover state of vivid blue buttons
+- **Brand Blue (`#1863A9`)**: Secondary brand color, links, card accents
+- **Dark Blue (`#064178`)**: Darker blue variant, sub-sections
+- **Midnight Blue (`#042651`)**: Deep panel backgrounds (carte médicale only)
+- **Rich Blue (`#0C4A83`)**: Button backgrounds (secondary CTA, on dark panels)
 
 ## Secondary / UI Blues
-- **Medium Blue (`#163C64`)**: Card/panel backgrounds
+- **Medium Blue (`#163C64`)**: Card/panel backgrounds (dark-themed panels, carte details)
 - **Steel Blue (`#356897`)**: Hover states, secondary elements
-- **Sky Blue (`#3793E0`)**: Interactive elements
-- **Light Blue (`#3DA8FF`)**: Highlights, icons
-- **Pale Blue (`#B6DAF7`)**: Borders, subtle accents
-- **Ice Blue (`#DFEFFE`)**: Light backgrounds
+- **Sky Blue (`#3793E0`)**: Interactive elements, icon color
+- **Light Blue (`#3DA8FF`)**: Highlights, icons, active state indicators
+- **Pale Blue (`#B6DAF7`)**: Borders, subtle accents, secondary text on dark bg
+- **Ice Blue (`#DFEFFE`)**: Light section backgrounds
 - **Off White / Mist (`#E8EFF6`)**: Light section backgrounds
-- **Near White (`#F1F4F7`)**: Card backgrounds
+- **Near White (`#F1F4F7`)**: Card backgrounds on light pages
 
 ## Neutral Colors
-- **White (`#FFFFFF`)**: Text on dark, backgrounds
+- **White (`#FFFFFF`)**: Text on dark backgrounds, card backgrounds
+- **Light Grey (`#F0F2F5`)**: Default page background (replaces deep navy for body)
 - **Grey (`#465058`)**: Body text, secondary text
-- **Dark Grey (`#333333`)**: General text
+- **Dark Grey (`#333333`)**: General text on light backgrounds
 
 ## Accent / Status Colors
+- **Deep Navy (`#010C2D`)**: Small dark accents only — badges, tags, dark icon chips, footer strip
 - **Cyan (`#36C5F0`)**: Accent, highlights
 - **Green (`#2EB67D`)**: Success states
 - **Amber (`#ECB22E`)**: Warning states

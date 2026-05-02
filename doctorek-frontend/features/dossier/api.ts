@@ -111,7 +111,7 @@ export async function uploadDocument(
     body: form,
   })
   const body: ApiResponse<DocumentMedicalDto> = await res.json()
-  if (!body.success || !res.ok) throw new Error(body.error ?? `HTTP ${res.status}`)
+  if (!body.success || !res.ok) throw new Error(body.message ?? `HTTP ${res.status}`)
   return body.data as DocumentMedicalDto
 }
 

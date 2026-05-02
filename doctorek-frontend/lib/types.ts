@@ -1,7 +1,7 @@
 export interface ApiResponse<T> {
   success: boolean
   data: T | null
-  error: string | null
+  message: string | null
 }
 
 export interface MedecinProfile {
@@ -101,6 +101,87 @@ export interface QuestionnairePreConsult {
   dureeSymptoomes?: 'moins_7j' | '1_4sem' | 'plus_1mois' | null
   notesComplementaires?: string
 }
+
+// ── Carte Virtuelle ─────────────────────────────────────────────────────────
+
+export interface MedicamentActuel {
+  nom: string
+  dosage: string
+}
+
+export interface AntecedentChirurgical {
+  description: string
+  date?: string
+}
+
+export interface ContactUrgence {
+  nom: string
+  lien: string
+  telephone: string
+}
+
+export interface CarteVirtuelle {
+  id: string
+  patientId: string
+  cardRef: string
+  statut: 'VIRTUEL'
+  dateNaissance: string | null
+  genre: string | null
+  nationalite: string | null
+  numIdentite: string | null
+  photoUrl: string | null
+  telephone: string | null
+  adresseRue: string | null
+  adresseVille: string | null
+  adressePays: string | null
+  groupeSanguin: string | null
+  tailleCm: number | null
+  poidsKg: number | null
+  donneurOrganes: boolean
+  allergies: string[]
+  maladiesChroniques: string[]
+  medicamentsActuels: MedicamentActuel[]
+  antecedentsChirurgicaux: AntecedentChirurgical[]
+  vaccinations: string[]
+  antecedentsFamiliaux: string[]
+  contactsUrgence: ContactUrgence[]
+  medecinTraitant: string | null
+  assuranceNom: string | null
+  assuranceNumero: string | null
+  assuranceDetails: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CarteVirtuelleRequest {
+  patientId: string
+  dateNaissance?: string | null
+  genre?: string | null
+  nationalite?: string | null
+  numIdentite?: string | null
+  photoUrl?: string | null
+  telephone?: string | null
+  adresseRue?: string | null
+  adresseVille?: string | null
+  adressePays?: string | null
+  groupeSanguin?: string | null
+  tailleCm?: number | null
+  poidsKg?: number | null
+  donneurOrganes?: boolean
+  allergies?: string[]
+  maladiesChroniques?: string[]
+  medicamentsActuels?: MedicamentActuel[]
+  antecedentsChirurgicaux?: AntecedentChirurgical[]
+  vaccinations?: string[]
+  antecedentsFamiliaux?: string[]
+  contactsUrgence?: ContactUrgence[]
+  medecinTraitant?: string | null
+  assuranceNom?: string | null
+  assuranceNumero?: string | null
+  assuranceDetails?: string | null
+}
+
+// ── Patients ─────────────────────────────────────────────────────────────────
 
 export interface PatientSummary {
   patientId: string

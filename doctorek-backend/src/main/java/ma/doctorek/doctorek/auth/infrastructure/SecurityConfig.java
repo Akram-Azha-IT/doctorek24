@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/annuaire/**").permitAll()
                 .requestMatchers("/api/v1/agenda/**").permitAll()
                 .requestMatchers("/api/v1/dossier/**").permitAll()
+                .requestMatchers("/api/v1/carte/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )

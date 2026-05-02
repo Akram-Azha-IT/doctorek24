@@ -73,7 +73,15 @@ export function Header() {
                 href={dashboardHref}
                 className="inline-flex items-center text-white hover:text-blue-100 transition-colors"
               >
-                <UserRound className="mr-2 h-5 w-5" />
+                {session.photoUrl ? (
+                  <img
+                    src={session.photoUrl}
+                    alt="Avatar"
+                    className="mr-2 h-8 w-8 rounded-full object-cover border-2 border-white/30 flex-shrink-0"
+                  />
+                ) : (
+                  <UserRound className="mr-2 h-5 w-5" />
+                )}
                 <div className="flex flex-col text-left">
                   <span className="text-sm font-bold leading-tight">
                     {session.firstName ?? 'Mon espace'}

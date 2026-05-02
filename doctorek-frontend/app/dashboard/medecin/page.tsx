@@ -5,7 +5,7 @@ import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import type { Disponibilite, RendezVous, StatutRdv } from '@/lib/types'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import { CalendarDays, CheckCircle2, Clock4, XCircle, TrendingUp, PenLine, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarDays, CheckCircle2, Clock4, XCircle, TrendingUp, PenLine, Trash2 } from 'lucide-react'
 
 const STATUT_LABELS: Record<StatutRdv, string> = {
   EN_ATTENTE: 'En attente',
@@ -102,58 +102,158 @@ function StatCard({ label, value, sub, icon, iconBg, active }: StatCardProps) {
   )
 }
 
-function MiniCalendar({ markedDates }: { markedDates: Set<string> }) {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
-  const todayStr = localDateISO(today)
+const STATUT_DOT: Record<StatutRdv, string> = {
+  CONFIRME: 'bg-[#2EB67D]',
+  EN_ATTENTE: 'bg-[#ECB22E]',
+  ANNULE: 'bg-[#E01E5A]',
+  TERMINE: 'bg-zinc-400',
+}
 
-  const firstDay = new Date(year, month, 1).getDay()
-  const startOffset = firstDay === 0 ? 6 : firstDay - 1
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
+const STATUT_PILL: Record<StatutRdv, string> = {
+  CONFIRME: 'bg-[#E6F8F0] text-[#009E60]',
+  EN_ATTENTE: 'bg-[#FFF8E6] text-[#E59E00]',
+  ANNULE: 'bg-[#FFEBEB] text-[#E01E5A]',
+  TERMINE: 'bg-zinc-100 text-zinc-500',
+}
 
-  const monthLabel = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(today)
+function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
+  const [nowMinutes, setNowMinutes] = useState(() => {
+    const n = new Date()
+    return n.getHours() * 60 + n.getMinutes()
+  })
 
-  const cells: (number | null)[] = [
-    ...Array(startOffset).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ]
+  useEffect(() => {
+    const id = setInterval(() => {
+      const n = new Date()
+      setNowMinutes(n.getHours() * 60 + n.getMinutes())
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const active = rdvs.filter((r) => r.statut !== 'ANNULE').sort((a, b) => a.heureRdv.localeCompare(b.heureRdv))
+
+  const parseMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number)
+    return h * 60 + m
+  }
+
+  const allMins = active.map((r) => parseMin(r.heureRdv))
+  const START = allMins.length ? Math.max(0, Math.min(...allMins) - 60) : 8 * 60
+  const END = allMins.length ? Math.min(24 * 60, Math.max(...allMins) + 90) : 19 * 60
+  const SPAN = END - START
+
+  const toPercent = (min: number) => Math.max(0, Math.min(100, ((min - START) / SPAN) * 100))
+
+  const nowPct = toPercent(nowMinutes)
+  const nowVisible = nowMinutes >= START && nowMinutes <= END
+
+  const hourMarks: number[] = []
+  const startHour = Math.ceil(START / 60)
+  const endHour = Math.floor(END / 60)
+  for (let h = startHour; h <= endHour; h++) hourMarks.push(h)
 
   return (
-    <div className="rounded-2xl bg-white border border-zinc-100 px-5 py-5 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-[#010C2D] capitalize">{monthLabel}</p>
-        <div className="flex items-center gap-1">
-          <button className="p-1 hover:bg-zinc-50 rounded text-zinc-400 transition-colors"><ChevronLeft className="h-4 w-4" /></button>
-          <button className="p-1 hover:bg-zinc-50 rounded text-zinc-400 transition-colors"><ChevronRight className="h-4 w-4" /></button>
+    <div className="rounded-2xl bg-white border border-zinc-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-5 pt-5 pb-3 flex items-start justify-between">
+        <div>
+          <p className="text-sm font-bold text-[#010C2D]">Programme du jour</p>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            {active.length === 0 ? 'Aucun rendez-vous' : `${active.length} rendez-vous`}
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 rounded-xl bg-[#E2F0FD] px-3 py-1.5">
+          <Clock4 className="h-3.5 w-3.5 text-[#1863A9]" />
+          <span className="text-xs font-bold text-[#1863A9]">
+            {String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:{String(nowMinutes % 60).padStart(2, '0')}
+          </span>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-y-2 text-center">
-        {['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'].map((d, i) => (
-          <span key={i} className="text-[11px] font-semibold text-zinc-400 pb-2">{d}</span>
-        ))}
-        {cells.map((day, i) => {
-          if (!day) return <span key={i} />
-          const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-          const isToday = iso === todayStr
-          const hasRdv = markedDates.has(iso)
-          return (
-            <div key={i} className="flex items-center justify-center">
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-semibold cursor-pointer transition-colors ${
-                  isToday
-                    ? 'bg-[#1863A9] text-white shadow-sm shadow-[#1863A9]/20'
-                    : hasRdv
-                    ? 'bg-[#E2F0FD] text-[#1863A9]'
-                    : 'text-zinc-600 hover:bg-zinc-50'
-                }`}
+
+      {active.length === 0 ? (
+        <div className="px-5 pb-8 pt-4 flex flex-col items-center gap-3">
+          <div className="h-16 w-16 rounded-2xl bg-[#F1F4F7] flex items-center justify-center">
+            <CalendarDays className="h-7 w-7 text-zinc-300" />
+          </div>
+          <p className="text-xs text-zinc-400 text-center">Journée libre —<br />aucun rendez-vous aujourd'hui</p>
+        </div>
+      ) : (
+        <div className="px-5 pb-5">
+          {/* Timeline */}
+          <div className="relative" style={{ height: 260 }}>
+            {/* Hour marks */}
+            {hourMarks.map((h) => {
+              const pct = toPercent(h * 60)
+              return (
+                <div
+                  key={h}
+                  className="absolute left-0 right-0 flex items-center gap-2"
+                  style={{ top: `${pct}%` }}
+                >
+                  <span className="text-[10px] font-semibold text-zinc-300 w-7 shrink-0 text-right leading-none">{h}h</span>
+                  <div className="flex-1 h-px bg-zinc-100" />
+                </div>
+              )
+            })}
+
+            {/* Now line */}
+            {nowVisible && (
+              <div
+                className="absolute left-0 right-0 z-20 flex items-center gap-2 pointer-events-none"
+                style={{ top: `${nowPct}%` }}
               >
-                {day}
-              </span>
-            </div>
-          )
-        })}
-      </div>
+                <span className="w-7 shrink-0" />
+                <div className="flex-1 flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-[#E01E5A] shadow-[0_0_0_3px_rgba(224,30,90,0.2)] shrink-0 animate-pulse" />
+                  <div className="flex-1 h-px bg-[#E01E5A]/40" />
+                </div>
+              </div>
+            )}
+
+            {/* Appointment dots */}
+            {active.map((rdv) => {
+              const min = parseMin(rdv.heureRdv)
+              const pct = toPercent(min)
+              const past = min < nowMinutes
+              return (
+                <div
+                  key={rdv.id}
+                  className="absolute left-0 right-0 z-10 flex items-center gap-2"
+                  style={{ top: `${pct}%`, transform: 'translateY(-50%)' }}
+                >
+                  <span className="w-7 shrink-0" />
+                  <div className="flex-1 flex items-center gap-2">
+                    {/* Dot */}
+                    <span
+                      className={`h-3 w-3 rounded-full shrink-0 shadow-sm ring-2 ring-white ${STATUT_DOT[rdv.statut]} ${past ? 'opacity-40' : ''}`}
+                    />
+                    {/* Time pill */}
+                    <span
+                      className={`rounded-lg px-2.5 py-1 text-xs font-bold tracking-tight shadow-sm ${
+                        past ? 'bg-zinc-100 text-zinc-400' : STATUT_PILL[rdv.statut]
+                      }`}
+                    >
+                      {rdv.heureRdv.slice(0, 5)}
+                    </span>
+                    {/* Duration tick */}
+                    <span className="text-[10px] text-zinc-300 font-medium">{rdv.duree}min</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="mt-1 flex items-center gap-3 flex-wrap">
+            {(['CONFIRME', 'EN_ATTENTE', 'ANNULE'] as StatutRdv[]).map((s) => (
+              <div key={s} className="flex items-center gap-1.5">
+                <span className={`h-2 w-2 rounded-full ${STATUT_DOT[s]}`} />
+                <span className="text-[10px] font-semibold text-zinc-400">{STATUT_LABELS[s]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -262,8 +362,6 @@ export default function MedecinDashboardPage() {
     .filter((r) => r.dateRdv >= today && r.statut !== 'ANNULE')
     .sort((a, b) => a.dateRdv.localeCompare(b.dateRdv) || a.heureRdv.localeCompare(b.heureRdv))
     .slice(0, 5)
-
-  const markedDates = new Set(allRdvs.filter((r) => r.statut !== 'ANNULE').map((r) => r.dateRdv))
 
   const dateLabel = new Intl.DateTimeFormat('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -405,7 +503,7 @@ export default function MedecinDashboardPage() {
 
           {/* Right column */}
           <div className="flex-1 min-w-[260px] space-y-5">
-            <MiniCalendar markedDates={markedDates} />
+            <TodayTimeline rdvs={todayRdvs} />
           </div>
         </div>
       )}

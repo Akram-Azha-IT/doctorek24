@@ -9,7 +9,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   })
   const body: ApiResponse<T> = await res.json()
   if (!body.success || !res.ok) {
-    throw new Error(body.error ?? `HTTP ${res.status}`)
+    throw new Error(body.message ?? `HTTP ${res.status}`)
   }
   return body.data as T
 }

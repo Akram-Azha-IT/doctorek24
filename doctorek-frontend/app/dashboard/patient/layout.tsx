@@ -1,0 +1,247 @@
+'use client'
+
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+  LayoutDashboard, Calendar, Search, CreditCard,
+  LogOut, Bell, Settings, Activity, Heart, ChevronRight,
+} from 'lucide-react'
+import { getSession, clearSession } from '@/lib/session'
+import { useCarteByPatient } from '@/features/carte/hooks'
+
+const NAV_ITEMS = [
+  { href: '/dashboard/patient', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/patient/rdvs', label: 'Mes Rendez-vous', icon: Calendar },
+  { href: '/recherche', label: 'Trouver un médecin', icon: Search },
+  { href: '/dashboard/patient/carte', label: 'Carte Médicale', icon: CreditCard },
+]
+
+function getInitials(firstName: string, lastName: string): string {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
+
+export default function PatientLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [patientId, setPatientId] = useState('')
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [sidebarWidth, setSidebarWidth] = useState(248)
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef(false)
+  const startXRef = useRef(0)
+  const startWidthRef = useRef(248)
+
+  useEffect(() => {
+    const session = getSession()
+    if (session) {
+      setFirstName(session.firstName ?? '')
+      setLastName(session.lastName ?? '')
+      setPatientId(session.id ?? '')
+      setPhotoUrl(session.photoUrl ?? null)
+    }
+  }, [])
+
+  const { data: carte } = useCarteByPatient(patientId || null)
+  const resolvedPhoto = carte?.photoUrl ?? photoUrl
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragRef.current) return
+    const delta = e.clientX - startXRef.current
+    const next = Math.min(380, Math.max(180, startWidthRef.current + delta))
+    setSidebarWidth(next)
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    if (!dragRef.current) return
+    dragRef.current = false
+    setIsDragging(false)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+  }, [handleMouseMove])
+
+  function handleDividerMouseDown(e: React.MouseEvent) {
+    e.preventDefault()
+    dragRef.current = true
+    startXRef.current = e.clientX
+    startWidthRef.current = sidebarWidth
+    setIsDragging(true)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [handleMouseMove, handleMouseUp])
+
+  function handleLogout() {
+    clearSession()
+    router.push('/login')
+  }
+
+  function isActive(item: (typeof NAV_ITEMS)[number]): boolean {
+    if (item.exact) return pathname === item.href
+    return pathname.startsWith(item.href)
+  }
+
+  const initials = firstName || lastName ? getInitials(firstName, lastName) : 'P'
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Patient'
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#F0F2F5]">
+      {/* ── Sidebar ── */}
+      <aside
+        className="flex shrink-0 flex-col bg-white border-r border-zinc-100"
+        style={{ width: sidebarWidth }}
+      >
+        {/* Logo */}
+        <div className="flex h-20 items-center gap-3 px-6 border-b border-zinc-100">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#007DFF] text-white shadow-md shadow-blue-500/30">
+            <Activity className="h-4 w-4" />
+          </div>
+          <span className="text-lg font-extrabold text-[#010C2D] tracking-tight">
+            Doctorek
+          </span>
+        </div>
+
+        {/* Patient identity mini-card */}
+        <div className="mx-4 mt-5 mb-2 flex items-center gap-3 rounded-2xl bg-[#F0F2F5] px-4 py-3">
+          <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center">
+            {resolvedPhoto ? (
+              <img src={resolvedPhoto} alt="profil" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-[#333333]">{fullName}</p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <p className="text-[11px] text-[#465058] font-medium">Patient · En ligne</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5">
+          <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Navigation</p>
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item)
+            return (
+              <button
+                key={item.href}
+                type="button"
+                onClick={() => router.push(item.href)}
+                className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                  active
+                    ? 'bg-[#007DFF] text-white shadow-sm shadow-blue-500/20'
+                    : 'text-[#465058] hover:bg-[#F0F2F5] hover:text-[#333333]'
+                }`}
+              >
+                <item.icon
+                  className={`h-4 w-4 shrink-0 transition-colors ${
+                    active ? 'text-white' : 'text-zinc-400 group-hover:text-[#007DFF]'
+                  }`}
+                />
+                <span className="truncate">{item.label}</span>
+                {active && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-70" />}
+              </button>
+            )
+          })}
+
+          {/* Divider */}
+          <div className="my-4 border-t border-zinc-100" />
+
+          <p className="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Santé</p>
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/patient/carte')}
+            className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#465058] hover:bg-[#F0F2F5] hover:text-[#333333] transition-all"
+          >
+            <Heart className="h-4 w-4 shrink-0 text-zinc-400 group-hover:text-red-400 transition-colors" />
+            <span className="truncate">Mon Dossier</span>
+          </button>
+        </nav>
+
+        {/* Logout */}
+        <div className="px-4 py-5 border-t border-zinc-100">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            Déconnexion
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Drag divider ── */}
+      <div
+        onMouseDown={handleDividerMouseDown}
+        className={`group relative flex w-1 shrink-0 cursor-col-resize items-center justify-center transition-colors ${
+          isDragging ? 'bg-[#007DFF]' : 'bg-zinc-100 hover:bg-[#007DFF]'
+        }`}
+      >
+        <div className={`flex flex-col gap-[3px] opacity-0 transition-opacity group-hover:opacity-100 ${isDragging ? 'opacity-100' : ''}`}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-1 w-1 rounded-full bg-white shadow-sm" />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Main content area ── */}
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Top navbar */}
+        <header className="flex h-20 shrink-0 items-center justify-between px-8 bg-white border-b border-zinc-100">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-zinc-400 font-medium">Dashboard</span>
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-300" />
+            <span className="font-semibold text-[#333333]">
+              {NAV_ITEMS.find((i) => (i.exact ? pathname === i.href : pathname.startsWith(i.href)))?.label ?? 'Patient'}
+            </span>
+          </div>
+
+          {/* Right controls */}
+          <div className="flex items-center gap-3">
+            <button className="relative rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F0F2F5] transition-colors">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#007DFF] border-2 border-white" />
+            </button>
+            <button className="rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F0F2F5] transition-colors">
+              <Settings className="h-5 w-5" />
+            </button>
+            <div className="h-7 w-px bg-zinc-200 mx-1" />
+            <div className="flex items-center gap-2.5">
+              <div className="text-right">
+                <p className="text-sm font-bold text-[#333333]">{fullName}</p>
+                <p className="text-[11px] text-zinc-400 font-medium">Patient</p>
+              </div>
+              <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                {resolvedPhoto ? (
+                  <img src={resolvedPhoto} alt="profil" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}

@@ -14,16 +14,19 @@ import { Badge } from '@/components/ui/badge'
 import type { Creneau, RendezVous } from '@/lib/types'
 
 function toISO(d: Date): string {
-  return d.toISOString().split('T')[0]
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
 }
 
-function tomorrow(): Date {
+function today(): Date {
   const d = new Date()
-  d.setDate(d.getDate() + 1)
+  d.setHours(0, 0, 0, 0)
   return d
 }
 
-function isPastOrToday(date: Date): boolean {
+function isPast(date: Date): boolean {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return date < today
@@ -40,7 +43,7 @@ function formatDateLabel(date: Date): string {
 
 export default function RdvPage() {
   const { id } = useParams<{ id: string }>()
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(tomorrow())
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(today())
   const [selectedCreneau, setSelectedCreneau] = useState<Creneau | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
@@ -100,7 +103,7 @@ export default function RdvPage() {
               <CalendarPicker
                 selected={selectedDate}
                 onSelect={handleSelectDate}
-                disabledDays={isPastOrToday}
+                disabledDays={isPast}
               />
             </div>
 
