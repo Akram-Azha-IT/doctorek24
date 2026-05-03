@@ -29,16 +29,33 @@ function userPlaceholderSvg(): string {
   </svg>`
 }
 
-function zellSvg(): string {
+function zellSvg(patternId = 'zell'): string {
   return `<svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.03;pointer-events:none;" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <pattern id="zell" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <pattern id="${patternId}" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
         <path d="M20 0 L40 20 L20 40 L0 20 Z M10 10 L30 30 M30 10 L10 30" stroke="${C_DOC_BLUE}" stroke-width="0.5" fill="none"/>
         <circle cx="20" cy="20" r="14" stroke="${C_DOC_BLUE}" stroke-width="0.3" fill="none"/>
       </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#zell)"/>
+    <rect width="100%" height="100%" fill="url(#${patternId})"/>
   </svg>`
+}
+
+function doctorekWatermark(): string {
+  return `<div style="position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+    <span style="color:${C_DOC_BLUE};font-size:56px;font-weight:900;font-style:italic;opacity:0.045;letter-spacing:-0.02em;transform:rotate(-18deg);white-space:nowrap;user-select:none;">Doctorek</span>
+  </div>`
+}
+
+function doubleShieldBadge(): string {
+  return `<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:2px;">
+    <svg viewBox="0 0 58 64" style="width:34px;overflow:visible;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22 2 L44 8 L44 27 C44 39 34 49 22 55 C10 49 0 39 0 27 L0 8 Z" fill="#3DA8FF"/>
+      <path d="M36 22 L56 28 L56 39 C56 47 47 54 36 58 C25 54 16 47 16 39 L16 28 Z" fill="#00263C"/>
+    </svg>
+    <div style="color:#003B95;font-size:5px;font-weight:900;letter-spacing:0.06em;text-align:center;line-height:1.2;">Healthcare</div>
+    <div style="color:#6B7280;font-size:3.5px;font-weight:600;letter-spacing:0.04em;text-align:center;line-height:1.2;">Security</div>
+  </div>`
 }
 
 export function renderCarteRectoHtml(carte: CarteVirtuelle, firstName?: string, lastName?: string): string {
@@ -54,7 +71,8 @@ export function renderCarteRectoHtml(carte: CarteVirtuelle, firstName?: string, 
 
   return `
     <div style="position:relative;width:100%;height:100%;background:${C_BG_CARD};border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08),inset 0 0 0 1px rgba(0,0,0,0.1);font-family:system-ui,-apple-system,sans-serif;">
-      ${zellSvg()}
+      ${zellSvg('zell-recto')}
+      ${doctorekWatermark()}
 
       <!-- Red/Green stripe -->
       <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg, ${C_RED} 0%, ${C_RED} 50%, ${C_GREEN} 50%, ${C_GREEN} 100%);"></div>
@@ -134,7 +152,7 @@ export function renderCarteVersoHtml(carte: CarteVirtuelle, firstName?: string, 
     { fr: 'Nom',                   ar: 'النسب',               value: nom },
     { fr: 'Prénom',                ar: 'الاسم الشخصي',        value: prenom },
     { fr: 'Date de naissance',     ar: 'تاريخ الازدياد',      value: carte.dateNaissance ?? '—' },
-    { fr: 'C.I.N.',                ar: 'ب.ت.و',               value: '—' },
+    { fr: 'C.I.N.',                ar: 'ب.ت.و',               value: carte.numIdentite ?? '—' },
     { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',      value: `01/01/${createdYear}` },
   ]
 
@@ -148,7 +166,8 @@ export function renderCarteVersoHtml(carte: CarteVirtuelle, firstName?: string, 
 
   return `
     <div style="position:relative;width:100%;height:100%;background:${C_BG_CARD};border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08),inset 0 0 0 1px rgba(0,0,0,0.1);font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;">
-      ${zellSvg()}
+      ${zellSvg('zell-verso')}
+      ${doctorekWatermark()}
 
       <!-- Red/Green stripe -->
       <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg, ${C_RED} 0%, ${C_RED} 50%, ${C_GREEN} 50%, ${C_GREEN} 100%);z-index:3;"></div>
@@ -173,6 +192,7 @@ export function renderCarteVersoHtml(carte: CarteVirtuelle, firstName?: string, 
       <div style="background:#F8FAFC;border-top:1px solid #E5E7EB;padding:6px 20px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2;">
         <div style="background:${C_DOC_BLUE};color:white;padding:1px 5px;border-radius:3px;font-size:7px;font-weight:900;font-style:italic;">Doctorek</div>
         <div style="font-family:'Courier New',Courier,monospace;font-size:6px;color:${C_LABEL};letter-spacing:0.08em;font-weight:600;">CARTE MÉDICALE NATIONALE — MA</div>
+        ${doubleShieldBadge()}
       </div>
     </div>
   `

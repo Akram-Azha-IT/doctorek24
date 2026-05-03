@@ -53,7 +53,11 @@ function mapCarteToForm(carte: CarteVirtuelle): CarteFormData {
 export default function CarteEditPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
-  const session = getSession()
+  const [session, setSession] = useState<ReturnType<typeof getSession>>(null)
+
+  useEffect(() => {
+    setSession(getSession())
+  }, [])
 
   const { data: existingCarte, isLoading } = useCarteByPatient(session?.id ?? null)
   const createCarte = useCreateCarte()
@@ -63,6 +67,8 @@ export default function CarteEditPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(carteFullSchema) as any,
     defaultValues: {
+      firstName: null,
+      lastName: null,
       photoUrl: null,
       allergies: [],
       maladiesChroniques: [],
@@ -77,9 +83,16 @@ export default function CarteEditPage() {
 
   useEffect(() => {
     if (existingCarte) {
-      form.reset(mapCarteToForm(existingCarte))
+      form.reset({
+        ...mapCarteToForm(existingCarte),
+        firstName: session?.firstName ?? null,
+        lastName: session?.lastName ?? null,
+      })
+    } else if (session) {
+      form.setValue('firstName' as never, session.firstName ?? null)
+      form.setValue('lastName' as never, session.lastName ?? null)
     }
-  }, [existingCarte, form])
+  }, [existingCarte, session, form])
 
   const allergies = useFieldArray({ control: form.control, name: 'allergies' as never })
   const maladies = useFieldArray({ control: form.control, name: 'maladiesChroniques' as never })
@@ -106,20 +119,24 @@ export default function CarteEditPage() {
 
   const onSubmit = async (data: CarteFormData) => {
     if (!session) { router.push('/login'); return }
+    const { firstName, lastName, ...carteData } = data as CarteFormData & { firstName?: string | null; lastName?: string | null }
     const payload = {
       patientId: session.id,
-      ...data,
-      allergies: (data.allergies ?? []).filter(Boolean) as string[],
-      maladiesChroniques: (data.maladiesChroniques ?? []).filter(Boolean) as string[],
-      vaccinations: (data.vaccinations ?? []).filter(Boolean) as string[],
-      antecedentsFamiliaux: (data.antecedentsFamiliaux ?? []).filter(Boolean) as string[],
+      ...carteData,
+      allergies: (carteData.allergies ?? []).filter(Boolean) as string[],
+      maladiesChroniques: (carteData.maladiesChroniques ?? []).filter(Boolean) as string[],
+      vaccinations: (carteData.vaccinations ?? []).filter(Boolean) as string[],
+      antecedentsFamiliaux: (carteData.antecedentsFamiliaux ?? []).filter(Boolean) as string[],
     }
     const carte = isUpdating
       ? await updateCarte.mutateAsync(payload)
       : await createCarte.mutateAsync(payload)
-    if (carte.photoUrl) {
-      saveSession({ ...session, photoUrl: carte.photoUrl })
-    }
+    saveSession({
+      ...session,
+      ...(firstName ? { firstName } : {}),
+      ...(lastName ? { lastName } : {}),
+      ...(carte.photoUrl ? { photoUrl: carte.photoUrl } : {}),
+    })
     router.push('/dashboard/patient')
   }
 
@@ -254,6 +271,18 @@ export default function CarteEditPage() {
                   {/* Step 1 — Identity */}
                   {step === 0 && (
                     <div className="space-y-5">
+                      {/* Name fields */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelCls}>Prénom</label>
+                          <input {...register('firstName' as never)} placeholder="ex: Mohamed" className={inputCls} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Nom</label>
+                          <input {...register('lastName' as never)} placeholder="ex: El Fassi" className={inputCls} />
+                        </div>
+                      </div>
+
                       {/* Photo upload */}
                       <div className="flex flex-col sm:flex-row items-start gap-4">
                         <div className="flex flex-col items-center gap-2">

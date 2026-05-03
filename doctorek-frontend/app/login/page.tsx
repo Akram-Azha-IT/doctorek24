@@ -10,6 +10,8 @@ import { saveSession } from '@/lib/session'
 
 const LoginSchema = z.object({
   role: z.enum(['MEDECIN', 'PATIENT']),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   email: z.string().email('Email invalide'),
   password: z.string().min(1, 'Mot de passe requis'),
   userId: z.string().uuid('Format UUID invalide (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)'),
@@ -27,15 +29,23 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(LoginSchema),
-    defaultValues: { role: 'MEDECIN', email: '', password: '', userId: '' },
+    defaultValues: { role: 'MEDECIN', firstName: '', lastName: '', email: '', password: '', userId: '' },
   })
 
   function onSubmit(values: LoginValues) {
-    // Use `role` state directly — the hidden input never fires RHF onChange
+    const pendingRaw = localStorage.getItem('doctorek_pending_name')
+    const pending = pendingRaw
+      ? (JSON.parse(pendingRaw) as { firstName: string; lastName: string })
+      : null
+    localStorage.removeItem('doctorek_pending_name')
+
     saveSession({
       role,
       id: values.userId,
       email: values.email,
+      ...(pending ?? {}),
+      ...(values.firstName ? { firstName: values.firstName } : {}),
+      ...(values.lastName ? { lastName: values.lastName } : {}),
     })
 
     if (role === 'MEDECIN') {
@@ -78,6 +88,31 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <input type="hidden" {...register('role')} value={role} />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Prénom
+                </label>
+                <input
+                  type="text"
+                  {...register('firstName')}
+                  placeholder="Mohamed"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Nom
+                </label>
+                <input
+                  type="text"
+                  {...register('lastName')}
+                  placeholder="El Fassi"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">

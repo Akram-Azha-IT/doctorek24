@@ -26,6 +26,10 @@ export function RegisterForm() {
     const { confirmPassword: _, ...payload } = values
     mutate(payload, {
       onSuccess: (data) => {
+        localStorage.setItem('doctorek_pending_name', JSON.stringify({
+          firstName: values.firstName,
+          lastName: values.lastName,
+        }))
         toast.success('Inscription réussie ! Vérifiez votre email.')
         router.push(`/inscription/verification?userId=${data.id}&email=${encodeURIComponent(data.email)}`)
       },

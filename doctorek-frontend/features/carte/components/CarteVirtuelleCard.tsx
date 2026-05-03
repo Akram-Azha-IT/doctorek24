@@ -152,19 +152,13 @@ function CarteRecto({ carte, firstName, lastName }: { carte: CarteVirtuelle; fir
           </div>
           <div style={{ height: '1px', flex: 1, background: `${C_DOC_BLUE}50`, marginRight: 'clamp(14px, 4vw, 20px)' }} />
         </div>
-        {/* Caducée */}
-        <svg viewBox="0 0 24 24" style={{ width: 'clamp(10px, 2.8vw, 16px)', height: 'clamp(10px, 2.8vw, 16px)', marginTop: 'clamp(2px, 0.5vw, 4px)', display: 'inline-block' }} fill={C_DOC_BLUE} xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2C10.9 2 10 2.9 10 4v1.17C7.17 5.9 5 8.3 5 11c0 2.1 1.07 3.94 2.69 5.06L7 20h2l.5-3h5l.5 3h2l-.69-3.94C17.93 14.94 19 13.1 19 11c0-2.7-2.17-5.1-5-5.83V4c0-1.1-.9-2-2-2zm0 2.5c.28 0 .5.22.5.5v.72C14.33 6.3 16 8.5 16 11c0 1.48-.6 2.82-1.56 3.8L14 15H10l-.44-.2C8.6 13.82 8 12.48 8 11c0-2.5 1.67-4.7 3.5-4.28V4.5c0-.28.22-.5.5-.5z"/>
-        </svg>
       </div>
 
-      {/* Shield watermark — right side */}
-      <div style={{ position: 'absolute', right: 'clamp(14px, 4vw, 20px)', top: '50%', transform: 'translateY(-30%)', zIndex: 1, opacity: 0.06, pointerEvents: 'none' }}>
-        <svg viewBox="0 0 100 120" style={{ width: 'clamp(60px, 18vw, 110px)' }} fill={C_DOC_BLUE} xmlns="http://www.w3.org/2000/svg">
-          <path d="M50 5 L95 20 L95 60 C95 85 75 105 50 115 C25 105 5 85 5 60 L5 20 Z"/>
-          <rect x="44" y="30" width="12" height="60" fill="white"/>
-          <rect x="20" y="54" width="60" height="12" fill="white"/>
-        </svg>
+      {/* Doctorek background copyright watermark */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: C_DOC_BLUE, fontSize: 'clamp(28px, 9vw, 56px)', fontWeight: 900, fontStyle: 'italic', opacity: 0.045, letterSpacing: '-0.02em', transform: 'rotate(-18deg)', whiteSpace: 'nowrap', userSelect: 'none' }}>
+          Doctorek
+        </span>
       </div>
 
       {/* Corps de la carte */}
@@ -247,7 +241,7 @@ function CarteVerso({
     { fr: 'Nom', ar: 'النسب',                      value: nom },
     { fr: 'Prénom', ar: 'الاسم الشخصي',             value: prenom },
     { fr: 'Date de naissance', ar: 'تاريخ الازدياد', value: carte.dateNaissance ?? '—' },
-    { fr: 'C.I.N.', ar: 'ب.ت.و',                   value: '—' },
+    { fr: 'C.I.N.', ar: 'ب.ت.و',                   value: carte.numIdentite ?? '—' },
     { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل', value: `01/01/${createdYear}` },
   ]
 
@@ -262,6 +256,13 @@ function CarteVerso({
       ...(flat ? {} : { transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }),
     }}>
       <ZelligeWatermark />
+
+      {/* Doctorek background copyright watermark */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: C_DOC_BLUE, fontSize: 'clamp(28px, 9vw, 56px)', fontWeight: 900, fontStyle: 'italic', opacity: 0.045, letterSpacing: '-0.02em', transform: 'rotate(-18deg)', whiteSpace: 'nowrap', userSelect: 'none' }}>
+          Doctorek
+        </span>
+      </div>
 
       {/* Liseré haut rouge/vert */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: `linear-gradient(90deg, ${C_RED} 0%, ${C_RED} 50%, ${C_GREEN} 50%, ${C_GREEN} 100%)` }} />
@@ -311,8 +312,8 @@ function CarteVerso({
             {/* Small shield overlay — deep teal navy */}
             <path d="M36 22 L56 28 L56 39 C56 47 47 54 36 58 C25 54 16 47 16 39 L16 28 Z" fill="#00263C"/>
           </svg>
-          <div style={{ color: C_DOC_DARK, fontSize: 'clamp(3px, 0.85vw, 5px)', fontWeight: 900, letterSpacing: '0.06em', textAlign: 'center', lineHeight: 1.2 }}>SÉCURISÉ</div>
-          <div style={{ color: C_LABEL, fontSize: 'clamp(2.5px, 0.65vw, 3.5px)', fontWeight: 600, letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>& CHIFFRÉ</div>
+          <div style={{ color: C_DOC_DARK, fontSize: 'clamp(3px, 0.85vw, 5px)', fontWeight: 900, letterSpacing: '0.06em', textAlign: 'center', lineHeight: 1.2 }}>Healthcare</div>
+          <div style={{ color: C_LABEL, fontSize: 'clamp(2.5px, 0.65vw, 3.5px)', fontWeight: 600, letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>Security</div>
         </div>
         {/* Text */}
         <div style={{ flex: 1 }}>

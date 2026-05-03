@@ -17,6 +17,8 @@ const antecedentSchema = z.object({
 })
 
 export const carteStep1Schema = z.object({
+  firstName: z.string().optional().nullable(),
+  lastName: z.string().optional().nullable(),
   photoUrl: z.string().optional().nullable(),
   dateNaissance: z.string().optional().nullable(),
   genre: z.string().optional().nullable(),
