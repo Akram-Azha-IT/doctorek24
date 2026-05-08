@@ -6,6 +6,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { carteFullSchema, CarteFormData } from '@/features/carte/schemas'
 import { useCreateCarte, useUpdateCarte, useCarteByPatient } from '@/features/carte/hooks'
+import { getInfosMedicales, upsertInfosMedicales } from '@/features/dossier/api'
 import { getSession, saveSession } from '@/lib/session'
 import { CarteVirtuelle } from '@/lib/types'
 import CarteVirtuelleCard from '@/features/carte/components/CarteVirtuelleCard'
@@ -131,6 +132,25 @@ export default function CarteEditPage() {
     const carte = isUpdating
       ? await updateCarte.mutateAsync(payload)
       : await createCarte.mutateAsync(payload)
+
+    // Sync overlapping fields to dossier (preserve doctor notes)
+    const existingInfos = await getInfosMedicales(session.id).catch(() => null)
+    await upsertInfosMedicales(session.id, {
+      groupeSanguin: carteData.groupeSanguin ?? null,
+      allergies: (carteData.allergies ?? []).filter(Boolean) as string[],
+      antecedents: [
+        ...(carteData.maladiesChroniques ?? []).filter(Boolean),
+        ...(carteData.antecedentsChirurgicaux ?? [])
+          .filter((a) => a.description)
+          .map((a) => `${a.description}${a.date ? ` (${a.date})` : ''}`),
+      ].join('\n') || null,
+      traitementsCours: (carteData.medicamentsActuels ?? [])
+        .filter((m) => m.nom)
+        .map((m) => `${m.nom}${m.dosage ? ` ${m.dosage}` : ''}`.trim())
+        .join(', ') || null,
+      notesGenerales: existingInfos?.notesGenerales ?? null,
+    }).catch(() => null)
+
     saveSession({
       ...session,
       ...(firstName ? { firstName } : {}),
@@ -167,6 +187,58 @@ export default function CarteEditPage() {
               firstName={session?.firstName}
               lastName={session?.lastName}
             />
+          </div>
+        )}
+
+        {/* Motivation banner — shown only for first-time card creation */}
+        {!existingCarte && (
+          <div className="mb-6 rounded-2xl overflow-hidden shadow-md">
+            {/* Top strip — urgency / loss aversion */}
+            <div className="bg-[#00263C] px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-[#E01E5A]/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#E01E5A]">
+                    <path d="M12 2L2 19h20L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M12 9v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Et si vous étiez inconscient aux urgences ?</p>
+                  <p className="text-[#B6DAF7] text-xs mt-0.5">Les secours ont besoin de votre groupe sanguin, allergies et contacts en quelques secondes.</p>
+                </div>
+              </div>
+              <span className="self-start sm:self-auto bg-[#2EB67D] text-white text-[11px] font-bold px-3 py-1 rounded-full flex-shrink-0">
+                100% Gratuit
+              </span>
+            </div>
+
+            {/* Bottom strip — benefits + goal gradient */}
+            <div className="bg-[#007DFF] px-6 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div className="flex items-center gap-1.5 text-white text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Prêt en <strong>5 minutes</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5 text-white text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Reconnu dans tous les établissements</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-white text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Téléchargeable en PDF</span>
+              </div>
+              <div className="ml-auto flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-white text-[11px] font-semibold">Service Doctorek certifié</span>
+              </div>
+            </div>
           </div>
         )}
 

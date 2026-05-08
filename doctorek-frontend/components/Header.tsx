@@ -12,6 +12,9 @@ export function Header() {
 
   useEffect(() => {
     setSession(getSession())
+    function sync() { setSession(getSession()) }
+    window.addEventListener('session-updated', sync)
+    return () => window.removeEventListener('session-updated', sync)
   }, [])
 
   function handleLogout() {

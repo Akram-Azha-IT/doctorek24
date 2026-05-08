@@ -89,31 +89,6 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <input type="hidden" {...register('role')} value={role} />
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Prénom
-                </label>
-                <input
-                  type="text"
-                  {...register('firstName')}
-                  placeholder="Mohamed"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Nom
-                </label>
-                <input
-                  type="text"
-                  {...register('lastName')}
-                  placeholder="El Fassi"
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Email

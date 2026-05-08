@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useRdvsMedecin } from '@/features/agenda/hooks'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import type { RendezVous, StatutRdv } from '@/lib/types'
+import type { RendezVous, StatutRdv, CarteVirtuelleRequest, AntecedentChirurgical, MedicamentActuel } from '@/lib/types'
+import { useCarteByPatient, useUpdateCarte, useCreateCarte } from '@/features/carte/hooks'
 import {
   useInfosMedicales,
   useUpsertInfosMedicales,
@@ -152,37 +153,132 @@ function TabBtn({
 
 function InfosTab({ patientId }: { patientId: string }) {
   const { data, isLoading } = useInfosMedicales(patientId)
+  const { data: carte } = useCarteByPatient(patientId)
   const upsert = useUpsertInfosMedicales(patientId)
-  const [newAllergie, setNewAllergie] = useState('')
+  const updateCarteM = useUpdateCarte(patientId)
+  const createCarteM = useCreateCarte()
 
-  const infos = data ?? {
-    patientId,
-    groupeSanguin: '',
-    allergies: [],
-    antecedents: '',
-    traitementsCours: '',
-    notesGenerales: '',
+  const [newAllergie, setNewAllergie] = useState('')
+  const [newMaladie, setNewMaladie] = useState('')
+  const [newVaccin, setNewVaccin] = useState('')
+  const [newAntecedent, setNewAntecedent] = useState<AntecedentChirurgical>({ description: '', date: '' })
+  const [newMedicament, setNewMedicament] = useState({ nom: '', dosage: '' })
+
+  const notesGenerales = data?.notesGenerales ?? ''
+
+  function saveCarteField(patch: Partial<CarteVirtuelleRequest>) {
+    const base: CarteVirtuelleRequest = {
+      patientId,
+      dateNaissance: carte?.dateNaissance,
+      genre: carte?.genre,
+      nationalite: carte?.nationalite,
+      numIdentite: carte?.numIdentite,
+      photoUrl: carte?.photoUrl,
+      telephone: carte?.telephone,
+      adresseRue: carte?.adresseRue,
+      adresseVille: carte?.adresseVille,
+      adressePays: carte?.adressePays,
+      tailleCm: carte?.tailleCm,
+      poidsKg: carte?.poidsKg,
+      donneurOrganes: carte?.donneurOrganes,
+      antecedentsFamiliaux: carte?.antecedentsFamiliaux ?? [],
+      contactsUrgence: carte?.contactsUrgence ?? [],
+      medecinTraitant: carte?.medecinTraitant,
+      assuranceNom: carte?.assuranceNom,
+      assuranceNumero: carte?.assuranceNumero,
+      assuranceDetails: carte?.assuranceDetails,
+      groupeSanguin: carte?.groupeSanguin,
+      allergies: carte?.allergies ?? [],
+      maladiesChroniques: carte?.maladiesChroniques ?? [],
+      medicamentsActuels: carte?.medicamentsActuels ?? [],
+      antecedentsChirurgicaux: carte?.antecedentsChirurgicaux ?? [],
+      vaccinations: carte?.vaccinations ?? [],
+      ...patch,
+    }
+    if (carte) {
+      updateCarteM.mutate(base)
+    } else {
+      createCarteM.mutate(base)
+    }
   }
 
-  function save(patch: Partial<typeof infos>) {
+  function saveNotes(notes: string) {
     upsert.mutate({
-      groupeSanguin: patch.groupeSanguin ?? infos.groupeSanguin ?? null,
-      allergies: patch.allergies ?? infos.allergies,
-      antecedents: patch.antecedents ?? infos.antecedents ?? null,
-      traitementsCours: patch.traitementsCours ?? infos.traitementsCours ?? null,
-      notesGenerales: patch.notesGenerales ?? infos.notesGenerales ?? null,
+      groupeSanguin: null,
+      allergies: [],
+      antecedents: null,
+      traitementsCours: null,
+      notesGenerales: notes,
     })
   }
 
   function addAllergie() {
     const val = newAllergie.trim()
-    if (!val || infos.allergies.includes(val)) return
-    save({ allergies: [...infos.allergies, val] })
+    if (!val || (carte?.allergies ?? []).includes(val)) return
+    saveCarteField({ allergies: [...(carte?.allergies ?? []), val] })
     setNewAllergie('')
   }
 
   function removeAllergie(a: string) {
-    save({ allergies: infos.allergies.filter((x) => x !== a) })
+    saveCarteField({ allergies: (carte?.allergies ?? []).filter((x) => x !== a) })
+  }
+
+  function addMaladie() {
+    const val = newMaladie.trim()
+    if (!val) return
+    saveCarteField({ maladiesChroniques: [...(carte?.maladiesChroniques ?? []), val] })
+    setNewMaladie('')
+  }
+
+  function removeMaladie(m: string) {
+    saveCarteField({ maladiesChroniques: (carte?.maladiesChroniques ?? []).filter((x) => x !== m) })
+  }
+
+  function addMedicament() {
+    const nom = newMedicament.nom.trim()
+    if (!nom) return
+    saveCarteField({
+      medicamentsActuels: [
+        ...(carte?.medicamentsActuels ?? []),
+        { nom, dosage: newMedicament.dosage?.trim() ?? '' },
+      ],
+    })
+    setNewMedicament({ nom: '', dosage: '' })
+  }
+
+  function removeMedicament(idx: number) {
+    saveCarteField({
+      medicamentsActuels: (carte?.medicamentsActuels ?? []).filter((_, i) => i !== idx),
+    })
+  }
+
+  function addAntecedentChir() {
+    const desc = newAntecedent.description.trim()
+    if (!desc) return
+    saveCarteField({
+      antecedentsChirurgicaux: [
+        ...(carte?.antecedentsChirurgicaux ?? []),
+        { description: desc, date: newAntecedent.date || undefined },
+      ],
+    })
+    setNewAntecedent({ description: '', date: '' })
+  }
+
+  function removeAntecedentChir(idx: number) {
+    saveCarteField({
+      antecedentsChirurgicaux: (carte?.antecedentsChirurgicaux ?? []).filter((_, i) => i !== idx),
+    })
+  }
+
+  function addVaccin() {
+    const val = newVaccin.trim()
+    if (!val) return
+    saveCarteField({ vaccinations: [...(carte?.vaccinations ?? []), val] })
+    setNewVaccin('')
+  }
+
+  function removeVaccin(v: string) {
+    saveCarteField({ vaccinations: (carte?.vaccinations ?? []).filter((x) => x !== v) })
   }
 
   if (isLoading)
@@ -196,15 +292,16 @@ function InfosTab({ patientId }: { patientId: string }) {
 
   return (
     <div className="space-y-5">
+      {/* Groupe sanguin */}
       <Card icon={<Heart className="h-4 w-4 text-red-500" />} title="Groupe sanguin">
         <div className="flex flex-wrap gap-2">
           {GROUPES.map((g) => (
             <button
               key={g}
               type="button"
-              onClick={() => save({ groupeSanguin: g })}
+              onClick={() => saveCarteField({ groupeSanguin: g })}
               className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                infos.groupeSanguin === g
+                carte?.groupeSanguin === g
                   ? 'border-[#1863A9] bg-[#1863A9] text-white'
                   : 'border-zinc-200 text-zinc-600 hover:border-[#1863A9] hover:text-[#1863A9]'
               }`}
@@ -215,25 +312,19 @@ function InfosTab({ patientId }: { patientId: string }) {
         </div>
       </Card>
 
-      <Card
-        icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
-        title="Allergies"
-      >
+      {/* Allergies */}
+      <Card icon={<AlertTriangle className="h-4 w-4 text-amber-500" />} title="Allergies">
         <div className="flex flex-wrap gap-2 mb-3">
-          {infos.allergies.length === 0 && (
+          {(carte?.allergies ?? []).length === 0 && (
             <p className="text-sm text-zinc-400">Aucune allergie enregistrée</p>
           )}
-          {infos.allergies.map((a) => (
+          {(carte?.allergies ?? []).map((a) => (
             <span
               key={a}
               className="flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-sm font-medium text-amber-700"
             >
               {a}
-              <button
-                type="button"
-                onClick={() => removeAllergie(a)}
-                className="hover:text-amber-900"
-              >
+              <button type="button" onClick={() => removeAllergie(a)} className="hover:text-amber-900">
                 <X className="h-3 w-3" />
               </button>
             </span>
@@ -258,40 +349,182 @@ function InfosTab({ patientId }: { patientId: string }) {
         </div>
       </Card>
 
-      <Card
-        icon={<ClipboardList className="h-4 w-4 text-[#1863A9]" />}
-        title="Antécédents médicaux"
-      >
-        <textarea
-          rows={4}
-          defaultValue={infos.antecedents ?? ''}
-          onBlur={(e) => save({ antecedents: e.target.value })}
-          placeholder="Hypertension, diabète type 2, chirurgies antérieures…"
-          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30 resize-none"
-        />
+      {/* Maladies chroniques */}
+      <Card icon={<ClipboardList className="h-4 w-4 text-[#1863A9]" />} title="Maladies chroniques">
+        <div className="flex flex-wrap gap-2 mb-3">
+          {(carte?.maladiesChroniques ?? []).length === 0 && (
+            <p className="text-sm text-zinc-400">Aucune maladie chronique enregistrée</p>
+          )}
+          {(carte?.maladiesChroniques ?? []).map((m) => (
+            <span
+              key={m}
+              className="flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-sm font-medium text-blue-700"
+            >
+              {m}
+              <button type="button" onClick={() => removeMaladie(m)} className="hover:text-blue-900">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newMaladie}
+            onChange={(e) => setNewMaladie(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addMaladie()}
+            placeholder="Ajouter une maladie chronique…"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+          />
+          <button
+            type="button"
+            onClick={addMaladie}
+            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
       </Card>
 
-      <Card
-        icon={<Pill className="h-4 w-4 text-purple-500" />}
-        title="Médicaments en cours"
-      >
-        <textarea
-          rows={3}
-          defaultValue={infos.traitementsCours ?? ''}
-          onBlur={(e) => save({ traitementsCours: e.target.value })}
-          placeholder="Metformine 500mg, Lisinopril 10mg…"
-          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30 resize-none"
-        />
+      {/* Médicaments actuels */}
+      <Card icon={<Pill className="h-4 w-4 text-purple-500" />} title="Médicaments actuels">
+        <ul className="space-y-1.5 mb-3">
+          {(carte?.medicamentsActuels ?? []).length === 0 && (
+            <li className="text-sm text-zinc-400">Aucun médicament enregistré</li>
+          )}
+          {(carte?.medicamentsActuels ?? []).map((med, i) => (
+            <li key={i} className="flex items-center gap-2 rounded-lg bg-zinc-50 border border-zinc-100 px-3 py-2">
+              <span className="flex-1 text-sm font-medium text-zinc-800">
+                {med.nom}
+                {med.dosage.length > 0 && <span className="ml-2 text-xs text-zinc-400 font-normal">{med.dosage}</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeMedicament(i)}
+                className="text-zinc-300 hover:text-red-500 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newMedicament.nom}
+            onChange={(e) => setNewMedicament((p) => ({ ...p, nom: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && addMedicament()}
+            placeholder="Nom du médicament…"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+          />
+          <input
+            type="text"
+            value={newMedicament.dosage}
+            onChange={(e) => setNewMedicament((p) => ({ ...p, dosage: e.target.value }))}
+            placeholder="Dosage (optionnel)"
+            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+          />
+          <button
+            type="button"
+            onClick={addMedicament}
+            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
       </Card>
 
-      <Card
-        icon={<FileText className="h-4 w-4 text-zinc-400" />}
-        title="Notes générales"
-      >
+      {/* Antécédents chirurgicaux */}
+      <Card icon={<Stethoscope className="h-4 w-4 text-zinc-500" />} title="Antécédents chirurgicaux">
+        <ul className="space-y-1 mb-3">
+          {(carte?.antecedentsChirurgicaux ?? []).length === 0 && (
+            <li className="text-sm text-zinc-400">Aucun antécédent chirurgical</li>
+          )}
+          {(carte?.antecedentsChirurgicaux ?? []).map((a, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm text-zinc-700">
+              <span className="flex-1">
+                {a.description}
+                {a.date && <span className="text-zinc-400 ml-1">({a.date})</span>}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeAntecedentChir(i)}
+                className="text-zinc-300 hover:text-red-500 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newAntecedent.description}
+            onChange={(e) => setNewAntecedent((p) => ({ ...p, description: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && addAntecedentChir()}
+            placeholder="Description (ex: Appendicectomie)…"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+          />
+          <input
+            type="text"
+            value={newAntecedent.date ?? ''}
+            onChange={(e) => setNewAntecedent((p) => ({ ...p, date: e.target.value }))}
+            placeholder="Date (optionnel)"
+            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+          />
+          <button
+            type="button"
+            onClick={addAntecedentChir}
+            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+      </Card>
+
+      {/* Vaccinations */}
+      <Card icon={<Heart className="h-4 w-4 text-emerald-500" />} title="Vaccinations">
+        <div className="flex flex-wrap gap-2 mb-3">
+          {(carte?.vaccinations ?? []).length === 0 && (
+            <p className="text-sm text-zinc-400">Aucune vaccination enregistrée</p>
+          )}
+          {(carte?.vaccinations ?? []).map((v) => (
+            <span
+              key={v}
+              className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-sm font-medium text-emerald-700"
+            >
+              {v}
+              <button type="button" onClick={() => removeVaccin(v)} className="hover:text-emerald-900">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newVaccin}
+            onChange={(e) => setNewVaccin(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addVaccin()}
+            placeholder="Ajouter un vaccin…"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+          />
+          <button
+            type="button"
+            onClick={addVaccin}
+            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+      </Card>
+
+      {/* Notes médecin — dossier only */}
+      <Card icon={<FileText className="h-4 w-4 text-zinc-400" />} title="Notes du médecin">
         <textarea
           rows={4}
-          defaultValue={infos.notesGenerales ?? ''}
-          onBlur={(e) => save({ notesGenerales: e.target.value })}
+          defaultValue={notesGenerales}
+          onBlur={(e) => saveNotes(e.target.value)}
           placeholder="Observations, remarques importantes du médecin…"
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30 resize-none"
         />
@@ -789,6 +1022,8 @@ export default function DossierPatientPage() {
   const medecinId = session?.role === 'MEDECIN' ? (session.id ?? '') : ''
 
   const [tab, setTab] = useState<TabId>('infos')
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   const { data: allRdvs, isLoading: rdvsLoading } = useRdvsMedecin(medecinId)
   const { data: ordonnances = [] } = useOrdonnances(patientId)
@@ -803,6 +1038,42 @@ export default function DossierPatientPage() {
     })
 
   const rdvsTermines = rdvs.filter((r) => r.statut === 'TERMINE').length
+  const hasAccess = rdvs.length > 0
+
+  if (!mounted || rdvsLoading) {
+    return (
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 space-y-6">
+        <div className="h-8 w-40 animate-pulse rounded-lg bg-zinc-200" />
+        <div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />
+        <div className="h-96 animate-pulse rounded-2xl bg-zinc-100" />
+      </main>
+    )
+  }
+
+  if (!hasAccess) {
+    return (
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-8 flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-800 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour aux patients
+        </button>
+        <div className="rounded-2xl border border-red-100 bg-red-50 px-8 py-16 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
+          </div>
+          <h2 className="mb-2 text-xl font-bold text-zinc-900">Accès non autorisé</h2>
+          <p className="mx-auto max-w-sm text-sm text-zinc-500">
+            Vous n'avez aucun rendez-vous avec ce patient. L'accès au dossier médical est
+            réservé aux médecins ayant une relation de soin établie.
+          </p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 space-y-6">

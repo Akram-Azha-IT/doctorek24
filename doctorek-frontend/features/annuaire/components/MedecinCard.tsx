@@ -1,6 +1,10 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { MedecinProfile } from '@/lib/types'
 import { MedecinAvatar } from './MedecinAvatar'
+import { getDoctorPhoto } from '@/lib/doctorPhotos'
 
 interface MedecinCardProps {
   medecin: MedecinProfile
@@ -9,11 +13,16 @@ interface MedecinCardProps {
 
 export function MedecinCard({ medecin, availableToday }: MedecinCardProps) {
   const accepte = medecin.acceptNouveauxPatients !== false
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPhotoUrl(getDoctorPhoto(medecin.id))
+  }, [medecin.id])
 
   return (
     <Link href={`/medecins/${medecin.id}`} className="block group">
       <div className="flex items-center gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-4 transition-shadow hover:shadow-md">
-        <MedecinAvatar firstName={medecin.firstName} lastName={medecin.lastName} size="md" />
+        <MedecinAvatar firstName={medecin.firstName} lastName={medecin.lastName} photoUrl={photoUrl} size="md" />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">

@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-jakarta);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,6 +49,19 @@
 }
 
 :root {
+  /* ── Doctorek brand tokens ──────────────────────────────────
+     Primary:  #007DFF  (hero bg, buttons, links)
+     Navy:     #00263C  (headings, dark surfaces, footer)
+     Page bg:  #F0F2F5
+     Text:     #333333
+     Muted:    #465058  (secondary text)
+     Pale:     #B6DAF7  (borders, footer text on dark)
+     Ice:      #EBF5FF  (light blue panel bg)
+     Green:    #2EB67D  (success)
+     Amber:    #ECB22E  (warning)
+     Red:      #E01E5A  (error)
+  ─────────────────────────────────────────────────────────── */
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -123,8 +136,17 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+    color: #333333;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   html {
     @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+    -webkit-font-smoothing: antialiased;
   }
 }

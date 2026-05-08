@@ -6,6 +6,7 @@ function getAvatarColor(name: string): string {
 interface MedecinAvatarProps {
   firstName: string
   lastName: string
+  photoUrl?: string | null
   size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
@@ -16,7 +17,17 @@ const SIZE_CLASSES = {
   xl: 'w-24 h-24 text-3xl',
 }
 
-export function MedecinAvatar({ firstName, lastName, size = 'lg' }: MedecinAvatarProps) {
+export function MedecinAvatar({ firstName, lastName, photoUrl, size = 'lg' }: MedecinAvatarProps) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={`${firstName} ${lastName}`}
+        className={`${SIZE_CLASSES[size]} rounded-full object-cover shrink-0`}
+      />
+    )
+  }
+
   const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase()
   const bg = getAvatarColor(`${firstName}${lastName}`)
 

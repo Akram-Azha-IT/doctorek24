@@ -86,7 +86,7 @@ function MrzLine({ firstName = "PATIENT", lastName = "DOCTOREK", docId = "VMC202
   // Génère la zone de lecture optique (Machine Readable Zone)
   const line1 = `I<MAR${docId}<<<<<<<<<<<<<<<<<`
   const line2 = `${lastName.replace(/\s/g, '<')}<<${firstName.replace(/\s/g, '<')}<<<<<<<<<<<<<<<<<<`
-  
+
   return (
     <div style={{
       fontFamily: '"Courier New", Courier, monospace',
@@ -163,7 +163,7 @@ function CarteRecto({ carte, firstName, lastName }: { carte: CarteVirtuelle; fir
 
       {/* Corps de la carte */}
       <div style={{ padding: 'clamp(8px, 2vw, 12px) clamp(14px, 4vw, 20px)', display: 'flex', gap: 'clamp(10px, 3vw, 16px)', position: 'relative', zIndex: 2 }}>
-        
+
         {/* Colonne Photo */}
         <div style={{ flexShrink: 0 }}>
           <div style={{
@@ -413,6 +413,30 @@ export default function CarteVirtuelleCard({ carte, firstName, lastName, onEdit 
             Modifier
           </button>
         )}
+      </div>
+
+      {/* Trust badges */}
+      <div className="mt-5 grid grid-cols-3 gap-2">
+        <div className="flex flex-col items-center gap-1.5 bg-[#F0F7FF] rounded-xl py-3 px-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#007DFF]">
+            <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-[11px] font-semibold text-[#1863A9] text-center leading-tight">Reconnu partout</span>
+        </div>
+        <div className="flex flex-col items-center gap-1.5 bg-[#F0FDF8] rounded-xl py-3 px-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#2EB67D]">
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.8"/>
+            <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+          </svg>
+          <span className="text-[11px] font-semibold text-[#1a7a52] text-center leading-tight">Données sécurisées</span>
+        </div>
+        <div className="flex flex-col items-center gap-1.5 bg-[#FFF8F0] rounded-xl py-3 px-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#ECB22E]">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="text-[11px] font-semibold text-[#92600a] text-center leading-tight">Service Certifié</span>
+        </div>
       </div>
     </div>
   )

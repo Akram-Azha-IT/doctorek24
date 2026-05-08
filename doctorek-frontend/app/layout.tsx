@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { QueryProvider } from '@/lib/query-provider'
 import { Toaster } from '@/components/ui/sonner'
@@ -7,6 +7,14 @@ import { Toaster } from '@/components/ui/sonner'
 const geist = Geist({
   variable: '--font-geist',
   subsets: ['latin'],
+  display: 'swap',
+})
+
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-jakarta',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -16,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="fr" className={`${geist.variable} ${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-zinc-50 font-sans">
         <QueryProvider>
           {children}

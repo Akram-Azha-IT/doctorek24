@@ -22,18 +22,26 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   const router = useRouter()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [sidebarWidth, setSidebarWidth] = useState(260)
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef(false)
   const startXRef = useRef(0)
   const startWidthRef = useRef(260)
 
-  useEffect(() => {
+  function syncFromSession() {
     const session = getSession()
     if (session) {
       setFirstName(session.firstName ?? '')
       setLastName(session.lastName ?? '')
+      setPhotoUrl(session.photoUrl ?? null)
     }
+  }
+
+  useEffect(() => {
+    syncFromSession()
+    window.addEventListener('session-updated', syncFromSession)
+    return () => window.removeEventListener('session-updated', syncFromSession)
   }, [])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
@@ -192,9 +200,17 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
                   <p className="text-[11px] font-semibold text-zinc-500">En ligne</p>
                 </div>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1863A9] text-sm font-bold text-white shadow-sm border-2 border-white cursor-pointer hover:opacity-90 transition-opacity">
-                {initials}
-              </div>
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt={fullName}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm border-2 border-white cursor-pointer hover:opacity-90 transition-opacity"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1863A9] text-sm font-bold text-white shadow-sm border-2 border-white cursor-pointer hover:opacity-90 transition-opacity">
+                  {initials}
+                </div>
+              )}
               <button className="rounded-full p-1 text-zinc-400 hover:text-[#010C2D] transition-colors">
                 <Settings className="h-5 w-5" />
               </button>
