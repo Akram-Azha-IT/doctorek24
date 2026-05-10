@@ -21,6 +21,14 @@ export function updateMedecin(id: string, data: UpdateMedecinProfilePayload): Pr
     body: JSON.stringify(data),
   })
 }
+
+export function updateMedecinPhoto(id: string, photoUrl: string): Promise<MedecinProfile> {
+  return apiFetch<MedecinProfile>(`/api/v1/annuaire/medecins/${id}/photo`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ photoUrl }),
+  })
+}
 import {
   type DisponibiliteFilter,
   nextNDaysISO,

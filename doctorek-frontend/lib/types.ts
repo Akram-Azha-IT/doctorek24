@@ -14,6 +14,7 @@ export interface MedecinProfile {
   inpe: string
   latitude?: number | null
   longitude?: number | null
+  photoUrl?: string | null
   secteurTarifaire?: 1 | 2 | 3
   langues?: string[]
   presentation?: string
@@ -125,6 +126,8 @@ export interface CarteVirtuelle {
   patientId: string
   cardRef: string
   statut: 'VIRTUEL'
+  firstName: string | null
+  lastName: string | null
   dateNaissance: string | null
   genre: string | null
   nationalite: string | null

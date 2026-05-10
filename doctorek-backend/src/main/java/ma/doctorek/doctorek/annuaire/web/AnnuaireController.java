@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import ma.doctorek.doctorek.annuaire.application.GetMedecinProfileUseCase;
 import ma.doctorek.doctorek.annuaire.application.SearchMedecinsUseCase;
 import ma.doctorek.doctorek.annuaire.application.SearchNearbyMedecinsUseCase;
+import ma.doctorek.doctorek.annuaire.application.UpdateMedecinPhotoUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinProfileUseCase;
+import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinPhotoRequest;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNearbyResult;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfile;
@@ -23,15 +25,18 @@ public class AnnuaireController {
     private final SearchMedecinsUseCase searchMedecinsUseCase;
     private final SearchNearbyMedecinsUseCase searchNearbyMedecinsUseCase;
     private final UpdateMedecinProfileUseCase updateMedecinProfileUseCase;
+    private final UpdateMedecinPhotoUseCase updateMedecinPhotoUseCase;
 
     public AnnuaireController(GetMedecinProfileUseCase getMedecinProfileUseCase,
                                SearchMedecinsUseCase searchMedecinsUseCase,
                                SearchNearbyMedecinsUseCase searchNearbyMedecinsUseCase,
-                               UpdateMedecinProfileUseCase updateMedecinProfileUseCase) {
+                               UpdateMedecinProfileUseCase updateMedecinProfileUseCase,
+                               UpdateMedecinPhotoUseCase updateMedecinPhotoUseCase) {
         this.getMedecinProfileUseCase = getMedecinProfileUseCase;
         this.searchMedecinsUseCase = searchMedecinsUseCase;
         this.searchNearbyMedecinsUseCase = searchNearbyMedecinsUseCase;
         this.updateMedecinProfileUseCase = updateMedecinProfileUseCase;
+        this.updateMedecinPhotoUseCase = updateMedecinPhotoUseCase;
     }
 
     /**
@@ -80,6 +85,18 @@ public class AnnuaireController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateMedecinProfileRequest request) {
         MedecinProfile updated = updateMedecinProfileUseCase.execute(id, request);
+        return ResponseEntity.ok(ApiResponse.ok(updated));
+    }
+
+    /**
+     * PUT /api/v1/annuaire/medecins/{id}/photo
+     * Met à jour la photo de profil d'un médecin.
+     */
+    @PutMapping("/medecins/{id}/photo")
+    public ResponseEntity<ApiResponse<MedecinProfile>> updateMedecinPhoto(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateMedecinPhotoRequest request) {
+        MedecinProfile updated = updateMedecinPhotoUseCase.execute(id, request);
         return ResponseEntity.ok(ApiResponse.ok(updated));
     }
 }

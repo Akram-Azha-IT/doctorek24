@@ -1,5 +1,5 @@
 export interface Session {
-  role: 'MEDECIN' | 'PATIENT'
+  role: 'MEDECIN' | 'PATIENT' | 'ADMIN'
   id: string
   email: string
   firstName?: string

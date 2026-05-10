@@ -58,6 +58,15 @@ public class JpaMedecinProfileRepository implements MedecinProfileRepository {
             .toList();
     }
 
+    @Override
+    public MedecinProfile updatePhotoUrl(UUID id, String photoUrl) {
+        User user = springData.findById(id)
+            .filter(u -> u.getRole() == Role.MEDECIN)
+            .orElseThrow(() -> new MedecinNotFoundException(id));
+        user.setPhotoUrl(photoUrl);
+        return toProfile(springData.save(user));
+    }
+
     private MedecinProfile toProfile(User u) {
         return new MedecinProfile(
             u.getId(),
@@ -68,7 +77,8 @@ public class JpaMedecinProfileRepository implements MedecinProfileRepository {
             u.getAdresse(),
             u.getInpe(),
             u.getLatitude(),
-            u.getLongitude()
+            u.getLongitude(),
+            u.getPhotoUrl()
         );
     }
 

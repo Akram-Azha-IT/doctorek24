@@ -11,4 +11,5 @@ public interface MedecinProfileRepository {
     List<MedecinProfile> searchMedecins(String specialite, String ville);
     MedecinProfile updateProfile(UUID id, UpdateMedecinProfileRequest request);
     List<MedecinNearbyResult> findNearbyMedecins(double lat, double lng, double radiusKm, String specialite);
+    MedecinProfile updatePhotoUrl(UUID id, String photoUrl);
 }

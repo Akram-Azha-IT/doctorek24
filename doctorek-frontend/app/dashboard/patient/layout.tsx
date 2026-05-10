@@ -4,8 +4,9 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Search, CreditCard,
-  LogOut, Bell, Settings, Activity, Heart, ChevronRight,
+  LogOut, Bell, Settings, Heart, ChevronRight,
 } from 'lucide-react'
+import Image from 'next/image'
 import { getSession, clearSession } from '@/lib/session'
 import { useCarteByPatient } from '@/features/carte/hooks'
 
@@ -104,12 +105,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
       >
         {/* Logo */}
         <div className="flex h-20 items-center gap-3 px-6 border-b border-zinc-100">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#007DFF] text-white shadow-md shadow-blue-500/30">
-            <Activity className="h-4 w-4" />
-          </div>
-          <span className="text-lg font-extrabold text-[#010C2D] tracking-tight">
-            Doctorek
-          </span>
+          <Image src="/logo0.png" alt="Doctorek" width={120} height={40} className="h-8 w-auto" />
         </div>
 
         {/* Patient identity mini-card */}

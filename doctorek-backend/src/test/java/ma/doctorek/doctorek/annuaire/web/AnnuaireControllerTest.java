@@ -60,7 +60,7 @@ class AnnuaireControllerTest {
         @DisplayName("returns 200 with medecin profile")
         void returns200WithProfile() throws Exception {
             MedecinProfile profile = new MedecinProfile(
-                existingId, "Youssef", "Bakkali", "Cardiologie", "Casablanca", "123 Rue Hassan II", "1234567890", null, null
+                existingId, "Youssef", "Bakkali", "Cardiologie", "Casablanca", "123 Rue Hassan II", "1234567890", null, null, null
             );
             when(getMedecinProfileUseCase.execute(existingId)).thenReturn(profile);
 
@@ -102,7 +102,7 @@ class AnnuaireControllerTest {
         @DisplayName("returns 200 with matching medecins")
         void returns200WithResults() throws Exception {
             MedecinProfile profile = new MedecinProfile(
-                UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
+                UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null, null
             );
             when(searchMedecinsUseCase.execute("Cardiologie", "Casablanca"))
                 .thenReturn(List.of(profile));
@@ -153,7 +153,7 @@ class AnnuaireControllerTest {
         @DisplayName("returns 200 with updated profile")
         void returns200WithUpdatedProfile() throws Exception {
             MedecinProfile updated = new MedecinProfile(
-                existingId, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
+                existingId, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null, null
             );
             when(updateMedecinProfileUseCase.execute(eq(existingId), any(UpdateMedecinProfileRequest.class)))
                 .thenReturn(updated);

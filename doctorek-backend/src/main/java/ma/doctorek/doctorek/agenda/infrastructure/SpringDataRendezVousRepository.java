@@ -25,6 +25,21 @@ class SpringDataRendezVousRepository implements RendezVousRepository {
     }
 
     @Override
+    public long countAll() {
+        return jpa.count();
+    }
+
+    @Override
+    public long countByDateRdv(LocalDate date) {
+        return jpa.countByDateRdv(date);
+    }
+
+    @Override
+    public long countByStatut(StatutRdv statut) {
+        return jpa.countByStatut(statut.name());
+    }
+
+    @Override
     public Optional<RendezVous> findById(UUID id) {
         return jpa.findById(id).map(RendezVousEntity::toDomain);
     }

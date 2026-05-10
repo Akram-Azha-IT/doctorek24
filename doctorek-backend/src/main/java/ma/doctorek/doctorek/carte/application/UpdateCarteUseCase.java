@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.carte.application;
 
+import ma.doctorek.doctorek.auth.domain.UserRepository;
 import ma.doctorek.doctorek.carte.application.dto.CarteVirtuelleRequest;
 import ma.doctorek.doctorek.carte.application.dto.CarteVirtuelleResponse;
 import ma.doctorek.doctorek.carte.domain.CarteNotFoundException;
@@ -15,9 +16,11 @@ import java.util.UUID;
 public class UpdateCarteUseCase {
 
     private final CarteVirtuelleRepository repository;
+    private final UserRepository userRepository;
 
-    public UpdateCarteUseCase(CarteVirtuelleRepository repository) {
+    public UpdateCarteUseCase(CarteVirtuelleRepository repository, UserRepository userRepository) {
         this.repository = repository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -72,6 +75,9 @@ public class UpdateCarteUseCase {
 
         CarteVirtuelle saved = repository.save(updated);
         repository.logAudit(saved.id(), "UPDATE", patientId);
-        return CarteVirtuelleResponse.from(saved);
+        String[] names = userRepository.findById(patientId)
+                .map(u -> new String[]{u.getFirstName(), u.getLastName()})
+                .orElse(new String[]{null, null});
+        return CarteVirtuelleResponse.from(saved, names[0], names[1]);
     }
 }

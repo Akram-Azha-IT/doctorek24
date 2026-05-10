@@ -1,9 +1,13 @@
 package ma.doctorek.doctorek.auth.infrastructure;
 
+import ma.doctorek.doctorek.auth.domain.Role;
 import ma.doctorek.doctorek.auth.domain.User;
 import ma.doctorek.doctorek.auth.domain.UserRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,5 +53,28 @@ public class JpaUserRepository implements UserRepository {
     @Override
     public boolean existsByInpe(String inpe) {
         return delegate.existsByInpe(inpe);
+    }
+
+    @Override
+    public long countByRole(Role role) {
+        return delegate.countByRole(role);
+    }
+
+    @Override
+    public List<User> findByRoleInWithSearch(List<Role> roles, String search, int page, int size) {
+        return delegate.findByRoleInWithSearch(
+                roles,
+                search == null ? "" : search.trim(),
+                PageRequest.of(page, size, Sort.by("createdAt").descending())
+        ).getContent();
+    }
+
+    @Override
+    public long countByRoleInWithSearch(List<Role> roles, String search) {
+        return delegate.findByRoleInWithSearch(
+                roles,
+                search == null ? "" : search.trim(),
+                PageRequest.of(0, Integer.MAX_VALUE)
+        ).getTotalElements();
     }
 }

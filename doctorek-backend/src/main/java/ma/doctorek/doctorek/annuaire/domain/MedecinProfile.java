@@ -11,5 +11,6 @@ public record MedecinProfile(
     String adresse,
     String inpe,
     Double latitude,
-    Double longitude
+    Double longitude,
+    String photoUrl
 ) {}

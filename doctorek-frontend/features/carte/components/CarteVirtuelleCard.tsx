@@ -106,7 +106,7 @@ function MrzLine({ firstName = "PATIENT", lastName = "DOCTOREK", docId = "VMC202
 
 // ── RECTO ──────────────────────────────────────────────────────────────────────
 
-function CarteRecto({ carte, firstName, lastName }: { carte: CarteVirtuelle; firstName?: string; lastName?: string }) {
+export function CarteRecto({ carte, firstName, lastName }: { carte: CarteVirtuelle; firstName?: string; lastName?: string }) {
   const nom = lastName?.toUpperCase() || '—'
   const prenom = firstName || '—'
   const expiryDate = new Date(); expiryDate.setFullYear(expiryDate.getFullYear() + 3)
@@ -222,7 +222,7 @@ function CarteRecto({ carte, firstName, lastName }: { carte: CarteVirtuelle; fir
 
 // ── VERSO ──────────────────────────────────────────────────────────────────────
 
-function CarteVerso({
+export function CarteVerso({
   carte,
   firstName,
   lastName,
@@ -282,51 +282,43 @@ function CarteVerso({
         </div>
       </div>
 
-      {/* Corps : champs bilingues 3 colonnes */}
-      <div style={{ flex: 1, padding: 'clamp(8px, 2vw, 12px) clamp(14px, 4vw, 20px)', position: 'relative', zIndex: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 'clamp(3px, 0.8vw, 5px)' }}>
-        {bilingualRows.map((row, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E5E7EB', paddingBottom: 'clamp(2px, 0.5vw, 3px)' }}>
-            {/* FR label — far left */}
-            <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, minWidth: 'clamp(50px, 13vw, 72px)', flexShrink: 0 }}>
-              {row.fr}
-            </span>
-            {/* Value — center */}
-            <span style={{ color: C_TEXT, fontSize: 'clamp(7px, 2vw, 10px)', fontWeight: 800, flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 4px' }}>
-              {row.value}
-            </span>
-            {/* AR label — far right */}
-            <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, direction: 'rtl', textAlign: 'right', minWidth: 'clamp(50px, 13vw, 72px)', flexShrink: 0 }}>
-              {row.ar}
-            </span>
-          </div>
-        ))}
-      </div>
+      {/* Corps : champs bilingues + notice */}
+      <div style={{ flex: 1, padding: 'clamp(6px, 1.5vw, 10px) clamp(14px, 4vw, 20px)', position: 'relative', zIndex: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.6vw, 4px)' }}>
+          {bilingualRows.map((row, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E5E7EB', paddingBottom: 'clamp(2px, 0.5vw, 3px)' }}>
+              <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, minWidth: 'clamp(50px, 13vw, 72px)', flexShrink: 0 }}>
+                {row.fr}
+              </span>
+              <span style={{ color: C_TEXT, fontSize: 'clamp(7px, 2vw, 10px)', fontWeight: 800, flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 4px' }}>
+                {row.value}
+              </span>
+              <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, direction: 'rtl', textAlign: 'right', minWidth: 'clamp(50px, 13vw, 72px)', flexShrink: 0 }}>
+                {row.ar}
+              </span>
+            </div>
+          ))}
+        </div>
 
-      {/* Confidentiality notice */}
-      <div style={{ margin: '0 clamp(10px, 3vw, 16px) clamp(4px, 1vw, 6px)', background: '#EEF4FF', border: `1px solid ${C_DOC_BLUE}30`, borderRadius: '6px', padding: 'clamp(4px, 1vw, 8px) clamp(8px, 2vw, 12px)', display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 10px)', position: 'relative', zIndex: 2 }}>
-        {/* Security badge — double-shield style */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, gap: 'clamp(1px, 0.3vw, 2px)' }}>
-          <svg viewBox="0 0 58 64" style={{ width: 'clamp(20px, 5.5vw, 34px)', overflow: 'visible' }} fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Large shield — Doctorek sky blue */}
-            <path d="M22 2 L44 8 L44 27 C44 39 34 49 22 55 C10 49 0 39 0 27 L0 8 Z" fill="#3DA8FF"/>
-            {/* Small shield overlay — deep teal navy */}
-            <path d="M36 22 L56 28 L56 39 C56 47 47 54 36 58 C25 54 16 47 16 39 L16 28 Z" fill="#00263C"/>
-          </svg>
-          <div style={{ color: C_DOC_DARK, fontSize: 'clamp(3px, 0.85vw, 5px)', fontWeight: 900, letterSpacing: '0.06em', textAlign: 'center', lineHeight: 1.2 }}>Healthcare</div>
-          <div style={{ color: C_LABEL, fontSize: 'clamp(2.5px, 0.65vw, 3.5px)', fontWeight: 600, letterSpacing: '0.04em', textAlign: 'center', lineHeight: 1.2 }}>Security</div>
-        </div>
-        {/* Text */}
-        <div style={{ flex: 1 }}>
-          <div style={{ color: C_TEXT, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 700, lineHeight: 1.4 }}>
-            Cette carte est strictement personnelle et confidentielle.
+        {/* Confidentiality notice + QR */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 10px)', marginTop: 'clamp(3px, 0.8vw, 6px)', marginBottom: 'clamp(4px, 1.2vw, 8px)' }}>
+          <div style={{ flex: 1, background: '#EEF4FF', border: `1px solid ${C_DOC_BLUE}22`, borderRadius: '5px', padding: 'clamp(3px, 0.7vw, 5px) clamp(5px, 1.2vw, 8px)', display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)' }}>
+            <svg viewBox="0 0 24 24" style={{ width: 'clamp(10px, 2.5vw, 14px)', flexShrink: 0 }} fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill={C_DOC_BLUE} opacity="0.9"/>
+              <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div>
+              <div style={{ color: C_TEXT, fontSize: 'clamp(4px, 1.05vw, 6px)', fontWeight: 700, lineHeight: 1.35 }}>
+                Cette carte est strictement personnelle et confidentielle.
+              </div>
+              <div style={{ color: C_LABEL, fontSize: 'clamp(3.5px, 0.85vw, 5px)', fontWeight: 500, lineHeight: 1.3, marginTop: '1px' }}>
+                En cas de perte ou de vol, contacter le Ministère de la Santé.
+              </div>
+            </div>
           </div>
-          <div style={{ color: C_LABEL, fontSize: 'clamp(3.5px, 0.9vw, 5.5px)', fontWeight: 500, lineHeight: 1.3, marginTop: '1px' }}>
-            En cas de perte ou de vol, veuillez contacter le Ministère de la Santé.
+          <div style={{ width: 'clamp(24px, 6.5vw, 42px)', height: 'clamp(24px, 6.5vw, 42px)', flexShrink: 0 }}>
+            <QrCodePlaceholder />
           </div>
-        </div>
-        {/* QR placeholder */}
-        <div style={{ width: 'clamp(24px, 7vw, 44px)', height: 'clamp(24px, 7vw, 44px)', flexShrink: 0 }}>
-          <QrCodePlaceholder />
         </div>
       </div>
 

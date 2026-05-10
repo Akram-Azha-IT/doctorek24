@@ -2,11 +2,15 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut, Search, Sun, Moon, Bell, Mail, Settings, Activity } from 'lucide-react'
+import {
+  LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut,
+  Search, Bell, Settings, ChevronDown,
+} from 'lucide-react'
+import Image from 'next/image'
 import { getSession, clearSession } from '@/lib/session'
 
 const NAV_ITEMS = [
-  { href: '/dashboard/medecin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/medecin', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/medecin/agenda', label: 'Agenda', icon: Calendar },
   { href: '/dashboard/medecin/patients', label: 'Patients', icon: Users },
   { href: '/dashboard/medecin/disponibilites', label: 'Disponibilités', icon: Clock },
@@ -23,11 +27,11 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
-  const [sidebarWidth, setSidebarWidth] = useState(260)
+  const [sidebarWidth, setSidebarWidth] = useState(256)
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef(false)
   const startXRef = useRef(0)
-  const startWidthRef = useRef(260)
+  const startWidthRef = useRef(256)
 
   function syncFromSession() {
     const session = getSession()
@@ -47,7 +51,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!dragRef.current) return
     const delta = e.clientX - startXRef.current
-    const next = Math.min(400, Math.max(180, startWidthRef.current + delta))
+    const next = Math.min(380, Math.max(200, startWidthRef.current + delta))
     setSidebarWidth(next)
   }, [])
 
@@ -90,27 +94,27 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
     return pathname.startsWith(item.href)
   }
 
-  const initials = firstName || lastName ? getInitials(firstName, lastName) : 'Dr'
+  const initials = firstName || lastName ? getInitials(firstName, lastName) : 'DR'
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Médecin'
+  const specialite = 'Médecin généraliste'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FB]">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden" style={{ background: '#F0F2F5' }}>
+      {/* ── Sidebar ── */}
       <aside
-        className="flex shrink-0 flex-col bg-[#F8F9FA]"
-        style={{ width: sidebarWidth }}
+        className="flex shrink-0 flex-col bg-white"
+        style={{ width: sidebarWidth, boxShadow: '1px 0 0 0 #E5E9F0' }}
       >
         {/* Logo */}
-        <div className="flex h-24 items-center gap-3 px-8">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1863A9] text-white shadow-md shadow-blue-500/20">
-            <Activity className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-extrabold text-[#010C2D] tracking-tight">Doctorek<span className="text-[#1863A9] font-medium">Pro</span></span>
+        <div className="flex h-16 shrink-0 items-center gap-2.5 px-6 border-b border-[#E5E9F0]">
+          <Image src="/logo0.png" alt="Doctorek" width={120} height={40} className="h-8 w-auto" />
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-2 px-4 space-y-1">
-          <p className="px-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-4">Applications</p>
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+          <p className="px-3 pt-1 pb-3 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#B0BAC9' }}>
+            Menu
+          </p>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item)
             return (
@@ -118,108 +122,170 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
                 key={item.href}
                 type="button"
                 onClick={() => router.push(item.href)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all"
+                style={
                   active
-                    ? 'bg-[#E8F2FC] text-[#1863A9]'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-[#010C2D]'
-                }`}
+                    ? { background: '#EBF4FF', color: '#007DFF' }
+                    : { color: '#6B7A99' }
+                }
+                onMouseEnter={(e) => {
+                  if (!active) (e.currentTarget as HTMLElement).style.background = '#F5F7FA'
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) (e.currentTarget as HTMLElement).style.background = ''
+                }}
               >
-                <item.icon className={`h-5 w-5 shrink-0 ${active ? 'text-[#1863A9]' : 'text-zinc-400'}`} />
+                <item.icon
+                  className="h-[18px] w-[18px] shrink-0"
+                  style={{ color: active ? '#007DFF' : '#A0AEC0' }}
+                />
                 {item.label}
+                {active && (
+                  <span
+                    className="ml-auto h-1.5 w-1.5 rounded-full"
+                    style={{ background: '#007DFF' }}
+                  />
+                )}
               </button>
             )
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="px-4 py-8">
+        {/* Doctor profile + logout at bottom */}
+        <div className="px-3 pb-4 space-y-1 border-t border-[#E5E9F0] pt-3">
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/medecin/profil')}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all"
+            style={{ color: '#6B7A99' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F7FA' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '' }}
+          >
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={fullName}
+                className="h-8 w-8 shrink-0 rounded-full object-cover border-2 border-white shadow-sm"
+              />
+            ) : (
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                style={{ background: '#007DFF' }}
+              >
+                {initials}
+              </div>
+            )}
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-sm font-semibold truncate" style={{ color: '#010C2D' }}>
+                Dr. {fullName}
+              </p>
+              <p className="text-[11px] truncate" style={{ color: '#A0AEC0' }}>{specialite}</p>
+            </div>
+            <ChevronDown className="h-4 w-4 shrink-0" style={{ color: '#C4CFDD' }} />
+          </button>
+
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
+            style={{ color: '#E01E5A' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#FFF0F4' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '' }}
           >
-            <LogOut className="h-5 w-5 shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0" />
             Déconnexion
           </button>
         </div>
       </aside>
 
-      {/* Drag divider */}
+      {/* Drag handle */}
       <div
         onMouseDown={handleDividerMouseDown}
-        className={`group relative flex w-1 shrink-0 cursor-col-resize items-center justify-center transition-colors ${
-          isDragging ? 'bg-[#1863A9]' : 'bg-zinc-200 hover:bg-[#1863A9]'
-        }`}
-      >
-        <div className={`flex flex-col gap-[3px] opacity-0 transition-opacity group-hover:opacity-100 ${isDragging ? 'opacity-100' : ''}`}>
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-1 w-1 rounded-full bg-white shadow-sm" />
-          ))}
-        </div>
-      </div>
+        className="group relative flex w-1 shrink-0 cursor-col-resize items-center justify-center transition-colors"
+        style={{ background: isDragging ? '#007DFF' : '#E5E9F0' }}
+        onMouseEnter={(e) => {
+          if (!isDragging) (e.currentTarget as HTMLElement).style.background = '#B6DAF7'
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragging) (e.currentTarget as HTMLElement).style.background = '#E5E9F0'
+        }}
+      />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Navbar */}
-        <header className="flex h-24 shrink-0 items-center justify-between px-8 z-10 mt-2">
-          <div className="flex items-center gap-2 rounded-full bg-white px-5 py-3 shadow-sm border border-zinc-100 focus-within:ring-2 focus-within:ring-[#1863A9]/20 transition-all w-[380px]">
-            <Search className="h-4 w-4 text-zinc-400" />
+      {/* ── Main ── */}
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Top bar */}
+        <header
+          className="flex h-16 shrink-0 items-center justify-between px-6 border-b"
+          style={{ background: '#FFFFFF', borderColor: '#E5E9F0' }}
+        >
+          {/* Search */}
+          <div
+            className="flex items-center gap-2 rounded-xl px-4 py-2 w-72 border transition-all focus-within:border-[#007DFF]"
+            style={{ background: '#F5F7FA', borderColor: '#E5E9F0' }}
+          >
+            <Search className="h-4 w-4 shrink-0" style={{ color: '#A0AEC0' }} />
             <input
               type="text"
-              placeholder="Recherche..."
-              className="flex-1 bg-transparent text-sm text-[#010C2D] placeholder:text-zinc-400 outline-none font-medium"
+              placeholder="Rechercher un patient, RDV…"
+              className="flex-1 bg-transparent text-sm outline-none"
+              style={{ color: '#333333' }}
             />
           </div>
 
-          <div className="flex items-center gap-6 rounded-full bg-white px-4 py-2 shadow-sm border border-zinc-100">
-            <div className="flex items-center gap-3 text-zinc-500">
-              <div className="flex items-center gap-1 rounded-full bg-[#F8F9FA] border border-zinc-100 p-1">
-                <button className="rounded-full bg-white p-1.5 shadow-sm text-zinc-600">
-                  <Sun className="h-4 w-4" />
-                </button>
-                <button className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-600 transition-colors">
-                  <Moon className="h-4 w-4" />
-                </button>
-              </div>
-              <button className="relative rounded-full p-1.5 hover:text-zinc-600 transition-colors bg-[#F8F9FA] border border-zinc-100">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>
-              </button>
-              <button className="rounded-full p-1.5 hover:text-zinc-600 transition-colors bg-[#F8F9FA] border border-zinc-100">
-                <Mail className="h-4 w-4" />
-              </button>
-            </div>
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            <button
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E9F0] bg-white transition-colors hover:border-[#B6DAF7]"
+            >
+              <Bell className="h-4 w-4" style={{ color: '#6B7A99' }} />
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#E01E5A] border-2 border-white" />
+            </button>
+            <button
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E9F0] bg-white transition-colors hover:border-[#B6DAF7]"
+              onClick={() => router.push('/dashboard/medecin/profil')}
+            >
+              <Settings className="h-4 w-4" style={{ color: '#6B7A99' }} />
+            </button>
 
-            <div className="h-8 w-px bg-zinc-200 mx-1"></div>
+            <div
+              className="h-7 w-px mx-1"
+              style={{ background: '#E5E9F0' }}
+            />
 
-            <div className="flex items-center gap-3 pl-1 pr-1">
-              <div className="text-right">
-                <p className="text-sm font-bold text-[#010C2D]">{fullName}</p>
-                <div className="flex items-center justify-end gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#01B574]"></span>
-                  <p className="text-[11px] font-semibold text-zinc-500">En ligne</p>
-                </div>
-              </div>
+            <button
+              className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 transition-colors hover:bg-[#F5F7FA]"
+              onClick={() => router.push('/dashboard/medecin/profil')}
+            >
               {photoUrl ? (
                 <img
                   src={photoUrl}
                   alt={fullName}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover shadow-sm border-2 border-white cursor-pointer hover:opacity-90 transition-opacity"
+                  className="h-8 w-8 rounded-full object-cover border-2 border-white"
+                  style={{ boxShadow: '0 0 0 2px #007DFF22' }}
                 />
               ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1863A9] text-sm font-bold text-white shadow-sm border-2 border-white cursor-pointer hover:opacity-90 transition-opacity">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
+                  style={{ background: '#007DFF' }}
+                >
                   {initials}
                 </div>
               )}
-              <button className="rounded-full p-1 text-zinc-400 hover:text-[#010C2D] transition-colors">
-                <Settings className="h-5 w-5" />
-              </button>
-            </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-semibold leading-none" style={{ color: '#010C2D' }}>
+                  Dr. {firstName || 'Médecin'}
+                </p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#2EB67D]" />
+                  <p className="text-[10px] font-medium" style={{ color: '#A0AEC0' }}>En ligne</p>
+                </div>
+              </div>
+            </button>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto px-8 pb-8">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

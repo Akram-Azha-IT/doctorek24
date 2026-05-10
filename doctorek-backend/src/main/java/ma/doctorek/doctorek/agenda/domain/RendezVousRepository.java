@@ -8,6 +8,9 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 public interface RendezVousRepository {
+    long countAll();
+    long countByDateRdv(LocalDate date);
+    long countByStatut(StatutRdv statut);
     Optional<RendezVous> findById(UUID id);
     List<PatientSummary> findPatientsByMedecinId(UUID medecinId, String search, String filtre, int page, int size);
     long countPatientsByMedecinId(UUID medecinId, String search, String filtre);

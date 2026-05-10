@@ -13,6 +13,8 @@ public record CarteVirtuelleResponse(
         UUID patientId,
         String cardRef,
         String statut,
+        String firstName,
+        String lastName,
         LocalDate dateNaissance,
         String genre,
         String nationalite,
@@ -40,9 +42,10 @@ public record CarteVirtuelleResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
-    public static CarteVirtuelleResponse from(CarteVirtuelle c) {
+    public static CarteVirtuelleResponse from(CarteVirtuelle c, String firstName, String lastName) {
         return new CarteVirtuelleResponse(
                 c.id(), c.patientId(), c.cardRef(), c.statut(),
+                firstName, lastName,
                 c.dateNaissance(), c.genre(), c.nationalite(), c.numIdentite(), c.photoUrl(),
                 c.telephone(), c.adresseRue(), c.adresseVille(), c.adressePays(),
                 c.groupeSanguin(), c.tailleCm(), c.poidsKg(), c.donneurOrganes(),

@@ -33,7 +33,7 @@ class GetMedecinProfileUseCaseTest {
     @DisplayName("returns profile when medecin exists")
     void execute_existingMedecin_returnsProfile() {
         MedecinProfile profile = new MedecinProfile(
-            id, "Youssef", "Bakkali", "Cardiologie", "Casablanca", "123 Rue Hassan II", "1234567890", null, null
+            id, "Youssef", "Bakkali", "Cardiologie", "Casablanca", "123 Rue Hassan II", "1234567890", null, null, null
         );
         when(repo.findMedecinById(id)).thenReturn(Optional.of(profile));
 

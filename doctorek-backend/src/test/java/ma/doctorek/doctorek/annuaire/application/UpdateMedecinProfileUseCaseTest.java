@@ -35,7 +35,7 @@ class UpdateMedecinProfileUseCaseTest {
             "Cardiologie", "Casablanca", "Rue 10", "fr", null, null
         );
         MedecinProfile updated = new MedecinProfile(
-            id, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null
+            id, "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null, null
         );
         when(repo.updateProfile(id, request)).thenReturn(updated);
 

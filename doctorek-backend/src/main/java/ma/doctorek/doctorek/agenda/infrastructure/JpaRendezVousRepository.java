@@ -16,6 +16,9 @@ import java.util.stream.Stream;
 
 interface JpaRendezVousRepository extends JpaRepository<RendezVousEntity, UUID> {
 
+    long countByDateRdv(LocalDate dateRdv);
+    long countByStatut(String statut);
+
     List<RendezVousEntity> findByMedecinIdAndDateRdv(UUID medecinId, LocalDate dateRdv);
 
     Page<RendezVousEntity> findByPatientId(UUID patientId, Pageable pageable);

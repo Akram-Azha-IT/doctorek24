@@ -52,6 +52,9 @@ public class User {
     @Column
     private Double longitude;
 
+    @Column(name = "photo_url", columnDefinition = "TEXT")
+    private String photoUrl;
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -123,6 +126,9 @@ public class User {
         this.verificationCodeExpiresAt = expiresAt;
     }
 
+    public void setActive(boolean active) { this.active = active; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+
     public void markEmailVerified() {
         this.emailVerified = true;
         this.verificationCode = null;
@@ -150,6 +156,7 @@ public class User {
     public String getAdresse()                    { return adresse; }
     public Double getLatitude()                   { return latitude; }
     public Double getLongitude()                  { return longitude; }
+    public String getPhotoUrl()                   { return photoUrl; }
 
     // ── Builder ───────────────────────────────────────────────
     public static Builder builder() { return new Builder(); }

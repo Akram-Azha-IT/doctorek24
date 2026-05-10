@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
 import { getCreneaux } from '@/features/agenda/api'
-import { getDoctorPhoto } from '@/lib/doctorPhotos'
 import type { MedecinProfile } from '@/lib/types'
 import { nextNDaysISO } from '@/lib/disponibilite'
 
@@ -31,11 +29,6 @@ interface MedecinCardListProps {
 export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEnter, onMouseLeave }: MedecinCardListProps) {
   const dates = nextNDaysISO(5)
   const accepte = medecin.acceptNouveauxPatients !== false
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    setPhotoUrl(getDoctorPhoto(medecin.id))
-  }, [medecin.id])
 
   const { data: todayCreneaux, isLoading: slotsLoading } = useQuery({
     queryKey: ['creneaux', medecin.id, dates[0]],
@@ -58,7 +51,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
           href={`/medecins/${medecin.id}`}
           className="flex flex-1 gap-4 p-5 min-w-0"
         >
-          <MedecinAvatar firstName={medecin.firstName} lastName={medecin.lastName} photoUrl={photoUrl} size="lg" />
+          <MedecinAvatar firstName={medecin.firstName} lastName={medecin.lastName} photoUrl={medecin.photoUrl ?? null} size="lg" />
 
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">

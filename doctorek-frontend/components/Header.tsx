@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { HelpCircle, UserRound } from 'lucide-react'
 import { getSession, clearSession, type Session } from '@/lib/session'
@@ -30,12 +31,17 @@ export function Header() {
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-4 md:px-8">
 
         {/* Logo */}
-        <Link
-          href="/"
-          className="text-[28px] font-bold tracking-tight text-white flex items-center gap-2"
-          style={{ fontFamily: 'sans-serif' }}
-        >
-          <span className="italic">Doctorek</span>
+        <Link href="/" className="flex items-center">
+          <div className="bg-white rounded-xl px-3 py-1.5">
+            <Image
+              src="/logo0.png"
+              alt="Doctorek"
+              width={130}
+              height={44}
+              className="h-9 w-auto"
+              priority
+            />
+          </div>
         </Link>
 
         {/* Right nav */}

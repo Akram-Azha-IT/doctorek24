@@ -6,21 +6,25 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { saveSession } from '@/lib/session'
 
 const LoginSchema = z.object({
-  role: z.enum(['MEDECIN', 'PATIENT']),
+  role: z.enum(['MEDECIN', 'PATIENT', 'ADMIN']),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   email: z.string().email('Email invalide'),
   password: z.string().min(1, 'Mot de passe requis'),
-  userId: z.string().uuid('Format UUID invalide (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)'),
+  userId: z.string().regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    'Format UUID invalide (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+  ),
 })
 
 type LoginValues = z.infer<typeof LoginSchema>
 
 export default function LoginPage() {
-  const [role, setRole] = useState<'MEDECIN' | 'PATIENT'>('MEDECIN')
+  const [role, setRole] = useState<'MEDECIN' | 'PATIENT' | 'ADMIN'>('MEDECIN')
   const router = useRouter()
 
   const {
@@ -50,8 +54,10 @@ export default function LoginPage() {
 
     if (role === 'MEDECIN') {
       router.push('/dashboard/medecin')
-    } else {
+    } else if (role === 'PATIENT') {
       router.push('/dashboard/patient')
+    } else {
+      router.push('/dashboard/admin')
     }
   }
 
@@ -60,8 +66,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="text-2xl font-bold tracking-tight text-blue-600">
-            Doctorek
+          <Link href="/" className="inline-block">
+            <Image src="/logo0.png" alt="Doctorek" width={160} height={54} className="h-12 w-auto mx-auto" priority />
           </Link>
           <p className="mt-2 text-sm text-zinc-500">Connectez-vous a votre espace</p>
         </div>
@@ -69,7 +75,7 @@ export default function LoginPage() {
         <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
           {/* Role toggle */}
           <div className="mb-6 flex rounded-xl bg-zinc-100 p-1">
-            {(['MEDECIN', 'PATIENT'] as const).map((r) => (
+            {(['MEDECIN', 'PATIENT', 'ADMIN'] as const).map((r) => (
               <button
                 key={r}
                 type="button"
@@ -81,7 +87,7 @@ export default function LoginPage() {
                     : 'text-zinc-500 hover:text-zinc-700',
                 ].join(' ')}
               >
-                {r === 'MEDECIN' ? 'Medecin' : 'Patient'}
+                {r === 'MEDECIN' ? 'Médecin' : r === 'PATIENT' ? 'Patient' : 'Admin'}
               </button>
             ))}
           </div>
@@ -121,7 +127,7 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                {role === 'MEDECIN' ? 'Identifiant medecin (UUID)' : 'Identifiant patient (UUID)'}
+                {role === 'MEDECIN' ? 'Identifiant médecin (UUID)' : role === 'PATIENT' ? 'Identifiant patient (UUID)' : 'Identifiant admin (UUID)'}
               </label>
               <input
                 type="text"

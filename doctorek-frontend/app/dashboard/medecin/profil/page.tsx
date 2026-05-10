@@ -6,6 +6,7 @@ import { getSession, saveSession } from '@/lib/session'
 import { setDoctorPhoto } from '@/lib/doctorPhotos'
 import { useMedecin, useUpdateMedecin } from '@/features/annuaire/hooks'
 import type { UpdateMedecinProfilePayload } from '@/features/annuaire/api'
+import { updateMedecinPhoto } from '@/features/annuaire/api'
 
 const SPECIALITES = [
   'Médecine générale', 'Cardiologie', 'Dermatologie', 'Endocrinologie',
@@ -97,7 +98,7 @@ export default function ProfilPage() {
     if (!file) return
     if (file.size > 2 * 1024 * 1024) return
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
       const dataUrl = reader.result as string
       setPhotoUrl(dataUrl)
       const current = getSession()
@@ -105,6 +106,11 @@ export default function ProfilPage() {
         saveSession({ ...current, photoUrl: dataUrl })
         setDoctorPhoto(current.id, dataUrl)
         window.dispatchEvent(new Event('session-updated'))
+        try {
+          await updateMedecinPhoto(current.id, dataUrl)
+        } catch {
+          // localStorage still has it for this session; backend sync best-effort
+        }
       }
       setPhotoStatus('success')
       setTimeout(() => setPhotoStatus('idle'), 2500)

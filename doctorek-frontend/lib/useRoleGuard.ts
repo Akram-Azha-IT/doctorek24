@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSession } from '@/lib/session'
 
-export function useRoleGuard(requiredRole: 'MEDECIN' | 'PATIENT') {
+export function useRoleGuard(requiredRole: 'MEDECIN' | 'PATIENT' | 'ADMIN') {
   const router = useRouter()
 
   useEffect(() => {
@@ -12,7 +12,9 @@ export function useRoleGuard(requiredRole: 'MEDECIN' | 'PATIENT') {
       return
     }
     if (session.role !== requiredRole) {
-      router.replace(session.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient')
+      if (session.role === 'ADMIN') router.replace('/dashboard/admin')
+      else if (session.role === 'MEDECIN') router.replace('/dashboard/medecin')
+      else router.replace('/dashboard/patient')
     }
   }, [router, requiredRole])
 }

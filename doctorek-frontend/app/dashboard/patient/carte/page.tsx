@@ -184,8 +184,8 @@ export default function CarteEditPage() {
           <div className="mb-8">
             <CarteVirtuelleCard
               carte={existingCarte}
-              firstName={session?.firstName}
-              lastName={session?.lastName}
+              firstName={existingCarte.firstName ?? session?.firstName}
+              lastName={existingCarte.lastName ?? session?.lastName}
             />
           </div>
         )}
