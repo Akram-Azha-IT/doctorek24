@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Search, CheckCircle, XCircle, ToggleLeft, ToggleRight } from 'lucide-react'
 import { useAdminUsers, useToggleUserActive } from '@/features/admin/hooks'
 import type { UserSummary } from '@/features/admin/types'
+import { ConfirmToggleModal } from '@/features/admin/components/ConfirmToggleModal'
 
 const PAGE_SIZE = 20
 
@@ -11,6 +12,7 @@ export default function AdminMedecinsPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(0)
+  const [pendingToggle, setPendingToggle] = useState<UserSummary | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data, isLoading, error } = useAdminUsers('MEDECIN', debouncedSearch, page, PAGE_SIZE)
@@ -27,7 +29,21 @@ export default function AdminMedecinsPage() {
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0
 
+  function handleConfirmToggle() {
+    if (!pendingToggle) return
+    toggle.mutate(pendingToggle.id, { onSettled: () => setPendingToggle(null) })
+  }
+
   return (
+    <>
+    <ConfirmToggleModal
+      open={pendingToggle !== null}
+      userName={`${pendingToggle?.firstName ?? ''} ${pendingToggle?.lastName ?? ''}`.trim()}
+      isActive={pendingToggle?.active ?? false}
+      isPending={toggle.isPending}
+      onConfirm={handleConfirmToggle}
+      onCancel={() => setPendingToggle(null)}
+    />
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8F2FC]">
@@ -121,7 +137,7 @@ export default function AdminMedecinsPage() {
                       <td className="py-3.5 px-5 text-right">
                         <button
                           type="button"
-                          onClick={() => toggle.mutate(user.id)}
+                          onClick={() => setPendingToggle(user)}
                           disabled={toggle.isPending}
                           title={user.active ? 'Désactiver' : 'Activer'}
                           className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
@@ -148,5 +164,6 @@ export default function AdminMedecinsPage() {
         )}
       </div>
     </div>
+    </>
   )
 }

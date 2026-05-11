@@ -6,8 +6,8 @@ import {
   LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut,
   Search, Bell, Settings, ChevronDown,
 } from 'lucide-react'
-import Image from 'next/image'
 import { getSession, clearSession } from '@/lib/session'
+import Logo from '@/components/Logo'
 
 const NAV_ITEMS = [
   { href: '/dashboard/medecin', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
@@ -107,7 +107,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
       >
         {/* Logo */}
         <div className="flex h-16 shrink-0 items-center gap-2.5 px-6 border-b border-[#E5E9F0]">
-          <Image src="/logo0.png" alt="Doctorek" width={120} height={40} className="h-8 w-auto" />
+          <Logo className="h-8 w-auto" width={120} height={40} priority />
         </div>
 
         {/* Nav */}

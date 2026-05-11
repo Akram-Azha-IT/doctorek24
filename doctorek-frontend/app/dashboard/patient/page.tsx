@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRdvsPatient } from '@/features/agenda/hooks'
 import { useMedecin } from '@/features/annuaire/hooks'
@@ -111,6 +112,7 @@ export default function DashboardPatientPage() {
   const [patientId, setPatientId] = useState('')
   const [firstName, setFirstName] = useState<string | null>(null)
   const [lastName, setLastName] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -214,7 +216,7 @@ export default function DashboardPatientPage() {
             </p>
           </div>
 
-          <div className="flex gap-6">
+          <div className="flex gap-6 items-start">
             {/* ── Left / Main column ── */}
             <div className="flex-1 min-w-0 space-y-6">
 
@@ -351,17 +353,26 @@ export default function DashboardPatientPage() {
                     <CarteVirtuelleCard carte={carte} firstName={firstName ?? undefined} lastName={lastName ?? undefined} />
                   </div>
                 ) : (
-                  <div className="rounded-xl bg-gradient-to-br from-[#007DFF] to-[#042651] px-6 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-white">Créez votre carte médicale virtuelle</p>
-                      <p className="text-xs text-[#B6DAF7] mt-1">Accédez à vos données médicales partout, partagez avec votre médecin</p>
+                  <div className="rounded-xl bg-gradient-to-br from-[#007DFF] to-[#042651] overflow-hidden relative flex flex-col sm:flex-row items-stretch min-h-[160px]">
+                    <div className="flex flex-col justify-center px-6 py-6 z-10 flex-1">
+                      <p className="text-sm font-bold text-white leading-snug">Créez votre carte médicale virtuelle</p>
+                      <p className="text-xs text-[#B6DAF7] mt-1.5">Accédez à vos données médicales partout,<br/>partagez avec votre médecin</p>
+                      <Link
+                        href="/dashboard/patient/carte"
+                        className="mt-4 self-start rounded-xl bg-white px-5 py-2 text-xs font-bold text-[#007DFF] hover:bg-[#F0F2F5] transition-colors"
+                      >
+                        Créer ma carte
+                      </Link>
                     </div>
-                    <Link
-                      href="/dashboard/patient/carte"
-                      className="shrink-0 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-[#007DFF] hover:bg-[#F0F2F5] transition-colors"
-                    >
-                      Créer ma carte
-                    </Link>
+                    <div className="relative w-40 shrink-0 self-stretch hidden sm:block">
+                      <Image
+                        src="/card-hero.png"
+                        alt="Carte médicale Doctorek"
+                        fill
+                        className="object-contain object-right-bottom drop-shadow-xl"
+                        sizes="160px"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -384,8 +395,25 @@ export default function DashboardPatientPage() {
               )}
             </div>
 
-            {/* ── Right panel ── */}
-            <div className="w-72 shrink-0 space-y-4">
+            {/* ── Right panel toggle ── */}
+            <div className="shrink-0 flex flex-col items-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(o => !o)}
+                className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center hover:bg-[#F0F2F5] transition-colors"
+                title={sidebarOpen ? 'Masquer le panneau' : 'Afficher le panneau'}
+              >
+                <svg
+                  width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="#465058" strokeWidth="2.5"
+                  className={`transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`}
+                >
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+
+              {/* ── Right panel ── */}
+              <div className={`space-y-4 overflow-hidden transition-all duration-300 ${sidebarOpen ? 'w-72 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
 
               {/* Profile card */}
               <div className="bg-white rounded-2xl p-6 shadow-sm text-center">
@@ -521,22 +549,34 @@ export default function DashboardPatientPage() {
 
               {/* Promo card */}
               {!hasCarte && (
-                <div className="bg-gradient-to-br from-[#007DFF] to-[#042651] rounded-2xl p-5 relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#007DFF] to-[#042651] rounded-2xl overflow-hidden relative">
                   <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/10" />
                   <div className="absolute -right-2 -bottom-6 w-16 h-16 rounded-full bg-white/5" />
-                  <p className="text-sm font-bold text-white relative">Créez votre carte médicale!</p>
-                  <p className="text-xs text-[#B6DAF7] mt-1 relative">Partagez vos données médicales facilement avec vos médecins</p>
-                  <Link
-                    href="/dashboard/patient/carte"
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-bold text-[#007DFF] hover:bg-[#F0F2F5] transition-colors relative"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#007DFF" strokeWidth="2.5">
-                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Créer ma carte
-                  </Link>
+                  <div className="relative h-32 w-full">
+                    <Image
+                      src="/card-hero.png"
+                      alt="Carte médicale Doctorek"
+                      fill
+                      className="object-contain object-center"
+                      sizes="288px"
+                    />
+                  </div>
+                  <div className="px-5 pb-5">
+                    <p className="text-sm font-bold text-white">Créez votre carte médicale!</p>
+                    <p className="text-xs text-[#B6DAF7] mt-1">Partagez vos données médicales facilement avec vos médecins</p>
+                    <Link
+                      href="/dashboard/patient/carte"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-xs font-bold text-[#007DFF] hover:bg-[#F0F2F5] transition-colors"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#007DFF" strokeWidth="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                      Créer ma carte
+                    </Link>
+                  </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>

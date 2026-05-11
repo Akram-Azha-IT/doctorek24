@@ -5,6 +5,7 @@ import { Search, CheckCircle, XCircle, ToggleLeft, ToggleRight, CreditCard, Chev
 import { useAdminUsers, useToggleUserActive, usePatientCarte } from '@/features/admin/hooks'
 import type { UserSummary } from '@/features/admin/types'
 import { CarteRecto, CarteVerso } from '@/features/carte/components/CarteVirtuelleCard'
+import { ConfirmToggleModal } from '@/features/admin/components/ConfirmToggleModal'
 
 const PAGE_SIZE = 20
 
@@ -57,6 +58,7 @@ export default function AdminPatientsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(0)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [pendingToggle, setPendingToggle] = useState<UserSummary | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data, isLoading, error } = useAdminUsers('PATIENT', debouncedSearch, page, PAGE_SIZE)
@@ -77,7 +79,21 @@ export default function AdminPatientsPage() {
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0
 
+  function handleConfirmToggle() {
+    if (!pendingToggle) return
+    toggle.mutate(pendingToggle.id, { onSettled: () => setPendingToggle(null) })
+  }
+
   return (
+    <>
+    <ConfirmToggleModal
+      open={pendingToggle !== null}
+      userName={`${pendingToggle?.firstName ?? ''} ${pendingToggle?.lastName ?? ''}`.trim()}
+      isActive={pendingToggle?.active ?? false}
+      isPending={toggle.isPending}
+      onConfirm={handleConfirmToggle}
+      onCancel={() => setPendingToggle(null)}
+    />
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
@@ -180,7 +196,7 @@ export default function AdminPatientsPage() {
                             )}
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); toggle.mutate(user.id) }}
+                              onClick={(e) => { e.stopPropagation(); setPendingToggle(user) }}
                               disabled={toggle.isPending}
                               title={user.active ? 'Désactiver' : 'Activer'}
                               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
@@ -218,5 +234,6 @@ export default function AdminPatientsPage() {
         )}
       </div>
     </div>
+    </>
   )
 }

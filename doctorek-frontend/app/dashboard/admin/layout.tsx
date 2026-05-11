@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Users, ShieldCheck, LogOut, Search, Sun, Moon, Bell, Mail, Settings, CreditCard, Stethoscope, UserRound } from 'lucide-react'
-import Image from 'next/image'
+import { LayoutDashboard, LogOut, Search, Sun, Moon, Bell, Mail, Settings, CreditCard, Stethoscope, UserRound, Users } from 'lucide-react'
 import { getSession, clearSession } from '@/lib/session'
+import Logo from '@/components/Logo'
 
 const NAV_ITEMS = [
   { href: '/dashboard/admin', label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/patients', label: 'Patients', icon: UserRound },
   { href: '/dashboard/admin/medecins', label: 'Médecins', icon: Stethoscope },
   { href: '/dashboard/admin/cartes', label: 'Cartes virtuelles', icon: CreditCard },
@@ -89,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="flex shrink-0 flex-col bg-[#F8F9FA]" style={{ width: sidebarWidth }}>
         {/* Logo */}
         <div className="flex h-24 items-center gap-3 px-8">
-          <Image src="/logo0.png" alt="Doctorek" width={110} height={37} className="h-8 w-auto" />
+          <Logo className="h-8 w-auto" width={110} height={37} priority />
           <span className="text-sm font-bold rounded-md px-2 py-0.5" style={{ background: '#EBF4FF', color: '#007DFF' }}>Admin</span>
         </div>
 

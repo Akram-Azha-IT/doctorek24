@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MapPin, Search, UserRound, HelpCircle, ChevronRight, Loader2, Phone, Mail } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 const POPULAR_SPECIALTIES = [
   { name: 'Médecin généraliste', icon: '/medecin.png' },
@@ -48,7 +49,7 @@ export default function HomePage() {
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'done'>('idle')
   const router = useRouter()
 
-  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
+  function handleSearch(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     const params = new URLSearchParams()
     if (specialite) params.set('specialite', specialite)
@@ -90,7 +91,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-white font-sans text-[#333333]">
       {/* ── Hero ──────────────────────────────────────────────────── */}
       <div
-        className="bg-[#EBF4FF] relative z-10 w-full overflow-hidden rounded-b-[70px] md:rounded-b-[100px]"
+        className="bg-[#EBF4FF] relative z-10 w-full"
         style={{ boxShadow: '0 8px 40px rgba(0,125,255,0.10)' }}
       >
         {/* Soft top fade for navbar contrast */}
@@ -134,9 +135,7 @@ export default function HomePage() {
         {/* Navbar */}
         <nav className="relative z-50">
           <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 md:px-8">
-            <Link href="/" className="flex items-center">
-              <Image src="/logo0.png" alt="Doctorek" width={140} height={47} className="h-10 w-auto" priority />
-            </Link>
+            <Logo className="h-10 w-auto" width={140} height={47} priority />
             <div className="flex items-center gap-4 md:gap-6">
               <Link
                 href="/inscription?role=medecin"
@@ -165,42 +164,39 @@ export default function HomePage() {
         {/* Hero Content */}
         <div className="mx-auto max-w-[1400px] px-4 pt-4 pb-36 md:pt-6 md:pb-52 md:px-8 relative">
 
-          {/* Doctor image + animated Doctorek text */}
+          {/* Blob behind doctor — sibling of image so multiply blend works against hero bg */}
+          <div
+            className="absolute hidden md:block pointer-events-none select-none"
+            style={{
+              right: '64px',
+              bottom: '80px',
+              width: '400px',
+              height: '430px',
+              background: 'linear-gradient(145deg, #B6DAF7 0%, #DFEFFE 100%)',
+              borderRadius: '62% 38% 54% 46% / 55% 48% 52% 45%',
+              zIndex: 2,
+            }}
+          />
+
+          {/* Doctor image */}
           <div
             className="absolute right-4 md:right-20 hidden md:block pointer-events-none select-none"
             style={{ zIndex: 5, bottom: '120px' }}
           >
-            <div className="relative">
-              {/* Blob behind doctor */}
-              <div
-                style={{
-                  position: 'absolute',
-                  width: '88%',
-                  height: '92%',
-                  bottom: '-4%',
-                  left: '6%',
-                  background: 'linear-gradient(145deg, #007DFF 0%, #005FCC 100%)',
-                  borderRadius: '62% 38% 54% 46% / 55% 48% 52% 45%',
-                  zIndex: 0,
-                }}
-              />
-              <Image
-                src="/hero-doctorek.png"
-                alt="Médecin Doctorek"
-                width={460}
-                height={560}
-                priority
-                style={{
-                  mixBlendMode: 'multiply',
-                  height: 'clamp(400px, 48vh, 390px)',
-                  width: 'auto',
-                  objectFit: 'contain',
-                  display: 'block',
-                  position: 'relative',
-                  zIndex: 1,
-                }}
-              />
-            </div>
+            <Image
+              src="/hero-doctorek.png"
+              alt="Médecin Doctorek"
+              width={460}
+              height={560}
+              priority
+              style={{
+                mixBlendMode: 'multiply',
+                height: 'clamp(400px, 48vh, 390px)',
+                width: 'auto',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
           </div>
 
           <div className="relative z-20">
@@ -251,14 +247,21 @@ export default function HomePage() {
             </form>
           </div>
         </div>
+
       </div>
 
       {/* ── Promo Cards — float over hero curve ─────────────────── */}
-      <div className="relative z-20 -mt-16 md:-mt-20 px-4 md:px-8">
+      <div className="relative z-20 -mt-22 md:-mt-30 px-4 md:px-8">
         <div className="mx-auto max-w-[1400px] grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          <Link href="/login" className="group flex bg-[#EBF4FF] rounded-2xl overflow-hidden shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow min-h-[180px]">
-            <div className="flex-1 p-7 flex flex-col justify-between">
+          <Link href="/login" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
+            {/* Card bg + clipped circle blob */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
+              <div className="absolute rounded-full bg-[#D0E8FF] w-[180px] h-[180px] sm:w-[210px] sm:h-[210px] right-4 bottom-4 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
+              <div className="absolute rounded-full bg-[#B6DAF7] w-[130px] h-[130px] sm:w-[155px] sm:h-[155px] right-10 bottom-8 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
+            </div>
+            {/* Text */}
+            <div className="relative z-10 flex-1 p-6 sm:p-7 flex flex-col justify-between">
               <div>
                 <p className="text-[11px] font-semibold text-[#465058] uppercase tracking-widest mb-3">Patients</p>
                 <h3 className="text-[18px] font-bold text-[#00263C] leading-snug mb-2">
@@ -272,13 +275,31 @@ export default function HomePage() {
                 Découvrir <ChevronRight className="h-4 w-4" />
               </span>
             </div>
-            <div className="w-[38%] bg-[#D0E8FF] flex items-center justify-center">
-              <Image src="/carte-de-membre.png" alt="Carte médicale" width={80} height={80} className="opacity-85" />
+            {/* Phone — stacks below text on mobile, side panel on sm+ */}
+            <div className="relative z-20 h-44 sm:h-auto sm:w-[43%] shrink-0">
+              <div
+                className="absolute bottom-0 top-[-16px] inset-x-[10%] sm:inset-x-0 sm:top-[-48px]"
+                style={{ transform: 'rotate(-8deg)' }}
+              >
+                <Image
+                  src="/card-hero.png"
+                  alt="Carte médicale Doctorek"
+                  fill
+                  className="object-contain object-bottom drop-shadow-2xl"
+                  sizes="(max-width: 640px) 70vw, 260px"
+                />
+              </div>
             </div>
           </Link>
 
-          <Link href="/inscription?role=medecin" className="group flex bg-[#EBF4FF] rounded-2xl overflow-hidden shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow min-h-[180px]">
-            <div className="flex-1 p-7 flex flex-col justify-between">
+          <Link href="/inscription?role=medecin" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
+            {/* Card bg + clipped circle blob */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
+              <div className="absolute rounded-full bg-[#D0E8FF] w-[200px] h-[200px] sm:w-[210px] sm:h-[210px] left-1/2 -translate-x-1/2 bottom-2 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
+              <div className="absolute rounded-full bg-[#B6DAF7] w-[148px] h-[148px] sm:w-[155px] sm:h-[155px] left-1/2 -translate-x-1/2 bottom-6 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
+            </div>
+            {/* Text */}
+            <div className="relative z-10 flex-1 p-6 sm:p-7 flex flex-col justify-between">
               <div>
                 <p className="text-[11px] font-semibold text-[#465058] uppercase tracking-widest mb-3">Médecins</p>
                 <h3 className="text-[18px] font-bold text-[#00263C] leading-snug mb-2">
@@ -292,8 +313,20 @@ export default function HomePage() {
                 Découvrir <ChevronRight className="h-4 w-4" />
               </span>
             </div>
-            <div className="w-[38%] bg-[#D0E8FF] flex items-center justify-center">
-              <Image src="/medecin.png" alt="Espace médecin" width={80} height={80} className="opacity-85" />
+            {/* Phone — stacks below text on mobile, side panel on sm+ */}
+            <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
+              <div
+                className="absolute bottom-0 top-[-28px] inset-x-[5%] sm:inset-x-0 sm:top-[-48px]"
+                style={{ transform: 'rotate(8deg)' }}
+              >
+                <Image
+                  src="/medecin-carte-hero.png"
+                  alt="Dashboard médecin Doctorek"
+                  fill
+                  className="object-contain object-bottom drop-shadow-2xl"
+                  sizes="(max-width: 640px) 80vw, 260px"
+                />
+              </div>
             </div>
           </Link>
 
@@ -430,14 +463,7 @@ export default function HomePage() {
             {/* Brand */}
             <div className="col-span-1">
               <div className="mb-4">
-                <Image
-                  src="/logo0.png"
-                  alt="Doctorek"
-                  width={140}
-                  height={47}
-                  className="h-10 w-auto"
-                  style={{ filter: 'brightness(0) invert(1)' }}
-                />
+                <Logo className="h-10 w-auto" width={140} height={47} style={{ filter: 'brightness(0) invert(1)' }} />
               </div>
               <p className="text-[#B6DAF7] text-[13px] leading-relaxed mb-6">
                 La première plateforme numérique de santé au Maroc. Votre santé, notre engagement national.

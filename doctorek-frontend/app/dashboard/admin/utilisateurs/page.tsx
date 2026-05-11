@@ -5,6 +5,7 @@ import { Search, CheckCircle, XCircle, ToggleLeft, ToggleRight, CreditCard, Chev
 import { useAdminUsers, useToggleUserActive, usePatientCarte } from '@/features/admin/hooks'
 import type { UserSummary } from '@/features/admin/types'
 import { CarteRecto, CarteVerso } from '@/features/carte/components/CarteVirtuelleCard'
+import { ConfirmToggleModal } from '@/features/admin/components/ConfirmToggleModal'
 
 type RoleFilter = '' | 'PATIENT' | 'MEDECIN'
 
@@ -88,6 +89,7 @@ export default function AdminUtilisateursPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [pendingToggle, setPendingToggle] = useState<UserSummary | null>(null)
   const { data, isLoading, error } = useAdminUsers(roleFilter, debouncedSearch, page, PAGE_SIZE)
   const toggle = useToggleUserActive()
 
@@ -111,7 +113,21 @@ export default function AdminUtilisateursPage() {
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0
 
+  function handleConfirmToggle() {
+    if (!pendingToggle) return
+    toggle.mutate(pendingToggle.id, { onSettled: () => setPendingToggle(null) })
+  }
+
   return (
+    <>
+    <ConfirmToggleModal
+      open={pendingToggle !== null}
+      userName={`${pendingToggle?.firstName ?? ''} ${pendingToggle?.lastName ?? ''}`.trim()}
+      isActive={pendingToggle?.active ?? false}
+      isPending={toggle.isPending}
+      onConfirm={handleConfirmToggle}
+      onCancel={() => setPendingToggle(null)}
+    />
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-[#010C2D]">Utilisateurs</h1>
@@ -267,7 +283,7 @@ export default function AdminUtilisateursPage() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                toggle.mutate(user.id)
+                                setPendingToggle(user)
                               }}
                               disabled={toggle.isPending}
                               title={user.active ? 'Désactiver le compte' : 'Activer le compte'}
@@ -337,5 +353,6 @@ export default function AdminUtilisateursPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
