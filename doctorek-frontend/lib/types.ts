@@ -19,6 +19,7 @@ export interface MedecinProfile {
   langues?: string[]
   presentation?: string
   acceptNouveauxPatients?: boolean
+  consultationVideo?: boolean
 }
 
 export interface MedecinNearbyResult {

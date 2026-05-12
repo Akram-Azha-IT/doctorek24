@@ -3,15 +3,12 @@
 import { useState } from 'react'
 import { CarteVirtuelle } from '@/lib/types'
 
-// Couleurs du thème Doctorek (extraites de votre image)
-const C_DOC_BLUE = '#0066FF' // Le bleu vif de votre site
-const C_DOC_DARK = '#003B95' // Un bleu plus foncé pour le contraste
-const C_BG_CARD  = '#FFFFFF' // Fond blanc pur étatique
-const C_TEXT     = '#111827' // Texte principal (presque noir)
-const C_LABEL    = '#6B7280' // Gris pour les libellés
-const C_RED      = '#C1272D' // Rouge drapeau marocain
-const C_GREEN    = '#006233' // Vert drapeau marocain
-const C_GOLD     = '#D4AF37' // Or pour la puce
+const C_BLUE  = '#007DFF'
+const C_DARK  = '#003B95'
+const C_TEXT  = '#111827'
+const C_LABEL = '#6B7280'
+const C_RED   = '#C1272D'
+const C_GREEN = '#006233'
 
 interface CarteVirtuelleCardProps {
   carte: CarteVirtuelle
@@ -20,203 +17,295 @@ interface CarteVirtuelleCardProps {
   onEdit?: () => void
 }
 
-// ── ICONES & SVG OFFICIELS ────────────────────────────────────────────────────────
+// ── RECTO — inline SVG ──────────────────────────────────────────────────────
 
-function CorrectMoroccanFlag({ size = 36 }: { size?: number }) {
-  return (
-    <svg width={size} height={Math.round(size * 0.67)} viewBox="0 0 30 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
-      <rect width="30" height="20" rx="2" fill={C_RED}/>
-      <path d="M15 4 L18.5 14.8 L9.3 8.1 L20.7 8.1 L11.5 14.8 Z" stroke={C_GREEN} strokeWidth="1.2" strokeLinejoin="miter" fill="none"/>
-    </svg>
-  )
-}
+export function CarteRecto({
+  carte,
+  firstName,
+  lastName,
+}: {
+  carte: CarteVirtuelle
+  firstName?: string
+  lastName?: string
+}) {
+  const fullName =
+    [firstName, lastName?.toUpperCase()].filter(Boolean).join(' ') ||
+    'NOM ET PRÉNOM'
 
-function EmvChip({ size }: { size: number }) {
-  const h = Math.round(size * 0.8)
+  const rawCin = carte.numIdentite ?? ''
+  const maskedCin =
+    rawCin.length >= 3
+      ? rawCin[0] + '*'.repeat(rawCin.length - 2) + rawCin[rawCin.length - 1]
+      : rawCin || '—'
+
+  const cnss = carte.assuranceNumero ?? '—'
+
   return (
-    <svg width={size} height={h} viewBox="0 0 40 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: `clamp(${size * 0.6}px, ${size * 0.15}vw, ${size}px)`, height: 'auto' }}>
-      <rect width="40" height="32" rx="6" fill="url(#chipGradientState)"/>
+    <svg
+      viewBox="0 0 856 540"
+      style={{ width: '100%', height: '100%', display: 'block' }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <defs>
-        <linearGradient id="chipGradientState" x1="0" y1="0" x2="40" y2="32" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#E5C158"/>
-          <stop offset="0.5" stopColor="#FCEEAA"/>
-          <stop offset="1" stopColor="#C29B35"/>
+        {/* Card rounded clip */}
+        <clipPath id="card-clip-recto">
+          <rect width="856" height="540" rx="28" />
+        </clipPath>
+        {/* Circular photo clip */}
+        <clipPath id="photo-clip-recto">
+          <circle cx="132" cy="292" r="82" />
+        </clipPath>
+        {/* Name text clip (prevents overflow into chip area) */}
+        <clipPath id="name-clip-recto">
+          <rect x="248" y="198" width="418" height="54" />
+        </clipPath>
+        {/* EMV chip gradient */}
+        <linearGradient id="chip-grad-recto" x1="0" y1="0" x2="60" y2="46" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#E5C158" />
+          <stop offset="0.5" stopColor="#FCEEAA" />
+          <stop offset="1" stopColor="#C29B35" />
         </linearGradient>
-      </defs>
-      {/* Lignes de contact de la puce */}
-      <path d="M12 0V32 M28 0V32 M0 11H40 M0 21H40 M12 11H28V21H12Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1"/>
-      <circle cx="20" cy="16" r="3" stroke="rgba(0,0,0,0.1)" strokeWidth="1" fill="none"/>
-    </svg>
-  )
-}
-
-function ZelligeWatermark() {
-  return (
-    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.03, pointerEvents: 'none' }} aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <pattern id="state-zellige" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M20 0 L40 20 L20 40 L0 20 Z M10 10 L30 30 M30 10 L10 30" stroke={C_DOC_BLUE} strokeWidth="0.5" fill="none"/>
-          <circle cx="20" cy="20" r="14" stroke={C_DOC_BLUE} strokeWidth="0.3" fill="none"/>
+        {/* Zellige background watermark */}
+        <pattern id="zellige-recto" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M20 0 L40 20 L20 40 L0 20 Z M10 10 L30 30 M30 10 L10 30" stroke="#0066FF" strokeWidth="0.5" fill="none" />
+          <circle cx="20" cy="20" r="14" stroke="#0066FF" strokeWidth="0.3" fill="none" />
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#state-zellige)"/>
+
+      <g clipPath="url(#card-clip-recto)">
+        {/* ── Background ── */}
+        <rect width="856" height="540" fill="#FFFFFF" />
+        <rect width="856" height="540" fill="url(#zellige-recto)" opacity="0.03" />
+
+        {/* ── Top Moroccan stripe ── */}
+        <rect x="0" y="0" width="428" height="7" fill={C_RED} />
+        <rect x="428" y="0" width="428" height="7" fill={C_GREEN} />
+
+        {/* ── HEADER ── */}
+        {/* Left: Logo image */}
+        <image
+          href="/logo0.png"
+          x="20"
+          y="16"
+          width="170"
+          height="58"
+          preserveAspectRatio="xMinYMid meet"
+        />
+
+        {/* Right: Arabic title + subtitle */}
+        <text
+          x="832"
+          y="44"
+          textAnchor="end"
+          fontFamily="system-ui,-apple-system,sans-serif"
+          fontSize="14"
+          fontWeight="800"
+          fill={C_TEXT}
+        >
+          المملكة المغربية
+        </text>
+        <text
+          x="832"
+          y="65"
+          textAnchor="end"
+          fontFamily="system-ui,-apple-system,sans-serif"
+          fontSize="11"
+          fontWeight="700"
+          fill={C_BLUE}
+          letterSpacing="0.5"
+        >
+          Carte Santé Virtuelle
+        </text>
+
+        {/* ── ECG separator ── */}
+        <line x1="24" y1="96" x2="832" y2="96" stroke={C_BLUE} strokeWidth="0.6" opacity="0.15" />
+        <path
+          d="M24 96 L310 96 L326 96 L336 80 L346 112 L356 80 L366 96 L392 96 L832 96"
+          stroke={C_BLUE}
+          strokeWidth="1.5"
+          opacity="0.45"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+
+        {/* ── BODY ── */}
+
+        {/* Photo ring */}
+        <circle cx="132" cy="292" r="90" fill="none" stroke={C_BLUE} strokeWidth="3" opacity="0.75" />
+
+        {/* Photo or silhouette */}
+        {carte.photoUrl ? (
+          <image
+            href={carte.photoUrl}
+            x="50"
+            y="210"
+            width="164"
+            height="164"
+            clipPath="url(#photo-clip-recto)"
+            preserveAspectRatio="xMidYMid slice"
+          />
+        ) : (
+          <g clipPath="url(#photo-clip-recto)">
+            <circle cx="132" cy="292" r="82" fill={C_BLUE} />
+            <circle cx="132" cy="264" r="29" fill="white" opacity="0.9" />
+            <ellipse cx="132" cy="344" rx="44" ry="36" fill="white" opacity="0.9" />
+          </g>
+        )}
+
+        {/* Patient name */}
+        <g clipPath="url(#name-clip-recto)">
+          <text
+            x="248"
+            y="236"
+            fontFamily="system-ui,-apple-system,sans-serif"
+            fontSize="22"
+            fontWeight="900"
+            fill={C_TEXT}
+            letterSpacing="0.3"
+          >
+            {fullName}
+          </text>
+        </g>
+
+        {/* CIN */}
+        <text
+          x="248"
+          y="272"
+          fontFamily="system-ui,-apple-system,sans-serif"
+          fontSize="8"
+          fontWeight="700"
+          fill={C_LABEL}
+          letterSpacing="2"
+        >
+          CIN
+        </text>
+        <text
+          x="248"
+          y="295"
+          fontFamily="'Courier New',Courier,monospace"
+          fontSize="17"
+          fontWeight="800"
+          fill={C_TEXT}
+          letterSpacing="2"
+        >
+          {maskedCin}
+        </text>
+        <line x1="248" y1="307" x2="562" y2="307" stroke="#E5E7EB" strokeWidth="1" />
+
+        {/* CNSS / AMO */}
+        <text
+          x="248"
+          y="327"
+          fontFamily="system-ui,-apple-system,sans-serif"
+          fontSize="8"
+          fontWeight="700"
+          fill={C_LABEL}
+          letterSpacing="2"
+        >
+          N° CNSS / AMO
+        </text>
+        <text
+          x="248"
+          y="350"
+          fontFamily="'Courier New',Courier,monospace"
+          fontSize="16"
+          fontWeight="800"
+          fill={C_TEXT}
+          letterSpacing="1.5"
+        >
+          {cnss}
+        </text>
+
+        {/* EMV Chip */}
+        <g transform="translate(694, 226)">
+          <rect width="62" height="48" rx="8" fill="url(#chip-grad-recto)" />
+          <line x1="19" y1="0" x2="19" y2="48" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
+          <line x1="43" y1="0" x2="43" y2="48" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
+          <line x1="0" y1="16" x2="62" y2="16" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
+          <line x1="0" y1="32" x2="62" y2="32" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
+          <rect x="19" y="16" width="24" height="16" fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
+          <circle cx="31" cy="24" r="3.5" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" fill="none" />
+        </g>
+
+        {/* QR Code placeholder */}
+        <g transform="translate(682, 290)">
+          <rect width="84" height="84" rx="5" fill="#F3F4F6" />
+          {/* Corners */}
+          <rect x="8" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
+          <rect x="14" y="14" width="12" height="12" fill={C_TEXT} />
+          <rect x="52" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
+          <rect x="58" y="14" width="12" height="12" fill={C_TEXT} />
+          <rect x="8" y="52" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
+          <rect x="14" y="58" width="12" height="12" fill={C_TEXT} />
+          {/* Data cells */}
+          <rect x="42" y="44" width="8" height="8" fill={C_TEXT} />
+          <rect x="58" y="52" width="16" height="8" fill={C_TEXT} />
+          <rect x="50" y="68" width="8" height="8" fill={C_TEXT} />
+          <rect x="66" y="68" width="8" height="8" fill={C_TEXT} />
+          <rect x="42" y="10" width="8" height="16" fill={C_TEXT} />
+          <rect x="10" y="42" width="16" height="8" fill={C_TEXT} />
+        </g>
+
+        {/* ── FOOTER ── */}
+        <rect x="0" y="460" width="856" height="80" fill={C_BLUE} />
+
+        {/* Footer: Logo white */}
+        <image
+          href="/logo0.png"
+          x="24"
+          y="472"
+          width="120"
+          height="38"
+          preserveAspectRatio="xMinYMid meet"
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
+
+        {/* Separator 1 */}
+        <text x="158" y="500" fontFamily="system-ui,-apple-system,sans-serif" fontSize="18" fontWeight="300" fill="rgba(255,255,255,0.35)">|</text>
+
+        {/* Website */}
+        <text
+          x="174"
+          y="500"
+          fontFamily="system-ui,-apple-system,sans-serif"
+          fontSize="11"
+          fontWeight="600"
+          fill="rgba(255,255,255,0.85)"
+          letterSpacing="0.5"
+        >
+          www.doctorek.ma
+        </text>
+
+        {/* Separator 2 */}
+        <text x="334" y="500" fontFamily="system-ui,-apple-system,sans-serif" fontSize="18" fontWeight="300" fill="rgba(255,255,255,0.35)">|</text>
+
+        {/* Phone icon */}
+        <g
+          transform="translate(352, 488)"
+          stroke="rgba(255,255,255,0.85)"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        >
+          <path d="M14 10.5v2a1.5 1.5 0 01-1.6 1.5 12 12 0 01-5.2-1.8 12 12 0 01-3.6-3.6A12 12 0 011.8 3.1 1.5 1.5 0 013.3 1.5h2a1.5 1.5 0 011.5 1.3c.1.7.3 1.4.5 2.1a1.5 1.5 0 01-.3 1.6L6.2 7.3A12 12 0 009.7 10.8l.8-.8a1.5 1.5 0 011.6-.3c.7.2 1.4.4 2.1.5A1.5 1.5 0 0114 10.5z" />
+        </g>
+
+        {/* Phone number */}
+        <text
+          x="376"
+          y="500"
+          fontFamily="system-ui,-apple-system,sans-serif"
+          fontSize="11"
+          fontWeight="600"
+          fill="rgba(255,255,255,0.85)"
+          letterSpacing="0.5"
+        >
+          080 100 2000
+        </text>
+      </g>
     </svg>
-  )
-}
-
-function QrCodePlaceholder() {
-  // Faux QR code pour le verso (donne un aspect très officiel)
-  return (
-    <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="100" rx="4" fill="#F3F4F6"/>
-      <path d="M10 10H40V40H10V10ZM20 20H30V30H20V20Z" fill={C_TEXT}/>
-      <path d="M60 10H90V40H60V10ZM70 20H80V30H70V20Z" fill={C_TEXT}/>
-      <path d="M10 60H40V90H10V60ZM20 70H30V80H20V70Z" fill={C_TEXT}/>
-      <rect x="50" y="50" width="10" height="10" fill={C_TEXT}/>
-      <rect x="70" y="60" width="20" height="10" fill={C_TEXT}/>
-      <rect x="60" y="80" width="10" height="10" fill={C_TEXT}/>
-      <rect x="80" y="80" width="10" height="10" fill={C_TEXT}/>
-      <rect x="50" y="10" width="10" height="20" fill={C_TEXT}/>
-      <rect x="10" y="50" width="20" height="10" fill={C_TEXT}/>
-    </svg>
-  )
-}
-
-function MrzLine({ firstName = "PATIENT", lastName = "DOCTOREK", docId = "VMC2026C6E480" }) {
-  // Génère la zone de lecture optique (Machine Readable Zone)
-  const line1 = `I<MAR${docId}<<<<<<<<<<<<<<<<<`
-  const line2 = `${lastName.replace(/\s/g, '<')}<<${firstName.replace(/\s/g, '<')}<<<<<<<<<<<<<<<<<<`
-
-  return (
-    <div style={{
-      fontFamily: '"Courier New", Courier, monospace',
-      fontSize: 'clamp(5px, 1.8vw, 9px)',
-      lineHeight: 1.2,
-      letterSpacing: '0.1em',
-      color: C_TEXT,
-      fontWeight: 600,
-      textTransform: 'uppercase',
-      opacity: 0.85
-    }}>
-      <div>{line1.substring(0, 30)}</div>
-      <div>{line2.substring(0, 30)}</div>
-    </div>
-  )
-}
-
-// ── RECTO ──────────────────────────────────────────────────────────────────────
-
-export function CarteRecto({ carte, firstName, lastName }: { carte: CarteVirtuelle; firstName?: string; lastName?: string }) {
-  const nom = lastName?.toUpperCase() || '—'
-  const prenom = firstName || '—'
-  const expiryDate = new Date(); expiryDate.setFullYear(expiryDate.getFullYear() + 3)
-  const expiry = expiryDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-
-  return (
-    <div style={{
-      position: 'absolute', inset: 0,
-      borderRadius: 'min(3vw, 12px)', overflow: 'hidden',
-      background: C_BG_CARD,
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0,0,0,0.1)',
-      fontFamily: 'system-ui,-apple-system,sans-serif',
-      backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
-    }}>
-      <ZelligeWatermark />
-
-      {/* Liseré haut rouge/vert */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: `linear-gradient(90deg, ${C_RED} 0%, ${C_RED} 50%, ${C_GREEN} 50%, ${C_GREEN} 100%)` }} />
-
-      {/* Header Étatique */}
-      <div style={{ padding: 'clamp(10px, 3vw, 14px) clamp(14px, 4vw, 20px) 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ color: C_TEXT, fontSize: 'clamp(5px, 1.6vw, 8px)', fontWeight: 800, letterSpacing: '0.05em' }}>ROYAUME DU MAROC</div>
-          <div style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.2vw, 6px)', fontWeight: 600, marginTop: '1px' }}>MINISTÈRE DE LA SANTÉ</div>
-        </div>
-
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <span style={{ color: '#007DFF', fontSize: 'clamp(14px, 4vw, 22px)', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.01em', lineHeight: 1 }}>Doctorek</span>
-        </div>
-
-        <div style={{ flex: 1, textAlign: 'right', direction: 'rtl' }}>
-          <div style={{ color: C_TEXT, fontSize: 'clamp(6px, 1.8vw, 9px)', fontWeight: 800 }}>المملكة المغربية</div>
-          <div style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.2vw, 6px)', fontWeight: 600, marginTop: '1px' }}>وزارة الصحة</div>
-        </div>
-      </div>
-
-      {/* Titre central + caducée */}
-      <div style={{ textAlign: 'center', marginTop: 'clamp(4px, 1.2vw, 8px)', position: 'relative', zIndex: 2 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(4px, 1vw, 8px)' }}>
-          <div style={{ height: '1px', flex: 1, background: `${C_DOC_BLUE}50`, marginLeft: 'clamp(14px, 4vw, 20px)' }} />
-          <div style={{ color: C_DOC_BLUE, fontSize: 'clamp(7px, 2.2vw, 11px)', fontWeight: 900, letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
-            CARTE MÉDICALE NATIONALE
-          </div>
-          <div style={{ height: '1px', flex: 1, background: `${C_DOC_BLUE}50`, marginRight: 'clamp(14px, 4vw, 20px)' }} />
-        </div>
-      </div>
-
-      {/* Doctorek background copyright watermark */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: C_DOC_BLUE, fontSize: 'clamp(28px, 9vw, 56px)', fontWeight: 900, fontStyle: 'italic', opacity: 0.045, letterSpacing: '-0.02em', transform: 'rotate(-18deg)', whiteSpace: 'nowrap', userSelect: 'none' }}>
-          Doctorek
-        </span>
-      </div>
-
-      {/* Corps de la carte */}
-      <div style={{ padding: 'clamp(8px, 2vw, 12px) clamp(14px, 4vw, 20px)', display: 'flex', gap: 'clamp(10px, 3vw, 16px)', position: 'relative', zIndex: 2 }}>
-
-        {/* Colonne Photo */}
-        <div style={{ flexShrink: 0 }}>
-          <div style={{
-            width: 'clamp(60px, 16vw, 80px)', height: 'clamp(80px, 21vw, 105px)',
-            background: '#F3F4F6', borderRadius: '6px', border: '1.5px solid #D1D5DB',
-            overflow: 'hidden'
-          }}>
-            {carte.photoUrl ? (
-              <img src={carte.photoUrl} alt="photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
-            ) : (
-              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="#D1D5DB"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            )}
-          </div>
-        </div>
-
-        {/* Colonne Informations (Disposition type CNI) */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'clamp(5px, 1.2vw, 8px)', justifyContent: 'center' }}>
-          <div>
-            <div style={{ color: C_LABEL, fontSize: 'clamp(6px, 1.6vw, 8px)', fontWeight: 600 }}>
-              Nom / النسب
-            </div>
-            <div style={{ color: C_TEXT, fontSize: 'clamp(11px, 3vw, 14px)', fontWeight: 800, lineHeight: 1.1 }}>{nom}</div>
-          </div>
-
-          <div>
-            <div style={{ color: C_LABEL, fontSize: 'clamp(6px, 1.6vw, 8px)', fontWeight: 600 }}>
-              Prénom / الاسم الشخصي
-            </div>
-            <div style={{ color: C_TEXT, fontSize: 'clamp(11px, 3vw, 14px)', fontWeight: 800, lineHeight: 1.1 }}>{prenom}</div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 'clamp(10px, 3vw, 20px)' }}>
-            <div>
-              <div style={{ color: C_LABEL, fontSize: 'clamp(6px, 1.6vw, 8px)', fontWeight: 600 }}>Né(e) le / تاريخ الازدياد</div>
-              <div style={{ color: C_TEXT, fontSize: 'clamp(9px, 2.4vw, 12px)', fontWeight: 700 }}>{carte.dateNaissance ?? '—'}</div>
-            </div>
-            <div>
-              <div style={{ color: C_LABEL, fontSize: 'clamp(6px, 1.6vw, 8px)', fontWeight: 600 }}>N° Carte / رقم البطاقة</div>
-              <div style={{ color: C_TEXT, fontSize: 'clamp(9px, 2.4vw, 12px)', fontWeight: 800 }}>{carte.cardRef ?? '—'}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Doctorek */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'clamp(6px, 1.5vw, 10px) clamp(14px, 4vw, 20px)', background: '#F8FAFC', borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 2 }}>
-        <span style={{ color: '#007DFF', fontSize: 'clamp(7px, 2vw, 11px)', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.01em' }}>Doctorek</span>
-        <div style={{ textAlign: 'right' }}>
-          <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.2vw, 6px)', fontWeight: 600, marginRight: '4px' }}>Valable jusqu'au:</span>
-          <span style={{ color: C_TEXT, fontSize: 'clamp(6px, 1.8vw, 9px)', fontWeight: 800 }}>{expiry}</span>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -237,97 +326,266 @@ export function CarteVerso({
   const prenom = firstName || '—'
   const createdYear = new Date().getFullYear()
 
-  const bilingualRows = [
-    { fr: 'Nom', ar: 'النسب',                      value: nom },
-    { fr: 'Prénom', ar: 'الاسم الشخصي',             value: prenom },
-    { fr: 'Date de naissance', ar: 'تاريخ الازدياد', value: carte.dateNaissance ?? '—' },
-    { fr: 'C.I.N.', ar: 'ب.ت.و',                   value: carte.numIdentite ?? '—' },
-    { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل', value: `01/01/${createdYear}` },
+  const rows = [
+    { fr: 'Nom',                   ar: 'النسب',            value: nom },
+    { fr: 'Prénom',                 ar: 'الاسم الشخصي',     value: prenom },
+    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',   value: carte.dateNaissance ?? '—' },
+    { fr: 'C.I.N.',                 ar: 'ب.ت.و',           value: carte.numIdentite ?? '—' },
+    { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',    value: `01/01/${createdYear}` },
   ]
 
   return (
-    <div style={{
-      position: 'absolute', inset: 0,
-      borderRadius: 'min(3vw, 12px)', overflow: 'hidden',
-      background: C_BG_CARD,
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0,0,0,0.1)',
-      fontFamily: 'system-ui,-apple-system,sans-serif',
-      display: 'flex', flexDirection: 'column',
-      ...(flat ? {} : { transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }),
-    }}>
-      <ZelligeWatermark />
-
-      {/* Doctorek background copyright watermark */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: C_DOC_BLUE, fontSize: 'clamp(28px, 9vw, 56px)', fontWeight: 900, fontStyle: 'italic', opacity: 0.045, letterSpacing: '-0.02em', transform: 'rotate(-18deg)', whiteSpace: 'nowrap', userSelect: 'none' }}>
-          Doctorek
-        </span>
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        borderRadius: 'min(3vw, 12px)',
+        overflow: 'hidden',
+        background: '#F8FAFD',
+        boxShadow: '0 4px 24px rgba(0,125,255,0.12), inset 0 0 0 1px rgba(0,125,255,0.1)',
+        fontFamily: 'system-ui,-apple-system,sans-serif',
+        display: 'flex',
+        flexDirection: 'column',
+        ...(flat
+          ? {}
+          : {
+              transform: 'rotateY(180deg)',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden' as const,
+            }),
+      }}
+    >
+      {/* Logo watermark */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+        aria-hidden="true"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo0.png"
+          alt=""
+          style={{
+            width: '55%',
+            opacity: 0.04,
+            transform: 'rotate(-12deg)',
+            userSelect: 'none',
+            filter: `hue-rotate(0deg) saturate(0)`,
+          }}
+        />
       </div>
 
-      {/* Liseré haut rouge/vert */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: `linear-gradient(90deg, ${C_RED} 0%, ${C_RED} 50%, ${C_GREEN} 50%, ${C_GREEN} 100%)` }} />
+      {/* Top stripe */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0,
+          height: '5px',
+          background: `linear-gradient(90deg, ${C_RED} 50%, ${C_GREEN} 50%)`,
+          zIndex: 3,
+        }}
+      />
 
-      {/* Header — logo gauche / N° immatriculation droite */}
-      <div style={{ padding: 'clamp(10px, 3vw, 14px) clamp(14px, 4vw, 20px) clamp(6px, 1.5vw, 8px)', background: C_DOC_BLUE, position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {/* Logo Doctorek */}
-        <span style={{ color: '#FFFFFF', fontSize: 'clamp(10px, 2.8vw, 16px)', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.01em' }}>Doctorek</span>
-        {/* N° immatriculation */}
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, letterSpacing: '0.05em' }}>
-            N° D'IMMATRICULATION / رقم التسجيل
+      {/* Header */}
+      <div
+        style={{
+          background: `linear-gradient(135deg, ${C_BLUE} 0%, ${C_DARK} 100%)`,
+          padding: 'clamp(10px,2.8vw,16px) clamp(14px,3.5vw,22px)',
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo0.png"
+          alt="Doctorek"
+          style={{
+            height: 'clamp(18px,4.5vw,28px)',
+            width: 'auto',
+            filter: 'brightness(0) invert(1)',
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div
+            style={{
+              color: 'rgba(255,255,255,0.6)',
+              fontSize: 'clamp(5px,1.15vw,7px)',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+            }}
+          >
+            N° Immatriculation / رقم التسجيل
           </div>
-          <div style={{ color: '#FFFFFF', fontSize: 'clamp(9px, 2.6vw, 13px)', fontWeight: 900, fontFamily: '"Courier New", Courier, monospace', letterSpacing: '0.08em', marginTop: '1px' }}>
+          <div
+            style={{
+              color: '#FFFFFF',
+              fontSize: 'clamp(10px,2.8vw,15px)',
+              fontWeight: 900,
+              fontFamily: '"Courier New", Courier, monospace',
+              letterSpacing: '0.1em',
+              marginTop: '2px',
+            }}
+          >
             {carte.assuranceNumero ?? carte.cardRef ?? '—'}
           </div>
         </div>
       </div>
 
-      {/* Corps : champs bilingues + notice */}
-      <div style={{ flex: 1, padding: 'clamp(6px, 1.5vw, 10px) clamp(14px, 4vw, 20px)', position: 'relative', zIndex: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(2px, 0.6vw, 4px)' }}>
-          {bilingualRows.map((row, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #E5E7EB', paddingBottom: 'clamp(2px, 0.5vw, 3px)' }}>
-              <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, minWidth: 'clamp(50px, 13vw, 72px)', flexShrink: 0 }}>
-                {row.fr}
-              </span>
-              <span style={{ color: C_TEXT, fontSize: 'clamp(7px, 2vw, 10px)', fontWeight: 800, flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 4px' }}>
-                {row.value}
-              </span>
-              <span style={{ color: C_LABEL, fontSize: 'clamp(4px, 1.1vw, 6px)', fontWeight: 600, direction: 'rtl', textAlign: 'right', minWidth: 'clamp(50px, 13vw, 72px)', flexShrink: 0 }}>
-                {row.ar}
-              </span>
-            </div>
-          ))}
-        </div>
+      {/* Body */}
+      <div
+        style={{
+          flex: 1,
+          padding: 'clamp(8px,2vw,14px) clamp(14px,3.5vw,22px)',
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'clamp(3px,0.7vw,5px)',
+        }}
+      >
+        {rows.map((row, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr auto 1fr',
+              alignItems: 'center',
+              gap: '4px',
+              background: i % 2 === 0 ? 'rgba(0,125,255,0.04)' : 'transparent',
+              borderRadius: '5px',
+              padding: 'clamp(3px,0.7vw,5px) clamp(6px,1.4vw,10px)',
+            }}
+          >
+            <span
+              style={{
+                color: C_LABEL,
+                fontSize: 'clamp(5px,1.2vw,7px)',
+                fontWeight: 700,
+                letterSpacing: '0.03em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {row.fr}
+            </span>
+            <span
+              style={{
+                color: C_TEXT,
+                fontSize: 'clamp(8px,2.1vw,12px)',
+                fontWeight: 800,
+                textAlign: 'center',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                letterSpacing: '0.02em',
+                borderLeft: `2px solid ${C_BLUE}30`,
+                borderRight: `2px solid ${C_BLUE}30`,
+                padding: '0 clamp(6px,1.5vw,10px)',
+              }}
+            >
+              {row.value}
+            </span>
+            <span
+              style={{
+                color: C_LABEL,
+                fontSize: 'clamp(5px,1.2vw,7px)',
+                fontWeight: 700,
+                direction: 'rtl',
+                textAlign: 'right',
+                letterSpacing: '0.01em',
+              }}
+            >
+              {row.ar}
+            </span>
+          </div>
+        ))}
+      </div>
 
-        {/* Confidentiality notice + QR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 10px)', marginTop: 'clamp(3px, 0.8vw, 6px)', marginBottom: 'clamp(4px, 1.2vw, 8px)' }}>
-          <div style={{ flex: 1, background: '#EEF4FF', border: `1px solid ${C_DOC_BLUE}22`, borderRadius: '5px', padding: 'clamp(3px, 0.7vw, 5px) clamp(5px, 1.2vw, 8px)', display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)' }}>
-            <svg viewBox="0 0 24 24" style={{ width: 'clamp(10px, 2.5vw, 14px)', flexShrink: 0 }} fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill={C_DOC_BLUE} opacity="0.9"/>
-              <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <div>
-              <div style={{ color: C_TEXT, fontSize: 'clamp(4px, 1.05vw, 6px)', fontWeight: 700, lineHeight: 1.35 }}>
-                Cette carte est strictement personnelle et confidentielle.
-              </div>
-              <div style={{ color: C_LABEL, fontSize: 'clamp(3.5px, 0.85vw, 5px)', fontWeight: 500, lineHeight: 1.3, marginTop: '1px' }}>
-                En cas de perte ou de vol, contacter le Ministère de la Santé.
-              </div>
-            </div>
+      {/* Security notice */}
+      <div
+        style={{
+          margin: '0 clamp(14px,3.5vw,22px) clamp(6px,1.5vw,10px)',
+          background: `linear-gradient(135deg, #EEF6FF 0%, #F0FDF9 100%)`,
+          border: `1px solid ${C_BLUE}25`,
+          borderRadius: '8px',
+          padding: 'clamp(4px,1vw,7px) clamp(8px,2vw,12px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(6px,1.5vw,10px)',
+          position: 'relative',
+          zIndex: 2,
+        }}
+      >
+        <svg viewBox="0 0 24 24" style={{ width: 'clamp(12px,3vw,18px)', flexShrink: 0 }} fill="none">
+          <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill={C_BLUE} opacity="0.85" />
+          <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: C_TEXT, fontSize: 'clamp(5px,1.2vw,7px)', fontWeight: 700, lineHeight: 1.4 }}>
+            Carte strictement personnelle et confidentielle
           </div>
-          <div style={{ width: 'clamp(24px, 6.5vw, 42px)', height: 'clamp(24px, 6.5vw, 42px)', flexShrink: 0 }}>
-            <QrCodePlaceholder />
+          <div style={{ color: C_LABEL, fontSize: 'clamp(4px,0.9vw,6px)', fontWeight: 500, marginTop: '1px', lineHeight: 1.3 }}>
+            En cas de perte ou vol, contactez le Ministère de la Santé.
           </div>
         </div>
+        <svg viewBox="0 0 80 80" style={{ width: 'clamp(22px,5.5vw,36px)', flexShrink: 0 }} fill="none">
+          <rect width="80" height="80" rx="4" fill="#F3F4F6" />
+          <path d="M8 8H32V32H8V8ZM16 16H24V24H16V16Z" fill={C_TEXT} />
+          <path d="M48 8H72V32H48V8ZM56 16H64V24H56V16Z" fill={C_TEXT} />
+          <path d="M8 48H32V72H8V48ZM16 56H24V64H16V56Z" fill={C_TEXT} />
+          <rect x="40" y="40" width="8" height="8" fill={C_TEXT} />
+          <rect x="56" y="48" width="16" height="8" fill={C_TEXT} />
+          <rect x="48" y="64" width="8" height="8" fill={C_TEXT} />
+          <rect x="64" y="64" width="8" height="8" fill={C_TEXT} />
+          <rect x="40" y="8" width="8" height="16" fill={C_TEXT} />
+          <rect x="8" y="40" width="16" height="8" fill={C_TEXT} />
+        </svg>
       </div>
 
       {/* Footer */}
-      <div style={{ background: '#F8FAFC', borderTop: '1px solid #E5E7EB', padding: 'clamp(3px, 0.8vw, 5px) clamp(14px, 4vw, 20px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
-        <span style={{ color: C_DOC_BLUE, fontSize: 'clamp(7px, 2vw, 12px)', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-0.01em' }}>
-          Doctorek
-        </span>
-        <div style={{ fontFamily: '"Courier New", Courier, monospace', fontSize: 'clamp(3.5px, 0.9vw, 6px)', color: C_LABEL, letterSpacing: '0.06em', fontWeight: 600 }}>
+      <div
+        style={{
+          background: C_BLUE,
+          padding: 'clamp(5px,1.3vw,8px) clamp(14px,3.5vw,22px)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'relative',
+          zIndex: 2,
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo0.png"
+          alt="Doctorek"
+          style={{
+            height: 'clamp(14px,3.5vw,22px)',
+            width: 'auto',
+            filter: 'brightness(0) invert(1)',
+          }}
+        />
+        <div
+          style={{
+            fontFamily: '"Courier New", Courier, monospace',
+            fontSize: 'clamp(4px,0.95vw,6.5px)',
+            color: 'rgba(255,255,255,0.7)',
+            letterSpacing: '0.08em',
+            fontWeight: 600,
+          }}
+        >
           CARTE MÉDICALE NATIONALE — MA
         </div>
       </div>
@@ -335,9 +593,14 @@ export function CarteVerso({
   )
 }
 
-// ── Composant Principal et Menu ──────────────────────────────────────────────
+// ── Composant Principal ──────────────────────────────────────────────────────
 
-export default function CarteVirtuelleCard({ carte, firstName, lastName, onEdit }: CarteVirtuelleCardProps) {
+export default function CarteVirtuelleCard({
+  carte,
+  firstName,
+  lastName,
+  onEdit,
+}: CarteVirtuelleCardProps) {
   const [downloading, setDownloading] = useState(false)
   const [flipped, setFlipped] = useState(false)
 
@@ -358,7 +621,7 @@ export default function CarteVirtuelleCard({ carte, firstName, lastName, onEdit 
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert('Erreur lors de l\'exportation de la carte. Veuillez réessayer.')
+      alert("Erreur lors de l'exportation de la carte. Veuillez réessayer.")
     } finally {
       setDownloading(false)
     }
@@ -366,19 +629,31 @@ export default function CarteVirtuelleCard({ carte, firstName, lastName, onEdit 
 
   return (
     <div className="max-w-xl mx-auto">
-      {/* Carte 3D flip */}
+      {/* Card 3D flip container */}
       <div
-        style={{ width: '100%', aspectRatio: '1.586', position: 'relative', perspective: '1400px', cursor: 'pointer', filter: 'drop-shadow(0 20px 40px rgba(0,125,255,0.15))' }}
+        style={{
+          width: '100%',
+          aspectRatio: '1.586',
+          position: 'relative',
+          perspective: '1400px',
+          cursor: 'pointer',
+          filter: 'drop-shadow(0 20px 40px rgba(0,125,255,0.15))',
+        }}
         onClick={() => setFlipped(f => !f)}
         title="Cliquer pour retourner la carte"
       >
-        <div style={{
-          position: 'absolute', inset: 0,
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
-          transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-        }}>
-          <CarteRecto carte={carte} firstName={firstName} lastName={lastName} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            transformStyle: 'preserve-3d',
+            transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
+            transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          }}
+        >
+          <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+            <CarteRecto carte={carte} firstName={firstName} lastName={lastName} />
+          </div>
           <CarteVerso carte={carte} firstName={firstName} lastName={lastName} />
         </div>
       </div>
@@ -394,7 +669,20 @@ export default function CarteVirtuelleCard({ carte, firstName, lastName, onEdit 
           disabled={downloading}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold bg-[#007DFF] text-white shadow-lg shadow-blue-500/20 hover:bg-[#0052CC] transition-colors disabled:opacity-50"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
           {downloading ? 'Exportation...' : 'Télécharger la carte'}
         </button>
         {onEdit && (
@@ -411,21 +699,21 @@ export default function CarteVirtuelleCard({ carte, firstName, lastName, onEdit 
       <div className="mt-5 grid grid-cols-3 gap-2">
         <div className="flex flex-col items-center gap-1.5 bg-[#F0F7FF] rounded-xl py-3 px-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#007DFF]">
-            <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="text-[11px] font-semibold text-[#1863A9] text-center leading-tight">Reconnu partout</span>
         </div>
         <div className="flex flex-col items-center gap-1.5 bg-[#F0FDF8] rounded-xl py-3 px-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#2EB67D]">
-            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.8"/>
-            <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
           <span className="text-[11px] font-semibold text-[#1a7a52] text-center leading-tight">Données sécurisées</span>
         </div>
         <div className="flex flex-col items-center gap-1.5 bg-[#FFF8F0] rounded-xl py-3 px-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#ECB22E]">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="text-[11px] font-semibold text-[#92600a] text-center leading-tight">Service Certifié</span>
         </div>

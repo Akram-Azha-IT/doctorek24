@@ -9,6 +9,9 @@ export interface DoctorMapEntry {
   lat: number
   lng: number
   name: string
+  photoUrl?: string | null
+  initials?: string
+  avatarColor?: string
 }
 
 interface DoctorMapProps {
@@ -20,17 +23,48 @@ interface DoctorMapProps {
 const COLOR_DEFAULT = '#1863A9'
 const COLOR_HOVERED = '#E01E5A'
 
-function makePinIcon(L: typeof import('leaflet'), hovered: boolean) {
-  const color = hovered ? COLOR_HOVERED : COLOR_DEFAULT
-  const w = hovered ? 32 : 24
-  const h = hovered ? 48 : 36
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="${w}" height="${h}"><path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z" fill="${color}" stroke="white" stroke-width="1.2"/><circle cx="12" cy="12" r="4.5" fill="white"/></svg>`
+function makeAvatarIcon(
+  L: typeof import('leaflet'),
+  doc: DoctorMapEntry,
+  hovered: boolean,
+) {
+  const border = hovered ? COLOR_HOVERED : COLOR_DEFAULT
+  const size = hovered ? 52 : 44
+  const tipColor = hovered ? COLOR_HOVERED : COLOR_DEFAULT
+
+  const inner = doc.photoUrl
+    ? `<img src="${doc.photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`
+    : `<span style="font-size:${hovered ? 16 : 14}px;font-weight:700;color:#fff;font-family:system-ui,sans-serif">${doc.initials ?? ''}</span>`
+
+  const bgColor = doc.photoUrl ? 'transparent' : (doc.avatarColor ?? COLOR_DEFAULT)
+
+  const html = `
+    <div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35))">
+      <div style="
+        width:${size}px;height:${size}px;
+        border-radius:50%;
+        border:2.5px solid ${border};
+        background:${bgColor};
+        display:flex;align-items:center;justify-content:center;
+        overflow:hidden;
+        box-sizing:border-box;
+      ">${inner}</div>
+      <div style="
+        width:0;height:0;
+        border-left:7px solid transparent;
+        border-right:7px solid transparent;
+        border-top:9px solid ${tipColor};
+        margin-top:-1px;
+      "></div>
+    </div>`
+
+  const totalH = size + 9
   return L.divIcon({
-    html: svg,
+    html,
     className: '',
-    iconSize: [w, h],
-    iconAnchor: [w / 2, h],
-    tooltipAnchor: [0, -h],
+    iconSize: [size, totalH],
+    iconAnchor: [size / 2, totalH],
+    tooltipAnchor: [0, -(totalH)],
   })
 }
 
@@ -105,7 +139,7 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
     for (const doc of doctors) {
       if (existing.has(doc.id)) continue
       const marker = L.marker([doc.lat, doc.lng], {
-        icon: makePinIcon(L, doc.id === hoveredId),
+        icon: makeAvatarIcon(L, doc, doc.id === hoveredId),
       }).addTo(map)
       marker.bindTooltip(doc.name, { permanent: false, direction: 'top' })
       existing.set(doc.id, marker)
@@ -127,7 +161,8 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
     if (!mapReady || !map || !L) return
 
     for (const [id, marker] of markersRef.current) {
-      marker.setIcon(makePinIcon(L, id === hoveredId))
+      const doc = doctors.find((d) => d.id === id)
+      if (doc) marker.setIcon(makeAvatarIcon(L, doc, id === hoveredId))
     }
 
     if (hoveredId) {

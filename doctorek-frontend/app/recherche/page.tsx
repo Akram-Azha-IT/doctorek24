@@ -83,6 +83,7 @@ export default function RecherchePage() {
   const [filter, setFilter] = useState<DisponibiliteFilter>('all')
   const [nearbyMode, setNearbyMode] = useState(nearbyParam === '1' && urlCoords !== null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
 
   const { register, watch } = useForm<SearchFormValues>({
     defaultValues: {
@@ -151,12 +152,19 @@ export default function RecherchePage() {
     const source = nearbyMode ? nearbyMedecins.map((r) => r.medecin) : searchMedecins
     return source
       .filter((m) => m.latitude != null && m.longitude != null)
-      .map((m) => ({
-        id: m.id,
-        lat: m.latitude!,
-        lng: m.longitude!,
-        name: `Dr. ${m.firstName} ${m.lastName}`,
-      }))
+      .map((m) => {
+        const name = `${m.firstName}${m.lastName}`
+        const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+        return {
+          id: m.id,
+          lat: m.latitude!,
+          lng: m.longitude!,
+          name: `Dr. ${m.firstName} ${m.lastName}`,
+          photoUrl: m.photoUrl ?? null,
+          initials: `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase(),
+          avatarColor: `hsl(${hash % 360}, 55%, 42%)`,
+        }
+      })
   }, [nearbyMode, nearbyMedecins, searchMedecins])
 
   const resultCount = nearbyMode ? nearbyMedecins.length : searchMedecins.length
@@ -172,7 +180,10 @@ export default function RecherchePage() {
 
   return (
     <>
-      <Header />
+      <Header sticky={false} />
+
+      {/* ── Sticky search + filter wrapper ── */}
+      <div className="sticky top-0 z-40">
 
       {/* ── Search banner ── */}
       <div className="bg-[#064178] px-4 py-4 shadow-lg">
@@ -214,7 +225,7 @@ export default function RecherchePage() {
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="sticky top-[49px] z-10 border-b border-zinc-200 bg-white/95 shadow-sm backdrop-blur-sm">
+      <div className="border-b border-[#c8dff5] bg-[#EBF4FF] shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 overflow-x-auto">
           <button
             type="button"
@@ -271,16 +282,18 @@ export default function RecherchePage() {
           )}
         </div>
       </div>
+      </div>{/* end sticky wrapper */}
 
       {/* ── Main layout ── */}
+      <div className="min-h-screen bg-[#EBF4FF]">
       <div className="mx-auto flex max-w-6xl">
 
         {/* Left: results list */}
-        <div className="flex-1 min-w-0 px-4 py-5">
+        <div className={`flex-1 min-w-0 px-4 py-5 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
           <p className="mb-4 text-sm text-zinc-500">{resultLabel}</p>
 
           {isError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-300">
               {(error as Error).message}
             </div>
           )}
@@ -345,7 +358,7 @@ export default function RecherchePage() {
           )}
         </div>
 
-        {/* Right: sticky map */}
+        {/* Right: sticky map — desktop side panel */}
         <div className="hidden lg:block w-[380px] shrink-0">
           <div className="sticky top-[97px] h-[calc(100vh-97px)] overflow-hidden rounded-tl-xl border-l border-zinc-200">
             <DoctorMap
@@ -363,6 +376,50 @@ export default function RecherchePage() {
           </div>
         </div>
       </div>
+      </div>{/* end bg wrapper */}
+
+      {/* ── Mobile map overlay (full-screen below sticky header) ── */}
+      {mobileView === 'map' && (
+        <div className="fixed inset-0 z-30 lg:hidden">
+          <div className="relative h-full w-full overflow-hidden">
+            <DoctorMap
+              doctors={mapDoctors}
+              hoveredId={hoveredId}
+              center={geoCoords ?? undefined}
+            />
+            {mapDoctors.length === 0 && !isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#E8EFF6]/80 pointer-events-none">
+                <div className="rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-zinc-500 shadow-md backdrop-blur-sm ring-1 ring-zinc-200">
+                  Aucun médecin localisé
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile FAB: toggle list / map ── */}
+      <button
+        type="button"
+        onClick={() => setMobileView(v => v === 'list' ? 'map' : 'list')}
+        className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 lg:hidden flex items-center gap-2 rounded-full bg-[#007DFF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-400/40 ring-1 ring-white/20 transition-all active:scale-95 hover:bg-[#00263C]"
+      >
+        {mobileView === 'list' ? (
+          <>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Vue Carte
+          </>
+        ) : (
+          <>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            Vue Liste
+          </>
+        )}
+      </button>
     </>
   )
 }
