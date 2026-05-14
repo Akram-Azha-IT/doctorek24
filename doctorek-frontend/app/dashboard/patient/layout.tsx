@@ -4,9 +4,9 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Search, CreditCard,
-  LogOut, Bell, Settings, Heart, ChevronRight,
+  LogOut, Bell, Settings, Heart, ChevronRight, FileText,
 } from 'lucide-react'
-import { getSession, clearSession } from '@/lib/session'
+import { getSession, saveSession, clearSession } from '@/lib/session'
 import Logo from '@/components/Logo'
 import { useCarteByPatient } from '@/features/carte/hooks'
 
@@ -18,7 +18,8 @@ const NAV_ITEMS = [
 ]
 
 const HEALTH_ITEMS = [
-  { href: '/dashboard/patient/carte', label: 'Mon Dossier', icon: Heart },
+  { href: '/dashboard/patient/carte', label: 'Carte Médicale', icon: Heart },
+  { href: '/dashboard/patient/dossier', label: 'Mes Documents', icon: FileText },
 ]
 
 const COLLAPSED_WIDTH = 64
@@ -53,6 +54,22 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
   const { data: carte } = useCarteByPatient(patientId || null)
   const resolvedPhoto = carte?.photoUrl ?? photoUrl
+
+  useEffect(() => {
+    if (!carte) return
+    const session = getSession()
+    if (!session) return
+    const carteFirst = carte.firstName ?? ''
+    const carteLast = carte.lastName ?? ''
+    if (!session.firstName && carteFirst) {
+      setFirstName(carteFirst)
+      saveSession({ ...session, firstName: carteFirst })
+    }
+    if (!session.lastName && carteLast) {
+      setLastName(carteLast)
+      saveSession({ ...session, firstName: session.firstName ?? carteFirst, lastName: carteLast })
+    }
+  }, [carte])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!dragRef.current) return

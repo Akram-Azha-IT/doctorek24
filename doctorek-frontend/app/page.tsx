@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MapPin, Search, UserRound, HelpCircle, ChevronRight, Loader2, Phone, Mail } from 'lucide-react'
+import { MapPin, Search, UserRound, HelpCircle, ChevronRight, Loader2 } from 'lucide-react'
 import Logo from '@/components/Logo'
+import { Footer } from '@/components/Footer'
 
 const POPULAR_SPECIALTIES = [
   { name: 'Médecin généraliste', icon: '/medecin.png' },
@@ -454,88 +455,214 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="bg-[#00263C] pt-14 pb-0">
-        <div className="mx-auto max-w-[1400px] px-4 md:px-8">
+      {/* ── Section 1: Patients (light blue, content left, image right) ── */}
+      <section className="relative overflow-hidden" style={{ background: '#EBF4FF' }}>
+        <div className="mx-auto max-w-[1200px] px-4 md:px-8 py-10 md:py-14">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 min-h-[200px] md:min-h-[240px]">
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12">
-
-            {/* Brand */}
-            <div className="col-span-1">
-              <div className="mb-4">
-                <Logo className="h-10 w-auto" width={140} height={47} style={{ filter: 'brightness(0) invert(1)' }} />
-              </div>
-              <p className="text-[#B6DAF7] text-[13px] leading-relaxed mb-6">
-                La première plateforme numérique de santé au Maroc. Votre santé, notre engagement national.
+            {/* Left: content */}
+            <div className="flex-1 md:max-w-[580px]">
+              <h2 className="text-2xl md:text-[32px] font-bold text-[#00263C] leading-snug mb-3 tracking-tight">
+                Vous êtes patient ?
+              </h2>
+              <p className="text-[#465058] text-[14px] font-semibold mb-4">
+                Prenez rendez-vous en quelques secondes, 24h/24.
               </p>
-              <div className="flex flex-col gap-2">
-                <a href="mailto:contact@doctorek.ma" className="flex items-center gap-2 text-[#B6DAF7] text-[13px] hover:text-white transition-colors">
-                  <Mail className="h-4 w-4 text-[#007DFF]" />
-                  contact@doctorek.ma
-                </a>
-                <a href="tel:+212500000000" className="flex items-center gap-2 text-[#B6DAF7] text-[13px] hover:text-white transition-colors">
-                  <Phone className="h-4 w-4 text-[#007DFF]" />
-                  +212 5 00 00 00 00
-                </a>
-              </div>
-            </div>
-
-            {/* Specialties */}
-            <div>
-              <h4 className="font-bold text-white text-[12px] mb-4 tracking-wide uppercase">Spécialités</h4>
-              <ul className="space-y-3 text-[13px] text-[#B6DAF7]">
+              <ul className="space-y-2 mb-6">
                 {[
-                  { label: 'Médecin généraliste', icon: '/medecin.png' },
-                  { label: 'Pédiatre', icon: '/therapie.png' },
-                  { label: 'Gynécologue', icon: '/gynecologue.png' },
-                  { label: 'Dentiste', icon: '/dentiste.png' },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link href="/recherche" className="flex items-center gap-2 hover:text-white transition-colors">
-                      <Image src={item.icon} alt={item.label} width={16} height={16} className="opacity-70" />
-                      {item.label}
-                    </Link>
+                  'Recherche par spécialité, ville ou disponibilité',
+                  'Prise de rendez-vous en ligne à toute heure',
+                  'Carte médicale digitale toujours accessible',
+                  'Historique de vos consultations centralisé',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2.5">
+                    <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 16 16" stroke="#007DFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 8l4 4 6-7" />
+                    </svg>
+                    <span className="text-[#333333] text-[13px]">{item}</span>
                   </li>
                 ))}
               </ul>
+              <Link
+                href="/inscription"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-[14px] text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ background: '#007DFF' }}
+              >
+                En savoir plus
+              </Link>
             </div>
 
-            {/* Patients */}
-            <div>
-              <h4 className="font-bold text-white tracking-wide uppercase text-[12px] mb-4">Patients</h4>
-              <ul className="space-y-3 text-[13px] text-[#B6DAF7]">
-                <li><Link href="/recherche" className="hover:text-white transition-colors">Trouver un praticien</Link></li>
-                <li><Link href="/login" className="hover:text-white transition-colors">Se connecter</Link></li>
-                <li><Link href="/inscription" className="hover:text-white transition-colors">Créer un compte</Link></li>
-                <li><Link href="/help" className="hover:text-white transition-colors">Centre d'aide</Link></li>
-              </ul>
-            </div>
-
-            {/* Professionals */}
-            <div>
-              <h4 className="font-bold text-white tracking-wide uppercase text-[12px] mb-4">Professionnels</h4>
-              <ul className="space-y-3 text-[13px] text-[#B6DAF7]">
-                <li><Link href="/inscription?role=medecin" className="hover:text-white transition-colors">Logiciel Doctorek Pro</Link></li>
-                <li><Link href="/login" className="hover:text-white transition-colors">Espace médecin</Link></li>
-              </ul>
+            {/* Right: blob composition */}
+            <div className="relative flex-shrink-0 w-[240px] md:w-[280px] h-[240px] md:h-[280px]">
+              {/* Back blob */}
+              <div className="absolute pointer-events-none" style={{
+                width: '86%', height: '86%',
+                background: '#00263C',
+                borderRadius: '60% 40% 55% 45% / 45% 60% 40% 55%',
+                bottom: 0, left: 0,
+              }} />
+              {/* Accent blob */}
+              <div className="absolute pointer-events-none" style={{
+                width: '38%', height: '38%',
+                background: '#007DFF',
+                borderRadius: '50% 50% 40% 60% / 55% 45% 55% 45%',
+                top: 0, right: 0,
+                opacity: 0.8,
+              }} />
+              {/* Photo clipped to organic shape */}
+              <div className="absolute overflow-hidden" style={{
+                width: '82%', height: '82%',
+                borderRadius: '55% 45% 45% 55% / 55% 45% 55% 45%',
+                top: '5%', right: '5%',
+              }}>
+                <Image
+                  src="/Telehealth at Your Fingertips_ Convenient Care from Home.jpg"
+                  alt="Prise de rendez-vous en ligne"
+                  width={240}
+                  height={240}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
 
           </div>
-
-          {/* Bottom strip */}
-          <div className="border-t border-white/10 py-6 flex flex-col md:flex-row justify-between items-center gap-3">
-            <p className="text-[12px] text-[#B6DAF7]">
-              © {new Date().getFullYear()} Doctorek. Tous droits réservés.
-            </p>
-            <div className="flex gap-5 text-[12px] text-[#B6DAF7]">
-              <Link href="#" className="hover:text-white transition-colors">Conditions générales</Link>
-              <Link href="#" className="hover:text-white transition-colors">Confidentialité</Link>
-              <Link href="#" className="hover:text-white transition-colors">Mentions légales</Link>
-            </div>
-          </div>
-
         </div>
-      </footer>
+      </section>
+
+      {/* ── Section 2: Professionnels (dark navy, image left, content right) ── */}
+      <section className="relative overflow-hidden" style={{ background: '#00263C' }}>
+        <div className="mx-auto max-w-[1200px] px-4 md:px-8 py-10 md:py-14">
+          <div className="flex flex-col-reverse md:flex-row items-center gap-8 md:gap-16 min-h-[200px] md:min-h-[240px]">
+
+            {/* Left: blob composition */}
+            <div className="relative flex-shrink-0 w-[240px] md:w-[280px] h-[240px] md:h-[280px]">
+              {/* Back blob */}
+              <div className="absolute pointer-events-none" style={{
+                width: '86%', height: '86%',
+                background: '#007DFF',
+                borderRadius: '45% 55% 60% 40% / 60% 40% 55% 45%',
+                bottom: 0, right: 0,
+              }} />
+              {/* Accent blob */}
+              <div className="absolute pointer-events-none" style={{
+                width: '38%', height: '38%',
+                background: '#FFAF5D',
+                borderRadius: '50% 50% 55% 45% / 45% 55% 45% 55%',
+                top: 0, left: 0,
+                opacity: 0.85,
+              }} />
+              {/* Photo clipped to organic shape */}
+              <div className="absolute overflow-hidden" style={{
+                width: '82%', height: '82%',
+                borderRadius: '45% 55% 55% 45% / 45% 55% 45% 55%',
+                top: '5%', left: '5%',
+              }}>
+                <Image
+                  src="/Entice Beauty By Shah Emran The Artist.jpg"
+                  alt="Tableau de bord médecin"
+                  width={240}
+                  height={240}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Right: content */}
+            <div className="flex-1 md:max-w-[580px] md:pl-10">
+              <h2 className="text-2xl md:text-[32px] font-bold text-white leading-snug mb-3 tracking-tight">
+                Vous êtes professionnel de santé ?
+              </h2>
+              <p className="text-[#B6DAF7] text-[14px] font-semibold mb-4">
+                Rejoignez Doctorek et gérez votre cabinet simplement.
+              </p>
+              <ul className="space-y-2 mb-6">
+                {[
+                  'Agenda en ligne avec gestion des disponibilités',
+                  'Dossiers patients centralisés et sécurisés',
+                  'Rappels automatiques pour réduire les absences',
+                  'Tableau de bord et statistiques de votre activité',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2.5">
+                    <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 16 16" stroke="#FFAF5D" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 8l4 4 6-7" />
+                    </svg>
+                    <span className="text-[#D4E8F8] text-[13px]">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/inscription?role=medecin"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-[14px] text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ background: '#007DFF' }}
+              >
+                En savoir plus
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── Section 3: Données (light, content left, image right) ───── */}
+      <section className="relative overflow-hidden bg-white">
+        <div className="mx-auto max-w-[1200px] px-4 md:px-8 py-10 md:py-14">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 min-h-[200px] md:min-h-[240px]">
+
+            {/* Left: content */}
+            <div className="flex-1 md:max-w-[580px]">
+              <h2 className="text-2xl md:text-[32px] font-bold text-[#00263C] leading-snug mb-3 tracking-tight">
+                Votre santé. Vos données.
+              </h2>
+              <p className="text-[#465058] text-[14px] leading-relaxed mb-6 max-w-[460px]">
+                Vos informations médicales vous appartiennent. Chez Doctorek, elles sont chiffrées, hébergées au Maroc et ne sont jamais vendues ni partagées sans votre consentement explicite.
+              </p>
+              <Link
+                href="/inscription"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-[14px] text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ background: '#007DFF' }}
+              >
+                En savoir plus
+              </Link>
+            </div>
+
+            {/* Right: blob composition */}
+            <div className="relative flex-shrink-0 w-[240px] md:w-[280px] h-[240px] md:h-[280px]">
+              {/* Back blob */}
+              <div className="absolute pointer-events-none" style={{
+                width: '86%', height: '86%',
+                background: '#00263C',
+                borderRadius: '60% 40% 55% 45% / 45% 60% 40% 55%',
+                bottom: 0, left: 0,
+              }} />
+              {/* Accent blob */}
+              <div className="absolute pointer-events-none" style={{
+                width: '38%', height: '38%',
+                background: '#007DFF',
+                borderRadius: '50% 50% 40% 60% / 55% 45% 55% 45%',
+                top: 0, right: 0,
+                opacity: 0.8,
+              }} />
+              {/* Photo clipped to organic shape */}
+              <div className="absolute overflow-hidden" style={{
+                width: '82%', height: '82%',
+                borderRadius: '55% 45% 45% 55% / 55% 45% 55% 45%',
+                top: '5%', right: '5%',
+              }}>
+                <Image
+                  src="/Modern Hospital Vital Signs Dashboard — Connected Health Technology.jpg"
+                  alt="Données médicales sécurisées"
+                  width={240}
+                  height={280}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   )
 }

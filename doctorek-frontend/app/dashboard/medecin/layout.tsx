@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut,
   Search, Bell, Settings, ChevronDown,
 } from 'lucide-react'
-import { getSession, clearSession } from '@/lib/session'
+import { getSession, saveSession, clearSession } from '@/lib/session'
+import { apiFetch } from '@/lib/api-client'
 import Logo from '@/components/Logo'
 
 const NAV_ITEMS = [
@@ -46,6 +47,20 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
     syncFromSession()
     window.addEventListener('session-updated', syncFromSession)
     return () => window.removeEventListener('session-updated', syncFromSession)
+  }, [])
+
+  useEffect(() => {
+    const session = getSession()
+    if (!session) return
+    if (session.firstName || session.lastName) return
+    apiFetch<{ firstName: string; lastName: string }>(`/api/v1/annuaire/medecins/${session.id}`)
+      .then((profile) => {
+        const updated = { ...session, firstName: profile.firstName, lastName: profile.lastName }
+        saveSession(updated)
+        setFirstName(profile.firstName ?? '')
+        setLastName(profile.lastName ?? '')
+      })
+      .catch(() => {})
   }, [])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {

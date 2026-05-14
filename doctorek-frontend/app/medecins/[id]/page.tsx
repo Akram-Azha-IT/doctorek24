@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
 import { MedecinProfileCard } from '@/features/annuaire/components/MedecinProfileCard'
 import { useMedecin } from '@/features/annuaire/hooks'
 
@@ -27,6 +28,7 @@ export default function MedecinPage() {
 
         {data && <MedecinProfileCard medecin={data} />}
       </main>
+      <Footer />
     </>
   )
 }

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { getSession, saveSession } from '@/lib/session'
-import { setDoctorPhoto } from '@/lib/doctorPhotos'
 import { useMedecin, useUpdateMedecin } from '@/features/annuaire/hooks'
 import type { UpdateMedecinProfilePayload } from '@/features/annuaire/api'
 import { updateMedecinPhoto } from '@/features/annuaire/api'
@@ -83,15 +82,36 @@ function useGeoDetect(onSuccess: (lat: number, lng: number) => void) {
 export default function ProfilPage() {
   useRoleGuard('MEDECIN')
 
-  const session = getSession()
-  const medecinId = session?.id ?? ''
+  const [medecinId, setMedecinId] = useState('')
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [photoStatus, setPhotoStatus] = useState<'idle' | 'success'>('idle')
+
+  useEffect(() => {
+    const s = getSession()
+    if (s) {
+      setMedecinId(s.id)
+      setPhotoUrl(s.photoUrl ?? null)
+    }
+  }, [])
 
   const { data: profile, isLoading: profileLoading } = useMedecin(medecinId)
   const mutation = useUpdateMedecin(medecinId)
-
-  const [photoUrl, setPhotoUrl] = useState<string | null>(session?.photoUrl ?? null)
-  const [photoStatus, setPhotoStatus] = useState<'idle' | 'success'>('idle')
   const photoInputRef = useRef<HTMLInputElement>(null)
+
+  function compressImage(dataUrl: string, maxSize = 256, quality = 0.7): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = dataUrl
+    })
+  }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -99,17 +119,17 @@ export default function ProfilPage() {
     if (file.size > 2 * 1024 * 1024) return
     const reader = new FileReader()
     reader.onload = async () => {
-      const dataUrl = reader.result as string
-      setPhotoUrl(dataUrl)
+      const fullDataUrl = reader.result as string
+      setPhotoUrl(fullDataUrl)
+      const compressed = await compressImage(fullDataUrl)
       const current = getSession()
       if (current) {
-        saveSession({ ...current, photoUrl: dataUrl })
-        setDoctorPhoto(current.id, dataUrl)
+        saveSession({ ...current, photoUrl: compressed })
         window.dispatchEvent(new Event('session-updated'))
         try {
-          await updateMedecinPhoto(current.id, dataUrl)
+          await updateMedecinPhoto(current.id, compressed)
         } catch {
-          // localStorage still has it for this session; backend sync best-effort
+          // backend sync best-effort; session still updated
         }
       }
       setPhotoStatus('success')
@@ -123,7 +143,6 @@ export default function ProfilPage() {
     const current = getSession()
     if (current) {
       saveSession({ ...current, photoUrl: null })
-      setDoctorPhoto(current.id, null)
       window.dispatchEvent(new Event('session-updated'))
     }
     if (photoInputRef.current) photoInputRef.current.value = ''
@@ -195,11 +214,27 @@ export default function ProfilPage() {
     }
   }
 
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success'>('idle')
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  function parseApiError(error: unknown): string {
+    const msg = error instanceof Error ? error.message : ''
+    if (msg.includes('phone') || msg.includes('users_phone_key')) {
+      return 'Ce numéro de téléphone est déjà utilisé par un autre compte.'
+    }
+    if (msg.includes('inpe') || msg.includes('users_inpe_key')) {
+      return 'Cet INPE est déjà associé à un autre compte.'
+    }
+    if (msg.includes('email') || msg.includes('users_email_key')) {
+      return 'Cette adresse e-mail est déjà utilisée par un autre compte.'
+    }
+    return 'Une erreur est survenue lors de la mise à jour. Veuillez réessayer.'
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaveStatus('idle')
+    setSaveError(null)
     const payload: UpdateMedecinProfilePayload = {
       firstName: form.firstName,
       lastName: form.lastName,
@@ -213,7 +248,7 @@ export default function ProfilPage() {
     }
     mutation.mutate(payload, {
       onSuccess: () => setSaveStatus('success'),
-      onError: () => setSaveStatus('error'),
+      onError: (error) => setSaveError(parseApiError(error)),
     })
   }
 
@@ -254,8 +289,8 @@ export default function ProfilPage() {
                 />
               ) : (
                 <div className="h-24 w-24 rounded-full border-4 border-white shadow-md ring-2 ring-zinc-200 bg-[#1863A9] flex items-center justify-center text-white text-2xl font-bold select-none">
-                  {(form.firstName[0] ?? session?.firstName?.[0] ?? 'D').toUpperCase()}
-                  {(form.lastName[0] ?? session?.lastName?.[0] ?? 'r').toUpperCase()}
+                  {(form.firstName[0] ?? 'D').toUpperCase()}
+                  {(form.lastName[0] ?? 'r').toUpperCase()}
                 </div>
               )}
               {/* Camera badge */}
@@ -542,8 +577,13 @@ export default function ProfilPage() {
                   Profil mis à jour
                 </span>
               )}
-              {saveStatus === 'error' && (
-                <span className="text-sm text-red-600">Erreur lors de la mise à jour</span>
+              {saveError && (
+                <span className="flex items-center gap-2 text-sm text-red-600">
+                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                  </svg>
+                  {saveError}
+                </span>
               )}
             </div>
             <button

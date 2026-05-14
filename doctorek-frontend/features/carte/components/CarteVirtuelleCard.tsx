@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CarteVirtuelle } from '@/lib/types'
+import QrCodeDisplay from './QrCodeDisplay'
 
 const C_BLUE  = '#007DFF'
 const C_DARK  = '#003B95'
@@ -23,10 +24,12 @@ export function CarteRecto({
   carte,
   firstName,
   lastName,
+  qrUrl,
 }: {
   carte: CarteVirtuelle
   firstName?: string
   lastName?: string
+  qrUrl?: string
 }) {
   const fullName =
     [firstName, lastName?.toUpperCase()].filter(Boolean).join(' ') ||
@@ -228,24 +231,30 @@ export function CarteRecto({
           <circle cx="31" cy="24" r="3.5" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" fill="none" />
         </g>
 
-        {/* QR Code placeholder */}
-        <g transform="translate(682, 290)">
-          <rect width="84" height="84" rx="5" fill="#F3F4F6" />
-          {/* Corners */}
-          <rect x="8" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
-          <rect x="14" y="14" width="12" height="12" fill={C_TEXT} />
-          <rect x="52" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
-          <rect x="58" y="14" width="12" height="12" fill={C_TEXT} />
-          <rect x="8" y="52" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
-          <rect x="14" y="58" width="12" height="12" fill={C_TEXT} />
-          {/* Data cells */}
-          <rect x="42" y="44" width="8" height="8" fill={C_TEXT} />
-          <rect x="58" y="52" width="16" height="8" fill={C_TEXT} />
-          <rect x="50" y="68" width="8" height="8" fill={C_TEXT} />
-          <rect x="66" y="68" width="8" height="8" fill={C_TEXT} />
-          <rect x="42" y="10" width="8" height="16" fill={C_TEXT} />
-          <rect x="10" y="42" width="16" height="8" fill={C_TEXT} />
-        </g>
+        {/* QR Code — real generated code */}
+        {qrUrl ? (
+          <foreignObject x="682" y="290" width="84" height="84">
+            <div style={{ width: 84, height: 84, borderRadius: 5, overflow: 'hidden' }}>
+              <QrCodeDisplay value={qrUrl} size={84} />
+            </div>
+          </foreignObject>
+        ) : (
+          <g transform="translate(682, 290)">
+            <rect width="84" height="84" rx="5" fill="#F3F4F6" />
+            <rect x="8" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
+            <rect x="14" y="14" width="12" height="12" fill={C_TEXT} />
+            <rect x="52" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
+            <rect x="58" y="14" width="12" height="12" fill={C_TEXT} />
+            <rect x="8" y="52" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
+            <rect x="14" y="58" width="12" height="12" fill={C_TEXT} />
+            <rect x="42" y="44" width="8" height="8" fill={C_TEXT} />
+            <rect x="58" y="52" width="16" height="8" fill={C_TEXT} />
+            <rect x="50" y="68" width="8" height="8" fill={C_TEXT} />
+            <rect x="66" y="68" width="8" height="8" fill={C_TEXT} />
+            <rect x="42" y="10" width="8" height="16" fill={C_TEXT} />
+            <rect x="10" y="42" width="16" height="8" fill={C_TEXT} />
+          </g>
+        )}
 
         {/* ── FOOTER ── */}
         <rect x="0" y="460" width="856" height="80" fill={C_BLUE} />
@@ -603,6 +612,9 @@ export default function CarteVirtuelleCard({
 }: CarteVirtuelleCardProps) {
   const [downloading, setDownloading] = useState(false)
   const [flipped, setFlipped] = useState(false)
+  const qrUrl = carte.cardRef
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://doctorek.ma'}/carte/${carte.cardRef}`
+    : undefined
 
   const downloadPng = async () => {
     setDownloading(true)
@@ -652,7 +664,7 @@ export default function CarteVirtuelleCard({
           }}
         >
           <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CarteRecto carte={carte} firstName={firstName} lastName={lastName} />
+            <CarteRecto carte={carte} firstName={firstName} lastName={lastName} qrUrl={qrUrl} />
           </div>
           <CarteVerso carte={carte} firstName={firstName} lastName={lastName} />
         </div>
