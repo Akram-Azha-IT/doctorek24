@@ -69,7 +69,7 @@ class PrendreRdvUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new PrendreRdvUseCase(dispoRepo, rdvRepo, userRepo, emailService, new ObjectMapper());
+        useCase = new PrendreRdvUseCase(dispoRepo, rdvRepo, userRepo, emailService, new QuestionnaireSerializer(new ObjectMapper()));
     }
 
     @Nested

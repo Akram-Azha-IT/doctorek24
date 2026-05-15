@@ -17,16 +17,19 @@ public class RegisterMedecinUseCase {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final UserRepository  userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final EmailService    emailService;
+    private final UserRepository           userRepository;
+    private final MedecinProfileCreatePort medecinProfileCreatePort;
+    private final PasswordEncoder          passwordEncoder;
+    private final EmailService             emailService;
 
     public RegisterMedecinUseCase(UserRepository userRepository,
+                                  MedecinProfileCreatePort medecinProfileCreatePort,
                                   PasswordEncoder passwordEncoder,
                                   EmailService emailService) {
-        this.userRepository  = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService    = emailService;
+        this.userRepository          = userRepository;
+        this.medecinProfileCreatePort = medecinProfileCreatePort;
+        this.passwordEncoder         = passwordEncoder;
+        this.emailService            = emailService;
     }
 
     @Transactional
@@ -41,7 +44,7 @@ public class RegisterMedecinUseCase {
             throw new PhoneAlreadyExistsException(normalizedPhone);
         }
 
-        if (userRepository.existsByInpe(request.inpe())) {
+        if (medecinProfileCreatePort.existsByInpe(request.inpe())) {
             throw new InpeAlreadyExistsException(request.inpe());
         }
 
@@ -52,10 +55,6 @@ public class RegisterMedecinUseCase {
             .firstName(request.firstName().strip())
             .lastName(request.lastName().strip())
             .role(Role.MEDECIN)
-            .inpe(request.inpe().strip())
-            .specialite(request.specialite().strip())
-            .ville(request.ville().strip())
-            .adresse(request.adresse() != null ? request.adresse().strip() : null)
             .lang(request.lang())
             .build();
 
@@ -64,8 +63,18 @@ public class RegisterMedecinUseCase {
         user.setVerificationCodeExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
 
         User saved = userRepository.save(user);
+
+        medecinProfileCreatePort.create(
+            saved,
+            request.inpe().strip(),
+            request.specialite().strip(),
+            request.ville().strip(),
+            request.adresse() != null ? request.adresse().strip() : null
+        );
+
         emailService.sendVerificationCode(saved.getEmail(), saved.getFirstName(), code);
-        return MedecinRegisteredResponse.from(saved);
+        return MedecinRegisteredResponse.from(saved, request.inpe().strip(),
+            request.specialite().strip(), request.ville().strip());
     }
 
     private String normalizePhone(String phone) {

@@ -51,11 +51,6 @@ public class JpaUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean existsByInpe(String inpe) {
-        return delegate.existsByInpe(inpe);
-    }
-
-    @Override
     public long countByRole(Role role) {
         return delegate.countByRole(role);
     }

@@ -25,6 +25,9 @@ class RegisterMedecinUseCaseTest {
     private UserRepository userRepository;
 
     @Mock
+    private MedecinProfileCreatePort medecinProfileCreatePort;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -34,44 +37,36 @@ class RegisterMedecinUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        useCase = new RegisterMedecinUseCase(userRepository, passwordEncoder, emailService);
+        useCase = new RegisterMedecinUseCase(userRepository, medecinProfileCreatePort, passwordEncoder, emailService);
     }
 
     @Test
     @DisplayName("valid data → creates médecin, sends verification code, returns response")
     void execute_withValidData_createsMedecin() {
-        // Arrange
-        RegisterMedecinRequest request = new RegisterMedecinRequest(
-            "dr.hassan@example.com", "0661234567", "password123",
-            "Hassan", "Alaoui", "1234567890", "Cardiologie", "Casablanca", "Rue des Fleurs 10", "fr"
-        );
+        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.existsByInpe(anyString())).thenReturn(false);
+        when(medecinProfileCreatePort.existsByInpe(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$hashed");
+        when(userRepository.save(any(User.class))).thenReturn(mockSavedUser());
 
-        User savedUser = mockSavedMedecin("dr.hassan@example.com", "+212661234567", "1234567890");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        // Act
         MedecinRegisteredResponse response = useCase.execute(request);
 
-        // Assert
         assertThat(response.email()).isEqualTo("dr.hassan@example.com");
         assertThat(response.role()).isEqualTo(Role.MEDECIN);
         assertThat(response.inpe()).isEqualTo("1234567890");
         assertThat(response.specialite()).isEqualTo("Cardiologie");
         verify(emailService).sendVerificationCode(eq("dr.hassan@example.com"), eq("Hassan"), anyString());
         verify(emailService, never()).sendBienvenueInscription(any(), any(), any());
+        verify(medecinProfileCreatePort).create(any(), eq("1234567890"), eq("Cardiologie"), eq("Casablanca"), any());
     }
 
     @Test
     @DisplayName("existing email → throws EmailAlreadyExistsException")
     void execute_withExistingEmail_throwsException() {
-        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail("dr.hassan@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.execute(request))
+        assertThatThrownBy(() -> useCase.execute(validRequest()))
             .isInstanceOf(EmailAlreadyExistsException.class)
             .hasMessageContaining("dr.hassan@example.com");
 
@@ -81,11 +76,10 @@ class RegisterMedecinUseCaseTest {
     @Test
     @DisplayName("existing phone → throws PhoneAlreadyExistsException")
     void execute_withExistingPhone_throwsException() {
-        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone("+212661234567")).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.execute(request))
+        assertThatThrownBy(() -> useCase.execute(validRequest()))
             .isInstanceOf(PhoneAlreadyExistsException.class);
 
         verify(userRepository, never()).save(any());
@@ -94,12 +88,11 @@ class RegisterMedecinUseCaseTest {
     @Test
     @DisplayName("existing INPE → throws InpeAlreadyExistsException")
     void execute_withExistingInpe_throwsException() {
-        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.existsByInpe("1234567890")).thenReturn(true);
+        when(medecinProfileCreatePort.existsByInpe("1234567890")).thenReturn(true);
 
-        assertThatThrownBy(() -> useCase.execute(request))
+        assertThatThrownBy(() -> useCase.execute(validRequest()))
             .isInstanceOf(InpeAlreadyExistsException.class)
             .hasMessageContaining("1234567890");
 
@@ -109,16 +102,13 @@ class RegisterMedecinUseCaseTest {
     @Test
     @DisplayName("password is encoded before saving")
     void execute_passwordIsEncoded() {
-        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.existsByInpe(anyString())).thenReturn(false);
+        when(medecinProfileCreatePort.existsByInpe(anyString())).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("$2a$hashed");
+        when(userRepository.save(any(User.class))).thenReturn(mockSavedUser());
 
-        User savedUser = mockSavedMedecin("dr.hassan@example.com", "+212661234567", "1234567890");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        useCase.execute(request);
+        useCase.execute(validRequest());
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -129,16 +119,13 @@ class RegisterMedecinUseCaseTest {
     @Test
     @DisplayName("phone 06XXXXXXXX is normalized to +212XXXXXXXXX")
     void execute_phoneIsNormalized() {
-        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.existsByInpe(anyString())).thenReturn(false);
+        when(medecinProfileCreatePort.existsByInpe(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$hashed");
+        when(userRepository.save(any(User.class))).thenReturn(mockSavedUser());
 
-        User savedUser = mockSavedMedecin("dr.hassan@example.com", "+212661234567", "1234567890");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        useCase.execute(request);
+        useCase.execute(validRequest());
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -148,16 +135,13 @@ class RegisterMedecinUseCaseTest {
     @Test
     @DisplayName("role is set to MEDECIN regardless of input")
     void execute_roleIsAlwaysMedecin() {
-        RegisterMedecinRequest request = validRequest();
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(userRepository.existsByPhone(anyString())).thenReturn(false);
-        when(userRepository.existsByInpe(anyString())).thenReturn(false);
+        when(medecinProfileCreatePort.existsByInpe(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("$2a$hashed");
+        when(userRepository.save(any(User.class))).thenReturn(mockSavedUser());
 
-        User savedUser = mockSavedMedecin("dr.hassan@example.com", "+212661234567", "1234567890");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
-
-        useCase.execute(request);
+        useCase.execute(validRequest());
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -173,18 +157,14 @@ class RegisterMedecinUseCaseTest {
         );
     }
 
-    private User mockSavedMedecin(String email, String phone, String inpe) {
+    private User mockSavedUser() {
         return User.builder()
-            .email(email)
-            .phone(phone)
+            .email("dr.hassan@example.com")
+            .phone("+212661234567")
             .password("$2a$hashed")
             .firstName("Hassan")
             .lastName("Alaoui")
             .role(Role.MEDECIN)
-            .inpe(inpe)
-            .specialite("Cardiologie")
-            .ville("Casablanca")
-            .adresse("Rue des Fleurs 10")
             .lang("fr")
             .build();
     }

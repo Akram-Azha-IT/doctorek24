@@ -19,16 +19,16 @@ public record MedecinRegisteredResponse(
     String  lang,
     Instant createdAt
 ) {
-    public static MedecinRegisteredResponse from(User user) {
+    public static MedecinRegisteredResponse from(User user, String inpe, String specialite, String ville) {
         return new MedecinRegisteredResponse(
             user.getId(),
             user.getEmail(),
             user.getPhone(),
             user.getFirstName(),
             user.getLastName(),
-            user.getInpe(),
-            user.getSpecialite(),
-            user.getVille(),
+            inpe,
+            specialite,
+            ville,
             user.getRole(),
             user.getLang(),
             user.getCreatedAt()

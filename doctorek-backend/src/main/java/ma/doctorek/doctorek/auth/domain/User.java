@@ -34,27 +34,6 @@ public class User {
     @Column(nullable = false, length = 5)
     private String lang = "fr";
 
-    @Column(unique = true, length = 10)
-    private String inpe;
-
-    @Column(length = 100)
-    private String specialite;
-
-    @Column(length = 100)
-    private String ville;
-
-    @Column(columnDefinition = "TEXT")
-    private String adresse;
-
-    @Column
-    private Double latitude;
-
-    @Column
-    private Double longitude;
-
-    @Column(name = "photo_url", columnDefinition = "TEXT")
-    private String photoUrl;
-
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -76,19 +55,13 @@ public class User {
     protected User() {}
 
     private User(Builder builder) {
-        this.email      = builder.email;
-        this.phone      = builder.phone;
-        this.password   = builder.password;
-        this.firstName  = builder.firstName;
-        this.lastName   = builder.lastName;
-        this.role       = builder.role;
-        this.lang       = builder.lang;
-        this.inpe       = builder.inpe;
-        this.specialite = builder.specialite;
-        this.ville      = builder.ville;
-        this.adresse    = builder.adresse;
-        this.latitude   = builder.latitude;
-        this.longitude  = builder.longitude;
+        this.email     = builder.email;
+        this.phone     = builder.phone;
+        this.password  = builder.password;
+        this.firstName = builder.firstName;
+        this.lastName  = builder.lastName;
+        this.role      = builder.role;
+        this.lang      = builder.lang;
     }
 
     @PrePersist
@@ -104,18 +77,11 @@ public class User {
     }
 
     // ── Mutators ─────────────────────────────────────────────
-    public void updateProfile(String firstName, String lastName, String phone,
-                              String specialite, String ville, String adresse, String lang,
-                              Double latitude, Double longitude) {
-        this.firstName  = firstName;
-        this.lastName   = lastName;
-        this.phone      = phone;
-        this.specialite = specialite;
-        this.ville      = ville;
-        this.adresse    = adresse;
-        if (lang != null)      this.lang      = lang;
-        if (latitude != null)  this.latitude  = latitude;
-        if (longitude != null) this.longitude = longitude;
+    public void updateProfile(String firstName, String lastName, String phone, String lang) {
+        this.firstName = firstName;
+        this.lastName  = lastName;
+        this.phone     = phone;
+        if (lang != null) this.lang = lang;
     }
 
     public void setVerificationCode(String code) {
@@ -127,7 +93,6 @@ public class User {
     }
 
     public void setActive(boolean active) { this.active = active; }
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 
     public void markEmailVerified() {
         this.emailVerified = true;
@@ -150,13 +115,6 @@ public class User {
     public Instant getVerificationCodeExpiresAt() { return verificationCodeExpiresAt; }
     public Instant getCreatedAt()                 { return createdAt; }
     public Instant getUpdatedAt()                 { return updatedAt; }
-    public String getInpe()                       { return inpe; }
-    public String getSpecialite()                 { return specialite; }
-    public String getVille()                      { return ville; }
-    public String getAdresse()                    { return adresse; }
-    public Double getLatitude()                   { return latitude; }
-    public Double getLongitude()                  { return longitude; }
-    public String getPhotoUrl()                   { return photoUrl; }
 
     // ── Builder ───────────────────────────────────────────────
     public static Builder builder() { return new Builder(); }
@@ -167,30 +125,18 @@ public class User {
         private String password;
         private String firstName;
         private String lastName;
-        private Role   role      = Role.PATIENT;
-        private String lang      = "fr";
-        private String inpe;
-        private String specialite;
-        private String ville;
-        private String adresse;
-        private Double latitude;
-        private Double longitude;
+        private Role   role = Role.PATIENT;
+        private String lang = "fr";
 
         private Builder() {}
 
-        public Builder email(String email)           { this.email = email;           return this; }
-        public Builder phone(String phone)           { this.phone = phone;           return this; }
-        public Builder password(String password)     { this.password = password;     return this; }
-        public Builder firstName(String firstName)   { this.firstName = firstName;   return this; }
-        public Builder lastName(String lastName)     { this.lastName = lastName;     return this; }
-        public Builder role(Role role)               { this.role = role;             return this; }
-        public Builder lang(String lang)             { this.lang = lang;             return this; }
-        public Builder inpe(String inpe)             { this.inpe = inpe;             return this; }
-        public Builder specialite(String specialite) { this.specialite = specialite; return this; }
-        public Builder ville(String ville)           { this.ville = ville;           return this; }
-        public Builder adresse(String adresse)           { this.adresse    = adresse;    return this; }
-        public Builder latitude(Double latitude)         { this.latitude   = latitude;   return this; }
-        public Builder longitude(Double longitude)       { this.longitude  = longitude;  return this; }
+        public Builder email(String email)         { this.email     = email;     return this; }
+        public Builder phone(String phone)         { this.phone     = phone;     return this; }
+        public Builder password(String password)   { this.password  = password;  return this; }
+        public Builder firstName(String firstName) { this.firstName = firstName; return this; }
+        public Builder lastName(String lastName)   { this.lastName  = lastName;  return this; }
+        public Builder role(Role role)             { this.role      = role;      return this; }
+        public Builder lang(String lang)           { this.lang      = lang;      return this; }
 
         public User build() { return new User(this); }
     }
