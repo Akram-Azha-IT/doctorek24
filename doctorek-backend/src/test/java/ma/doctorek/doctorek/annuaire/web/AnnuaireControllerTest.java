@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import ma.doctorek.doctorek.annuaire.application.SearchNearbyMedecinsUseCase;
+import ma.doctorek.doctorek.annuaire.application.UpdateMedecinPhotoUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinProfileUseCase;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
 import org.springframework.http.MediaType;
@@ -49,6 +50,9 @@ class AnnuaireControllerTest {
 
     @MockBean
     private UpdateMedecinProfileUseCase updateMedecinProfileUseCase;
+
+    @MockBean
+    private UpdateMedecinPhotoUseCase updateMedecinPhotoUseCase;
 
     private final UUID existingId = UUID.randomUUID();
 

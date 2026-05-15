@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
@@ -31,6 +32,7 @@ public class EmailService {
         this.enabled = enabled;
     }
 
+    @Async
     public void sendVerificationCode(String toEmail, String prenom, String code) {
         if (!shouldSend(toEmail))
             return;
@@ -53,6 +55,7 @@ public class EmailService {
         send(toEmail, subject, body, "verification-code", toEmail);
     }
 
+    @Async
     public void sendBienvenueInscription(String toEmail, String prenom, String role) {
         if (!shouldSend(toEmail))
             return;
@@ -71,6 +74,7 @@ public class EmailService {
         send(toEmail, subject, body, "bienvenue", toEmail);
     }
 
+    @Async
     public void sendConfirmationRdv(String toEmail, RendezVous rdv) {
         if (!shouldSend(toEmail))
             return;
@@ -101,6 +105,7 @@ public class EmailService {
         send(toEmail, subject, body, "confirmation", rdv.id().toString());
     }
 
+    @Async
     public void sendRappelRdv(String toEmail, RendezVous rdv, int joursAvant) {
         if (!shouldSend(toEmail))
             return;

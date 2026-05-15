@@ -21,7 +21,6 @@ import ma.doctorek.doctorek.agenda.application.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.agenda.application.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.agenda.application.dto.RendezVousResponse;
 import ma.doctorek.doctorek.agenda.application.dto.ReprogrammerRdvRequest;
-import ma.doctorek.doctorek.auth.domain.UserRepository;
 import ma.doctorek.doctorek.shared.web.ApiResponse;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -45,10 +44,9 @@ public class AgendaController {
     private final AnnulerRendezVousUseCase      annulerRendezVousUseCase;
     private final ConfirmerRendezVousUseCase    confirmerRendezVousUseCase;
     private final TerminerRendezVousUseCase     terminerRendezVousUseCase;
-    private final GetRdvsMedecinUseCase            getRdvsMedecinUseCase;
-    private final ReprogrammerRendezVousUseCase    reprogrammerRendezVousUseCase;
-    private final GetPatientsMedecinUseCase        getPatientsMedecinUseCase;
-    private final UserRepository                   userRepository;
+    private final GetRdvsMedecinUseCase         getRdvsMedecinUseCase;
+    private final ReprogrammerRendezVousUseCase reprogrammerRendezVousUseCase;
+    private final GetPatientsMedecinUseCase     getPatientsMedecinUseCase;
 
     public AgendaController(DefineDisponibiliteUseCase defineDisponibiliteUseCase,
                              DeleteDisponibiliteUseCase deleteDisponibiliteUseCase,
@@ -61,27 +59,21 @@ public class AgendaController {
                              TerminerRendezVousUseCase terminerRendezVousUseCase,
                              GetRdvsMedecinUseCase getRdvsMedecinUseCase,
                              ReprogrammerRendezVousUseCase reprogrammerRendezVousUseCase,
-                             GetPatientsMedecinUseCase getPatientsMedecinUseCase,
-                             UserRepository userRepository) {
-        this.defineDisponibiliteUseCase       = defineDisponibiliteUseCase;
-        this.deleteDisponibiliteUseCase       = deleteDisponibiliteUseCase;
-        this.getDisponibilitesUseCase         = getDisponibilitesUseCase;
-        this.getCreneauxDisponiblesUseCase    = getCreneauxDisponiblesUseCase;
-        this.prendreRdvUseCase                = prendreRdvUseCase;
-        this.getRdvsPatientUseCase            = getRdvsPatientUseCase;
-        this.annulerRendezVousUseCase         = annulerRendezVousUseCase;
-        this.confirmerRendezVousUseCase       = confirmerRendezVousUseCase;
-        this.terminerRendezVousUseCase        = terminerRendezVousUseCase;
-        this.getRdvsMedecinUseCase            = getRdvsMedecinUseCase;
-        this.reprogrammerRendezVousUseCase    = reprogrammerRendezVousUseCase;
-        this.getPatientsMedecinUseCase        = getPatientsMedecinUseCase;
-        this.userRepository                   = userRepository;
+                             GetPatientsMedecinUseCase getPatientsMedecinUseCase) {
+        this.defineDisponibiliteUseCase    = defineDisponibiliteUseCase;
+        this.deleteDisponibiliteUseCase    = deleteDisponibiliteUseCase;
+        this.getDisponibilitesUseCase      = getDisponibilitesUseCase;
+        this.getCreneauxDisponiblesUseCase = getCreneauxDisponiblesUseCase;
+        this.prendreRdvUseCase             = prendreRdvUseCase;
+        this.getRdvsPatientUseCase         = getRdvsPatientUseCase;
+        this.annulerRendezVousUseCase      = annulerRendezVousUseCase;
+        this.confirmerRendezVousUseCase    = confirmerRendezVousUseCase;
+        this.terminerRendezVousUseCase     = terminerRendezVousUseCase;
+        this.getRdvsMedecinUseCase         = getRdvsMedecinUseCase;
+        this.reprogrammerRendezVousUseCase = reprogrammerRendezVousUseCase;
+        this.getPatientsMedecinUseCase     = getPatientsMedecinUseCase;
     }
 
-    /**
-     * POST /api/v1/agenda/medecins/{medecinId}/disponibilites
-     * Définit (ou remplace) la disponibilité d'un médecin pour un jour donné.
-     */
     @PostMapping("/medecins/{medecinId}/disponibilites")
     public ResponseEntity<ApiResponse<DisponibiliteResponse>> defineDisponibilite(
             @PathVariable UUID medecinId,
@@ -92,10 +84,6 @@ public class AgendaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 
-    /**
-     * DELETE /api/v1/agenda/medecins/{medecinId}/disponibilites/{dispoId}
-     * Supprime une disponibilité spécifique d'un médecin.
-     */
     @DeleteMapping("/medecins/{medecinId}/disponibilites/{dispoId}")
     public ResponseEntity<ApiResponse<Void>> deleteDisponibilite(
             @PathVariable UUID medecinId,
@@ -104,10 +92,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
-    /**
-     * GET /api/v1/agenda/medecins/{medecinId}/disponibilites
-     * Retourne toutes les disponibilités hebdomadaires d'un médecin.
-     */
     @GetMapping("/medecins/{medecinId}/disponibilites")
     public ResponseEntity<ApiResponse<List<DisponibiliteResponse>>> getDisponibilites(
             @PathVariable UUID medecinId) {
@@ -118,10 +102,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 
-    /**
-     * GET /api/v1/agenda/medecins/{medecinId}/creneaux?date=YYYY-MM-DD
-     * Retourne les créneaux disponibles et pris pour une date donnée.
-     */
     @GetMapping("/medecins/{medecinId}/creneaux")
     public ResponseEntity<ApiResponse<List<CreneauResponse>>> getCreneaux(
             @PathVariable UUID medecinId,
@@ -133,10 +113,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 
-    /**
-     * POST /api/v1/agenda/rdv
-     * Prend un rendez-vous pour un patient chez un médecin.
-     */
     @PostMapping("/rdv")
     public ResponseEntity<ApiResponse<RendezVousResponse>> prendreRdv(
             @Valid @RequestBody PrendreRdvRequest request) {
@@ -144,10 +120,6 @@ public class AgendaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(response));
     }
 
-    /**
-     * GET /api/v1/agenda/patients/{patientId}/rdv
-     * Retourne tous les rendez-vous d'un patient.
-     */
     @GetMapping("/patients/{patientId}/rdv")
     public ResponseEntity<ApiResponse<List<RendezVousResponse>>> getRdvsPatient(
             @PathVariable UUID patientId) {
@@ -158,26 +130,12 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(responses));
     }
 
-    /**
-     * GET /api/v1/agenda/medecins/{medecinId}/rdv
-     * Retourne tous les rendez-vous d'un médecin.
-     */
     @GetMapping("/medecins/{medecinId}/rdv")
     public ResponseEntity<ApiResponse<List<RendezVousResponse>>> getRdvsMedecin(
             @PathVariable UUID medecinId) {
-        List<RendezVousResponse> responses = getRdvsMedecinUseCase.execute(medecinId)
-            .stream()
-            .map(rdv -> userRepository.findById(rdv.patientId())
-                .map(u -> RendezVousResponse.from(rdv, u.getFirstName(), u.getLastName()))
-                .orElseGet(() -> RendezVousResponse.from(rdv)))
-            .toList();
-        return ResponseEntity.ok(ApiResponse.ok(responses));
+        return ResponseEntity.ok(ApiResponse.ok(getRdvsMedecinUseCase.execute(medecinId)));
     }
 
-    /**
-     * PUT /api/v1/agenda/rdv/{id}/annuler
-     * Annule un rendez-vous existant.
-     */
     @PutMapping("/rdv/{id}/annuler")
     public ResponseEntity<ApiResponse<RendezVousResponse>> annulerRdv(
             @PathVariable UUID id) {
@@ -185,10 +143,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
-    /**
-     * PUT /api/v1/agenda/rdv/{id}/confirmer
-     * Confirme un rendez-vous en attente.
-     */
     @PutMapping("/rdv/{id}/confirmer")
     public ResponseEntity<ApiResponse<RendezVousResponse>> confirmerRdv(
             @PathVariable UUID id) {
@@ -196,10 +150,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
-    /**
-     * PUT /api/v1/agenda/rdv/{id}/terminer
-     * Marque un rendez-vous confirmé comme terminé.
-     */
     @PutMapping("/rdv/{id}/terminer")
     public ResponseEntity<ApiResponse<RendezVousResponse>> terminerRdv(
             @PathVariable UUID id) {
@@ -207,10 +157,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
-    /**
-     * GET /api/v1/agenda/medecins/{medecinId}/patients
-     * Retourne la liste paginée des patients d'un médecin.
-     */
     @GetMapping("/medecins/{medecinId}/patients")
     public ResponseEntity<ApiResponse<PatientsPageResponse>> getPatientsMedecin(
             @PathVariable UUID medecinId,
@@ -227,10 +173,6 @@ public class AgendaController {
         return ResponseEntity.ok(ApiResponse.ok(new PatientsPageResponse(patients, total, page, size)));
     }
 
-    /**
-     * PUT /api/v1/agenda/rdv/{id}/reprogrammer
-     * Reprogramme un rendez-vous à une nouvelle date/heure.
-     */
     @PutMapping("/rdv/{id}/reprogrammer")
     public ResponseEntity<ApiResponse<RendezVousResponse>> reprogrammerRdv(
             @PathVariable UUID id,

@@ -3,6 +3,7 @@ package ma.doctorek.doctorek.auth.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ma.doctorek.doctorek.auth.application.RegisterMedecinUseCase;
 import ma.doctorek.doctorek.auth.application.RegisterPatientUseCase;
+import ma.doctorek.doctorek.auth.application.VerifyEmailUseCase;
 import ma.doctorek.doctorek.auth.application.dto.MedecinRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.PatientRegisteredResponse;
 import ma.doctorek.doctorek.auth.application.dto.RegisterPatientRequest;
@@ -46,6 +47,9 @@ class AuthControllerTest {
 
     @MockBean
     private RegisterMedecinUseCase registerMedecinUseCase;
+
+    @MockBean
+    private VerifyEmailUseCase verifyEmailUseCase;
 
     private static final PatientRegisteredResponse MOCK_PATIENT_RESPONSE = new PatientRegisteredResponse(
         UUID.randomUUID(),

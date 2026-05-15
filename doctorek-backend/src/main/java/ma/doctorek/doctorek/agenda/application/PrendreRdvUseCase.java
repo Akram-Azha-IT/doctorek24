@@ -1,7 +1,5 @@
 package ma.doctorek.doctorek.agenda.application;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ma.doctorek.doctorek.agenda.application.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.agenda.domain.CreneauIndisponibleException;
 import ma.doctorek.doctorek.agenda.domain.Disponibilite;
@@ -23,22 +21,22 @@ public class PrendreRdvUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(PrendreRdvUseCase.class);
 
-    private final DisponibiliteRepository dispoRepo;
-    private final RendezVousRepository    rdvRepo;
-    private final UserRepository          userRepo;
-    private final EmailService            emailService;
-    private final ObjectMapper            objectMapper;
+    private final DisponibiliteRepository  dispoRepo;
+    private final RendezVousRepository     rdvRepo;
+    private final UserRepository           userRepo;
+    private final EmailService             emailService;
+    private final QuestionnaireSerializer  questionnaireSerializer;
 
     public PrendreRdvUseCase(DisponibiliteRepository dispoRepo,
                               RendezVousRepository rdvRepo,
                               UserRepository userRepo,
                               EmailService emailService,
-                              ObjectMapper objectMapper) {
-        this.dispoRepo    = dispoRepo;
-        this.rdvRepo      = rdvRepo;
-        this.userRepo     = userRepo;
-        this.emailService = emailService;
-        this.objectMapper = objectMapper;
+                              QuestionnaireSerializer questionnaireSerializer) {
+        this.dispoRepo              = dispoRepo;
+        this.rdvRepo                = rdvRepo;
+        this.userRepo               = userRepo;
+        this.emailService           = emailService;
+        this.questionnaireSerializer = questionnaireSerializer;
     }
 
     public RendezVous execute(PrendreRdvRequest request) {
@@ -52,14 +50,7 @@ public class PrendreRdvUseCase {
                 "Créneau indisponible : " + request.dateRdv() + " à " + request.heureRdv());
         }
 
-        String questionnaireJson = null;
-        if (request.questionnaire() != null) {
-            try {
-                questionnaireJson = objectMapper.writeValueAsString(request.questionnaire());
-            } catch (JsonProcessingException e) {
-                log.warn("Impossible de sérialiser le questionnaire", e);
-            }
-        }
+        String questionnaireJson = questionnaireSerializer.serialize(request.questionnaire());
 
         RendezVous rdv = new RendezVous(
             null,
