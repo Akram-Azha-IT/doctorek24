@@ -10,14 +10,11 @@ import { toast } from 'sonner'
 
 export default function PatientRdvsPage() {
   useRoleGuard('PATIENT')
-
   const [patientId, setPatientId] = useState('')
 
   useEffect(() => {
     const session = getSession()
-    if (session?.role === 'PATIENT' && session.id) {
-      setPatientId(session.id)
-    }
+    if (session?.role === 'PATIENT' && session.id) setPatientId(session.id)
   }, [])
 
   const { data: rdvs, isLoading, isError } = useRdvsPatient(patientId)
@@ -33,42 +30,84 @@ export default function PatientRdvsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-zinc-900">Mes Rendez-vous</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Consultez et gérez vos rendez-vous médicaux
-          </p>
+
+      <div className="flex-1 bg-[#E8EFF6]">
+        {/* Page header strip */}
+        <div className="border-b border-zinc-200/70 bg-white">
+          <div className="mx-auto w-full max-w-3xl px-4 py-5">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#007DFF]/10">
+                <svg
+                  className="h-5 w-5 text-[#007DFF]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.75}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-[17px] font-bold leading-tight text-[#333333]">
+                  Mes Rendez-vous
+                </h1>
+                <p className="text-xs text-zinc-400">
+                  Consultez et gérez vos rendez-vous médicaux
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {!patientId && (
-          <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
-            <p className="text-sm text-zinc-400">Chargement de vos rendez-vous…</p>
-          </div>
-        )}
+        {/* Content */}
+        <main className="mx-auto w-full max-w-3xl px-4 py-6">
+          {(!patientId || isLoading) && (
+            <div className="space-y-2.5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[84px] animate-pulse rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden flex"
+                />
+              ))}
+            </div>
+          )}
 
-        {patientId && isLoading && (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 animate-pulse rounded-xl bg-zinc-100" />
-            ))}
-          </div>
-        )}
+          {patientId && isError && (
+            <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-100">
+                <svg
+                  className="h-4 w-4 text-red-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-red-600">
+                Impossible de charger les rendez-vous.
+              </p>
+            </div>
+          )}
 
-        {patientId && isError && (
-          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            Impossible de charger les rendez-vous. Vérifiez l&apos;identifiant.
-          </p>
-        )}
-
-        {patientId && !isLoading && !isError && rdvs && (
-          <RdvTimeline
-            rdvs={rdvs}
-            isReprogramming={isReprogramming}
-            onReprogrammer={handleReprogrammer}
-          />
-        )}
-      </main>
+          {patientId && !isLoading && !isError && rdvs && (
+            <RdvTimeline
+              rdvs={rdvs}
+              isReprogramming={isReprogramming}
+              onReprogrammer={handleReprogrammer}
+            />
+          )}
+        </main>
+      </div>
     </>
   )
 }

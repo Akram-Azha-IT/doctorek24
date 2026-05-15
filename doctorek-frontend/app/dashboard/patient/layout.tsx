@@ -123,7 +123,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   const currentWidth = sidebarOpen ? sidebarWidth : COLLAPSED_WIDTH
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F0F2F5]">
+    <div className="flex h-screen overflow-hidden bg-white">
       {/* ── Sidebar ── */}
       <aside
         className="flex shrink-0 flex-col bg-white border-r border-zinc-100 overflow-hidden"
@@ -136,7 +136,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
         {/* Patient identity mini-card */}
         {sidebarOpen ? (
-          <div className="mx-4 mt-5 mb-2 flex items-center gap-3 rounded-2xl bg-[#F0F2F5] px-4 py-3">
+          <div className="mx-4 mt-5 mb-2 flex items-center gap-3 rounded-2xl bg-[#F1F4F7] px-4 py-3">
             <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center">
               {resolvedPhoto ? (
                 <img src={resolvedPhoto} alt="profil" className="w-full h-full object-cover" />
@@ -182,7 +182,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 } ${
                   active
                     ? 'bg-[#007DFF] text-white shadow-sm shadow-blue-500/20'
-                    : 'text-[#465058] hover:bg-[#F0F2F5] hover:text-[#333333]'
+                    : 'text-[#465058] hover:bg-[#F1F4F7] hover:text-[#333333]'
                 }`}
               >
                 <item.icon
@@ -215,7 +215,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 } ${
                   active
                     ? 'bg-[#007DFF] text-white shadow-sm shadow-blue-500/20'
-                    : 'text-[#465058] hover:bg-[#F0F2F5] hover:text-[#333333]'
+                    : 'text-[#465058] hover:bg-[#F1F4F7] hover:text-[#333333]'
                 }`}
               >
                 <item.icon
@@ -270,7 +270,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
             <button
               type="button"
               onClick={() => setSidebarOpen(o => !o)}
-              className="rounded-xl p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F0F2F5] transition-colors"
+              className="rounded-xl p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F1F4F7] transition-colors"
               title={sidebarOpen ? 'Réduire' : 'Agrandir'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -288,11 +288,11 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
           {/* Right controls */}
           <div className="flex items-center gap-3">
-            <button className="relative rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F0F2F5] transition-colors">
+            <button className="relative rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F1F4F7] transition-colors">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#007DFF] border-2 border-white" />
             </button>
-            <button className="rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F0F2F5] transition-colors">
+            <button className="rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F1F4F7] transition-colors">
               <Settings className="h-5 w-5" />
             </button>
             <div className="h-7 w-px bg-zinc-200 mx-1" />
