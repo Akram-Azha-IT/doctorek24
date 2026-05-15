@@ -185,6 +185,15 @@ export interface CarteVirtuelleRequest {
   assuranceDetails?: string | null
 }
 
+// ── Booking ──────────────────────────────────────────────────────────────────
+
+export interface BookingSlot {
+  medecin: MedecinProfile
+  date: string   // "YYYY-MM-DD"
+  debut: string  // "HH:mm"
+  fin: string    // "HH:mm"
+}
+
 // ── Patients ─────────────────────────────────────────────────────────────────
 
 export interface PatientSummary {

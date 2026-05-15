@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useQueries } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
 import { getCreneaux } from '@/features/agenda/api'
-import type { MedecinProfile } from '@/lib/types'
+import type { MedecinProfile, BookingSlot } from '@/lib/types'
 import { nextNDaysISO } from '@/lib/disponibilite'
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
@@ -116,9 +116,10 @@ interface MedecinCardListProps {
   distanceKm?: number
   onMouseEnter?: () => void
   onMouseLeave?: () => void
+  onBookSlot?: (slot: BookingSlot) => void
 }
 
-export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEnter, onMouseLeave }: MedecinCardListProps) {
+export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
   const allFutureDates = useMemo(() => nextNDaysISO(365), [])
   const [windowStart, setWindowStart] = useState(0)
   const visibleDates = useMemo(
@@ -432,13 +433,17 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
                     {/* Single slot button */}
                     {currentSlot && (
-                      <Link
-                        href={`/medecins/${medecin.id}/rdv?date=${selectedDate}&heure=${currentSlot.debut}`}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          onBookSlot?.({ medecin, date: selectedDate, debut: currentSlot.debut, fin: currentSlot.fin })
+                        }}
                         className="flex w-full items-center justify-center rounded-xl bg-emerald-500 py-2.5 text-[15px] font-bold text-white shadow-sm transition-all duration-150 hover:bg-emerald-600 hover:scale-[1.02] active:scale-95"
-                        onClick={e => e.stopPropagation()}
                       >
                         {currentSlot.debut}
-                      </Link>
+                      </button>
                     )}
 
                     {/* Slot counter */}

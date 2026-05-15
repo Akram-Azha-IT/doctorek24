@@ -19,6 +19,7 @@ interface ConfirmRdvFormProps {
   heureFin: string  // "HH:mm"
   onSuccess: (rdv: RendezVous) => void
   onCancel: () => void
+  embedded?: boolean
 }
 
 const DUREE_OPTIONS = [
@@ -35,6 +36,7 @@ export function ConfirmRdvForm({
   heureFin,
   onSuccess,
   onCancel,
+  embedded = false,
 }: ConfirmRdvFormProps) {
   const { mutate, isPending } = usePrendreRdv(medecinId, dateRdv)
   const [sessionPatientId, setSessionPatientId] = useState<string | null>(null)
@@ -94,34 +96,26 @@ export function ConfirmRdvForm({
     )
   }
 
-  return (
-    <div className="mt-6 border border-zinc-200 rounded-xl bg-white p-6 shadow-sm">
-      {/* Récapitulatif */}
-      <div className="mb-6 pb-4 border-b border-zinc-100">
-        <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
-          Récapitulatif
-        </p>
-        <p className="font-semibold text-zinc-900">{medecinName}</p>
-        <p className="text-sm text-zinc-600 mt-0.5">
-          {formatDate(dateRdv)} · {heureRdv} – {heureFin}
-        </p>
-      </div>
+  const inner = (
+    <>
+      {!embedded && (
+        <div className="mb-6 pb-4 border-b border-zinc-100">
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
+            Récapitulatif
+          </p>
+          <p className="font-semibold text-zinc-900">{medecinName}</p>
+          <p className="text-sm text-zinc-600 mt-0.5">
+            {formatDate(dateRdv)} · {heureRdv} – {heureFin}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-        {/* Patient ID (only if not logged in as patient) */}
+        {/* Require patient session — handled by BookingDrawer / RDV page guard */}
         {!sessionPatientId && (
-          <Field label="Votre identifiant patient (UUID)" id="patientId" error={errors.patientId?.message}>
-            <input
-              id="patientId"
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              {...register('patientId')}
-              aria-invalid={!!errors.patientId}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 aria-[invalid=true]:border-red-400"
-            />
-            <p className="text-xs text-zinc-400 mt-1">
-              Obtenez votre UUID sur votre profil après inscription.
-            </p>
-          </Field>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            Connectez-vous à votre compte patient pour continuer.
+          </div>
         )}
 
         {/* Section questionnaire */}
@@ -250,6 +244,14 @@ export function ConfirmRdvForm({
           </Button>
         </div>
       </form>
+    </>
+  )
+
+  if (embedded) return inner
+
+  return (
+    <div className="mt-6 border border-zinc-200 rounded-xl bg-white p-6 shadow-sm">
+      {inner}
     </div>
   )
 }

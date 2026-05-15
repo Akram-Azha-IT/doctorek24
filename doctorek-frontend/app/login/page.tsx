@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { saveSession } from '@/lib/session'
@@ -26,6 +26,8 @@ type LoginValues = z.infer<typeof LoginSchema>
 export default function LoginPage() {
   const [role, setRole] = useState<'MEDECIN' | 'PATIENT' | 'ADMIN'>('MEDECIN')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
 
   const {
     register,
@@ -55,7 +57,7 @@ export default function LoginPage() {
     if (role === 'MEDECIN') {
       router.push('/dashboard/medecin')
     } else if (role === 'PATIENT') {
-      router.push('/dashboard/patient')
+      router.push(redirect ?? '/dashboard/patient')
     } else {
       router.push('/dashboard/admin')
     }

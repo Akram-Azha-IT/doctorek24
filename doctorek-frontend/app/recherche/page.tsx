@@ -6,14 +6,17 @@ import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { Header } from '@/components/Header'
 import { MedecinCardList } from '@/features/annuaire/components/MedecinCardList'
+import { BookingDrawer } from '@/features/agenda/components/BookingDrawer'
 import type { DoctorMapEntry } from '@/features/annuaire/components/DoctorMap'
 import {
   useGeolocation,
+  useMedecin,
   useNearbyMedecins,
   useSearchMedecinsDisponibles,
 } from '@/features/annuaire/hooks'
 import type { SearchFormValues } from '@/features/annuaire/schemas'
 import type { DisponibiliteFilter } from '@/lib/disponibilite'
+import type { BookingSlot } from '@/lib/types'
 
 const DoctorMap = dynamic(
   () => import('@/features/annuaire/components/DoctorMap').then((m) => ({ default: m.DoctorMap })),
@@ -84,6 +87,23 @@ export default function RecherchePage() {
   const [nearbyMode, setNearbyMode] = useState(nearbyParam === '1' && urlCoords !== null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
+  const [bookingSlot, setBookingSlot] = useState<BookingSlot | null>(null)
+
+  // ── Return-to-booking after login redirect ────────────────────────────────
+  const bookMedecinId = searchParams.get('bookMedecinId') ?? ''
+  const bookDate = searchParams.get('bookDate') ?? ''
+  const bookDebut = searchParams.get('bookDebut') ?? ''
+  const bookFin = searchParams.get('bookFin') ?? ''
+  const hasBookingParams = !!(bookMedecinId && bookDate && bookDebut && bookFin)
+
+  const { data: bookMedecin } = useMedecin(bookMedecinId)
+
+  useEffect(() => {
+    if (hasBookingParams && bookMedecin) {
+      setBookingSlot({ medecin: bookMedecin, date: bookDate, debut: bookDebut, fin: bookFin })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookMedecin])
 
   const { register, watch } = useForm<SearchFormValues>({
     defaultValues: {
@@ -323,6 +343,7 @@ export default function RecherchePage() {
                   distanceKm={r.distanceKm}
                   onMouseEnter={() => setHoveredId(r.medecin.id)}
                   onMouseLeave={() => setHoveredId(null)}
+                  onBookSlot={setBookingSlot}
                 />
               ))}
             </div>
@@ -352,6 +373,7 @@ export default function RecherchePage() {
                   availableToday={availableTodayIds.has(medecin.id)}
                   onMouseEnter={() => setHoveredId(medecin.id)}
                   onMouseLeave={() => setHoveredId(null)}
+                  onBookSlot={setBookingSlot}
                 />
               ))}
             </div>
@@ -397,6 +419,9 @@ export default function RecherchePage() {
           </div>
         </div>
       )}
+
+      {/* ── Booking drawer ── */}
+      <BookingDrawer slot={bookingSlot} onClose={() => setBookingSlot(null)} />
 
       {/* ── Mobile FAB: toggle list / map ── */}
       <button
