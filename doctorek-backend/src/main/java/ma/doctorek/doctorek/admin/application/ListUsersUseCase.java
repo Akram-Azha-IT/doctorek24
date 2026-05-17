@@ -7,11 +7,13 @@ import ma.doctorek.doctorek.auth.domain.User;
 import ma.doctorek.doctorek.auth.domain.UserRepository;
 import ma.doctorek.doctorek.carte.application.GetCarteUseCase;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class ListUsersUseCase {
 
     private final UserRepository userRepository;

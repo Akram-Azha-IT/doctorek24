@@ -38,7 +38,7 @@ class RendezVousEntity {
     @Column(columnDefinition = "TEXT")
     private String motif;
 
-    @Column(name = "questionnaire_json", columnDefinition = "TEXT")
+    @Column(name = "questionnaire_json", columnDefinition = "jsonb")
     private String questionnaireJson;
 
     @Column(name = "created_at", nullable = false)

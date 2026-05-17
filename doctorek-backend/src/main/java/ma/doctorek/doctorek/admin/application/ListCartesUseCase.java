@@ -6,8 +6,10 @@ import ma.doctorek.doctorek.carte.infrastructure.SpringDataCarteRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class ListCartesUseCase {
 
     private final SpringDataCarteRepository carteRepository;

@@ -3,11 +3,13 @@ package ma.doctorek.doctorek.agenda.application;
 import ma.doctorek.doctorek.agenda.domain.PatientSummary;
 import ma.doctorek.doctorek.agenda.domain.RendezVousRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class GetPatientsMedecinUseCase {
 
     private final RendezVousRepository rdvRepo;

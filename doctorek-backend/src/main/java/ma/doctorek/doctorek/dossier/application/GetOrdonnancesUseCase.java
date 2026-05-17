@@ -3,11 +3,13 @@ package ma.doctorek.doctorek.dossier.application;
 import ma.doctorek.doctorek.dossier.application.dto.OrdonnanceResponse;
 import ma.doctorek.doctorek.dossier.domain.DossierRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 public class GetOrdonnancesUseCase {
 
     private final DossierRepository repository;

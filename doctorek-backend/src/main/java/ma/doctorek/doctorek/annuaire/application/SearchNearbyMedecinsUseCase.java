@@ -3,10 +3,12 @@ package ma.doctorek.doctorek.annuaire.application;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNearbyResult;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfileRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class SearchNearbyMedecinsUseCase {
 
     private static final double MAX_RADIUS_KM = 100.0;
