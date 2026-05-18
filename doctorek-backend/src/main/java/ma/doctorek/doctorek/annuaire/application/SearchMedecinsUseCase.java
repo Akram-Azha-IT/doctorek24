@@ -1,11 +1,9 @@
 package ma.doctorek.doctorek.annuaire.application;
 
-import ma.doctorek.doctorek.annuaire.domain.MedecinProfile;
+import ma.doctorek.doctorek.annuaire.application.dto.PagedMedecinsResponse;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -17,7 +15,7 @@ public class SearchMedecinsUseCase {
         this.repo = repo;
     }
 
-    public List<MedecinProfile> execute(String specialite, String ville) {
-        return repo.searchMedecins(specialite, ville);
+    public PagedMedecinsResponse execute(String specialite, String ville, String disponibilite, int page, int size) {
+        return repo.searchMedecinsPaged(specialite, ville, disponibilite, page, size);
     }
 }

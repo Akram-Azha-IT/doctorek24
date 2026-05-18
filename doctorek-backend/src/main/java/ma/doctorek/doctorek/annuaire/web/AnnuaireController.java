@@ -6,6 +6,7 @@ import ma.doctorek.doctorek.annuaire.application.SearchMedecinsUseCase;
 import ma.doctorek.doctorek.annuaire.application.SearchNearbyMedecinsUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinPhotoUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinProfileUseCase;
+import ma.doctorek.doctorek.annuaire.application.dto.PagedMedecinsResponse;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinPhotoRequest;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNearbyResult;
@@ -65,14 +66,17 @@ public class AnnuaireController {
     }
 
     /**
-     * GET /api/v1/annuaire/medecins?specialite=X&ville=Y
-     * Recherche de médecins par spécialité et/ou ville (params optionnels).
+     * GET /api/v1/annuaire/medecins?specialite=X&ville=Y&disponibilite=all|today|week&page=1&size=10
+     * Recherche paginée de médecins par spécialité et/ou ville.
      */
     @GetMapping("/medecins")
-    public ResponseEntity<ApiResponse<List<MedecinProfile>>> searchMedecins(
+    public ResponseEntity<ApiResponse<PagedMedecinsResponse>> searchMedecins(
             @RequestParam(required = false) String specialite,
-            @RequestParam(required = false) String ville) {
-        List<MedecinProfile> results = searchMedecinsUseCase.execute(specialite, ville);
+            @RequestParam(required = false) String ville,
+            @RequestParam(defaultValue = "all") String disponibilite,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PagedMedecinsResponse results = searchMedecinsUseCase.execute(specialite, ville, disponibilite, page, size);
         return ResponseEntity.ok(ApiResponse.ok(results));
     }
 

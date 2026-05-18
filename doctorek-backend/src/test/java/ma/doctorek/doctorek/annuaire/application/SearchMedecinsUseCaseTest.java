@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.annuaire.application;
 
+import ma.doctorek.doctorek.annuaire.application.dto.PagedMedecinsResponse;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfile;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfileRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -27,37 +28,42 @@ class SearchMedecinsUseCaseTest {
 
     @Test
     @DisplayName("returns matching medecins for given specialite and ville")
-    void execute_withSpecialiteAndVille_returnsList() {
+    void execute_withSpecialiteAndVille_returnsPaged() {
         MedecinProfile profile = new MedecinProfile(
             UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null, null
         );
-        when(repo.searchMedecins("Cardiologie", "Casablanca")).thenReturn(List.of(profile));
+        PagedMedecinsResponse paged = new PagedMedecinsResponse(List.of(profile), 1L, 1, 1, 10);
+        when(repo.searchMedecinsPaged("Cardiologie", "Casablanca", "all", 1, 10)).thenReturn(paged);
 
-        List<MedecinProfile> result = useCase.execute("Cardiologie", "Casablanca");
+        PagedMedecinsResponse result = useCase.execute("Cardiologie", "Casablanca", "all", 1, 10);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).specialite()).isEqualTo("Cardiologie");
-        assertThat(result.get(0).ville()).isEqualTo("Casablanca");
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).specialite()).isEqualTo("Cardiologie");
+        assertThat(result.content().get(0).ville()).isEqualTo("Casablanca");
+        assertThat(result.totalElements()).isEqualTo(1L);
     }
 
     @Test
-    @DisplayName("returns empty list when no medecin matches")
-    void execute_noMatch_returnsEmptyList() {
-        when(repo.searchMedecins("Neurologie", "Rabat")).thenReturn(List.of());
+    @DisplayName("returns empty content when no medecin matches")
+    void execute_noMatch_returnsEmptyContent() {
+        PagedMedecinsResponse empty = new PagedMedecinsResponse(List.of(), 0L, 0, 1, 10);
+        when(repo.searchMedecinsPaged("Neurologie", "Rabat", "all", 1, 10)).thenReturn(empty);
 
-        List<MedecinProfile> result = useCase.execute("Neurologie", "Rabat");
+        PagedMedecinsResponse result = useCase.execute("Neurologie", "Rabat", "all", 1, 10);
 
-        assertThat(result).isEmpty();
+        assertThat(result.content()).isEmpty();
+        assertThat(result.totalElements()).isZero();
     }
 
     @Test
     @DisplayName("delegates to repository with null params when not provided")
     void execute_nullParams_delegatesToRepository() {
-        when(repo.searchMedecins(null, null)).thenReturn(List.of());
+        PagedMedecinsResponse empty = new PagedMedecinsResponse(List.of(), 0L, 0, 1, 10);
+        when(repo.searchMedecinsPaged(null, null, "all", 1, 10)).thenReturn(empty);
 
-        useCase.execute(null, null);
+        useCase.execute(null, null, "all", 1, 10);
 
-        verify(repo).searchMedecins(null, null);
+        verify(repo).searchMedecinsPaged(null, null, "all", 1, 10);
     }
 
     @Test
@@ -67,10 +73,23 @@ class SearchMedecinsUseCaseTest {
             new MedecinProfile(UUID.randomUUID(), "A", "B", "Cardio", "Rabat", "Rue 1", "0000000001", null, null, null),
             new MedecinProfile(UUID.randomUUID(), "C", "D", "Dermato", "Fes", "Rue 2", "0000000002", null, null, null)
         );
-        when(repo.searchMedecins(null, null)).thenReturn(all);
+        PagedMedecinsResponse paged = new PagedMedecinsResponse(all, 2L, 1, 1, 10);
+        when(repo.searchMedecinsPaged(null, null, "all", 1, 10)).thenReturn(paged);
 
-        List<MedecinProfile> result = useCase.execute(null, null);
+        PagedMedecinsResponse result = useCase.execute(null, null, "all", 1, 10);
 
-        assertThat(result).hasSize(2);
+        assertThat(result.content()).hasSize(2);
+        assertThat(result.totalElements()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("filters by disponibilite=today delegates correct params")
+    void execute_todayFilter_delegates() {
+        PagedMedecinsResponse paged = new PagedMedecinsResponse(List.of(), 0L, 0, 1, 10);
+        when(repo.searchMedecinsPaged("Cardio", "Casa", "today", 1, 10)).thenReturn(paged);
+
+        useCase.execute("Cardio", "Casa", "today", 1, 10);
+
+        verify(repo).searchMedecinsPaged("Cardio", "Casa", "today", 1, 10);
     }
 }

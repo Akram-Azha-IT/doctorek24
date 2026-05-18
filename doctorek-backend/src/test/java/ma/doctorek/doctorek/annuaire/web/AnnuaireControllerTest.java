@@ -21,6 +21,7 @@ import java.util.UUID;
 import ma.doctorek.doctorek.annuaire.application.SearchNearbyMedecinsUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinPhotoUseCase;
 import ma.doctorek.doctorek.annuaire.application.UpdateMedecinProfileUseCase;
+import ma.doctorek.doctorek.annuaire.application.dto.PagedMedecinsResponse;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
 import org.springframework.http.MediaType;
 
@@ -108,32 +109,37 @@ class AnnuaireControllerTest {
             MedecinProfile profile = new MedecinProfile(
                 UUID.randomUUID(), "Hassan", "Alaoui", "Cardiologie", "Casablanca", "Rue 10", "1234567890", null, null, null
             );
-            when(searchMedecinsUseCase.execute("Cardiologie", "Casablanca"))
-                .thenReturn(List.of(profile));
+            PagedMedecinsResponse paged = new PagedMedecinsResponse(List.of(profile), 1L, 1, 1, 10);
+            when(searchMedecinsUseCase.execute("Cardiologie", "Casablanca", "all", 1, 10))
+                .thenReturn(paged);
 
             mockMvc.perform(get("/api/v1/annuaire/medecins")
                     .param("specialite", "Cardiologie")
                     .param("ville", "Casablanca"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].specialite").value("Cardiologie"))
-                .andExpect(jsonPath("$.data[0].ville").value("Casablanca"))
-                .andExpect(jsonPath("$.data[0].firstName").value("Hassan"));
+                .andExpect(jsonPath("$.data.content[0].specialite").value("Cardiologie"))
+                .andExpect(jsonPath("$.data.content[0].ville").value("Casablanca"))
+                .andExpect(jsonPath("$.data.content[0].firstName").value("Hassan"))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.totalPages").value(1));
         }
 
         @Test
-        @DisplayName("returns 200 with empty list when no match")
+        @DisplayName("returns 200 with empty content when no match")
         void returns200WithEmptyList() throws Exception {
-            when(searchMedecinsUseCase.execute("Neurologie", "Agadir"))
-                .thenReturn(List.of());
+            PagedMedecinsResponse empty = new PagedMedecinsResponse(List.of(), 0L, 0, 1, 10);
+            when(searchMedecinsUseCase.execute("Neurologie", "Agadir", "all", 1, 10))
+                .thenReturn(empty);
 
             mockMvc.perform(get("/api/v1/annuaire/medecins")
                     .param("specialite", "Neurologie")
                     .param("ville", "Agadir"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content").isEmpty())
+                .andExpect(jsonPath("$.data.totalElements").value(0));
         }
     }
 

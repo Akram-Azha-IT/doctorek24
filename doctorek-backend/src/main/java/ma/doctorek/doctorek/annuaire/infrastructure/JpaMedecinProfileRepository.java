@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.annuaire.infrastructure;
 
+import ma.doctorek.doctorek.annuaire.application.dto.PagedMedecinsResponse;
 import ma.doctorek.doctorek.annuaire.application.dto.UpdateMedecinProfileRequest;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNotFoundException;
 import ma.doctorek.doctorek.annuaire.domain.MedecinNearbyResult;
@@ -7,13 +8,18 @@ import ma.doctorek.doctorek.annuaire.domain.MedecinProfile;
 import ma.doctorek.doctorek.annuaire.domain.MedecinProfileRepository;
 import ma.doctorek.doctorek.auth.domain.User;
 import ma.doctorek.doctorek.auth.domain.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Repository
 public class JpaMedecinProfileRepository implements MedecinProfileRepository {
@@ -38,6 +44,33 @@ public class JpaMedecinProfileRepository implements MedecinProfileRepository {
             .stream()
             .map(this::toProfile)
             .toList();
+    }
+
+    @Override
+    public PagedMedecinsResponse searchMedecinsPaged(String specialite, String ville, String disponibilite, int page, int size) {
+        PageRequest pageable = PageRequest.of(page - 1, size);
+        Page<MedecinDetailEntity> result;
+
+        if ("today".equals(disponibilite)) {
+            List<String> days = List.of(LocalDate.now().getDayOfWeek().name());
+            result = springData.searchActiveMedecinsWithDispoPaged(specialite, ville, days, pageable);
+        } else if ("week".equals(disponibilite)) {
+            List<String> days = IntStream.range(0, 7)
+                .mapToObj(i -> LocalDate.now().plusDays(i).getDayOfWeek().name())
+                .distinct()
+                .toList();
+            result = springData.searchActiveMedecinsWithDispoPaged(specialite, ville, days, pageable);
+        } else {
+            result = springData.searchActiveMedecinsPaged(specialite, ville, pageable);
+        }
+
+        return new PagedMedecinsResponse(
+            result.getContent().stream().map(this::toProfile).toList(),
+            result.getTotalElements(),
+            result.getTotalPages(),
+            page,
+            size
+        );
     }
 
     @Override

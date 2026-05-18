@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -22,6 +22,8 @@ const DoctorMap = dynamic(
   () => import('@/features/annuaire/components/DoctorMap').then((m) => ({ default: m.DoctorMap })),
   { ssr: false },
 )
+
+const PAGE_SIZE = 10
 
 const DISPO_FILTERS: ReadonlyArray<{ value: DisponibiliteFilter; label: string }> = [
   { value: 'all', label: 'Toutes dates' },
@@ -74,6 +76,86 @@ function SkeletonCards() {
   )
 }
 
+function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
+  return direction === 'left' ? (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  ) : (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onPage,
+}: {
+  page: number
+  totalPages: number
+  onPage: (p: number) => void
+}) {
+  if (totalPages <= 1) return null
+
+  const pages: (number | '…')[] = []
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (page > 3) pages.push('…')
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i)
+    if (page < totalPages - 2) pages.push('…')
+    pages.push(totalPages)
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-1 py-6">
+      <button
+        type="button"
+        onClick={() => onPage(page - 1)}
+        disabled={page === 1}
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-colors hover:border-[#1863A9] hover:text-[#1863A9] disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Page précédente"
+      >
+        <ChevronIcon direction="left" />
+      </button>
+
+      {pages.map((p, i) =>
+        p === '…' ? (
+          <span key={`ellipsis-${i}`} className="flex h-9 w-9 items-center justify-center text-sm text-zinc-400">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onPage(p)}
+            className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
+              p === page
+                ? 'border-[#1863A9] bg-[#1863A9] text-white shadow-sm'
+                : 'border-zinc-200 bg-white text-zinc-700 hover:border-[#1863A9] hover:text-[#1863A9]'
+            }`}
+          >
+            {p}
+          </button>
+        ),
+      )}
+
+      <button
+        type="button"
+        onClick={() => onPage(page + 1)}
+        disabled={page === totalPages}
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-colors hover:border-[#1863A9] hover:text-[#1863A9] disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Page suivante"
+      >
+        <ChevronIcon direction="right" />
+      </button>
+    </div>
+  )
+}
+
 export default function RecherchePage() {
   const searchParams = useSearchParams()
 
@@ -88,6 +170,7 @@ export default function RecherchePage() {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
   const [bookingSlot, setBookingSlot] = useState<BookingSlot | null>(null)
+  const [page, setPage] = useState(1)
 
   // ── Return-to-booking after login redirect ────────────────────────────────
   const bookMedecinId = searchParams.get('bookMedecinId') ?? ''
@@ -120,6 +203,7 @@ export default function RecherchePage() {
   const values = watch()
   useEffect(() => {
     setQuery({ specialite: values.specialite, ville: values.ville })
+    setPage(1)
   }, [values.specialite, values.ville]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Geolocation ──────────────────────────────────────────────────────────
@@ -130,6 +214,7 @@ export default function RecherchePage() {
     (geoState.status === 'success' ? { lat: geoState.lat, lng: geoState.lng } : null)
 
   const handleNearbyClick = () => {
+    setPage(1)
     if (nearbyMode) {
       setNearbyMode(false)
       return
@@ -151,6 +236,7 @@ export default function RecherchePage() {
     nearbyMode ? '' : query.specialite,
     nearbyMode ? '' : query.ville,
     filter,
+    nearbyMode ? 1 : page,
   )
 
   const nearbyResult = useNearbyMedecins(
@@ -165,11 +251,27 @@ export default function RecherchePage() {
   const error = nearbyMode ? nearbyResult.error : searchResult.error
 
   const nearbyMedecins = nearbyResult.data ?? []
-  const searchMedecins = searchResult.data?.medecins ?? []
-  const availableTodayIds = searchResult.data?.availableTodayIds ?? new Set<string>()
+  const searchContent = searchResult.data?.content ?? []
+  const availableTodayIds = useMemo(
+    () => (filter === 'today' ? new Set(searchContent.map((m) => m.id)) : new Set<string>()),
+    [filter, searchContent],
+  )
+
+  const totalResults = nearbyMode ? nearbyMedecins.length : (searchResult.data?.totalElements ?? 0)
+  const totalPages = nearbyMode
+    ? Math.ceil(totalResults / PAGE_SIZE)
+    : (searchResult.data?.totalPages ?? 1)
+  const offset = (page - 1) * PAGE_SIZE
+
+  const pagedNearby = nearbyMedecins.slice(offset, offset + PAGE_SIZE)
+
+  const handlePage = useCallback((p: number) => {
+    setPage(p)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   const mapDoctors = useMemo<DoctorMapEntry[]>(() => {
-    const source = nearbyMode ? nearbyMedecins.map((r) => r.medecin) : searchMedecins
+    const source = nearbyMode ? nearbyMedecins.map((r) => r.medecin) : searchContent
     return source
       .filter((m) => m.latitude != null && m.longitude != null)
       .map((m) => {
@@ -185,14 +287,16 @@ export default function RecherchePage() {
           avatarColor: `hsl(${hash % 360}, 55%, 42%)`,
         }
       })
-  }, [nearbyMode, nearbyMedecins, searchMedecins])
+  }, [nearbyMode, nearbyMedecins, searchContent])
 
-  const resultCount = nearbyMode ? nearbyMedecins.length : searchMedecins.length
+  const resultCount = totalResults
+  const pageStart = totalResults === 0 ? 0 : offset + 1
+  const pageEnd = Math.min(offset + PAGE_SIZE, totalResults)
   const resultLabel = isLoading
     ? 'Chargement...'
     : nearbyMode
-      ? `${resultCount} médecin${resultCount !== 1 ? 's' : ''} dans un rayon de 20 km${query.specialite ? ` · ${query.specialite}` : ''}`
-      : `${resultCount} médecin${resultCount !== 1 ? 's' : ''} trouvé${resultCount !== 1 ? 's' : ''}${query.specialite ? ` · ${query.specialite}` : ''}${query.ville ? ` à ${query.ville}` : ''}`
+      ? `${resultCount} médecin${resultCount !== 1 ? 's' : ''} dans un rayon de 20 km${query.specialite ? ` · ${query.specialite}` : ''}${totalPages > 1 ? ` · ${pageStart}–${pageEnd} affichés` : ''}`
+      : `${resultCount} médecin${resultCount !== 1 ? 's' : ''} trouvé${resultCount !== 1 ? 's' : ''}${query.specialite ? ` · ${query.specialite}` : ''}${query.ville ? ` à ${query.ville}` : ''}${totalPages > 1 ? ` · ${pageStart}–${pageEnd} affichés` : ''}`
 
   const geoLoading =
     geoState.status === 'loading' ||
@@ -288,7 +392,7 @@ export default function RecherchePage() {
                 <button
                   key={f.value}
                   type="button"
-                  onClick={() => setFilter(f.value)}
+                  onClick={() => { setFilter(f.value); setPage(1) }}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     filter === f.value
                       ? 'bg-[#1863A9] text-white shadow-sm'
@@ -334,23 +438,26 @@ export default function RecherchePage() {
           )}
 
           {nearbyMode && !isLoading && !geoLoading && nearbyMedecins.length > 0 && (
-            <div className="flex flex-col">
-              {nearbyMedecins.map((r) => (
-                <MedecinCardList
-                  key={r.medecin.id}
-                  medecin={r.medecin}
-                  availableToday={false}
-                  distanceKm={r.distanceKm}
-                  onMouseEnter={() => setHoveredId(r.medecin.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  onBookSlot={setBookingSlot}
-                />
-              ))}
-            </div>
+            <>
+              <div className="flex flex-col">
+                {pagedNearby.map((r) => (
+                  <MedecinCardList
+                    key={r.medecin.id}
+                    medecin={r.medecin}
+                    availableToday={false}
+                    distanceKm={r.distanceKm}
+                    onMouseEnter={() => setHoveredId(r.medecin.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onBookSlot={setBookingSlot}
+                  />
+                ))}
+              </div>
+              <Pagination page={page} totalPages={totalPages} onPage={handlePage} />
+            </>
           )}
 
           {/* Regular search results */}
-          {!nearbyMode && !isLoading && searchResult.data && searchMedecins.length === 0 && (
+          {!nearbyMode && !isLoading && searchResult.data && searchContent.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#DFEFFE]">
                 <SearchIcon />
@@ -364,19 +471,22 @@ export default function RecherchePage() {
             </div>
           )}
 
-          {!nearbyMode && !isLoading && searchMedecins.length > 0 && (
-            <div className="flex flex-col">
-              {searchMedecins.map((medecin) => (
-                <MedecinCardList
-                  key={medecin.id}
-                  medecin={medecin}
-                  availableToday={availableTodayIds.has(medecin.id)}
-                  onMouseEnter={() => setHoveredId(medecin.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  onBookSlot={setBookingSlot}
-                />
-              ))}
-            </div>
+          {!nearbyMode && !isLoading && searchContent.length > 0 && (
+            <>
+              <div className="flex flex-col">
+                {searchContent.map((medecin) => (
+                  <MedecinCardList
+                    key={medecin.id}
+                    medecin={medecin}
+                    availableToday={availableTodayIds.has(medecin.id)}
+                    onMouseEnter={() => setHoveredId(medecin.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onBookSlot={setBookingSlot}
+                  />
+                ))}
+              </div>
+              <Pagination page={page} totalPages={totalPages} onPage={handlePage} />
+            </>
           )}
         </div>
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDebounce } from '@/lib/hooks'
-import { getMedecin, searchMedecins, searchMedecinsDisponibles, searchMedecinsNearby, updateMedecin, type UpdateMedecinProfilePayload } from './api'
+import { getMedecin, searchMedecins, searchMedecinsNearby, updateMedecin, type UpdateMedecinProfilePayload } from './api'
 import type { DisponibiliteFilter } from '@/lib/disponibilite'
 
 export type GeolocationState =
@@ -50,36 +50,18 @@ export function useNearbyMedecins(
   })
 }
 
-export function useSearchMedecins(specialite: string, ville: string) {
-  const debouncedSpecialite = useDebounce(specialite.trim(), 400)
-  const debouncedVille = useDebounce(ville.trim(), 400)
-
-  return useQuery({
-    queryKey: ['medecins', 'search', debouncedSpecialite, debouncedVille],
-    queryFn: () => searchMedecins(debouncedSpecialite, debouncedVille),
-    staleTime: 60 * 1000,
-  })
-}
-
 export function useSearchMedecinsDisponibles(
   specialite: string,
   ville: string,
   filter: DisponibiliteFilter,
+  page: number,
 ) {
   const debouncedSpecialite = useDebounce(specialite.trim(), 400)
   const debouncedVille = useDebounce(ville.trim(), 400)
 
   return useQuery({
-    queryKey: [
-      'medecins',
-      'search',
-      'dispo',
-      debouncedSpecialite,
-      debouncedVille,
-      filter,
-    ],
-    queryFn: () =>
-      searchMedecinsDisponibles(debouncedSpecialite, debouncedVille, filter),
+    queryKey: ['medecins', 'search', debouncedSpecialite, debouncedVille, filter, page],
+    queryFn: () => searchMedecins(debouncedSpecialite, debouncedVille, filter, page),
     staleTime: 60 * 1000,
   })
 }
