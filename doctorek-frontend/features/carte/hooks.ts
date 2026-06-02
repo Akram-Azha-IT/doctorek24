@@ -2,12 +2,20 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CarteVirtuelleRequest } from '@/lib/types'
+import { ApiError } from '@/lib/api-client'
 import { carteExists, createCarte, getCarteByPatient, updateCarte } from './api'
 
 export function useCarteByPatient(patientId: string | null) {
   return useQuery({
     queryKey: ['carte', patientId],
-    queryFn: () => getCarteByPatient(patientId!),
+    queryFn: async () => {
+      try {
+        return await getCarteByPatient(patientId!)
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null
+        throw e
+      }
+    },
     enabled: !!patientId,
     retry: false,
   })

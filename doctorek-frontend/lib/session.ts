@@ -5,6 +5,8 @@ export interface Session {
   firstName?: string
   lastName?: string
   photoUrl?: string | null
+  accessToken?: string
+  refreshToken?: string | null
 }
 
 const KEY = 'doctorek_session'

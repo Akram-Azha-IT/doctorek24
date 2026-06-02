@@ -4,16 +4,19 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Users, Clock, UserCircle, LogOut,
-  Search, Bell, Settings, ChevronDown,
+  Search, Settings, ChevronDown, MessageCircle,
 } from 'lucide-react'
+import { NotificationPanel } from '@/features/notifications/components/NotificationPanel'
 import { getSession, saveSession, clearSession } from '@/lib/session'
 import { apiFetch } from '@/lib/api-client'
 import Logo from '@/components/Logo'
+import { useUnreadCount } from '@/features/messaging/useUnreadCount'
 
 const NAV_ITEMS = [
   { href: '/dashboard/medecin', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/medecin/agenda', label: 'Agenda', icon: Calendar },
   { href: '/dashboard/medecin/patients', label: 'Patients', icon: Users },
+  { href: '/dashboard/medecin/messages', label: 'Messages', icon: MessageCircle },
   { href: '/dashboard/medecin/disponibilites', label: 'Disponibilités', icon: Clock },
   { href: '/dashboard/medecin/profil', label: 'Profil', icon: UserCircle },
 ]
@@ -109,6 +112,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
     return pathname.startsWith(item.href)
   }
 
+  const unreadMessages = useUnreadCount()
   const initials = firstName || lastName ? getInitials(firstName, lastName) : 'DR'
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Médecin'
   const specialite = 'Médecin généraliste'
@@ -132,6 +136,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
           </p>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item)
+            const badge = item.href === '/messages' && unreadMessages > 0 ? unreadMessages : 0
             return (
               <button
                 key={item.href}
@@ -150,12 +155,24 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
                   if (!active) (e.currentTarget as HTMLElement).style.background = ''
                 }}
               >
-                <item.icon
-                  className="h-[18px] w-[18px] shrink-0"
-                  style={{ color: active ? '#007DFF' : '#A0AEC0' }}
-                />
-                {item.label}
-                {active && (
+                <span className="relative shrink-0">
+                  <item.icon
+                    className="h-[18px] w-[18px]"
+                    style={{ color: active ? '#007DFF' : '#A0AEC0' }}
+                  />
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#E01E5A] text-[8px] font-bold text-white">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </span>
+                <span className="flex-1 text-left truncate">{item.label}</span>
+                {badge > 0 && !active && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E01E5A] px-1.5 text-[10px] font-bold text-white">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+                {active && badge === 0 && (
                   <span
                     className="ml-auto h-1.5 w-1.5 rounded-full"
                     style={{ background: '#007DFF' }}
@@ -249,12 +266,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            <button
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E9F0] bg-white transition-colors hover:border-[#B6DAF7]"
-            >
-              <Bell className="h-4 w-4" style={{ color: '#6B7A99' }} />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#E01E5A] border-2 border-white" />
-            </button>
+            <NotificationPanel />
             <button
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E9F0] bg-white transition-colors hover:border-[#B6DAF7]"
               onClick={() => router.push('/dashboard/medecin/profil')}

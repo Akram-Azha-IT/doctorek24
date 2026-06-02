@@ -4,9 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { AuthField, Icons, PrimaryButton } from './AuthField'
 import { RegisterMedecinSchema, type RegisterMedecinFormValues } from '../schemas'
 import { useRegisterMedecin } from '../hooks'
 
@@ -27,7 +25,9 @@ export function RegisterMedecinForm() {
     mutate(payload, {
       onSuccess: (data) => {
         toast.success('Inscription réussie ! Vérifiez votre email.')
-        router.push(`/inscription/verification?userId=${data.id}&email=${encodeURIComponent(data.email)}`)
+        router.push(
+          `/inscription/verification?userId=${data.id}&email=${encodeURIComponent(data.email)}`,
+        )
       },
       onError: (err) => {
         toast.error(err.message || "Erreur lors de l'inscription")
@@ -36,114 +36,107 @@ export function RegisterMedecinForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label="Prénom" id="med-firstName" error={errors.firstName?.message}>
-          <Input id="med-firstName" {...register('firstName')} aria-invalid={!!errors.firstName} />
-        </Field>
-        <Field label="Nom" id="med-lastName" error={errors.lastName?.message}>
-          <Input id="med-lastName" {...register('lastName')} aria-invalid={!!errors.lastName} />
-        </Field>
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <AuthField
+          label="Prénom"
+          autoComplete="given-name"
+          placeholder="Dr. Karim"
+          leadingIcon={Icons.user}
+          error={errors.firstName?.message}
+          {...register('firstName')}
+        />
+        <AuthField
+          label="Nom"
+          autoComplete="family-name"
+          placeholder="Tazi"
+          leadingIcon={Icons.user}
+          error={errors.lastName?.message}
+          {...register('lastName')}
+        />
       </div>
 
-      <Field label="Email professionnel" id="med-email" error={errors.email?.message}>
-        <Input id="med-email" type="email" {...register('email')} aria-invalid={!!errors.email} />
-      </Field>
-
-      <Field label="Téléphone" id="med-phone" error={errors.phone?.message}>
-        <Input
-          id="med-phone"
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <AuthField
+          label="Email professionnel"
+          type="email"
+          autoComplete="email"
+          placeholder="cabinet@exemple.ma"
+          leadingIcon={Icons.mail}
+          error={errors.email?.message}
+          {...register('email')}
+        />
+        <AuthField
+          label="Téléphone"
           type="tel"
+          autoComplete="tel"
           placeholder="0612345678"
+          leadingIcon={Icons.phone}
+          error={errors.phone?.message}
           {...register('phone')}
-          aria-invalid={!!errors.phone}
         />
-      </Field>
-
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label="INPE" id="med-inpe" error={errors.inpe?.message}>
-          <Input
-            id="med-inpe"
-            placeholder="10 chiffres"
-            maxLength={10}
-            {...register('inpe')}
-            aria-invalid={!!errors.inpe}
-          />
-        </Field>
-        <Field label="Spécialité" id="med-specialite" error={errors.specialite?.message}>
-          <Input
-            id="med-specialite"
-            placeholder="ex: Cardiologue"
-            {...register('specialite')}
-            aria-invalid={!!errors.specialite}
-          />
-        </Field>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field label="Ville" id="med-ville" error={errors.ville?.message}>
-          <Input
-            id="med-ville"
-            placeholder="ex: Alger"
-            {...register('ville')}
-            aria-invalid={!!errors.ville}
-          />
-        </Field>
-        <Field label="Adresse (optionnel)" id="med-adresse" error={errors.adresse?.message}>
-          <Input
-            id="med-adresse"
-            placeholder="ex: 12 rue Didouche Mourad"
-            {...register('adresse')}
-            aria-invalid={!!errors.adresse}
-          />
-        </Field>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <AuthField
+          label="INPE"
+          placeholder="10 chiffres"
+          maxLength={10}
+          leadingIcon={Icons.id}
+          hint="Identifiant national professionnel"
+          error={errors.inpe?.message}
+          {...register('inpe')}
+        />
+        <AuthField
+          label="Spécialité"
+          placeholder="Cardiologue"
+          leadingIcon={Icons.stethoscope}
+          error={errors.specialite?.message}
+          {...register('specialite')}
+        />
       </div>
 
-      <Field label="Mot de passe" id="med-password" error={errors.password?.message}>
-        <Input
-          id="med-password"
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <AuthField
+          label="Ville"
+          placeholder="Casablanca"
+          leadingIcon={Icons.pin}
+          error={errors.ville?.message}
+          {...register('ville')}
+        />
+        <AuthField
+          label="Adresse"
+          placeholder="12, av. Mohammed V (optionnel)"
+          leadingIcon={Icons.pin}
+          error={errors.adresse?.message}
+          {...register('adresse')}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <AuthField
+          label="Mot de passe"
           type="password"
+          autoComplete="new-password"
+          placeholder="Au moins 8 caractères"
+          leadingIcon={Icons.lock}
+          error={errors.password?.message}
           {...register('password')}
-          aria-invalid={!!errors.password}
         />
-      </Field>
-
-      <Field
-        label="Confirmer le mot de passe"
-        id="med-confirmPassword"
-        error={errors.confirmPassword?.message}
-      >
-        <Input
-          id="med-confirmPassword"
+        <AuthField
+          label="Confirmer le mot de passe"
           type="password"
+          autoComplete="new-password"
+          placeholder="Retapez votre mot de passe"
+          leadingIcon={Icons.lock}
+          error={errors.confirmPassword?.message}
           {...register('confirmPassword')}
-          aria-invalid={!!errors.confirmPassword}
         />
-      </Field>
+      </div>
 
-      <Button type="submit" disabled={isPending} className="w-full mt-1">
-        {isPending ? 'Inscription en cours...' : "S'inscrire en tant que médecin"}
-      </Button>
+      <PrimaryButton type="submit" loading={isPending}>
+        {isPending ? 'Inscription…' : 'Créer mon compte médecin'}
+      </PrimaryButton>
     </form>
-  )
-}
-
-function Field({
-  label,
-  id,
-  error,
-  children,
-}: {
-  label: string
-  id: string
-  error?: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
   )
 }

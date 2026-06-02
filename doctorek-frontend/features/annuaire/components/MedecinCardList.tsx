@@ -5,8 +5,20 @@ import Link from 'next/link'
 import { useQueries } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
 import { getCreneaux } from '@/features/agenda/api'
-import type { MedecinProfile, BookingSlot } from '@/lib/types'
+import type { MedecinProfile, BookingSlot, Creneau } from '@/lib/types'
 import { nextNDaysISO } from '@/lib/disponibilite'
+
+function hasFutureSlots(date: string, todayISO: string, data: Creneau[] | undefined): boolean {
+  if (!data) return false
+  const available = data.filter(s => s.disponible)
+  if (date !== todayISO) return available.length > 0
+  const now = new Date()
+  return available.some(s => {
+    const [h, m] = s.debut.split(':').map(Number)
+    const t = new Date(); t.setHours(h, m, 0, 0)
+    return t > now
+  })
+}
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -155,9 +167,10 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
   const slots = selectedResult?.data ?? []
   const isLoading = selectedResult?.isLoading ?? true
 
+  const todayISO = allFutureDates[0]
   const allLoaded = allDaysResults.every(r => !r.isLoading)
-  const allUnavailable = allLoaded && allDaysResults.every(r =>
-    !r.data || r.data.length === 0 || r.data.every(s => !s.disponible)
+  const allUnavailable = allLoaded && allDaysResults.every((r, i) =>
+    !hasFutureSlots(visibleDates[i], todayISO, r.data)
   )
 
   // Search next 25 days beyond visible window only when all 5 visible are unavailable
@@ -181,8 +194,20 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
   const extendedLoading = allUnavailable && extendedResults.some(r => r.isLoading)
 
-  const isUnavailable = !isLoading && (slots.length === 0 || slots.every(s => !s.disponible))
-  const availableSlots = slots.filter(s => s.disponible)
+  const availableSlots = useMemo(() => {
+    const isToday = selectedDate === allFutureDates[0]
+    const now = new Date()
+    return slots.filter(s => {
+      if (!s.disponible) return false
+      if (!isToday) return true
+      const [h, m] = s.debut.split(':').map(Number)
+      const slotTime = new Date()
+      slotTime.setHours(h, m, 0, 0)
+      return slotTime > now
+    })
+  }, [slots, selectedDate, allFutureDates])
+
+  const isUnavailable = !isLoading && availableSlots.length === 0
 
   // Reset slot index when date changes
   useEffect(() => { setSlotIdx(0) }, [selectedDate])
@@ -365,8 +390,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                     const isSelected = date === selectedDate
                     const isToday = windowStart === 0 && i === 0
                     const dayResult = allDaysResults[i]
-                    const daySlots = dayResult?.data ?? []
-                    const dayHasSlots = !dayResult?.isLoading && daySlots.some(s => s.disponible)
+                    const dayHasSlots = !dayResult?.isLoading && hasFutureSlots(date, todayISO, dayResult?.data)
                     return (
                       <button
                         key={date}

@@ -4,15 +4,19 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Search, CreditCard,
-  LogOut, Bell, Settings, Heart, ChevronRight, FileText,
+  LogOut, Settings, Heart, ChevronRight, FileText, MessageCircle,
 } from 'lucide-react'
+import { NotificationPanel } from '@/features/notifications/components/NotificationPanel'
 import { getSession, saveSession, clearSession } from '@/lib/session'
 import Logo from '@/components/Logo'
 import { useCarteByPatient } from '@/features/carte/hooks'
+import { usePatientProfile } from '@/features/patient/hooks'
+import { useUnreadCount } from '@/features/messaging/useUnreadCount'
 
 const NAV_ITEMS = [
   { href: '/dashboard/patient', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/patient/rdvs', label: 'Mes Rendez-vous', icon: Calendar },
+  { href: '/dashboard/patient/messages', label: 'Messages', icon: MessageCircle },
   { href: '/recherche', label: 'Trouver un médecin', icon: Search },
   { href: '/dashboard/patient/carte', label: 'Carte Médicale', icon: CreditCard },
 ]
@@ -53,7 +57,9 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   }, [])
 
   const { data: carte } = useCarteByPatient(patientId || null)
-  const resolvedPhoto = carte?.photoUrl ?? photoUrl
+  const { data: profile } = usePatientProfile(patientId || null)
+  const resolvedPhoto = profile?.photoUrl ?? photoUrl
+  const unreadMessages = useUnreadCount()
 
   useEffect(() => {
     if (!carte) return
@@ -171,6 +177,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
           )}
           {NAV_ITEMS.map((item) => {
             const active = isActive(item)
+            const badge = item.href === '/messages' && unreadMessages > 0 ? unreadMessages : 0
             return (
               <button
                 key={item.href}
@@ -185,13 +192,25 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                     : 'text-[#465058] hover:bg-[#F1F4F7] hover:text-[#333333]'
                 }`}
               >
-                <item.icon
-                  className={`h-4 w-4 shrink-0 transition-colors ${
-                    active ? 'text-white' : 'text-zinc-400 group-hover:text-[#007DFF]'
-                  }`}
-                />
-                {sidebarOpen && <span className="truncate">{item.label}</span>}
-                {sidebarOpen && active && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-70" />}
+                <span className="relative shrink-0">
+                  <item.icon
+                    className={`h-4 w-4 transition-colors ${
+                      active ? 'text-white' : 'text-zinc-400 group-hover:text-[#007DFF]'
+                    }`}
+                  />
+                  {badge > 0 && !sidebarOpen && (
+                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#E01E5A] text-[8px] font-bold text-white">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </span>
+                {sidebarOpen && <span className="truncate flex-1">{item.label}</span>}
+                {sidebarOpen && badge > 0 && !active && (
+                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E01E5A] px-1.5 text-[10px] font-bold text-white">
+                    {badge > 99 ? '99+' : badge}
+                  </span>
+                )}
+                {sidebarOpen && active && badge === 0 && <ChevronRight className="ml-auto h-3.5 w-3.5 opacity-70" />}
               </button>
             )
           })}
@@ -288,10 +307,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
           {/* Right controls */}
           <div className="flex items-center gap-3">
-            <button className="relative rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F1F4F7] transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#007DFF] border-2 border-white" />
-            </button>
+            <NotificationPanel />
             <button className="rounded-full p-2 text-zinc-400 hover:text-[#333333] hover:bg-[#F1F4F7] transition-colors">
               <Settings className="h-5 w-5" />
             </button>

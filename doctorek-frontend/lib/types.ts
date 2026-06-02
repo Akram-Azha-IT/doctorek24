@@ -1,3 +1,13 @@
+export interface AppNotification {
+  id: string
+  type: 'CARTE_CREEE' | 'MESSAGE_RECU' | 'ANNIVERSAIRE' | 'DOCUMENT_RECU' | 'RDV_RAPPEL' | string
+  title: string
+  body: string | null
+  data: string | null
+  read: boolean
+  createdAt: string
+}
+
 export interface ApiResponse<T> {
   success: boolean
   data: T | null
@@ -129,15 +139,6 @@ export interface CarteVirtuelle {
   statut: 'VIRTUEL'
   firstName: string | null
   lastName: string | null
-  dateNaissance: string | null
-  genre: string | null
-  nationalite: string | null
-  numIdentite: string | null
-  photoUrl: string | null
-  telephone: string | null
-  adresseRue: string | null
-  adresseVille: string | null
-  adressePays: string | null
   groupeSanguin: string | null
   tailleCm: number | null
   poidsKg: number | null
@@ -158,16 +159,6 @@ export interface CarteVirtuelle {
 }
 
 export interface CarteVirtuelleRequest {
-  patientId: string
-  dateNaissance?: string | null
-  genre?: string | null
-  nationalite?: string | null
-  numIdentite?: string | null
-  photoUrl?: string | null
-  telephone?: string | null
-  adresseRue?: string | null
-  adresseVille?: string | null
-  adressePays?: string | null
   groupeSanguin?: string | null
   tailleCm?: number | null
   poidsKg?: number | null
@@ -183,6 +174,60 @@ export interface CarteVirtuelleRequest {
   assuranceNom?: string | null
   assuranceNumero?: string | null
   assuranceDetails?: string | null
+}
+
+// ── Patient profile (identity / contact) ─────────────────────────────────────
+
+export interface PatientProfile {
+  userId: string
+  firstName: string
+  lastName: string
+  dateNaissance: string | null
+  genre: string | null
+  nationalite: string | null
+  numIdentite: string | null
+  photoUrl: string | null
+  telephone: string | null
+  adresseRue: string | null
+  adresseVille: string | null
+  adressePays: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PatientProfileRequest {
+  dateNaissance?: string | null
+  genre?: string | null
+  nationalite?: string | null
+  numIdentite?: string | null
+  photoUrl?: string | null
+  telephone?: string | null
+  adresseRue?: string | null
+  adresseVille?: string | null
+  adressePays?: string | null
+}
+
+// ── Messaging ────────────────────────────────────────────────────────────────
+
+export interface Message {
+  id: string
+  conversationId: string
+  senderId: string
+  content: string
+  sentAt: string
+  readAt: string | null
+}
+
+export interface Conversation {
+  id: string
+  medecinId: string
+  patientId: string
+  medecinName: string
+  patientName: string
+  lastMessageAt: string | null
+  createdAt: string
+  unreadCount: number
+  lastMessage: Message | null
 }
 
 // ── Booking ──────────────────────────────────────────────────────────────────

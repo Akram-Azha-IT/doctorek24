@@ -4,14 +4,14 @@ import { renderCarteRectoHtml, renderCarteVersoHtml } from '@/features/carte/com
 
 export async function POST(req: Request) {
   try {
-    const { carte, firstName, lastName } = await req.json()
+    const { carte, profile, firstName, lastName } = await req.json()
 
     if (!carte) {
       return NextResponse.json({ error: 'Carte data is required' }, { status: 400 })
     }
 
-    const rectoHtml = renderCarteRectoHtml(carte, firstName, lastName)
-    const versoHtml = renderCarteVersoHtml(carte, firstName, lastName)
+    const rectoHtml = renderCarteRectoHtml(carte, profile, firstName, lastName)
+    const versoHtml = renderCarteVersoHtml(carte, profile, firstName, lastName)
 
     const fullHtml = `
       <!DOCTYPE html>

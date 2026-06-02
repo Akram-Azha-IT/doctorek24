@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
 
   redis:
     image: redis:7-alpine
@@ -26,20 +27,50 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: doctorek-keycloak
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HOSTNAME: localhost
+      KC_HTTP_PORT: 9080
+      KC_HEALTH_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "9080:9080"
+    depends_on:
+      - postgres
+
   app:
     build: .
     container_name: doctorek-app
     depends_on:
       - postgres
       - redis
+      - keycloak
+      - mailhog
     ports:
       - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      KEYCLOAK_ISSUER_URI: http://localhost:9080/realms/doctorek
+      KEYCLOAK_JWK_SET_URI: http://keycloak:9080/realms/doctorek/protocol/openid-connect/certs
+      KEYCLOAK_URL: http://keycloak:9080
+      KEYCLOAK_REALM: doctorek
+      KEYCLOAK_ADMIN_CLIENT_ID: doctorek-admin-cli
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENABLED: "true"
       JAVA_TOOL_OPTIONS: -Xms256m -Xmx512m
 
 volumes:

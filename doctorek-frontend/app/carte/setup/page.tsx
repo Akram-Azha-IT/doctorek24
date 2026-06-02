@@ -6,6 +6,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { carteFullSchema, CarteFormData } from '@/features/carte/schemas'
 import { useCreateCarte } from '@/features/carte/hooks'
+import { useUpsertPatientProfile } from '@/features/patient/hooks'
 import { getSession, saveSession } from '@/lib/session'
 
 const STEPS = [
@@ -24,6 +25,7 @@ export default function CarteSetupPage() {
   const [step, setStep] = useState(0)
   const session = getSession()
   const createCarte = useCreateCarte()
+  const upsertProfile = useUpsertPatientProfile(session?.id ?? '')
 
   const form = useForm<CarteFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,16 +67,35 @@ export default function CarteSetupPage() {
       router.push('/login')
       return
     }
-    const carte = await createCarte.mutateAsync({
-      patientId: session.id,
-      ...data,
-      allergies: (data.allergies ?? []).filter(Boolean) as string[],
-      maladiesChroniques: (data.maladiesChroniques ?? []).filter(Boolean) as string[],
-      vaccinations: (data.vaccinations ?? []).filter(Boolean) as string[],
-      antecedentsFamiliaux: (data.antecedentsFamiliaux ?? []).filter(Boolean) as string[],
+    const {
+      dateNaissance, genre, nationalite, numIdentite, photoUrl,
+      telephone, adresseRue, adresseVille, adressePays,
+      ...carteData
+    } = data
+
+    const savedProfile = await upsertProfile.mutateAsync({
+      dateNaissance: dateNaissance ?? null,
+      genre: genre ?? null,
+      nationalite: nationalite ?? null,
+      numIdentite: numIdentite ?? null,
+      photoUrl: photoUrl ?? null,
+      telephone: telephone ?? null,
+      adresseRue: adresseRue ?? null,
+      adresseVille: adresseVille ?? null,
+      adressePays: adressePays ?? null,
     })
-    if (carte.photoUrl) {
-      saveSession({ ...session, photoUrl: carte.photoUrl })
+
+    await createCarte.mutateAsync({
+      patientId: session.id,
+      ...carteData,
+      allergies: (carteData.allergies ?? []).filter(Boolean) as string[],
+      maladiesChroniques: (carteData.maladiesChroniques ?? []).filter(Boolean) as string[],
+      vaccinations: (carteData.vaccinations ?? []).filter(Boolean) as string[],
+      antecedentsFamiliaux: (carteData.antecedentsFamiliaux ?? []).filter(Boolean) as string[],
+    })
+
+    if (savedProfile.photoUrl) {
+      saveSession({ ...session, photoUrl: savedProfile.photoUrl })
     }
     router.push('/dashboard/patient')
   }

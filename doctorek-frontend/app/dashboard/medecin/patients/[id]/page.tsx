@@ -169,15 +169,6 @@ function InfosTab({ patientId }: { patientId: string }) {
   function saveCarteField(patch: Partial<CarteVirtuelleRequest>) {
     const base: CarteVirtuelleRequest = {
       patientId,
-      dateNaissance: carte?.dateNaissance,
-      genre: carte?.genre,
-      nationalite: carte?.nationalite,
-      numIdentite: carte?.numIdentite,
-      photoUrl: carte?.photoUrl,
-      telephone: carte?.telephone,
-      adresseRue: carte?.adresseRue,
-      adresseVille: carte?.adresseVille,
-      adressePays: carte?.adressePays,
       tailleCm: carte?.tailleCm,
       poidsKg: carte?.poidsKg,
       donneurOrganes: carte?.donneurOrganes,

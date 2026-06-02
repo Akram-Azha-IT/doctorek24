@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CarteVirtuelle } from '@/lib/types'
+import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 import QrCodeDisplay from './QrCodeDisplay'
 
 const C_BLUE  = '#007DFF'
@@ -13,6 +13,7 @@ const C_GREEN = '#006233'
 
 interface CarteVirtuelleCardProps {
   carte: CarteVirtuelle
+  profile?: PatientProfile | null
   firstName?: string
   lastName?: string
   onEdit?: () => void
@@ -22,11 +23,13 @@ interface CarteVirtuelleCardProps {
 
 export function CarteRecto({
   carte,
+  profile,
   firstName,
   lastName,
   qrUrl,
 }: {
   carte: CarteVirtuelle
+  profile?: PatientProfile | null
   firstName?: string
   lastName?: string
   qrUrl?: string
@@ -35,7 +38,7 @@ export function CarteRecto({
     [firstName, lastName?.toUpperCase()].filter(Boolean).join(' ') ||
     'NOM ET PRÉNOM'
 
-  const rawCin = carte.numIdentite ?? ''
+  const rawCin = profile?.numIdentite ?? ''
   const maskedCin =
     rawCin.length >= 3
       ? rawCin[0] + '*'.repeat(rawCin.length - 2) + rawCin[rawCin.length - 1]
@@ -138,9 +141,9 @@ export function CarteRecto({
         <circle cx="132" cy="292" r="90" fill="none" stroke={C_BLUE} strokeWidth="3" opacity="0.75" />
 
         {/* Photo or silhouette */}
-        {carte.photoUrl ? (
+        {profile?.photoUrl ? (
           <image
-            href={carte.photoUrl}
+            href={profile.photoUrl}
             x="50"
             y="210"
             width="164"
@@ -322,11 +325,13 @@ export function CarteRecto({
 
 export function CarteVerso({
   carte,
+  profile,
   firstName,
   lastName,
   flat,
 }: {
   carte: CarteVirtuelle
+  profile?: PatientProfile | null
   firstName?: string
   lastName?: string
   flat?: boolean
@@ -338,8 +343,8 @@ export function CarteVerso({
   const rows = [
     { fr: 'Nom',                   ar: 'النسب',            value: nom },
     { fr: 'Prénom',                 ar: 'الاسم الشخصي',     value: prenom },
-    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',   value: carte.dateNaissance ?? '—' },
-    { fr: 'C.I.N.',                 ar: 'ب.ت.و',           value: carte.numIdentite ?? '—' },
+    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',   value: profile?.dateNaissance ?? '—' },
+    { fr: 'C.I.N.',                 ar: 'ب.ت.و',           value: profile?.numIdentite ?? '—' },
     { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',    value: `01/01/${createdYear}` },
   ]
 
@@ -606,6 +611,7 @@ export function CarteVerso({
 
 export default function CarteVirtuelleCard({
   carte,
+  profile,
   firstName,
   lastName,
   onEdit,
@@ -622,7 +628,7 @@ export default function CarteVirtuelleCard({
       const response = await fetch('/api/carte/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ carte, firstName, lastName }),
+        body: JSON.stringify({ carte, profile, firstName, lastName }),
       })
       if (!response.ok) throw new Error('Export failed')
       const blob = await response.blob()
@@ -664,9 +670,9 @@ export default function CarteVirtuelleCard({
           }}
         >
           <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-            <CarteRecto carte={carte} firstName={firstName} lastName={lastName} qrUrl={qrUrl} />
+            <CarteRecto carte={carte} profile={profile} firstName={firstName} lastName={lastName} qrUrl={qrUrl} />
           </div>
-          <CarteVerso carte={carte} firstName={firstName} lastName={lastName} />
+          <CarteVerso carte={carte} profile={profile} firstName={firstName} lastName={lastName} />
         </div>
       </div>
 

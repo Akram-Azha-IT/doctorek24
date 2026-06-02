@@ -1,4 +1,4 @@
-import { CarteVirtuelle } from '@/lib/types'
+import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 
 const C_DOC_BLUE = '#0066FF'
 const C_BG_CARD  = '#FFFFFF'
@@ -58,15 +58,20 @@ function doubleShieldBadge(): string {
   </div>`
 }
 
-export function renderCarteRectoHtml(carte: CarteVirtuelle, firstName?: string, lastName?: string): string {
+export function renderCarteRectoHtml(
+  carte: CarteVirtuelle,
+  profile?: PatientProfile | null,
+  firstName?: string,
+  lastName?: string,
+): string {
   const nom = lastName?.toUpperCase() || '—'
   const prenom = firstName || '—'
   const expiryDate = new Date()
   expiryDate.setFullYear(expiryDate.getFullYear() + 3)
   const expiry = expiryDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  const photoBlock = carte.photoUrl
-    ? `<img src="${carte.photoUrl}" alt="photo" style="width:100%;height:100%;object-fit:cover;"/>`
+  const photoBlock = profile?.photoUrl
+    ? `<img src="${profile.photoUrl}" alt="photo" style="width:100%;height:100%;object-fit:cover;"/>`
     : userPlaceholderSvg()
 
   return `
@@ -121,7 +126,7 @@ export function renderCarteRectoHtml(carte: CarteVirtuelle, firstName?: string, 
           <div style="display:flex;gap:18px;">
             <div>
               <div style="color:${C_LABEL};font-size:8px;font-weight:600;">Né(e) le / تاريخ الازدياد</div>
-              <div style="color:${C_TEXT};font-size:12px;font-weight:700;">${carte.dateNaissance ?? '—'}</div>
+              <div style="color:${C_TEXT};font-size:12px;font-weight:700;">${profile?.dateNaissance ?? '—'}</div>
             </div>
             <div>
               <div style="color:${C_LABEL};font-size:8px;font-weight:600;">N° Carte / رقم البطاقة</div>
@@ -143,7 +148,12 @@ export function renderCarteRectoHtml(carte: CarteVirtuelle, firstName?: string, 
   `
 }
 
-export function renderCarteVersoHtml(carte: CarteVirtuelle, firstName?: string, lastName?: string): string {
+export function renderCarteVersoHtml(
+  carte: CarteVirtuelle,
+  profile?: PatientProfile | null,
+  firstName?: string,
+  lastName?: string,
+): string {
   const nom = lastName?.toUpperCase() || '—'
   const prenom = firstName || '—'
   const createdYear = new Date().getFullYear()
@@ -151,8 +161,8 @@ export function renderCarteVersoHtml(carte: CarteVirtuelle, firstName?: string, 
   const rows = [
     { fr: 'Nom',                   ar: 'النسب',               value: nom },
     { fr: 'Prénom',                ar: 'الاسم الشخصي',        value: prenom },
-    { fr: 'Date de naissance',     ar: 'تاريخ الازدياد',      value: carte.dateNaissance ?? '—' },
-    { fr: 'C.I.N.',                ar: 'ب.ت.و',               value: carte.numIdentite ?? '—' },
+    { fr: 'Date de naissance',     ar: 'تاريخ الازدياد',      value: profile?.dateNaissance ?? '—' },
+    { fr: 'C.I.N.',                ar: 'ب.ت.و',               value: profile?.numIdentite ?? '—' },
     { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',      value: `01/01/${createdYear}` },
   ]
 

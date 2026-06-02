@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CreditCard, ChevronLeft, ChevronRight, Heart, MapPin, User } from 'lucide-react'
+import { CreditCard, ChevronLeft, ChevronRight, Heart, User } from 'lucide-react'
 import { useAdminCartes } from '@/features/admin/hooks'
 import type { CarteSummary } from '@/features/admin/types'
 
@@ -62,17 +62,6 @@ function CarteRow({ carte }: { carte: CarteSummary }) {
         <GroupeSanguinBadge value={carte.groupeSanguin} />
       </td>
       <td className="px-6 py-4">
-        {carte.adresseVille ? (
-          <div className="flex items-center gap-1.5 text-sm text-zinc-600">
-            <MapPin className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-            {carte.adresseVille}
-            {carte.adressePays ? `, ${carte.adressePays}` : ''}
-          </div>
-        ) : (
-          <span className="text-zinc-400 text-sm">—</span>
-        )}
-      </td>
-      <td className="px-6 py-4">
         <span className="text-sm text-zinc-500">{createdAt}</span>
       </td>
     </tr>
@@ -111,7 +100,6 @@ export default function AdminCartesPage() {
                   <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Patient ID</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Statut</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Groupe sanguin</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Localisation</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-zinc-400 uppercase tracking-wider">Créée le</th>
                 </tr>
               </thead>
@@ -119,7 +107,7 @@ export default function AdminCartesPage() {
                 {isLoading
                   ? Array.from({ length: 8 }).map((_, i) => (
                       <tr key={i} className="border-b border-zinc-50">
-                        {Array.from({ length: 6 }).map((_, j) => (
+                        {Array.from({ length: 5 }).map((_, j) => (
                           <td key={j} className="px-6 py-4">
                             <div className="h-4 rounded bg-zinc-100 animate-pulse" style={{ width: `${60 + (i * j) % 40}%` }} />
                           </td>

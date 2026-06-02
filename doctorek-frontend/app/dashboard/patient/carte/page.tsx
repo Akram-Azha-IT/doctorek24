@@ -6,10 +6,12 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { carteFullSchema, CarteFormData } from '@/features/carte/schemas'
 import { useCreateCarte, useUpdateCarte, useCarteByPatient } from '@/features/carte/hooks'
+import { usePatientProfile, useUpsertPatientProfile } from '@/features/patient/hooks'
 import { getInfosMedicales, upsertInfosMedicales } from '@/features/dossier/api'
 import { getSession, saveSession } from '@/lib/session'
-import { CarteVirtuelle } from '@/lib/types'
+import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 import CarteVirtuelleCard from '@/features/carte/components/CarteVirtuelleCard'
+import LogoLoader from '@/components/LogoLoader'
 
 const STEPS = [
   { label: 'Identité', icon: '👤', desc: 'Informations personnelles' },
@@ -22,32 +24,32 @@ const STEPS = [
 
 const GROUPES_SANGUINS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
-function mapCarteToForm(carte: CarteVirtuelle): CarteFormData {
+function mapToForm(carte: CarteVirtuelle | null, profile: PatientProfile | null): CarteFormData {
   return {
-    photoUrl: carte.photoUrl ?? null,
-    dateNaissance: carte.dateNaissance ?? null,
-    genre: carte.genre ?? null,
-    nationalite: carte.nationalite ?? null,
-    numIdentite: carte.numIdentite ?? null,
-    telephone: carte.telephone ?? null,
-    adresseRue: carte.adresseRue ?? null,
-    adresseVille: carte.adresseVille ?? null,
-    adressePays: carte.adressePays ?? null,
-    groupeSanguin: (carte.groupeSanguin ?? null) as CarteFormData['groupeSanguin'],
-    tailleCm: carte.tailleCm ?? null,
-    poidsKg: carte.poidsKg ?? null,
-    donneurOrganes: carte.donneurOrganes ?? false,
-    allergies: carte.allergies ?? [],
-    maladiesChroniques: carte.maladiesChroniques ?? [],
-    medicamentsActuels: carte.medicamentsActuels ?? [],
-    antecedentsChirurgicaux: carte.antecedentsChirurgicaux ?? [],
-    vaccinations: carte.vaccinations ?? [],
-    antecedentsFamiliaux: carte.antecedentsFamiliaux ?? [],
-    contactsUrgence: carte.contactsUrgence ?? [],
-    medecinTraitant: carte.medecinTraitant ?? null,
-    assuranceNom: carte.assuranceNom ?? null,
-    assuranceNumero: carte.assuranceNumero ?? null,
-    assuranceDetails: carte.assuranceDetails ?? null,
+    photoUrl: profile?.photoUrl ?? null,
+    dateNaissance: profile?.dateNaissance ?? null,
+    genre: profile?.genre ?? null,
+    nationalite: profile?.nationalite ?? null,
+    numIdentite: profile?.numIdentite ?? null,
+    telephone: profile?.telephone ?? null,
+    adresseRue: profile?.adresseRue ?? null,
+    adresseVille: profile?.adresseVille ?? null,
+    adressePays: profile?.adressePays ?? null,
+    groupeSanguin: (carte?.groupeSanguin ?? null) as CarteFormData['groupeSanguin'],
+    tailleCm: carte?.tailleCm ?? null,
+    poidsKg: carte?.poidsKg ?? null,
+    donneurOrganes: carte?.donneurOrganes ?? false,
+    allergies: carte?.allergies ?? [],
+    maladiesChroniques: carte?.maladiesChroniques ?? [],
+    medicamentsActuels: carte?.medicamentsActuels ?? [],
+    antecedentsChirurgicaux: carte?.antecedentsChirurgicaux ?? [],
+    vaccinations: carte?.vaccinations ?? [],
+    antecedentsFamiliaux: carte?.antecedentsFamiliaux ?? [],
+    contactsUrgence: carte?.contactsUrgence ?? [],
+    medecinTraitant: carte?.medecinTraitant ?? null,
+    assuranceNom: carte?.assuranceNom ?? null,
+    assuranceNumero: carte?.assuranceNumero ?? null,
+    assuranceDetails: carte?.assuranceDetails ?? null,
   }
 }
 
@@ -61,8 +63,10 @@ export default function CarteEditPage() {
   }, [])
 
   const { data: existingCarte, isLoading } = useCarteByPatient(session?.id ?? null)
+  const { data: existingProfile } = usePatientProfile(session?.id ?? null)
   const createCarte = useCreateCarte()
   const updateCarte = useUpdateCarte(session?.id ?? '')
+  const upsertProfile = useUpsertPatientProfile(session?.id ?? '')
 
   const form = useForm<CarteFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,17 +87,17 @@ export default function CarteEditPage() {
   })
 
   useEffect(() => {
-    if (existingCarte) {
+    if (existingCarte || existingProfile) {
       form.reset({
-        ...mapCarteToForm(existingCarte),
+        ...mapToForm(existingCarte ?? null, existingProfile ?? null),
         firstName: session?.firstName ?? null,
         lastName: session?.lastName ?? null,
       })
     } else if (session) {
-      form.setValue('firstName' as never, session.firstName ?? null)
-      form.setValue('lastName' as never, session.lastName ?? null)
+      form.setValue('firstName' as never, (session.firstName ?? null) as never)
+      form.setValue('lastName' as never, (session.lastName ?? null) as never)
     }
-  }, [existingCarte, session, form])
+  }, [existingCarte, existingProfile, session, form])
 
   const allergies = useFieldArray({ control: form.control, name: 'allergies' as never })
   const maladies = useFieldArray({ control: form.control, name: 'maladiesChroniques' as never })
@@ -120,18 +124,39 @@ export default function CarteEditPage() {
 
   const onSubmit = async (data: CarteFormData) => {
     if (!session) { router.push('/login'); return }
-    const { firstName, lastName, ...carteData } = data as CarteFormData & { firstName?: string | null; lastName?: string | null }
-    const payload = {
-      patientId: session.id,
+    const {
+      firstName, lastName,
+      dateNaissance, genre, nationalite, numIdentite, photoUrl,
+      telephone, adresseRue, adresseVille, adressePays,
+      ...carteData
+    } = data as CarteFormData & { firstName?: string | null; lastName?: string | null }
+
+    // Patient profile (identity + contact) → patient_details
+    const savedProfile = await upsertProfile.mutateAsync({
+      dateNaissance: dateNaissance ?? null,
+      genre: genre ?? null,
+      nationalite: nationalite ?? null,
+      numIdentite: numIdentite ?? null,
+      photoUrl: photoUrl ?? null,
+      telephone: telephone ?? null,
+      adresseRue: adresseRue ?? null,
+      adresseVille: adresseVille ?? null,
+      adressePays: adressePays ?? null,
+    })
+
+    // Health card data → cartes_virtuelles
+    const cartePayload = {
       ...carteData,
       allergies: (carteData.allergies ?? []).filter(Boolean) as string[],
       maladiesChroniques: (carteData.maladiesChroniques ?? []).filter(Boolean) as string[],
       vaccinations: (carteData.vaccinations ?? []).filter(Boolean) as string[],
       antecedentsFamiliaux: (carteData.antecedentsFamiliaux ?? []).filter(Boolean) as string[],
     }
-    const carte = isUpdating
-      ? await updateCarte.mutateAsync(payload)
-      : await createCarte.mutateAsync(payload)
+    if (isUpdating) {
+      await updateCarte.mutateAsync(cartePayload)
+    } else {
+      await createCarte.mutateAsync(cartePayload)
+    }
 
     // Sync overlapping fields to dossier (preserve doctor notes)
     const existingInfos = await getInfosMedicales(session.id).catch(() => null)
@@ -155,7 +180,7 @@ export default function CarteEditPage() {
       ...session,
       ...(firstName ? { firstName } : {}),
       ...(lastName ? { lastName } : {}),
-      ...(carte.photoUrl ? { photoUrl: carte.photoUrl } : {}),
+      ...(savedProfile.photoUrl ? { photoUrl: savedProfile.photoUrl } : {}),
     })
     router.push('/dashboard/patient')
   }
@@ -167,10 +192,7 @@ export default function CarteEditPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-full bg-[#F0F2F5]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-[#4A5568]">Chargement de votre carte...</p>
-        </div>
+        <LogoLoader label="Chargement de votre carte..." />
       </div>
     )
   }
@@ -184,6 +206,7 @@ export default function CarteEditPage() {
           <div className="mb-8">
             <CarteVirtuelleCard
               carte={existingCarte}
+              profile={existingProfile}
               firstName={existingCarte.firstName ?? session?.firstName}
               lastName={existingCarte.lastName ?? session?.lastName}
             />

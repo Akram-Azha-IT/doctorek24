@@ -51,7 +51,18 @@ export default function RdvPage() {
   const dateISO = selectedDate ? toISO(selectedDate) : ''
 
   const { data: medecin, isLoading: loadingMedecin } = useMedecin(id)
-  const { data: creneaux = [], isLoading: loadingCreneaux, isError } = useCreneaux(id, dateISO)
+  const { data: rawCreneaux = [], isLoading: loadingCreneaux, isError } = useCreneaux(id, dateISO)
+
+  const creneaux = (() => {
+    const now = new Date()
+    if (dateISO !== toISO(now)) return rawCreneaux
+    return rawCreneaux.filter((c) => {
+      const [h, m] = c.debut.split(':').map(Number)
+      const slot = new Date()
+      slot.setHours(h, m, 0, 0)
+      return slot > now
+    })
+  })()
 
   function handleSelectDate(date: Date | undefined) {
     setSelectedDate(date)

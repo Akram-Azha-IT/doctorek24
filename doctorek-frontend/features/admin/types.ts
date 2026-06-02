@@ -13,8 +13,6 @@ export interface CarteSummary {
   cardRef: string
   statut: string
   groupeSanguin: string | null
-  adresseVille: string | null
-  adressePays: string | null
   donneurOrganes: boolean | null
   createdAt: string
 }

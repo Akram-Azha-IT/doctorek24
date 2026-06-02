@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { QueryProvider } from '@/lib/query-provider'
+import { StompProvider } from '@/lib/stomp-context'
+import { AutoRefreshProvider } from '@/lib/AutoRefreshProvider'
 import { Toaster } from '@/components/ui/sonner'
 
 const geist = Geist({
@@ -27,8 +29,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${geist.variable} ${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-zinc-50 font-sans">
         <QueryProvider>
-          {children}
-          <Toaster position="top-right" richColors />
+          <AutoRefreshProvider>
+            <StompProvider>
+              {children}
+              <Toaster position="top-right" richColors />
+            </StompProvider>
+          </AutoRefreshProvider>
         </QueryProvider>
       </body>
     </html>

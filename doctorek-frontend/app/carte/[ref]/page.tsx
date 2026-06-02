@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { getCarteByRef } from '@/features/carte/api'
+import LogoLoader from '@/components/LogoLoader'
+import { getPatientProfile } from '@/features/patient/api'
 import { getRdvsPatient } from '@/features/agenda/api'
 import { getOrdonnances, getDocuments, getDocumentDownloadUrl } from '@/features/dossier/api'
 import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
-import type { CarteVirtuelle, RendezVous } from '@/lib/types'
+import type { CarteVirtuelle, PatientProfile, RendezVous } from '@/lib/types'
 
 // ── Palette (matches home page) ──────────────────────────────────────────────
 const C_BLUE    = '#007DFF'
@@ -92,6 +94,7 @@ export default function CarteScanPage() {
   const ref = params?.ref as string
 
   const [carte, setCarte] = useState<CarteVirtuelle | null>(null)
+  const [profile, setProfile] = useState<PatientProfile | null>(null)
   const [rdvs, setRdvs] = useState<RendezVous[]>([])
   const [ordonnances, setOrdonnances] = useState<OrdonnanceDto[]>([])
   const [documents, setDocuments] = useState<DocumentMedicalDto[]>([])
@@ -106,11 +109,13 @@ export default function CarteScanPage() {
       .then(async (data) => {
         setCarte(data)
         if (data?.patientId) {
-          const [appointments, ords, docs] = await Promise.allSettled([
+          const [prof, appointments, ords, docs] = await Promise.allSettled([
+            getPatientProfile(data.patientId),
             getRdvsPatient(data.patientId),
             getOrdonnances(data.patientId),
             getDocuments(data.patientId),
           ])
+          setProfile(prof.status === 'fulfilled' ? prof.value : null)
           setRdvs(appointments.status === 'fulfilled' ? (appointments.value ?? []) : [])
           setOrdonnances(ords.status === 'fulfilled' ? (ords.value ?? []) : [])
           setDocuments(docs.status === 'fulfilled' ? (docs.value ?? []) : [])
@@ -125,17 +130,7 @@ export default function CarteScanPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: C_BG }}>
-        <div className="text-center">
-          <div
-            className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center animate-pulse"
-            style={{ background: C_BLUE }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-              <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" />
-            </svg>
-          </div>
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: C_BODY }}>Chargement…</p>
-        </div>
+        <LogoLoader label="Chargement…" />
       </div>
     )
   }
@@ -160,8 +155,8 @@ export default function CarteScanPage() {
 
   // ── Computed values ────────────────────────────────────────────────────────
   const fullName = [carte.firstName, carte.lastName?.toUpperCase()].filter(Boolean).join(' ') || '—'
-  const age = carte.dateNaissance
-    ? Math.floor((Date.now() - new Date(carte.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000))
+  const age = profile?.dateNaissance
+    ? Math.floor((Date.now() - new Date(profile.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000))
     : null
   const bmi =
     carte.tailleCm && carte.poidsKg
@@ -269,9 +264,9 @@ export default function CarteScanPage() {
                   border: `2px solid ${C_BLUE}25`,
                 }}
               >
-                {carte.photoUrl ? (
+                {profile?.photoUrl ? (
                   <Image
-                    src={carte.photoUrl}
+                    src={profile.photoUrl}
                     alt={fullName}
                     width={64}
                     height={64}
@@ -294,11 +289,11 @@ export default function CarteScanPage() {
                   {fullName}
                 </h1>
                 <p className="text-sm mt-0.5" style={{ color: C_BODY }}>
-                  {[age ? `${age} ans` : null, carte.dateNaissance].filter(Boolean).join(' · ')}
+                  {[age ? `${age} ans` : null, profile?.dateNaissance].filter(Boolean).join(' · ')}
                 </p>
-                {carte.numIdentite && (
+                {profile?.numIdentite && (
                   <p className="text-xs font-mono mt-0.5 tracking-wider" style={{ color: `${C_BODY}80` }}>
-                    CIN {carte.numIdentite}
+                    CIN {profile.numIdentite}
                   </p>
                 )}
               </div>
@@ -603,12 +598,12 @@ export default function CarteScanPage() {
             >
               <SLabel>Informations personnelles</SLabel>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                <Field label="Genre"      value={carte.genre} />
-                <Field label="Nationalité" value={carte.nationalite} />
-                <Field label="Téléphone"  value={carte.telephone} />
+                <Field label="Genre"      value={profile?.genre} />
+                <Field label="Nationalité" value={profile?.nationalite} />
+                <Field label="Téléphone"  value={profile?.telephone} />
                 <Field
                   label="Adresse"
-                  value={[carte.adresseRue, carte.adresseVille, carte.adressePays].filter(Boolean).join(', ') || null}
+                  value={[profile?.adresseRue, profile?.adresseVille, profile?.adressePays].filter(Boolean).join(', ') || null}
                 />
               </div>
             </div>
