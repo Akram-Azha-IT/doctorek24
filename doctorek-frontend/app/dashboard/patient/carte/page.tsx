@@ -411,7 +411,7 @@ export default function CarteEditPage() {
                         <div className="flex-1 space-y-1">
                           <p className="text-sm font-medium text-[#333333]">Photo d&apos;identité</p>
                           <p className="text-xs text-[#94A3B8] leading-relaxed">
-                            Votre photo sera affichée sur la carte médicale virtuelle.<br />
+                            Votre photo sera affichée sur la carte médicale digitale.<br />
                             Format recommandé : portrait, fond neutre.
                           </p>
                           <button

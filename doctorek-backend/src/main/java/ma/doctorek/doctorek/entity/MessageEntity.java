@@ -1,11 +1,16 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(schema = "messaging", name = "message")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MessageEntity {
 
     @Id
@@ -30,8 +35,6 @@ public class MessageEntity {
     @Column(name = "client_msg_id", unique = true)
     private String clientMsgId;
 
-    protected MessageEntity() {}
-
     public MessageEntity(UUID conversationId, UUID senderId, String content) {
         this.conversationId = conversationId;
         this.senderId = senderId;
@@ -43,18 +46,7 @@ public class MessageEntity {
         this.sentAt = Instant.now();
     }
 
-    public UUID getId()             { return id; }
-    public UUID getConversationId() { return conversationId; }
-    public UUID getSenderId()       { return senderId; }
-    public String getContent()      { return content; }
-    public Instant getSentAt()      { return sentAt; }
-    public Instant getReadAt()      { return readAt; }
-
-    public void setClientMsgId(String clientMsgId) { this.clientMsgId = clientMsgId; }
-
     public void markRead() {
         if (this.readAt == null) this.readAt = Instant.now();
     }
-
-    public String getClientMsgId() { return clientMsgId; }
 }

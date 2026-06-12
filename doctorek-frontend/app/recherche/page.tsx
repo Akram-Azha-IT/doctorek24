@@ -30,12 +30,22 @@ export default function RecherchePage() {
   const latParam = searchParams.get('lat')
   const lngParam = searchParams.get('lng')
   const nearbyParam = searchParams.get('nearby')
-  const urlCoords = latParam && lngParam ? { lat: Number(latParam), lng: Number(lngParam) } : null
+  const _lat = Number(latParam); const _lng = Number(lngParam); const urlCoords = latParam && lngParam && isFinite(_lat) && isFinite(_lng) ? { lat: _lat, lng: _lng } : null
 
   const [filter, setFilter] = useState<DisponibiliteFilter>('all')
   const [nearbyMode, setNearbyMode] = useState(nearbyParam === '1' && urlCoords !== null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
+  const [nearBottom, setNearBottom] = useState(false)
+
+  useEffect(() => {
+    function onScroll() {
+      const threshold = 120 // px from bottom
+      setNearBottom(window.innerHeight + window.scrollY >= document.body.offsetHeight - threshold)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   const [bookingSlot, setBookingSlot] = useState<BookingSlot | null>(null)
   const [page, setPage] = useState(1)
 
@@ -54,7 +64,7 @@ export default function RecherchePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookMedecin])
 
-  const { register, watch } = useForm<SearchFormValues>({
+  const { register, watch, setValue } = useForm<SearchFormValues>({
     defaultValues: {
       specialite: searchParams.get('specialite') ?? '',
       ville: searchParams.get('ville') ?? '',
@@ -133,14 +143,14 @@ export default function RecherchePage() {
   const mapDoctors = useMemo<DoctorMapEntry[]>(() => {
     const source = nearbyMode ? nearbyMedecins.map((r) => r.medecin) : searchContent
     return source
-      .filter((m) => m.latitude != null && m.longitude != null)
+      .filter((m) => m.latitude != null && m.longitude != null && isFinite(m.latitude!) && isFinite(m.longitude!))
       .map((m) => {
         const name = `${m.firstName}${m.lastName}`
         const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
         return {
           id: m.id,
-          lat: m.latitude!,
-          lng: m.longitude!,
+          lat: Number(m.latitude),
+          lng: Number(m.longitude),
           name: `Dr. ${m.firstName} ${m.lastName}`,
           photoUrl: m.photoUrl ?? null,
           initials: `${m.firstName[0] ?? ''}${m.lastName[0] ?? ''}`.toUpperCase(),
@@ -166,7 +176,15 @@ export default function RecherchePage() {
       <Header sticky={false} />
 
       <div className="sticky top-0 z-40">
-        <SearchBar register={register} nearbyMode={nearbyMode} />
+        <SearchBar
+          register={register}
+          nearbyMode={nearbyMode}
+          villeValue={values.ville}
+          onVilleChange={(v) => setValue('ville', v)}
+          onNearbyClick={handleNearbyClick}
+          nearbyLoading={geoLoading}
+          onSearch={() => window.scrollTo({ top: 200, behavior: 'smooth' })}
+        />
         <FilterBar
           nearbyMode={nearbyMode}
           geoLoading={geoLoading}
@@ -197,6 +215,7 @@ export default function RecherchePage() {
             onPage={handlePage}
             onHover={setHoveredId}
             onBookSlot={setBookingSlot}
+            onFilterChange={handleFilterChange}
             mobileView={mobileView}
           />
           <DesktopMapPanel
@@ -223,7 +242,9 @@ export default function RecherchePage() {
       <button
         type="button"
         onClick={() => setMobileView(v => v === 'list' ? 'map' : 'list')}
-        className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 lg:hidden flex items-center gap-2 rounded-full bg-[#007DFF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-400/40 ring-1 ring-white/20 transition-all active:scale-95 hover:bg-[#00263C]"
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 lg:hidden flex items-center gap-2 rounded-full bg-[#007DFF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-400/40 ring-1 ring-white/20 active:scale-95 hover:bg-[#00263C] transition-all duration-300 ${
+          nearBottom ? 'opacity-0 pointer-events-none scale-90' : 'opacity-100 scale-100'
+        }`}
       >
         {mobileView === 'list' ? <><MapIcon /> Vue Carte</> : <><ListIcon /> Vue Liste</>}
       </button>

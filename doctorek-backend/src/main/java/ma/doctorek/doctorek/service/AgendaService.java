@@ -184,7 +184,7 @@ public class AgendaService {
         rdv.setDateRdv(request.dateRdv());
         rdv.setHeureRdv(request.heureRdv());
         rdv.setDuree(dispo.getDureeConsultation());
-        rdv.setStatut(StatutRdv.EN_ATTENTE.name());
+        rdv.setStatut(StatutRdv.CONFIRME.name()); // auto-confirmed — doctor manages via cancel only
         rdv.setMotif(request.motif());
         rdv.setQuestionnaireJson(questionnaireJson);
         rdv.setCreatedAt(LocalDateTime.now());
@@ -234,7 +234,7 @@ public class AgendaService {
         RendezVousEntity rdv = rdvRepo.findById(rdvId)
             .orElseThrow(() -> new RendezVousNotFoundException(rdvId));
         StatutRdv statut = StatutRdv.valueOf(rdv.getStatut());
-        if (statut != StatutRdv.EN_ATTENTE) {
+        if (statut == StatutRdv.ANNULE || statut == StatutRdv.TERMINE) {
             throw new RdvNonConfirmableException(rdvId, statut);
         }
         rdv.setStatut(StatutRdv.CONFIRME.name());

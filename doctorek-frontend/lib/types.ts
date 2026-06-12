@@ -251,7 +251,7 @@ export interface PatientSummary {
 }
 
 export interface PatientSummaryPage {
-  patients: PatientSummary[]
+  content: PatientSummary[]
   total: number
   page: number
   size: number

@@ -8,6 +8,9 @@ public record OrdonnanceResponse(
         UUID id,
         UUID patientId,
         UUID medecinId,
+        String medecinNom,
+        String source,
         LocalDate dateEmission,
         List<MedicamentDto> medicaments,
-        String notes) {}
+        String notes,
+        String fichierNom) {}

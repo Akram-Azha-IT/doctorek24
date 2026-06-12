@@ -3,7 +3,9 @@
 import { useParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import LogoLoader from '@/components/LogoLoader'
 import { MedecinProfileCard } from '@/features/annuaire/components/MedecinProfileCard'
+import { MobileStickyBooking } from '@/features/annuaire/components/MobileStickyBooking'
 import { useMedecin } from '@/features/annuaire/hooks'
 
 export default function MedecinPage() {
@@ -16,7 +18,7 @@ export default function MedecinPage() {
       <main className="w-full">
         {isLoading && (
           <div className="flex items-center justify-center py-24">
-            <p className="text-sm text-zinc-500">Chargement du profil...</p>
+            <LogoLoader width={120} label="Chargement du profil…" />
           </div>
         )}
 
@@ -27,6 +29,7 @@ export default function MedecinPage() {
         )}
 
         {data && <MedecinProfileCard medecin={data} />}
+        {data && <MobileStickyBooking medecin={data} />}
       </main>
       <Footer />
     </>

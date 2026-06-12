@@ -1,7 +1,9 @@
 package ma.doctorek.doctorek.exception;
 
-public class VerificationCodeExpiredException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class VerificationCodeExpiredException extends AppException {
     public VerificationCodeExpiredException() {
-        super("Verification code has expired");
+        super("Code de vérification expiré", HttpStatus.GONE);
     }
 }

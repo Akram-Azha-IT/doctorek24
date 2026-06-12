@@ -10,7 +10,7 @@ import { DonneesSection } from '@/features/home/components/DonneesSection'
 
 export default function HomePage() {
   return (
-    <main>
+    <main id="main-content">
       <HeroSection />
       <PromoCards />
       <StatsStrip />

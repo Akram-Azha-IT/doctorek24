@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -81,6 +82,8 @@ public class DossierService {
         OrdonnanceEntity e = new OrdonnanceEntity();
         e.setPatientId(patientId);
         e.setMedecinId(req.medecinId());
+        e.setMedecinNom(req.medecinNom());
+        e.setSource(req.source() != null ? req.source() : "MEDECIN");
         e.setDateEmission(req.dateEmission() != null ? req.dateEmission() : LocalDate.now());
         e.setNotes(req.notes());
         e.setCreatedAt(LocalDateTime.now());
@@ -105,22 +108,34 @@ public class DossierService {
             .stream().map(DocumentMedicalResponse::from).toList();
     }
 
-    @Transactional
     public DocumentMedicalResponse uploadDocument(UUID patientId, String typeDoc, MultipartFile file) throws IOException {
+        if (file.isEmpty()) throw new IllegalArgumentException("Le fichier est vide");
+
         Path dir = Paths.get(uploadDir, "dossier", patientId.toString());
         Files.createDirectories(dir);
 
-        String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "document";
+        String originalName = file.getOriginalFilename() != null
+                ? file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_")
+                : "document";
         String fileName = UUID.randomUUID() + "_" + originalName;
-        Path filePath = dir.resolve(fileName);
-        file.transferTo(filePath);
+        Path filePath = dir.resolve(fileName).normalize();
 
+        // Files.copy is more reliable than transferTo on all OS
+        try (var in = file.getInputStream()) {
+            Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return saveDocumentRecord(patientId, originalName, typeDoc, filePath, file.getSize());
+    }
+
+    @Transactional
+    protected DocumentMedicalResponse saveDocumentRecord(UUID patientId, String nom, String typeDoc, Path filePath, long taille) {
         DocumentMedicalEntity e = new DocumentMedicalEntity();
         e.setPatientId(patientId);
-        e.setNom(originalName);
+        e.setNom(nom);
         e.setTypeDoc(typeDoc);
         e.setChemin(filePath.toString());
-        e.setTaille(file.getSize());
+        e.setTaille(taille);
         e.setCreatedAt(LocalDateTime.now());
         return DocumentMedicalResponse.from(documentRepo.save(e));
     }
@@ -158,8 +173,46 @@ public class DossierService {
             e.getId(),
             e.getPatientId(),
             e.getMedecinId(),
+            e.getMedecinNom(),
+            e.getSource() != null ? e.getSource() : "MEDECIN",
             e.getDateEmission(),
             meds,
-            e.getNotes());
+            e.getNotes(),
+            e.getFichierNom());
+    }
+
+    @Transactional
+    public OrdonnanceResponse uploadOrdonnanceFichier(UUID ordonnanceId, MultipartFile file) throws IOException {
+        OrdonnanceEntity ord = ordonnanceRepo.findById(ordonnanceId)
+            .orElseThrow(() -> new IllegalArgumentException("Ordonnance introuvable: " + ordonnanceId));
+
+        Path dir = Paths.get(uploadDir, "ordonnances", ord.getPatientId().toString());
+        Files.createDirectories(dir);
+        String originalName = file.getOriginalFilename() != null
+            ? file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_") : "ordonnance";
+        String fileName = UUID.randomUUID() + "_" + originalName;
+        Path filePath = dir.resolve(fileName).normalize();
+        try (var in = file.getInputStream()) {
+            Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
+        }
+        ord.setFichierChemin(filePath.toString());
+        ord.setFichierNom(originalName);
+        return toOrdonnanceResponse(ordonnanceRepo.save(ord));
+    }
+
+    public OrdonnanceResponse getOrdonnanceFichierName(UUID ordonnanceId) {
+        OrdonnanceEntity ord = ordonnanceRepo.findById(ordonnanceId)
+            .orElseThrow(() -> new IllegalArgumentException("Ordonnance introuvable: " + ordonnanceId));
+        return toOrdonnanceResponse(ord);
+    }
+
+    public record OrdonnanceFichierResult(Resource resource, String nom) {}
+
+    public OrdonnanceFichierResult downloadOrdonnanceFichier(UUID ordonnanceId) {
+        OrdonnanceEntity ord = ordonnanceRepo.findById(ordonnanceId)
+            .orElseThrow(() -> new IllegalArgumentException("Ordonnance introuvable: " + ordonnanceId));
+        if (ord.getFichierChemin() == null) throw new IllegalStateException("Aucun fichier joint");
+        Resource resource = new PathResource(Paths.get(ord.getFichierChemin()));
+        return new OrdonnanceFichierResult(resource, ord.getFichierNom() != null ? ord.getFichierNom() : "ordonnance");
     }
 }

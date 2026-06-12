@@ -39,7 +39,7 @@ export default function PatientsPage() {
 
   const { data, isLoading, isError } = usePatientsMedecin(medecinId, search, filtre, page)
 
-  const patients = data?.patients ?? []
+  const patients = data?.content ?? []
   const total = data?.total ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE)
 

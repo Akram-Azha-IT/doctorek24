@@ -28,6 +28,7 @@ export default function DisponibilitesPage() {
   const [isCopying, setIsCopying] = useState(false)
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT)
   const [isDragging, setIsDragging] = useState(false)
+  const [panelOpen, setPanelOpen] = useState(true)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef(false)
@@ -151,8 +152,40 @@ export default function DisponibilitesPage() {
 
   return (
     <>
-      <main ref={containerRef} className="flex overflow-hidden bg-white" style={{ height: '100vh' }}>
-        <div className="shrink-0 border-r border-gray-200 overflow-hidden" style={{ width: leftWidth }}>
+      {/* Page header */}
+      <div className="px-5 py-4 md:px-6 border-b bg-white" style={{ borderColor: '#E5E9F0' }}>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setPanelOpen((o) => !o)}
+            aria-label={panelOpen ? 'Fermer le panel' : 'Ouvrir le panel'}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[#EBF4FF]"
+            style={{ border: '1px solid #E5E9F0' }}
+          >
+            <svg
+              className="h-4 w-4 transition-transform duration-250"
+              style={{ color: '#007DFF', transform: panelOpen ? 'rotate(0deg)' : 'rotate(180deg)' }}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-[17px] font-bold" style={{ color: '#010C2D' }}>Agenda & Disponibilités</h1>
+            <p className="text-xs mt-0.5" style={{ color: '#A0AEC0' }}>Gérez vos créneaux habituels et consultez vos rendez-vous</p>
+          </div>
+        </div>
+      </div>
+
+      <main ref={containerRef} className="flex overflow-hidden" style={{ height: 'calc(100vh - 128px)', background: '#F0F2F5' }}>
+        <div
+          className="shrink-0 border-r overflow-hidden bg-white"
+          style={{
+            width: panelOpen ? leftWidth : 0,
+            borderColor: '#E5E9F0',
+            transition: isDragging ? 'none' : 'width 250ms ease',
+          }}
+        >
           <DayListPanel
             byDay={byDay}
             isLoading={isLoading}
@@ -167,7 +200,7 @@ export default function DisponibilitesPage() {
           />
         </div>
 
-        <ResizableDivider isDragging={isDragging} onMouseDown={handleDividerMouseDown} />
+        {panelOpen && <ResizableDivider isDragging={isDragging} onMouseDown={handleDividerMouseDown} />}
 
         <div className="flex-1 overflow-hidden">
           <AvailabilityWeekGrid

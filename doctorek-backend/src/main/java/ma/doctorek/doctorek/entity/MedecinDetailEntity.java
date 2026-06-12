@@ -1,11 +1,15 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Table(schema = "annuaire", name = "medecin_details")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MedecinDetailEntity {
 
     @Id
@@ -38,8 +42,6 @@ public class MedecinDetailEntity {
     @Column(name = "photo_url", columnDefinition = "TEXT")
     private String photoUrl;
 
-    protected MedecinDetailEntity() {}
-
     public MedecinDetailEntity(User user, String inpe, String specialite, String ville, String adresse) {
         this.user       = user;
         this.inpe       = inpe;
@@ -56,16 +58,4 @@ public class MedecinDetailEntity {
         if (latitude != null)  this.latitude  = latitude;
         if (longitude != null) this.longitude = longitude;
     }
-
-    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
-
-    public UUID getUserId()       { return userId; }
-    public User getUser()         { return user; }
-    public String getInpe()       { return inpe; }
-    public String getSpecialite() { return specialite; }
-    public String getVille()      { return ville; }
-    public String getAdresse()    { return adresse; }
-    public Double getLatitude()   { return latitude; }
-    public Double getLongitude()  { return longitude; }
-    public String getPhotoUrl()   { return photoUrl; }
 }

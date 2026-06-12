@@ -1,21 +1,7 @@
 package ma.doctorek.doctorek.web;
 
-import ma.doctorek.doctorek.exception.CarteNotFoundException;
-import ma.doctorek.doctorek.exception.CreneauIndisponibleException;
-import ma.doctorek.doctorek.exception.DisponibiliteNotFoundException;
-import ma.doctorek.doctorek.exception.EmailAlreadyExistsException;
-import ma.doctorek.doctorek.exception.InpeAlreadyExistsException;
-import ma.doctorek.doctorek.exception.InvalidCredentialsException;
-import ma.doctorek.doctorek.exception.InvalidVerificationCodeException;
-import ma.doctorek.doctorek.exception.MedecinNotFoundException;
-import ma.doctorek.doctorek.exception.MedecinSansAgendaException;
-import ma.doctorek.doctorek.exception.PhoneAlreadyExistsException;
-import ma.doctorek.doctorek.exception.RdvNonAnnulableException;
-import ma.doctorek.doctorek.exception.RdvNonConfirmableException;
-import ma.doctorek.doctorek.exception.RdvNonTerminableException;
-import ma.doctorek.doctorek.exception.RendezVousNotFoundException;
-import ma.doctorek.doctorek.exception.UserNotFoundException;
-import ma.doctorek.doctorek.exception.VerificationCodeExpiredException;
+import jakarta.validation.ConstraintViolationException;
+import ma.doctorek.doctorek.exception.AppException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.stream.Collectors;
 
@@ -37,92 +24,28 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /** All domain exceptions — status code embedded in the exception itself. */
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAppException(AppException ex) {
+        return ResponseEntity.status(ex.getStatus()).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    /** Bean validation on @RequestBody (@Valid). */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
-            .map(FieldError::getDefaultMessage)
+            .map(e -> e.getField() + " : " + e.getDefaultMessage())
             .collect(Collectors.joining(", "));
         return ResponseEntity.badRequest().body(ApiResponse.error(message));
     }
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleEmailConflict(EmailAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(PhoneAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handlePhoneConflict(PhoneAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(InpeAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInpeConflict(InpeAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(MedecinNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMedecinNotFound(MedecinNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(DisponibiliteNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDisponibiliteNotFound(DisponibiliteNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(MedecinSansAgendaException.class)
-    public ResponseEntity<ApiResponse<Void>> handleMedecinSansAgenda(MedecinSansAgendaException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(RendezVousNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRendezVousNotFound(RendezVousNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(CreneauIndisponibleException.class)
-    public ResponseEntity<ApiResponse<Void>> handleCreneauIndisponible(CreneauIndisponibleException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(RdvNonAnnulableException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRdvNonAnnulable(RdvNonAnnulableException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(RdvNonConfirmableException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRdvNonConfirmable(RdvNonConfirmableException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(RdvNonTerminableException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRdvNonTerminable(RdvNonTerminableException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidCredentials(InvalidCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(InvalidVerificationCodeException.class)
-    public ResponseEntity<ApiResponse<Void>> handleInvalidCode(InvalidVerificationCodeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(VerificationCodeExpiredException.class)
-    public ResponseEntity<ApiResponse<Void>> handleExpiredCode(VerificationCodeExpiredException ex) {
-        return ResponseEntity.status(HttpStatus.GONE).body(ApiResponse.error(ex.getMessage()));
-    }
-
-    @ExceptionHandler(CarteNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleCarteNotFound(CarteNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    /** Bean validation on path/query params (@Validated). */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations().stream()
+            .map(v -> v.getPropertyPath() + " : " + v.getMessage())
+            .collect(Collectors.joining(", "));
+        return ResponseEntity.badRequest().body(ApiResponse.error(message));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -131,6 +54,17 @@ public class GlobalExceptionHandler {
             ? "Un enregistrement avec ces données existe déjà"
             : "Contrainte de données violée";
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(msg));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(413).body(ApiResponse.error("Fichier trop volumineux (max 20 MB)"));
+    }
+
+    @ExceptionHandler(java.io.IOException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIOException(java.io.IOException ex) {
+        log.error("Erreur I/O lors du traitement du fichier", ex);
+        return ResponseEntity.internalServerError().body(ApiResponse.error("Erreur lors du traitement du fichier"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -146,8 +80,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String message = "Paramètre invalide: '" + ex.getName() + "' doit être un UUID valide";
-        return ResponseEntity.badRequest().body(ApiResponse.error(message));
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.error("Paramètre invalide : '" + ex.getName() + "' doit être un UUID valide"));
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -166,6 +100,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("An unexpected error occurred"));
+            .body(ApiResponse.error("Une erreur inattendue s'est produite"));
     }
 }

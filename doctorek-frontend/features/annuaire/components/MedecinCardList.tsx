@@ -241,18 +241,36 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
   return (
     <div
-      className="group mb-3 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-200 hover:shadow-[0_6px_28px_rgba(0,125,255,0.11)]"
+      className="group relative mb-3 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-200 hover:shadow-[0_6px_28px_rgba(0,125,255,0.11)] overflow-hidden border border-transparent hover:border-[#007DFF]/10"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      {/* Left accent bar */}
+      <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b from-[#007DFF] to-[#3DA8FF] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+
       <div className="flex flex-col sm:flex-row sm:items-stretch">
 
         {/* ── Doctor info ─────────────────────────────── */}
-        <Link href={`/medecins/${medecin.id}`} className="flex min-w-0 flex-1 gap-4 px-5 py-5">
+        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 px-5 py-5 overflow-hidden">
+          {/* Gradient background blob */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse 120px 100px at top right, rgba(0,125,255,0.06) 0%, transparent 70%)',
+            }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            style={{
+              background: 'radial-gradient(ellipse 160px 130px at top right, rgba(0,125,255,0.09) 0%, transparent 70%)',
+            }}
+          />
 
           {/* Avatar */}
           <div className="relative shrink-0 self-start mt-0.5">
-            <div className={`rounded-full ring-2 ring-offset-2 transition-colors duration-200 ${availableToday ? 'ring-emerald-300' : 'ring-[#B6DAF7]'}`}>
+            <div className="rounded-full ring-2 ring-offset-2 ring-[#B6DAF7]">
               <MedecinAvatar
                 firstName={medecin.firstName}
                 lastName={medecin.lastName}
@@ -260,9 +278,6 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                 size="lg"
               />
             </div>
-            {availableToday && (
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white" />
-            )}
           </div>
 
           {/* Info */}
@@ -287,9 +302,9 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
               {/* Address */}
               <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
                 <PinIcon />
-                {medecin.adresse}, {medecin.ville}
+                {[medecin.adresse, medecin.ville].filter(Boolean).join(', ') || medecin.ville || '—'}
                 {distanceKm !== undefined && (
-                  <span className="ml-1 font-medium text-zinc-500">
+                  <span className="ml-1 font-medium text-[#007DFF]">
                     · {distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`}
                   </span>
                 )}
@@ -298,18 +313,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
             {/* Tags — anchored to bottom */}
             <div className="flex flex-wrap items-center gap-1.5">
-              {availableToday && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Disponible aujourd&apos;hui
-                </span>
-              )}
-              {accepte ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#EBF4FF] px-2 py-0.5 text-[11px] font-semibold text-[#1863A9]">
-                  <CheckIcon />
-                  Nouveaux patients
-                </span>
-              ) : (
+              {!accepte && (
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-400">
                   Complet
                 </span>
@@ -331,7 +335,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
         </Link>
 
         {/* ── Slot section ─────────────────────────────── */}
-        <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-4 sm:w-[290px] sm:border-t-0 sm:border-l">
+        <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-4 sm:w-[280px] sm:border-t-0 sm:border-l">
 
           {allUnavailable ? (
             /* Fully booked — show next available date or "no availability" */
@@ -367,7 +371,10 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                   className="inline-flex items-center gap-1 rounded-full bg-[#EBF4FF] px-3 py-1.5 text-[11px] font-semibold text-[#1863A9] transition-colors hover:bg-[#D6EAFF]"
                   onClick={e => e.stopPropagation()}
                 >
-                  Voir le profil →
+                  Voir le profil
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6"/>
+                  </svg>
                 </Link>
               )}
             </div>
@@ -470,12 +477,6 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                       </button>
                     )}
 
-                    {/* Slot counter */}
-                    {availableSlots.length > 1 && (
-                      <span className="text-[10px] font-medium text-zinc-400">
-                        {slotIdx + 1} / {availableSlots.length}
-                      </span>
-                    )}
 
                     {/* Down arrow */}
                     <button
@@ -488,6 +489,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                   </div>
                 )}
               </div>
+
             </>
           )}
         </div>

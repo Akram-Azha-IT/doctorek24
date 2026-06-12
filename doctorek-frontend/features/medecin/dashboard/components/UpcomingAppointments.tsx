@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { CalendarDays, ArrowRight } from 'lucide-react'
 import type { RendezVous } from '@/lib/types'
-import { STATUT_BADGE, STATUT_LABELS, patientName, patientInitials, avatarHue } from '../utils'
+import { patientName, patientInitials, avatarHue } from '../utils'
 
 interface UpcomingAppointmentsProps {
   rdvs: RendezVous[]
@@ -61,14 +61,14 @@ export function UpcomingAppointments({ rdvs, today }: UpcomingAppointmentsProps)
         </div>
       ) : (
         <div>
+          {/* Desktop: table header */}
           <div
-            className="grid px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider"
-            style={{ color: '#A0AEC0', background: '#FAFBFC', gridTemplateColumns: '1fr 120px 90px 100px' }}
+            className="hidden md:grid px-5 py-2.5 text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: '#A0AEC0', background: '#FAFBFC', gridTemplateColumns: '1fr 150px 90px' }}
           >
             <span>Patient</span>
             <span>Motif</span>
             <span>Date / Heure</span>
-            <span className="text-right">Statut</span>
           </div>
 
           {rdvs.map((rdv, idx) => {
@@ -82,49 +82,51 @@ export function UpcomingAppointments({ rdvs, today }: UpcomingAppointmentsProps)
                   new Date(rdv.dateRdv + 'T00:00:00')
                 )
             const motif = rdv.questionnaire?.motif ?? rdv.motif
-            const badge = STATUT_BADGE[rdv.statut]
 
             return (
-              <div
-                key={rdv.id}
-                className="grid items-center px-5 py-3.5 border-t transition-colors"
-                style={{
-                  borderColor: '#F0F2F5',
-                  gridTemplateColumns: '1fr 120px 90px 100px',
-                  background: idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC',
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F9FF' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC' }}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
-                    style={{ background: `hsl(${hue} 60% 55%)` }}
-                  >
+              <div key={rdv.id} className="border-t" style={{ borderColor: '#F0F2F5' }}>
+                {/* Desktop row */}
+                <div
+                  className="hidden md:grid items-center px-5 py-3.5 transition-colors"
+                  style={{
+                    gridTemplateColumns: '1fr 150px 90px',
+                    background: idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F9FF' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC' }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
+                      style={{ background: `hsl(${hue} 60% 55%)` }}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: '#010C2D' }}>{name}</p>
+                      <p className="text-xs truncate" style={{ color: '#A0AEC0' }}>{rdv.duree} min</p>
+                    </div>
+                  </div>
+                  <p className="text-xs truncate" style={{ color: '#6B7A99' }}>{motif || 'Consultation'}</p>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#010C2D' }}>{rdv.heureRdv.slice(0, 5)}</p>
+                    <p className="text-[11px]" style={{ color: '#A0AEC0' }}>{dateStr}</p>
+                  </div>
+                </div>
+
+                {/* Mobile card */}
+                <div
+                  className="flex md:hidden items-center gap-3 px-4 py-3"
+                  style={{ background: idx % 2 === 0 ? '#FFFFFF' : '#FAFBFC' }}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
+                    style={{ background: `hsl(${hue} 60% 55%)` }}>
                     {initials}
                   </div>
-                  <div className="min-w-0">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: '#010C2D' }}>{name}</p>
-                    <p className="text-xs truncate" style={{ color: '#A0AEC0' }}>{rdv.duree} min</p>
+                    <p className="text-xs truncate" style={{ color: '#A0AEC0' }}>
+                      {dateStr} · {rdv.heureRdv.slice(0, 5)} · {motif || 'Consultation'}
+                    </p>
                   </div>
-                </div>
-
-                <p className="text-xs truncate" style={{ color: '#6B7A99' }}>
-                  {motif || 'Consultation'}
-                </p>
-
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: '#010C2D' }}>{rdv.heureRdv.slice(0, 5)}</p>
-                  <p className="text-[11px]" style={{ color: '#A0AEC0' }}>{dateStr}</p>
-                </div>
-
-                <div className="flex justify-end">
-                  <span
-                    className="rounded-lg px-2.5 py-1 text-[11px] font-bold"
-                    style={{ background: badge.bg, color: badge.color }}
-                  >
-                    {STATUT_LABELS[rdv.statut]}
-                  </span>
                 </div>
               </div>
             )

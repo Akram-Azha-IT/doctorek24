@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRef } from 'react'
 import type { CarteVirtuelle, PatientProfile } from '@/lib/types'
-import { calcAge } from '../utils'
+import { calcAge, calcAgeDetailed } from '../utils'
 
 interface ProfileSidebarProps {
   firstName: string | null
@@ -54,9 +54,20 @@ export function ProfileSidebar({ firstName, lastName, profile, carte, hasCarte, 
         <h3 className="text-base font-bold text-[#333333]">
           {firstName ?? ''} {lastName ?? ''}
         </h3>
-        {profile?.dateNaissance && (
-          <p className="text-sm text-[#465058] mt-0.5">{calcAge(profile.dateNaissance)} ans</p>
-        )}
+        {profile?.dateNaissance && (() => {
+          const age = calcAgeDetailed(profile.dateNaissance)
+          return (
+            <div className="mt-1 space-y-0.5">
+              <p className="text-sm font-semibold text-[#333333]">{age.years} ans</p>
+              <p className="text-[11px] text-[#465058]">
+                {age.months} mois {age.days} jours
+              </p>
+              <p className="text-[10px] text-[#A0AEC0]">
+                {age.totalDays.toLocaleString('fr-FR')} jours au total
+              </p>
+            </div>
+          )
+        })()}
 
         {carte && (
           <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#F0F2F5] pt-4">

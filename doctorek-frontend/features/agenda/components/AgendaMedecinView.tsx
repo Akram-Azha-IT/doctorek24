@@ -148,15 +148,7 @@ export function AgendaMedecinView({ medecinId, rdvs, disponibilites }: AgendaMed
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-3 w-3 rounded-sm bg-emerald-50 border-l-2 border-emerald-500" />
-          Confirmé
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-amber-50 border-l-2 border-amber-400" />
-          En attente
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded-sm bg-blue-50 border-l-2 border-blue-300" />
-          Terminé
+          RDV
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-[2px] w-4 bg-red-500 rounded" />
@@ -249,13 +241,8 @@ function DayView({ date, rdvs, disponibilites, medecinId, onConfirm, onCancel, o
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {rdv.statut === 'EN_ATTENTE' && (
-                          <button onClick={() => onConfirm(rdv.id)} className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700 transition-colors">
-                            Confirmer
-                          </button>
-                        )}
                         {rdv.statut === 'CONFIRME' && (
-                          <button onClick={() => onTerminate(rdv.id)} className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 transition-colors">
+                          <button onClick={() => onTerminate(rdv.id)} className="rounded-md bg-[#007DFF] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#00263C] transition-colors">
                             Terminer
                           </button>
                         )}

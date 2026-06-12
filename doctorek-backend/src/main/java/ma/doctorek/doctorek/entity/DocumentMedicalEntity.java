@@ -1,12 +1,18 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(schema = "dossier", name = "documents_medicaux")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class DocumentMedicalEntity {
 
     @Id
@@ -30,27 +36,4 @@ public class DocumentMedicalEntity {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    public DocumentMedicalEntity() {}
-
-    public UUID getId()                       { return id; }
-    public void setId(UUID v)                 { this.id = v; }
-
-    public UUID getPatientId()                { return patientId; }
-    public void setPatientId(UUID v)          { this.patientId = v; }
-
-    public String getNom()                    { return nom; }
-    public void setNom(String v)              { this.nom = v; }
-
-    public String getTypeDoc()                { return typeDoc; }
-    public void setTypeDoc(String v)          { this.typeDoc = v; }
-
-    public String getChemin()                 { return chemin; }
-    public void setChemin(String v)           { this.chemin = v; }
-
-    public Long getTaille()                   { return taille; }
-    public void setTaille(Long v)             { this.taille = v; }
-
-    public LocalDateTime getCreatedAt()       { return createdAt; }
-    public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
 }

@@ -22,12 +22,22 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Doctorek — Trouvez votre médecin',
   description: 'Recherchez un médecin par spécialité et ville au Maroc',
+  icons: {
+    icon: '/icone-doctorek.png',
+    apple: '/icone-doctorek.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${geist.variable} ${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-zinc-50 font-sans">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:rounded-lg focus:bg-[#007DFF] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:shadow-lg"
+        >
+          Aller au contenu principal
+        </a>
         <QueryProvider>
           <AutoRefreshProvider>
             <StompProvider>

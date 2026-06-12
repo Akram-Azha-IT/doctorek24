@@ -11,6 +11,9 @@ import ma.doctorek.doctorek.notification.NotificationService;
 import ma.doctorek.doctorek.repository.ConversationRepository;
 import ma.doctorek.doctorek.repository.MessageRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -24,6 +27,8 @@ import java.util.UUID;
 
 @Service
 public class MessagingService {
+
+    private static final Logger log = LoggerFactory.getLogger(MessagingService.class);
 
     private final ConversationRepository conversationRepo;
     private final MessageRepository      messageRepo;
@@ -88,7 +93,17 @@ public class MessagingService {
         if (req.clientMsgId() != null && !req.clientMsgId().isBlank()) {
             msg.setClientMsgId(req.clientMsgId());
         }
-        messageRepo.save(msg);
+        try {
+            messageRepo.save(msg);
+        } catch (DataIntegrityViolationException e) {
+            // clientMsgId race condition: concurrent insert — return the winner
+            if (req.clientMsgId() != null) {
+                return messageRepo.findByClientMsgId(req.clientMsgId())
+                        .map(MessageResponse::from)
+                        .orElseThrow(() -> e);
+            }
+            throw e;
+        }
         conv.setLastMessageAt(Instant.now());
         conversationRepo.save(conv);
 
@@ -100,12 +115,16 @@ public class MessagingService {
         User recipient = resolveById(recipientId);
         stompTemplate.convertAndSendToUser(recipient.getEmail(), "/queue/messages", response);
 
-        // In-app notification for recipient
-        User sender = resolveById(senderId);
-        String senderName = sender.getFirstName() + " " + sender.getLastName();
-        notifService.push(recipientId, "MESSAGE_RECU",
-                "Nouveau message de " + senderName,
-                req.content().length() > 80 ? req.content().substring(0, 80) + "…" : req.content());
+        // Notification — never rolls back the message if it fails
+        try {
+            User sender = resolveById(senderId);
+            String senderName = sender.getFirstName() + " " + sender.getLastName();
+            notifService.push(recipientId, "MESSAGE_RECU",
+                    "Nouveau message de " + senderName,
+                    req.content().length() > 80 ? req.content().substring(0, 80) + "…" : req.content());
+        } catch (Exception e) {
+            log.warn("Notification push failed for message {}: {}", response.id(), e.getMessage());
+        }
 
         return response;
     }

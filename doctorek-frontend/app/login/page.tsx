@@ -28,9 +28,11 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect')
 
+  // Only show expiry banner when backend explicitly redirected due to auth failure
+  // (api-client sets redirect with the current path — any redirect after login is intentional)
   const [sessionExpired, setSessionExpired] = useState(false)
   useEffect(() => {
-    setSessionExpired(searchParams.get('redirect') !== null)
+    setSessionExpired(searchParams.get('expired') === '1')
   }, [searchParams])
 
   const {
@@ -77,7 +79,10 @@ function LoginForm() {
       rightSubtitle=""
     >
       {sessionExpired && (
-        <p className="mb-2 rounded-lg bg-[#FFF3CD] px-3 py-2 text-sm text-[#856404]">
+        <p role="alert" className="mb-2 flex items-center gap-2 rounded-lg bg-[#FFF3CD] px-3 py-2 text-sm text-[#856404]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
           Votre session a expiré. Veuillez vous reconnecter.
         </p>
       )}
@@ -103,7 +108,10 @@ function LoginForm() {
         />
 
         {serverError && (
-          <p className="rounded-lg bg-[#FFDEDE] px-3 py-2 text-sm text-[#E01E5A]">
+          <p role="alert" aria-live="assertive" className="flex items-center gap-2 rounded-lg bg-[#FFDEDE] px-3 py-2 text-sm text-[#E01E5A]">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
             {serverError}
           </p>
         )}

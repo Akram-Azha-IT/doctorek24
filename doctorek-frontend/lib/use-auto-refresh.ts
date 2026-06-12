@@ -28,7 +28,7 @@ export function useAutoRefresh() {
         const ok = await refreshAccessToken()
         if (!ok) {
           clearSession()
-          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+          window.location.href = `/login?expired=1&redirect=${encodeURIComponent(window.location.pathname)}`
         } else {
           scheduleNext()
         }
@@ -39,7 +39,7 @@ export function useAutoRefresh() {
         const ok = await refreshAccessToken()
         if (!ok) {
           clearSession()
-          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+          window.location.href = `/login?expired=1&redirect=${encodeURIComponent(window.location.pathname)}`
         } else {
           scheduleNext()
         }

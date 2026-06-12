@@ -34,7 +34,7 @@ function redirectToLogin() {
   clearSession()
   if (typeof window === 'undefined') return
   const redirect = encodeURIComponent(window.location.pathname)
-  window.location.href = `/login?redirect=${redirect}`
+  window.location.href = `/login?expired=1&redirect=${redirect}`
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {

@@ -27,17 +27,17 @@ const MEDECIN_ICON = (
 
 const TABS = [
   { value: 'patient' as const, label: 'Patient', icon: PATIENT_ICON },
-  { value: 'medecin' as const, label: 'Medecin', icon: MEDECIN_ICON },
+  { value: 'medecin' as const, label: 'Médecin', icon: MEDECIN_ICON },
 ] as const
 
 const DESCRIPTIONS: Record<Tab, string> = {
-  patient: 'Carte virtuelle, prise de RDV en ligne et dossier medical centralise en quelques secondes.',
-  medecin: 'Agenda intelligent, profil public et suivi de vos patients dans une interface dediee aux soignants.',
+  patient: 'Carte virtuelle, prise de RDV en ligne et dossier médical centralisé en quelques secondes.',
+  medecin: 'Agenda intelligent, profil public et suivi de vos patients dans une interface dédiée aux soignants.',
 }
 
 const EYEBROWS: Record<Tab, string> = {
   patient: 'Espace patient',
-  medecin: 'Espace medecin',
+  medecin: 'Espace médecin',
 }
 
 export default function InscriptionPage() {
@@ -74,12 +74,12 @@ export default function InscriptionPage() {
           {tab === 'patient' ? <RegisterForm /> : <RegisterMedecinForm />}
 
           <p className="text-center text-sm text-[#465058]">
-            {'Deja un compte ? '}
+            Déjà un compte ?{' '}
             <Link
               href="/login"
               className="font-semibold text-[#007DFF] underline-offset-4 hover:underline"
             >
-              {'Se connecter'}
+              Se connecter
             </Link>
           </p>
         </div>

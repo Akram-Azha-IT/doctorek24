@@ -33,3 +33,24 @@ export function calcAge(dateNaissance: string): number {
   if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--
   return age
 }
+
+export interface AgeDetail { years: number; months: number; days: number; totalDays: number }
+
+export function calcAgeDetailed(dateNaissance: string): AgeDetail {
+  const birth = new Date(dateNaissance)
+  const today = new Date()
+
+  let years = today.getFullYear() - birth.getFullYear()
+  let months = today.getMonth() - birth.getMonth()
+  let days = today.getDate() - birth.getDate()
+
+  if (days < 0) {
+    months--
+    const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0)
+    days += prevMonth.getDate()
+  }
+  if (months < 0) { years--; months += 12 }
+
+  const totalDays = Math.floor((today.getTime() - birth.getTime()) / 86_400_000)
+  return { years, months, days, totalDays }
+}

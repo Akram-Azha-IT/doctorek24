@@ -26,15 +26,12 @@ export function useStompContext() {
 export function StompProvider({ children }: { children: React.ReactNode }) {
   const clientRef = useRef<Client | null>(null)
   const [connected, setConnected] = useState(false)
-  // Map of destination → Set of callbacks
   const subsRef = useRef<Map<string, Set<(body: string) => void>>>(new Map())
-  // STOMP subscription handles for cleanup on reconnect
   const stompSubsRef = useRef<Map<string, { unsubscribe: () => void }>>(new Map())
 
   const applySubscriptions = useCallback((client: Client) => {
     stompSubsRef.current.forEach((sub) => sub.unsubscribe())
     stompSubsRef.current.clear()
-
     subsRef.current.forEach((callbacks, destination) => {
       if (callbacks.size === 0) return
       const stompSub = client.subscribe(destination, (frame) => {
@@ -45,49 +42,47 @@ export function StompProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const session = getSession()
-    if (!session?.accessToken) return
+    function activate() {
+      if (clientRef.current?.active) return
 
-    const client = new Client({
-      webSocketFactory: () =>
-        new SockJS(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/ws`),
-      reconnectDelay: 5000,
-      beforeConnect: async () => {
-        const s = getSession()
-        if (s?.accessToken) {
-          client.connectHeaders = { Authorization: `Bearer ${s.accessToken}` }
-        }
-      },
-      onConnect: () => {
-        setConnected(true)
-        applySubscriptions(client)
-      },
-      onDisconnect: () => setConnected(false),
-      onStompError: async (frame) => {
-        setConnected(false)
-        // Try to refresh token on auth error so next reconnect uses fresh token
-        const msg = frame.headers?.message ?? ''
-        if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('expired')) {
-          await refreshAccessToken()
-        }
-      },
-    })
+      const session = getSession()
+      if (!session?.accessToken) return
 
-    client.connectHeaders = { Authorization: `Bearer ${session.accessToken}` }
-    client.activate()
-    clientRef.current = client
+      const client = new Client({
+        webSocketFactory: () =>
+          new SockJS(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/ws`),
+        reconnectDelay: 5000,
+        beforeConnect: async () => {
+          const s = getSession()
+          if (s?.accessToken) {
+            client.connectHeaders = { Authorization: `Bearer ${s.accessToken}` }
+          }
+        },
+        onConnect: () => {
+          setConnected(true)
+          applySubscriptions(client)
+        },
+        onDisconnect: () => setConnected(false),
+        onStompError: async (frame) => {
+          setConnected(false)
+          const msg = frame.headers?.message ?? ''
+          if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('expired')) {
+            await refreshAccessToken()
+          }
+        },
+      })
 
-    // Re-apply subscriptions when session token updates
-    const onSessionUpdate = () => {
-      if (clientRef.current?.connected) {
-        applySubscriptions(clientRef.current)
-      }
+      client.connectHeaders = { Authorization: `Bearer ${session.accessToken}` }
+      client.activate()
+      clientRef.current = client
     }
-    window.addEventListener('session-updated', onSessionUpdate)
+
+    activate()
+    window.addEventListener('session-updated', activate)
 
     return () => {
-      window.removeEventListener('session-updated', onSessionUpdate)
-      client.deactivate()
+      window.removeEventListener('session-updated', activate)
+      clientRef.current?.deactivate()
       clientRef.current = null
       setConnected(false)
     }
@@ -100,7 +95,6 @@ export function StompProvider({ children }: { children: React.ReactNode }) {
     }
     subsRef.current.get(destination)!.add(callback)
 
-    // Subscribe immediately if already connected
     const client = clientRef.current
     if (client?.connected && !stompSubsRef.current.has(destination)) {
       const stompSub = client.subscribe(destination, (frame) => {
@@ -111,7 +105,6 @@ export function StompProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       subsRef.current.get(destination)?.delete(callback)
-      // If no more listeners for this destination, unsubscribe from STOMP
       if (subsRef.current.get(destination)?.size === 0) {
         stompSubsRef.current.get(destination)?.unsubscribe()
         stompSubsRef.current.delete(destination)

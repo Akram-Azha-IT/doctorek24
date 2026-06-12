@@ -4,14 +4,16 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
+import { MedecinAvatar } from '@/features/annuaire/components/MedecinAvatar'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useCreneaux } from '@/features/agenda/hooks'
 import { CalendarPicker } from '@/features/agenda/components/CalendarPicker'
 import { TimeSlotList } from '@/features/agenda/components/TimeSlotList'
-import { ConfirmRdvForm } from '@/features/agenda/components/ConfirmRdvForm'
-import { RdvSuccessCard } from '@/features/agenda/components/RdvSuccessCard'
-import { Badge } from '@/components/ui/badge'
-import type { Creneau, RendezVous } from '@/lib/types'
+import { BookingDrawer } from '@/features/agenda/components/BookingDrawer'
+import type { BookingSlot, Creneau } from '@/lib/types'
+
+const DAY_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+const MONTH_SHORT = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 
 function toISO(d: Date): string {
   const yyyy = d.getFullYear()
@@ -27,9 +29,9 @@ function today(): Date {
 }
 
 function isPast(date: Date): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return date < today
+  const t = new Date()
+  t.setHours(0, 0, 0, 0)
+  return date < t
 }
 
 function formatDateLabel(date: Date): string {
@@ -44,11 +46,14 @@ function formatDateLabel(date: Date): string {
 export default function RdvPage() {
   const { id } = useParams<{ id: string }>()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today())
-  const [selectedCreneau, setSelectedCreneau] = useState<Creneau | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
+  const [bookingSlot, setBookingSlot] = useState<BookingSlot | null>(null)
 
   const dateISO = selectedDate ? toISO(selectedDate) : ''
+
+  // Mobile date strip: next 14 days
+  const mobileDates = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + i); return d
+  })
 
   const { data: medecin, isLoading: loadingMedecin } = useMedecin(id)
   const { data: rawCreneaux = [], isLoading: loadingCreneaux, isError } = useCreneaux(id, dateISO)
@@ -64,122 +69,177 @@ export default function RdvPage() {
     })
   })()
 
-  function handleSelectDate(date: Date | undefined) {
-    setSelectedDate(date)
-    setSelectedCreneau(null)
-    setShowForm(false)
-    setConfirmedRdv(null)
-  }
-
   function handleSelectCreneau(c: Creneau) {
-    setSelectedCreneau(c)
-    setShowForm(false)
-    setConfirmedRdv(null)
+    if (!medecin || !selectedDate) return
+    setBookingSlot({
+      medecin,
+      date: dateISO,
+      debut: c.debut,
+      fin: c.fin,
+    })
   }
 
   return (
     <>
       <Header />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8" id="main-content">
+
         {/* Back link */}
         <Link
           href={`/medecins/${id}`}
-          className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 mb-8 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 mb-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] rounded"
         >
-          ← Retour au profil
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour au profil
         </Link>
 
         {/* Doctor header */}
         {loadingMedecin ? (
-          <div className="h-8 w-48 bg-zinc-100 animate-pulse rounded mb-6" />
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-14 w-14 rounded-full bg-zinc-100 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-5 w-48 bg-zinc-100 animate-pulse rounded" />
+              <div className="h-4 w-32 bg-zinc-100 animate-pulse rounded" />
+            </div>
+          </div>
         ) : medecin ? (
-          <div className="mb-8">
-            <p className="text-sm text-zinc-500 mb-1">Prendre rendez-vous avec</p>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="shrink-0 ring-2 ring-[#007DFF]/15 rounded-full overflow-hidden">
+              <MedecinAvatar
+                firstName={medecin.firstName}
+                lastName={medecin.lastName}
+                photoUrl={(medecin as { photoUrl?: string | null }).photoUrl}
+                size="lg"
+              />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#007DFF] uppercase tracking-wider mb-0.5">
+                Prendre rendez-vous
+              </p>
+              <h1 className="text-xl font-bold text-zinc-900">
                 Dr. {medecin.firstName} {medecin.lastName}
               </h1>
-              <Badge>{medecin.specialite}</Badge>
+              <p className="text-sm text-zinc-500 mt-0.5">
+                {medecin.specialite}{medecin.ville ? ` · ${medecin.ville}` : ''}
+              </p>
             </div>
-            <p className="text-sm text-zinc-500 mt-1">{medecin.ville}</p>
           </div>
         ) : null}
 
-        {/* Two-column booking widget */}
+        {/* Booking widget */}
         <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_1px_260px]">
-            {/* Left — calendar */}
-            <div className="p-6">
-              <p className="text-sm font-semibold text-zinc-900 mb-4">Choisir une date</p>
+
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 px-4 md:px-6 py-4 border-b border-zinc-100 bg-zinc-50/60">
+            <Step n={1} label="Choisir une date" active />
+            <div className="flex-1 h-px bg-zinc-200" aria-hidden="true" />
+            <Step n={2} label="Choisir un horaire" active={!!selectedDate} />
+            <div className="flex-1 h-px bg-zinc-200" aria-hidden="true" />
+            <Step n={3} label="Confirmer" active={false} />
+          </div>
+
+          {/* Mobile-only: horizontal date chip strip */}
+          <div className="md:hidden border-b border-zinc-100 bg-white">
+            <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none" style={{ touchAction: 'pan-x' }}>
+              {mobileDates.map((d) => {
+                const iso = toISO(d)
+                const isSelected = selectedDate ? toISO(selectedDate) === iso : false
+                const t = new Date()
+                t.setHours(0,0,0,0)
+                const isToday = d.getTime() === t.getTime()
+                return (
+                  <button
+                    key={iso}
+                    type="button"
+                    onClick={() => { setSelectedDate(d); setBookingSlot(null) }}
+                    aria-label={formatDateLabel(d)}
+                    aria-pressed={isSelected}
+                    className={`cursor-pointer shrink-0 flex flex-col items-center rounded-xl px-3 py-2 min-w-[52px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] ${
+                      isSelected
+                        ? 'bg-[#007DFF] text-white shadow-sm'
+                        : isToday
+                          ? 'bg-[#EBF4FF] text-[#1863A9]'
+                          : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wide leading-tight">
+                      {DAY_SHORT[d.getDay()]}
+                    </span>
+                    <span className="text-[17px] font-bold leading-snug">{d.getDate()}</span>
+                    <span className={`text-[10px] leading-tight ${isSelected ? 'opacity-75' : 'text-zinc-400'}`}>
+                      {MONTH_SHORT[d.getMonth()]}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1px_280px]">
+            {/* Left — calendar (hidden on mobile, use date strip above) */}
+            <div className="hidden md:block p-6">
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+                Étape 1 — Sélectionnez une date
+              </p>
               <CalendarPicker
                 selected={selectedDate}
-                onSelect={handleSelectDate}
+                onSelect={(d) => setSelectedDate(d)}
                 disabledDays={isPast}
               />
             </div>
 
             {/* Divider */}
-            <div className="hidden md:block bg-zinc-100" />
+            <div className="hidden md:block bg-zinc-100" aria-hidden="true" />
 
             {/* Right — time slots */}
-            <div className="p-6 md:overflow-y-auto md:max-h-[480px]">
+            <div className="p-4 md:p-6 md:overflow-y-auto md:max-h-[480px]">
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+                <span className="md:hidden">Étape 2 — </span>Choisissez un horaire
+              </p>
               <TimeSlotList
                 creneaux={creneaux}
-                selected={selectedCreneau?.debut ?? null}
+                selected={null}
                 onSelect={handleSelectCreneau}
                 isLoading={loadingCreneaux}
                 isError={isError}
                 dateLabel={selectedDate ? formatDateLabel(selectedDate) : ''}
               />
+              {!loadingCreneaux && creneaux.length > 0 && (
+                <p className="mt-4 text-xs text-zinc-400 text-center">
+                  Touchez un horaire pour confirmer
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Selected slot summary + confirm button */}
-        {selectedCreneau && !showForm && !confirmedRdv && (
-          <div className="mt-6 p-4 border border-zinc-200 rounded-xl bg-zinc-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-sm text-zinc-500">Créneau sélectionné</p>
-              <p className="font-semibold text-zinc-900 capitalize">
-                {selectedDate ? formatDateLabel(selectedDate) : ''} à {selectedCreneau.debut}
-              </p>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Durée estimée : jusqu&apos;à {selectedCreneau.fin}
-              </p>
-            </div>
-            <button
-              className="shrink-0 bg-zinc-900 hover:bg-zinc-700 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition-colors"
-              onClick={() => setShowForm(true)}
-            >
-              Confirmer ce créneau
-            </button>
-          </div>
-        )}
-
-        {/* Confirmation form */}
-        {selectedCreneau && showForm && !confirmedRdv && medecin && (
-          <ConfirmRdvForm
-            medecinId={id}
-            medecinName={`Dr. ${medecin.firstName} ${medecin.lastName}`}
-            dateRdv={dateISO}
-            heureRdv={selectedCreneau.debut}
-            heureFin={selectedCreneau.fin}
-            onSuccess={(rdv) => {
-              setConfirmedRdv(rdv)
-              setShowForm(false)
-            }}
-            onCancel={() => setShowForm(false)}
-          />
-        )}
-
-        {/* Success card */}
-        {confirmedRdv && medecin && (
-          <RdvSuccessCard
-            rdv={confirmedRdv}
-            medecinName={`Dr. ${medecin.firstName} ${medecin.lastName}`}
-          />
-        )}
       </main>
+
+      {/* BookingDrawer — same as /recherche */}
+      <BookingDrawer
+        slot={bookingSlot}
+        onClose={() => setBookingSlot(null)}
+      />
     </>
+  )
+}
+
+function Step({ n, label, active }: { n: number; label: string; active: boolean }) {
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
+          active ? 'bg-[#007DFF] text-white' : 'bg-zinc-200 text-zinc-400'
+        }`}
+        aria-hidden="true"
+      >
+        {n}
+      </span>
+      <span className={`text-[12px] font-medium hidden sm:block ${active ? 'text-zinc-700' : 'text-zinc-400'}`}>
+        {label}
+      </span>
+    </div>
   )
 }

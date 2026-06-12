@@ -22,7 +22,7 @@ export default function Logo({
   collapsed = false,
 }: LogoProps) {
   const image = collapsed ? (
-    <span className="text-xl font-extrabold text-[#007DFF]">D</span>
+    <Image src="/icone-doctorek.png" alt="Doctorek" width={36} height={36} className="h-9 w-9 rounded-xl" priority={priority} />
   ) : (
     <Image src="/logo0.png" alt="Doctorek" width={width} height={height} className={className} style={style} priority={priority} />
   )

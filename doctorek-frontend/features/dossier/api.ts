@@ -24,10 +24,13 @@ export interface MedicamentDto {
 export interface OrdonnanceDto {
   id: string
   patientId: string
-  medecinId: string
+  medecinId: string | null
+  medecinNom: string | null
+  source: 'MEDECIN' | 'PATIENT'
   dateEmission: string
   medicaments: MedicamentDto[]
   notes: string | null
+  fichierNom: string | null
 }
 
 export interface DocumentMedicalDto {
@@ -48,9 +51,12 @@ export interface UpsertInfosPayload {
 }
 
 export interface CreateOrdonnancePayload {
-  medecinId: string
+  medecinId?: string | null
+  medecinNom?: string | null
+  source?: 'MEDECIN' | 'PATIENT'
+  dateEmission?: string | null
   medicaments: MedicamentDto[]
-  notes: string | null
+  notes?: string | null
 }
 
 // ── Infos médicales ────────────────────────────────────────────────────────
@@ -92,6 +98,28 @@ export function deleteOrdonnance(patientId: string, ordonnanceId: string): Promi
   )
 }
 
+export async function uploadOrdonnanceFichier(ordonnanceId: string, file: File): Promise<OrdonnanceDto> {
+  const { getSession } = await import('@/lib/session')
+  const session = getSession()
+  const headers: Record<string, string> = {}
+  if (session?.accessToken) headers['Authorization'] = `Bearer ${session.accessToken}`
+  const form = new FormData()
+  form.append('file', file)
+  let res: Response
+  try {
+    res = await fetch(`${BASE}/api/v1/dossier/ordonnances/${ordonnanceId}/fichier`, {
+      method: 'POST', headers, body: form,
+    })
+  } catch { throw new Error('Connexion impossible.') }
+  const body = await res.json()
+  if (!body.success || !res.ok) throw new Error(body.message ?? `HTTP ${res.status}`)
+  return body.data as OrdonnanceDto
+}
+
+export function getOrdonnanceFichierUrl(ordonnanceId: string): string {
+  return `${BASE}/api/v1/dossier/ordonnances/${ordonnanceId}/fichier`
+}
+
 // ── Documents ──────────────────────────────────────────────────────────────
 
 export function getDocuments(patientId: string): Promise<DocumentMedicalDto[]> {
@@ -103,13 +131,27 @@ export async function uploadDocument(
   typeDoc: string,
   file: File,
 ): Promise<DocumentMedicalDto> {
+  const { getSession } = await import('@/lib/session')
+  const session = getSession()
+  const headers: Record<string, string> = {}
+  if (session?.accessToken) headers['Authorization'] = `Bearer ${session.accessToken}`
+
   const form = new FormData()
   form.append('typeDoc', typeDoc)
   form.append('file', file)
-  const res = await fetch(`${BASE}/api/v1/dossier/patients/${patientId}/documents`, {
-    method: 'POST',
-    body: form,
-  })
+
+  let res: Response
+  try {
+    res = await fetch(`${BASE}/api/v1/dossier/patients/${patientId}/documents`, {
+      method: 'POST',
+      headers,
+      body: form,
+    })
+  } catch {
+    throw new Error('Connexion impossible. Vérifiez votre réseau et réessayez.')
+  }
+
+  if (res.status === 413) throw new Error('Fichier trop volumineux (max 20 MB)')
   const body: ApiResponse<DocumentMedicalDto> = await res.json()
   if (!body.success || !res.ok) throw new Error(body.message ?? `HTTP ${res.status}`)
   return body.data as DocumentMedicalDto

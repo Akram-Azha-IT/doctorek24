@@ -71,6 +71,8 @@ export function useMedecin(id: string) {
     queryKey: ['medecins', id],
     queryFn: () => getMedecin(id),
     enabled: !!id,
+    retry: 1,
+    staleTime: 60_000,
   })
 }
 

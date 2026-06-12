@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 
 export function PromoCards() {
   return (
-    <div className="relative z-20 -mt-22 md:-mt-30 px-4 md:px-8">
+    <div className="relative z-20 mt-4 md:-mt-30 px-4 md:px-8">
       <div className="mx-auto max-w-[1400px] grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <Link href="/login" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">

@@ -1,11 +1,16 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(schema = "messaging", name = "conversation")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConversationEntity {
 
     @Id
@@ -24,8 +29,6 @@ public class ConversationEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected ConversationEntity() {}
-
     public ConversationEntity(UUID medecinId, UUID patientId) {
         this.medecinId = medecinId;
         this.patientId = patientId;
@@ -34,15 +37,5 @@ public class ConversationEntity {
     @PrePersist
     private void prePersist() {
         this.createdAt = Instant.now();
-    }
-
-    public UUID getId()             { return id; }
-    public UUID getMedecinId()      { return medecinId; }
-    public UUID getPatientId()      { return patientId; }
-    public Instant getLastMessageAt() { return lastMessageAt; }
-    public Instant getCreatedAt()   { return createdAt; }
-
-    public void setLastMessageAt(Instant lastMessageAt) {
-        this.lastMessageAt = lastMessageAt;
     }
 }

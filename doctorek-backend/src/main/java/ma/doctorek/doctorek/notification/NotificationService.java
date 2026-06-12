@@ -8,6 +8,7 @@ import ma.doctorek.doctorek.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -70,7 +71,7 @@ public class NotificationService {
         push(userId, type, title, body, null);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void push(UUID userId, String type, String title, String body, String data) {
         NotificationEntity n = new NotificationEntity();
         n.setUserId(userId);

@@ -53,9 +53,13 @@ public class CarteService {
 
         CarteVirtuelleEntity saved = carteRepository.save(carte);
         logAudit(saved.getId(), "CREATE", patientId);
-        notifService.push(patientId, "CARTE_CREEE",
-                "Carte médicale créée",
-                "Votre carte médicale virtuelle Doctorek est prête. Partagez-la avec vos médecins.");
+        try {
+            notifService.push(patientId, "CARTE_CREEE",
+                    "Carte médicale créée",
+                    "Votre carte médicale virtuelle Doctorek est prête. Partagez-la avec vos médecins.");
+        } catch (Exception e) {
+            // Notification failure must never roll back the carte creation
+        }
         return toResponse(saved);
     }
 

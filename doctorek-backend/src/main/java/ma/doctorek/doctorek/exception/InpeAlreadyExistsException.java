@@ -1,7 +1,9 @@
 package ma.doctorek.doctorek.exception;
 
-public class InpeAlreadyExistsException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class InpeAlreadyExistsException extends AppException {
     public InpeAlreadyExistsException(String inpe) {
-        super("INPE already registered: " + inpe);
+        super("INPE déjà enregistré : " + inpe, HttpStatus.CONFLICT);
     }
 }

@@ -47,7 +47,7 @@ public class DossierController {
         return ResponseEntity.ok(ApiResponse.ok(dossierService.getOrdonnances(patientId)));
     }
 
-    @PreAuthorize("hasRole('MEDECIN')")
+    @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")
     @PostMapping("/patients/{patientId}/ordonnances")
     public ResponseEntity<ApiResponse<OrdonnanceResponse>> createOrdonnance(
             @PathVariable UUID patientId,
@@ -55,13 +55,30 @@ public class DossierController {
         return ResponseEntity.ok(ApiResponse.ok(dossierService.createOrdonnance(patientId, request)));
     }
 
-    @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @DeleteMapping("/patients/{patientId}/ordonnances/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteOrdonnance(
             @PathVariable UUID patientId,
             @PathVariable UUID id) {
         dossierService.deleteOrdonnance(id);
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
+    @PostMapping(value = "/ordonnances/{ordonnanceId}/fichier", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<OrdonnanceResponse>> uploadOrdonnanceFichier(
+            @PathVariable UUID ordonnanceId,
+            @RequestParam("file") MultipartFile file) throws Exception {
+        return ResponseEntity.ok(ApiResponse.ok(dossierService.uploadOrdonnanceFichier(ordonnanceId, file)));
+    }
+
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
+    @GetMapping("/ordonnances/{ordonnanceId}/fichier")
+    public ResponseEntity<Resource> downloadOrdonnanceFichier(@PathVariable UUID ordonnanceId) {
+        var result = dossierService.downloadOrdonnanceFichier(ordonnanceId);
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + result.nom() + "\"")
+            .body(result.resource());
     }
 
     @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")

@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -8,6 +9,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "cartes_virtuelles", schema = "carte")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CarteVirtuelleEntity {
 
     @Id
@@ -20,6 +26,7 @@ public class CarteVirtuelleEntity {
     @Column(name = "card_ref", nullable = false, unique = true)
     private String cardRef;
 
+    @Builder.Default
     @Column(name = "statut", nullable = false)
     private String statut = "VIRTUEL";
 
@@ -32,6 +39,7 @@ public class CarteVirtuelleEntity {
     @Column(name = "poids_kg")
     private BigDecimal poidsKg;
 
+    @Builder.Default
     @Column(name = "donneur_organes")
     private Boolean donneurOrganes = false;
 
@@ -84,47 +92,4 @@ public class CarteVirtuelleEntity {
     void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public UUID getPatientId() { return patientId; }
-    public void setPatientId(UUID patientId) { this.patientId = patientId; }
-    public String getCardRef() { return cardRef; }
-    public void setCardRef(String cardRef) { this.cardRef = cardRef; }
-    public String getStatut() { return statut; }
-    public void setStatut(String statut) { this.statut = statut; }
-    public String getGroupeSanguin() { return groupeSanguin; }
-    public void setGroupeSanguin(String groupeSanguin) { this.groupeSanguin = groupeSanguin; }
-    public Integer getTailleCm() { return tailleCm; }
-    public void setTailleCm(Integer tailleCm) { this.tailleCm = tailleCm; }
-    public BigDecimal getPoidsKg() { return poidsKg; }
-    public void setPoidsKg(BigDecimal poidsKg) { this.poidsKg = poidsKg; }
-    public Boolean getDonneurOrganes() { return donneurOrganes; }
-    public void setDonneurOrganes(Boolean donneurOrganes) { this.donneurOrganes = donneurOrganes; }
-    public String getAllergies() { return allergies; }
-    public void setAllergies(String allergies) { this.allergies = allergies; }
-    public String getMaladiesChroniques() { return maladiesChroniques; }
-    public void setMaladiesChroniques(String maladiesChroniques) { this.maladiesChroniques = maladiesChroniques; }
-    public String getMedicamentsActuels() { return medicamentsActuels; }
-    public void setMedicamentsActuels(String medicamentsActuels) { this.medicamentsActuels = medicamentsActuels; }
-    public String getAntecedentsChirurgicaux() { return antecedentsChirurgicaux; }
-    public void setAntecedentsChirurgicaux(String antecedentsChirurgicaux) { this.antecedentsChirurgicaux = antecedentsChirurgicaux; }
-    public String getVaccinations() { return vaccinations; }
-    public void setVaccinations(String vaccinations) { this.vaccinations = vaccinations; }
-    public String getAntecedentsFamiliaux() { return antecedentsFamiliaux; }
-    public void setAntecedentsFamiliaux(String antecedentsFamiliaux) { this.antecedentsFamiliaux = antecedentsFamiliaux; }
-    public String getContactsUrgence() { return contactsUrgence; }
-    public void setContactsUrgence(String contactsUrgence) { this.contactsUrgence = contactsUrgence; }
-    public String getMedecinTraitant() { return medecinTraitant; }
-    public void setMedecinTraitant(String medecinTraitant) { this.medecinTraitant = medecinTraitant; }
-    public String getAssuranceNom() { return assuranceNom; }
-    public void setAssuranceNom(String assuranceNom) { this.assuranceNom = assuranceNom; }
-    public String getAssuranceNumero() { return assuranceNumero; }
-    public void setAssuranceNumero(String assuranceNumero) { this.assuranceNumero = assuranceNumero; }
-    public String getAssuranceDetails() { return assuranceDetails; }
-    public void setAssuranceDetails(String assuranceDetails) { this.assuranceDetails = assuranceDetails; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

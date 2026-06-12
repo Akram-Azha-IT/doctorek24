@@ -15,6 +15,11 @@ public interface PatientDetailRepository extends JpaRepository<PatientDetailEnti
 
     Optional<PatientDetailEntity> findByUserId(UUID userId);
 
-    @Query("SELECT p FROM PatientDetailEntity p WHERE p.dateNaissance IS NOT NULL AND FUNCTION('MONTH', p.dateNaissance) = :month AND FUNCTION('DAY', p.dateNaissance) = :day")
+    @Query(value = """
+        SELECT * FROM patient.patient_details
+        WHERE date_naissance IS NOT NULL
+          AND EXTRACT(MONTH FROM date_naissance) = :month
+          AND EXTRACT(DAY   FROM date_naissance) = :day
+        """, nativeQuery = true)
     List<PatientDetailEntity> findByBirthMonthAndDay(@Param("month") int month, @Param("day") int day);
 }

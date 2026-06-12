@@ -1,7 +1,9 @@
 package ma.doctorek.doctorek.exception;
 
-public class InvalidCredentialsException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class InvalidCredentialsException extends AppException {
     public InvalidCredentialsException() {
-        super("Identifiants incorrects");
+        super("Identifiants incorrects", HttpStatus.UNAUTHORIZED);
     }
 }

@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -8,6 +9,9 @@ import java.util.UUID;
 
 @Entity
 @Table(schema = "patient", name = "patient_details")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PatientDetailEntity {
 
     @Id
@@ -52,8 +56,6 @@ public class PatientDetailEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    protected PatientDetailEntity() {}
-
     public PatientDetailEntity(User user) {
         this.user = user;
     }
@@ -69,37 +71,4 @@ public class PatientDetailEntity {
     void preUpdate() {
         this.updatedAt = Instant.now();
     }
-
-    public UUID getUserId()              { return userId; }
-    public User getUser()                { return user; }
-
-    public LocalDate getDateNaissance()  { return dateNaissance; }
-    public void setDateNaissance(LocalDate v) { this.dateNaissance = v; }
-
-    public String getGenre()             { return genre; }
-    public void setGenre(String v)       { this.genre = v; }
-
-    public String getNationalite()       { return nationalite; }
-    public void setNationalite(String v) { this.nationalite = v; }
-
-    public String getNumIdentite()       { return numIdentite; }
-    public void setNumIdentite(String v) { this.numIdentite = v; }
-
-    public String getPhotoUrl()          { return photoUrl; }
-    public void setPhotoUrl(String v)    { this.photoUrl = v; }
-
-    public String getTelephone()         { return telephone; }
-    public void setTelephone(String v)   { this.telephone = v; }
-
-    public String getAdresseRue()        { return adresseRue; }
-    public void setAdresseRue(String v)  { this.adresseRue = v; }
-
-    public String getAdresseVille()      { return adresseVille; }
-    public void setAdresseVille(String v) { this.adresseVille = v; }
-
-    public String getAdressePays()       { return adressePays; }
-    public void setAdressePays(String v) { this.adressePays = v; }
-
-    public Instant getCreatedAt()        { return createdAt; }
-    public Instant getUpdatedAt()        { return updatedAt; }
 }

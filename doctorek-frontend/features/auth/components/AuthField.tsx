@@ -8,6 +8,7 @@ type AuthInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   error?: string
   leadingIcon?: React.ReactNode
   trailing?: React.ReactNode
+  showPasswordToggle?: boolean
 }
 
 /**
@@ -15,22 +16,26 @@ type AuthInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
  * border. Uses brand palette tokens for focus + error states.
  */
 export const AuthField = React.forwardRef<HTMLInputElement, AuthInputProps>(
-  function AuthField({ label, hint, error, leadingIcon, trailing, className, id, ...props }, ref) {
+  function AuthField({ label, hint, error, leadingIcon, trailing, showPasswordToggle, className, id, type, ...props }, ref) {
     const fieldId = id ?? React.useId()
+    const errorId = `${fieldId}-error`
     const hasError = Boolean(error)
+    const [showPwd, setShowPwd] = React.useState(false)
+    const isPassword = type === 'password'
+    const resolvedType = isPassword && showPwd ? 'text' : (type ?? 'text')
 
     return (
       <div className="flex flex-col gap-1">
         <label
           htmlFor={fieldId}
-          className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#465058]"
+          className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#465058]"
         >
           {label}
         </label>
 
         <div
           className={[
-            'group relative flex items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-sm shadow-[0_1px_0_0_rgba(1,12,45,0.04)]',
+            'group relative flex items-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-sm shadow-[0_1px_0_0_rgba(1,12,45,0.04)]',
             'ring-1 transition-all duration-150',
             hasError
               ? 'ring-[#E01E5A]/40 focus-within:ring-[#E01E5A]'
@@ -38,14 +43,16 @@ export const AuthField = React.forwardRef<HTMLInputElement, AuthInputProps>(
           ].join(' ')}
         >
           {leadingIcon && (
-            <span className="text-[#3793E0]" aria-hidden>
+            <span className="text-[#3793E0]" aria-hidden="true">
               {leadingIcon}
             </span>
           )}
           <input
             id={fieldId}
             ref={ref}
+            type={resolvedType}
             aria-invalid={hasError || undefined}
+            aria-describedby={hasError ? errorId : undefined}
             className={[
               'min-w-0 flex-1 bg-transparent text-[15px] text-[#010C2D] placeholder:text-[#9aa4ad] outline-none',
               className ?? '',
@@ -53,10 +60,31 @@ export const AuthField = React.forwardRef<HTMLInputElement, AuthInputProps>(
             {...props}
           />
           {trailing}
+          {isPassword && (showPasswordToggle !== false) && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              onClick={() => setShowPwd(v => !v)}
+              className="shrink-0 text-[#9aa4ad] hover:text-[#465058] transition-colors focus-visible:outline-none"
+            >
+              {showPwd ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
 
         {hasError ? (
-          <p className="text-xs font-medium text-[#E01E5A]">{error}</p>
+          <p id={errorId} role="alert" className="text-xs font-medium text-[#E01E5A]">{error}</p>
         ) : hint ? (
           <p className="text-xs text-[#465058]/80">{hint}</p>
         ) : null}

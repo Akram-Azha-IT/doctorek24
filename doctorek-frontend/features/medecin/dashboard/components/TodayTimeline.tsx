@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CalendarDays, Clock4 } from 'lucide-react'
-import type { RendezVous, StatutRdv } from '@/lib/types'
-import { STATUT_BADGE, STATUT_DOT, STATUT_LABELS } from '../utils'
+import type { RendezVous } from '@/lib/types'
 
 export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
   const [nowMinutes, setNowMinutes] = useState(() => {
@@ -106,7 +105,6 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
               const min = parseMin(rdv.heureRdv)
               const pct = toPercent(min)
               const past = min < nowMinutes
-              const badge = STATUT_BADGE[rdv.statut]
               return (
                 <div
                   key={rdv.id}
@@ -117,11 +115,11 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
                   <div className="flex-1 flex items-center gap-2">
                     <span
                       className="h-3 w-3 rounded-full shrink-0 ring-2 ring-white"
-                      style={{ background: past ? '#C4CFDD' : STATUT_DOT[rdv.statut], opacity: past ? 0.5 : 1 }}
+                      style={{ background: past ? '#C4CFDD' : '#007DFF', opacity: past ? 0.5 : 1 }}
                     />
                     <span
                       className="rounded-lg px-2.5 py-1 text-xs font-bold"
-                      style={past ? { background: '#F5F7FA', color: '#A0AEC0' } : { background: badge.bg, color: badge.color }}
+                      style={past ? { background: '#F5F7FA', color: '#A0AEC0' } : { background: '#EBF4FF', color: '#007DFF' }}
                     >
                       {rdv.heureRdv.slice(0, 5)}
                     </span>
@@ -132,13 +130,15 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
             })}
           </div>
 
-          <div className="mt-2 flex items-center gap-4 flex-wrap">
-            {(['CONFIRME', 'EN_ATTENTE', 'ANNULE'] as StatutRdv[]).map((s) => (
-              <div key={s} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full" style={{ background: STATUT_DOT[s] }} />
-                <span className="text-[10px] font-semibold" style={{ color: '#A0AEC0' }}>{STATUT_LABELS[s]}</span>
-              </div>
-            ))}
+          <div className="mt-2 flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full" style={{ background: '#007DFF' }} />
+              <span className="text-[10px] font-semibold" style={{ color: '#A0AEC0' }}>À venir</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full" style={{ background: '#C4CFDD' }} />
+              <span className="text-[10px] font-semibold" style={{ color: '#A0AEC0' }}>Passé</span>
+            </div>
           </div>
         </div>
       )}

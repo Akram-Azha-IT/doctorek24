@@ -1,7 +1,9 @@
 package ma.doctorek.doctorek.exception;
 
-public class EmailAlreadyExistsException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class EmailAlreadyExistsException extends AppException {
     public EmailAlreadyExistsException(String email) {
-        super("Email already registered: " + email);
+        super("Email déjà utilisé : " + email, HttpStatus.CONFLICT);
     }
 }

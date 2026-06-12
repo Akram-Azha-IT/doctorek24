@@ -70,7 +70,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     setInput('')
     setSending(true)
 
-    const clientMsgId = `${myId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const clientMsgId = crypto.randomUUID()
     const optimistic: Message = {
       id: `opt-${clientMsgId}`,
       conversationId: conversation.id,

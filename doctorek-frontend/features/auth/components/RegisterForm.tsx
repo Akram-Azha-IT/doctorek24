@@ -43,64 +43,77 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2" noValidate>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <AuthField
-          label="Prénom"
+          label="Prénom *"
           autoComplete="given-name"
           placeholder="Aïcha"
           leadingIcon={Icons.user}
           error={errors.firstName?.message}
+          required
+          aria-required="true"
           {...register('firstName')}
         />
         <AuthField
-          label="Nom"
+          label="Nom *"
           autoComplete="family-name"
           placeholder="Bennani"
           leadingIcon={Icons.user}
           error={errors.lastName?.message}
+          required
+          aria-required="true"
           {...register('lastName')}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <AuthField
-          label="Email"
+          label="Email *"
           type="email"
           autoComplete="email"
           placeholder="vous@exemple.com"
           leadingIcon={Icons.mail}
           error={errors.email?.message}
+          required
+          aria-required="true"
           {...register('email')}
         />
         <AuthField
-          label="Téléphone"
+          label="Téléphone *"
           type="tel"
           autoComplete="tel"
           placeholder="0612345678"
           leadingIcon={Icons.phone}
           error={errors.phone?.message}
+          required
+          aria-required="true"
           {...register('phone')}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <AuthField
-          label="Mot de passe"
+          label="Mot de passe *"
           type="password"
           autoComplete="new-password"
           placeholder="Au moins 8 caractères"
           leadingIcon={Icons.lock}
+          hint="8 caractères minimum"
           error={errors.password?.message}
+          required
+          aria-required="true"
           {...register('password')}
         />
         <AuthField
-          label="Confirmer le mot de passe"
+          label="Confirmer *"
           type="password"
           autoComplete="new-password"
           placeholder="Retapez votre mot de passe"
           leadingIcon={Icons.lock}
           error={errors.confirmPassword?.message}
+          required
+          aria-required="true"
           {...register('confirmPassword')}
         />
       </div>

@@ -1,7 +1,9 @@
 package ma.doctorek.doctorek.exception;
 
-public class InvalidVerificationCodeException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class InvalidVerificationCodeException extends AppException {
     public InvalidVerificationCodeException() {
-        super("Invalid verification code");
+        super("Code de vérification invalide", HttpStatus.BAD_REQUEST);
     }
 }

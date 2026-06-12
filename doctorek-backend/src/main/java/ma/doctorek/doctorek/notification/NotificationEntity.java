@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.notification;
 
 import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -9,6 +10,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "notification", schema = "notif")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class NotificationEntity {
 
     @Id
@@ -38,20 +44,7 @@ public class NotificationEntity {
     private Instant createdAt;
 
     @PrePersist
-    void prePersist() { this.createdAt = Instant.now(); }
-
-    public UUID getId() { return id; }
-    public UUID getUserId() { return userId; }
-    public void setUserId(UUID v) { this.userId = v; }
-    public String getType() { return type; }
-    public void setType(String v) { this.type = v; }
-    public String getTitle() { return title; }
-    public void setTitle(String v) { this.title = v; }
-    public String getBody() { return body; }
-    public void setBody(String v) { this.body = v; }
-    public String getData() { return data; }
-    public void setData(String v) { this.data = v; }
-    public Instant getReadAt() { return readAt; }
-    public void setReadAt(Instant v) { this.readAt = v; }
-    public Instant getCreatedAt() { return createdAt; }
+    void prePersist() {
+        this.createdAt = Instant.now();
+    }
 }

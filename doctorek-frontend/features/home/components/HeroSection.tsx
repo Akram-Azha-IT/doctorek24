@@ -1,16 +1,17 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MapPin, Search, UserRound, HelpCircle, ChevronRight, Loader2 } from 'lucide-react'
+import { Search, UserRound, HelpCircle, ChevronRight } from 'lucide-react'
 import Logo from '@/components/Logo'
+import { CityInput } from '@/components/CityInput'
 
 export function HeroSection() {
   const [specialite, setSpecialite] = useState('')
   const [ville, setVille] = useState('')
-  const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [geoLoading, setGeoLoading] = useState(false)
   const router = useRouter()
 
   function handleSearch(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -21,9 +22,9 @@ export function HeroSection() {
     router.push(`/recherche?${params.toString()}`)
   }
 
-  function handleVilleFocus() {
-    if (geoStatus !== 'idle' || !navigator.geolocation) return
-    setGeoStatus('loading')
+  function handleNearby() {
+    if (!navigator.geolocation) return
+    setGeoLoading(true)
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -32,26 +33,19 @@ export function HeroSection() {
             { headers: { 'Accept-Language': 'fr' } },
           )
           const data = await res.json()
-          const city =
-            data.address?.city ??
-            data.address?.town ??
-            data.address?.village ??
-            data.address?.county ??
-            ''
+          const city = data.address?.city ?? data.address?.town ?? data.address?.village ?? data.address?.county ?? ''
           if (city) setVille(city)
-          setGeoStatus('done')
-        } catch {
-          setGeoStatus('idle')
-        }
+        } catch { /* ignore */ }
+        setGeoLoading(false)
       },
-      () => { setGeoStatus('idle') },
+      () => setGeoLoading(false),
       { timeout: 10_000, maximumAge: 60_000 },
     )
   }
 
   return (
     <div
-      className="bg-[#EBF4FF] relative z-10 w-full"
+      className="bg-[#EBF4FF] relative z-30 md:z-10 w-full"
       style={{ boxShadow: '0 8px 40px rgba(0,125,255,0.10)' }}
     >
       {/* Soft top fade */}
@@ -93,10 +87,18 @@ export function HeroSection() {
       </div>
 
       {/* Navbar */}
-      <nav className="relative z-50">
-        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 md:px-8">
-          <Logo className="h-10 w-auto" width={140} height={47} priority />
-          <div className="flex items-center gap-4 md:gap-6">
+      <nav className="relative z-50" aria-label="Navigation principale">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-3 md:py-4 md:px-8">
+          <Logo className="h-8 md:h-10 w-auto" width={140} height={47} priority />
+          <div className="flex items-center gap-3 md:gap-6">
+            {/* Mobile: médecin shortcut */}
+            <Link
+              href="/inscription?role=medecin"
+              className="md:hidden inline-flex items-center justify-center rounded-full border border-[#007DFF]/30 bg-white/60 px-3 py-1.5 text-xs font-semibold text-[#007DFF] backdrop-blur-sm hover:bg-white transition-colors"
+            >
+              Médecin ?
+            </Link>
+            {/* Desktop only */}
             <Link
               href="/inscription?role=medecin"
               className="hidden md:inline-flex items-center justify-center rounded-md bg-[#007DFF] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#00263C]"
@@ -107,22 +109,19 @@ export function HeroSection() {
               href="/help"
               className="hidden md:inline-flex items-center justify-center text-[#465058] hover:text-[#007DFF] transition-colors text-sm font-medium"
             >
-              <HelpCircle className="h-4 w-4 mr-1.5" />
+              <HelpCircle className="h-4 w-4 mr-1.5" aria-hidden="true" />
               Aide
             </Link>
-            <Link href="/login" className="inline-flex items-center text-[#007DFF] hover:text-[#00263C] transition-colors gap-2">
-              <UserRound className="h-5 w-5" />
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-bold leading-tight">Se connecter</span>
-                <span className="text-[11px] leading-tight font-normal opacity-70">Gérer mes RDV</span>
-              </div>
+            <Link href="/login" className="inline-flex items-center text-[#007DFF] hover:text-[#00263C] transition-colors gap-1.5">
+              <UserRound className="h-5 w-5" aria-hidden="true" />
+              <span className="text-sm font-bold leading-tight">Se connecter</span>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Content */}
-      <div className="mx-auto max-w-[1400px] px-4 pt-4 pb-36 md:pt-6 md:pb-52 md:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 pt-3 pb-8 md:pt-6 md:pb-52 md:px-8 relative">
 
         {/* Blob behind doctor */}
         <div
@@ -161,52 +160,71 @@ export function HeroSection() {
 
         <div className="relative z-20">
           <div className="max-w-[640px]">
-            <h1 className="text-[42px] font-bold tracking-tight text-[#010C2D] sm:text-5xl lg:text-[58px] mb-3 leading-[1.1]">
+            <h1 className="text-[28px] text-center sm:text-left font-bold tracking-tight text-[#010C2D] sm:text-[42px] lg:text-[58px] mb-5 md:mb-3 leading-[1.18]">
               Votre santé entre<br />de bonnes mains
             </h1>
-            <p className="text-[#465058] text-[16px] mb-8 leading-relaxed max-w-lg">
-              Trouvez votre médecin, prenez rendez-vous en ligne et gérez votre dossier médical partout au Maroc, en quelques clics.
+            <p className="hidden sm:block text-[#465058] text-[16px] mb-8 leading-relaxed max-w-lg">
+              Trouvez votre médecin, prenez rendez-vous en ligne et gérez votre dossier médical partout au Maroc.
             </p>
           </div>
 
+          {/* Mobile quick-search label */}
+          <p className="md:hidden text-center text-[10px] font-semibold uppercase tracking-widest text-[#465058]/60 mb-2">
+            Recherche rapide
+          </p>
+
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="w-full max-w-[820px] relative z-30">
-            <div className="flex flex-col md:flex-row items-stretch rounded-2xl md:rounded-full bg-white shadow-[0_8px_40px_rgba(0,0,0,0.18)] overflow-hidden">
-              <div className="flex flex-[1.5] items-center gap-3 px-5 py-4 md:py-4 border-b md:border-b-0 md:border-r border-gray-100">
-                <Search className="h-5 w-5 text-gray-400 shrink-0" />
+          <form onSubmit={handleSearch} role="search" aria-label="Rechercher un médecin" className="w-full max-w-[820px] relative z-30">
+            <div className="flex flex-col md:flex-row items-stretch rounded-2xl md:rounded-full bg-white shadow-[0_8px_40px_rgba(0,0,0,0.18)]">
+              <div className="flex flex-[1.5] items-center gap-3 px-4 py-3 md:px-5 md:py-4 border-b md:border-b-0 md:border-r border-gray-100">
+                <Search className="h-4 w-4 md:h-5 md:w-5 text-gray-400 shrink-0" />
                 <input
                   type="text"
                   value={specialite}
                   onChange={(e) => setSpecialite(e.target.value)}
-                  placeholder="Spécialité, médecin, établissement…"
-                  className="w-full bg-transparent text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                  placeholder="Spécialité ou médecin…"
+                  className="w-full bg-transparent text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 outline-none"
                 />
               </div>
-              <div className="flex flex-1 items-center gap-3 px-5 py-4 md:py-4">
-                {geoStatus === 'loading'
-                  ? <Loader2 className="h-5 w-5 shrink-0 text-[#007DFF] animate-spin" />
-                  : <MapPin className="h-5 w-5 text-gray-400 shrink-0" />
-                }
-                <input
-                  type="text"
+              <div className="flex flex-1 items-center gap-3 px-4 py-3 md:px-5 md:py-4 relative">
+                <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+                </svg>
+                <CityInput
                   value={ville}
-                  onChange={(e) => setVille(e.target.value)}
-                  onFocus={handleVilleFocus}
-                  placeholder={geoStatus === 'loading' ? 'Localisation…' : 'Où ? (ex: Casablanca)'}
-                  className="w-full bg-transparent text-[15px] text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                  onChange={setVille}
+                  onNearby={handleNearby}
+                  nearbyLoading={geoLoading}
+                  placeholder="Ville…"
+                  inputClassName="text-[14px] md:text-[15px] text-gray-900 placeholder:text-gray-400 focus-visible:outline-none"
                 />
               </div>
               <button
                 type="submit"
-                className="flex items-center justify-center bg-[#00263C] px-8 py-4 md:py-0 text-[15px] font-bold text-white transition-all hover:bg-[#001c2d] md:rounded-full md:m-2 gap-2 focus:outline-none"
+                className="flex items-center justify-center bg-[#00263C] px-6 py-3.5 md:px-8 md:py-0 text-[14px] md:text-[15px] font-bold text-white transition-all hover:bg-[#001c2d] rounded-b-2xl md:rounded-full md:m-2 gap-2 outline-none"
               >
                 Rechercher
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </form>
+
+          {/* Mobile: quick specialty pills */}
+          <div className="md:hidden mt-3 flex flex-wrap gap-2 justify-center">
+            {['Généraliste', 'Pédiatre', 'Dentiste', 'Cardiologue'].map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => { setSpecialite(s); router.push(`/recherche?specialite=${encodeURIComponent(s)}`) }}
+                className="cursor-pointer rounded-full bg-white/70 backdrop-blur-sm border border-[#007DFF]/20 px-3.5 py-1.5 text-xs font-semibold text-[#007DFF] hover:bg-white transition-colors active:scale-95 outline-none"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   )
 }
+

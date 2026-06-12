@@ -30,15 +30,18 @@ public class RappelScheduler {
         this.emailService = emailService;
     }
 
+    // @Transactional here (not on the helper) — self-invocation bypasses the
+    // proxy, so the helper's annotation would never apply. Streaming needs an
+    // open tx/session across the whole forEach.
     @Scheduled(cron = "${doctorek.mail.rappel-cron:0 0 8 * * *}")
+    @Transactional(readOnly = true)
     public void envoyerRappelsQuotidiens() {
         LocalDate today = LocalDate.now();
         envoyerRappelsPourDate(today.plusDays(1), 1);
         envoyerRappelsPourDate(today.plusDays(2), 2);
     }
 
-    @Transactional(readOnly = true)
-    public void envoyerRappelsPourDate(LocalDate date, int joursAvant) {
+    private void envoyerRappelsPourDate(LocalDate date, int joursAvant) {
         try (Stream<RendezVousEntity> rdvs = rdvRepo.streamByDateRdvAndStatutNot(date, StatutRdv.ANNULE.name())) {
             rdvs.forEach(rdv -> userRepo.findById(rdv.getPatientId())
                     .ifPresentOrElse(

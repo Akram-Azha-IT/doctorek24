@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import ma.doctorek.doctorek.enums.Role;
 
 import java.time.Instant;
@@ -8,6 +9,11 @@ import java.util.UUID;
 
 @Entity
 @Table(schema = "auth", name = "users")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class User {
 
     @Id
@@ -33,12 +39,15 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Builder.Default
     @Column(nullable = false, length = 5)
     private String lang = "fr";
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Builder.Default
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
@@ -56,18 +65,6 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
-
-    protected User() {}
-
-    private User(Builder builder) {
-        this.email     = builder.email;
-        this.phone     = builder.phone;
-        this.password  = builder.password;
-        this.firstName = builder.firstName;
-        this.lastName  = builder.lastName;
-        this.role      = builder.role;
-        this.lang      = builder.lang;
-    }
 
     @PrePersist
     private void prePersist() {
@@ -88,61 +85,9 @@ public class User {
         if (lang != null) this.lang = lang;
     }
 
-    public void setVerificationCode(String code) {
-        this.verificationCode = code;
-    }
-
-    public void setVerificationCodeExpiresAt(Instant expiresAt) {
-        this.verificationCodeExpiresAt = expiresAt;
-    }
-
-    public void setKeycloakId(String keycloakId) { this.keycloakId = keycloakId; }
-
-    public void setActive(boolean active) { this.active = active; }
-
     public void markEmailVerified() {
         this.emailVerified = true;
         this.verificationCode = null;
         this.verificationCodeExpiresAt = null;
-    }
-
-    public UUID getId()                           { return id; }
-    public String getEmail()                      { return email; }
-    public String getPhone()                      { return phone; }
-    public String getPassword()                   { return password; }
-    public String getFirstName()                  { return firstName; }
-    public String getLastName()                   { return lastName; }
-    public Role getRole()                         { return role; }
-    public String getLang()                       { return lang; }
-    public boolean isActive()                     { return active; }
-    public boolean isEmailVerified()              { return emailVerified; }
-    public String getVerificationCode()           { return verificationCode; }
-    public Instant getVerificationCodeExpiresAt() { return verificationCodeExpiresAt; }
-    public String getKeycloakId()                 { return keycloakId; }
-    public Instant getCreatedAt()                 { return createdAt; }
-    public Instant getUpdatedAt()                 { return updatedAt; }
-
-    public static Builder builder() { return new Builder(); }
-
-    public static final class Builder {
-        private String email;
-        private String phone;
-        private String password;
-        private String firstName;
-        private String lastName;
-        private Role   role = Role.PATIENT;
-        private String lang = "fr";
-
-        private Builder() {}
-
-        public Builder email(String email)         { this.email     = email;     return this; }
-        public Builder phone(String phone)         { this.phone     = phone;     return this; }
-        public Builder password(String password)   { this.password  = password;  return this; }
-        public Builder firstName(String firstName) { this.firstName = firstName; return this; }
-        public Builder lastName(String lastName)   { this.lastName  = lastName;  return this; }
-        public Builder role(Role role)             { this.role      = role;      return this; }
-        public Builder lang(String lang)           { if (lang != null) this.lang = lang; return this; }
-
-        public User build() { return new User(this); }
     }
 }

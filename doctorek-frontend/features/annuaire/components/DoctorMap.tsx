@@ -138,7 +138,9 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
 
     for (const doc of doctors) {
       if (existing.has(doc.id)) continue
-      const marker = L.marker([doc.lat, doc.lng], {
+      const lat = Number(doc.lat); const lng = Number(doc.lng)
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
+      const marker = L.marker([lat, lng], {
         icon: makeAvatarIcon(L, doc, doc.id === hoveredId),
       }).addTo(map)
       marker.bindTooltip(doc.name, { permanent: false, direction: 'top' })
@@ -146,10 +148,13 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
     }
 
     if (doctors.length > 0) {
-      const points = doctors.map((d): [number, number] => [d.lat, d.lng])
-      map.fitBounds(points, { padding: [40, 40], maxZoom: 13 })
+      const points = doctors
+        .map((d): [number, number] => [Number(d.lat), Number(d.lng)])
+        .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng))
+      if (points.length > 0) map.fitBounds(points, { padding: [40, 40], maxZoom: 13 })
     } else if (center) {
-      map.setView([center.lat, center.lng], 11)
+      const clat = Number(center.lat); const clng = Number(center.lng)
+      if (Number.isFinite(clat) && Number.isFinite(clng)) map.setView([clat, clng], 11)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctors, mapReady])
@@ -167,10 +172,17 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
 
     if (hoveredId) {
       const doc = doctors.find((d) => d.id === hoveredId)
-      if (doc) map.flyTo([doc.lat, doc.lng], 15, { duration: 0.7 })
+      if (doc) {
+        const lat = Number(doc.lat); const lng = Number(doc.lng)
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          map.flyTo([lat, lng], 15, { duration: 0.7 })
+        }
+      }
     } else if (doctors.length > 0) {
-      const points = doctors.map((d): [number, number] => [d.lat, d.lng])
-      map.fitBounds(points, { padding: [40, 40], maxZoom: 13 })
+      const points = doctors
+        .map((d): [number, number] => [Number(d.lat), Number(d.lng)])
+        .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng))
+      if (points.length > 0) map.fitBounds(points, { padding: [40, 40], maxZoom: 13 })
     }
   }, [hoveredId, doctors, mapReady])
 

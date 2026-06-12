@@ -1,6 +1,7 @@
 package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -8,6 +9,11 @@ import java.util.UUID;
 
 @Entity
 @Table(schema = "agenda", name = "disponibilites")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class DisponibiliteEntity {
 
     @Id
@@ -43,39 +49,4 @@ public class DisponibiliteEntity {
 
     @Column(name = "date_fin")
     private LocalDate dateFin;
-
-    public DisponibiliteEntity() {}
-
-    public UUID getId()                         { return id; }
-    public void setId(UUID v)                   { this.id = v; }
-
-    public UUID getMedecinId()                  { return medecinId; }
-    public void setMedecinId(UUID v)            { this.medecinId = v; }
-
-    public String getJourSemaine()              { return jourSemaine; }
-    public void setJourSemaine(String v)        { this.jourSemaine = v; }
-
-    public LocalTime getHeureDebut()            { return heureDebut; }
-    public void setHeureDebut(LocalTime v)      { this.heureDebut = v; }
-
-    public LocalTime getHeureFin()              { return heureFin; }
-    public void setHeureFin(LocalTime v)        { this.heureFin = v; }
-
-    public int getDureeConsultation()           { return dureeConsultation; }
-    public void setDureeConsultation(int v)     { this.dureeConsultation = v; }
-
-    public String getFrequence()                { return frequence; }
-    public void setFrequence(String v)          { this.frequence = v; }
-
-    public int getIntervalSemaines()            { return intervalSemaines; }
-    public void setIntervalSemaines(int v)      { this.intervalSemaines = v; }
-
-    public LocalDate getDateDebut()             { return dateDebut; }
-    public void setDateDebut(LocalDate v)       { this.dateDebut = v; }
-
-    public String getTypeFinRecurrence()        { return typeFinRecurrence; }
-    public void setTypeFinRecurrence(String v)  { this.typeFinRecurrence = v; }
-
-    public LocalDate getDateFin()               { return dateFin; }
-    public void setDateFin(LocalDate v)         { this.dateFin = v; }
 }

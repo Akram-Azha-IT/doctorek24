@@ -807,6 +807,7 @@ function DocumentsTab({ patientId }: { patientId: string }) {
   const { data: documents = [], isLoading } = useDocuments(patientId)
   const upload = useUploadDocument(patientId)
   const remove = useDeleteDocument(patientId)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleFiles(files: FileList | null) {
@@ -889,13 +890,36 @@ function DocumentsTab({ patientId }: { patientId: string }) {
               >
                 <Download className="h-4 w-4" />
               </a>
-              <button
-                type="button"
-                onClick={() => remove.mutate(doc.id)}
-                className="text-zinc-300 hover:text-red-500 transition-colors p-1"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {confirmId === doc.id ? (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-xs text-zinc-500">Supprimer ?</span>
+                  <button
+                    type="button"
+                    onClick={() => { remove.mutate(doc.id); setConfirmId(null) }}
+                    disabled={remove.isPending}
+                    className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-semibold text-white hover:bg-red-600 transition-colors disabled:opacity-50"
+                  >
+                    Oui
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmId(null)}
+                    className="rounded-md border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
+                  >
+                    Non
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmId(doc.id)}
+                  className="text-zinc-300 hover:text-red-500 transition-colors p-1"
+                  title="Supprimer le document"
+                  aria-label={`Supprimer ${doc.nom}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
             </div>
           ))}
         </div>

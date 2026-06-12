@@ -6,11 +6,9 @@ import { useCarteByPatient } from '@/features/carte/hooks'
 import { usePatientProfile, useUpsertPatientProfile } from '@/features/patient/hooks'
 import { getSession, saveSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import { WelcomeBar } from '@/features/patient/dashboard/components/WelcomeBar'
 import { StatCards } from '@/features/patient/dashboard/components/StatCards'
 import { UpcomingAppointments } from '@/features/patient/dashboard/components/UpcomingAppointments'
 import { CarteSection } from '@/features/patient/dashboard/components/CarteSection'
-import { RecentRdvs } from '@/features/patient/dashboard/components/RecentRdvs'
 import { ProfileSidebar } from '@/features/patient/dashboard/components/ProfileSidebar'
 
 export default function DashboardPatientPage() {
@@ -19,7 +17,6 @@ export default function DashboardPatientPage() {
   const [patientId, setPatientId] = useState('')
   const [firstName, setFirstName] = useState<string | null>(null)
   const [lastName, setLastName] = useState<string | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     const session = getSession()
@@ -97,19 +94,26 @@ export default function DashboardPatientPage() {
   return (
     <div className="bg-[#F0F2F5]">
       <div className="max-w-6xl mx-auto px-6 py-8">
+
+        {/* Welcome — inline, no wrapper component */}
         <div className="mb-6">
-          <WelcomeBar firstName={firstName} rdvsAVenir={rdvsAVenir} />
+          <h1 className="text-2xl font-bold text-[#333333]">
+            Bonjour {firstName ?? 'Patient'},
+          </h1>
+          <p className="text-sm text-[#465058] mt-1">
+            {rdvsAVenir === 0
+              ? "Vous n'avez aucun rendez-vous à venir"
+              : `Vous avez ${rdvsAVenir} rendez-vous à venir`}
+          </p>
         </div>
 
         <div className="flex gap-6 items-start">
           <div className="flex-1 min-w-0 space-y-6">
             <StatCards
               totalRdvs={totalRdvs}
-              hasCarte={hasCarte}
               prochainRdv={prochainRdvs[0]}
               derniersRdvs={derniersRdvs}
             />
-            <UpcomingAppointments rdvs={prochainRdvs} />
             <CarteSection
               carte={carte}
               carteLoading={carteLoading}
@@ -118,39 +122,19 @@ export default function DashboardPatientPage() {
               firstName={firstName}
               lastName={lastName}
             />
-            <RecentRdvs rdvs={derniersRdvs} />
+            <UpcomingAppointments rdvs={prochainRdvs} />
           </div>
 
-          <div className="shrink-0 flex flex-col items-end gap-2">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((o) => !o)}
-              className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center hover:bg-[#F0F2F5] transition-colors"
-              title={sidebarOpen ? 'Masquer le panneau' : 'Afficher le panneau'}
-            >
-              <svg
-                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="#465058" strokeWidth="2.5"
-                className={`transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`}
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-
-            <div
-              className={`space-y-4 overflow-hidden transition-all duration-300 ${
-                sidebarOpen ? 'w-72 opacity-100' : 'w-0 opacity-0 pointer-events-none'
-              }`}
-            >
-              <ProfileSidebar
-                firstName={firstName}
-                lastName={lastName}
-                profile={profile}
-                carte={carte}
-                hasCarte={hasCarte}
-                onPhotoChange={handlePhotoChange}
-              />
-            </div>
+          {/* Profile sidebar — always visible, no toggle */}
+          <div className="hidden lg:block shrink-0 w-72 space-y-4">
+            <ProfileSidebar
+              firstName={firstName}
+              lastName={lastName}
+              profile={profile}
+              carte={carte}
+              hasCarte={hasCarte}
+              onPhotoChange={handlePhotoChange}
+            />
           </div>
         </div>
       </div>
