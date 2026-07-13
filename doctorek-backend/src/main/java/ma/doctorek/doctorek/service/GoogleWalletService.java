@@ -91,10 +91,10 @@ public class GoogleWalletService {
         genericObject.put("hexBackgroundColor", "#007DFF");
         // Google fetches the logo server-side: a non-public (e.g. localhost) URL breaks pass creation,
         // so dev/test falls back to a publicly reachable placeholder until a public domain is deployed.
-        // TODO: switch to frontendUrl + "/logo0.png" once a public HTTPS domain is deployed
+        // TODO: switch to frontendUrl + "/icone-doctorek.png" once a public HTTPS domain is deployed
         // (Google fetches this image server-side; localhost/non-public URLs are rejected).
         String logoUri = frontendUrl.startsWith("https://")
-                ? frontendUrl + "/logo0.png"
+                ? frontendUrl + "/icone-doctorek.png"
                 : "https://files.catbox.moe/nxeqy6.png";
         genericObject.put("logo", Map.of("sourceUri", Map.of("uri", logoUri)));
         String heroImageUri = buildHeroImageUrl(cardRef, fullName.trim(), maskCin(numIdentite),

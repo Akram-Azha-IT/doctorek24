@@ -147,7 +147,7 @@ export function renderCarteRectoHtml(
   return buildRectoSvg(fullName, maskedCin, cnss, logoUrl, photoBlock, qrBlock)
 }
 
-/** Same recto markup as the dashboard card, letterboxed to Google Wallet's recommended hero banner ratio. */
+/** Modern full-bleed hero banner for the Google Wallet pass (recommended ratio ~1032x336). */
 export function renderWalletHeroHtml(opts: {
   fullName: string
   maskedCin: string
@@ -157,36 +157,55 @@ export function renderWalletHeroHtml(opts: {
   qrDataUrl?: string
   photoUrl?: string
 }): string {
-  const { fullName, maskedCin, cnss, qrDataUrl, origin, photoUrl } = opts
+  const { fullName, maskedCin, cnss, cardRef, qrDataUrl, origin, photoUrl } = opts
   const logoUrl = `${origin}/logo0.png`
 
-  const photoBlock = photoUrl
-    ? `<image href="${photoUrl}" x="50" y="210" width="164" height="164" clip-path="url(#photo-clip-recto)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<g clip-path="url(#photo-clip-recto)">
-        <circle cx="132" cy="292" r="82" fill="${C_BLUE}"/>
-        <circle cx="132" cy="264" r="29" fill="white" opacity="0.9"/>
-        <ellipse cx="132" cy="344" rx="44" ry="36" fill="white" opacity="0.9"/>
-      </g>`
+  const chip = (label: string, value: string) => `
+    <div style="display:flex;flex-direction:column;gap:2px;padding:10px 18px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:14px;">
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#B6DAF7;">${label}</span>
+      <span style="font-size:17px;font-weight:700;color:#FFFFFF;">${value}</span>
+    </div>`
 
-  const qrBlock = qrDataUrl
-    ? `<g transform="translate(682, 290)">
-        <rect width="84" height="84" rx="5" fill="#FFFFFF"/>
-        <image href="${qrDataUrl}" x="2" y="2" width="80" height="80"/>
-      </g>`
+  const chips = [
+    maskedCin && maskedCin !== '-' ? chip('CIN', maskedCin) : '',
+    cnss && cnss !== '-' ? chip('N° CNSS / AMO', cnss) : '',
+  ].join('')
+
+  const photoBlock = photoUrl
+    ? `<img src="${photoUrl}" style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.35);box-shadow:0 10px 30px rgba(1,12,45,0.35);" />`
     : ''
 
-  const cardSvg = buildRectoSvg(fullName, maskedCin, cnss, logoUrl, photoBlock, qrBlock)
-
-  // Wallet's recommended hero ratio (~1032x336) is wider than the card's native 856x540 ratio,
-  // so the card is centered and scaled to fit the hero height, with brand-blue letterboxing.
-  const scale = 336 / 540
-  const scaledWidth = 856 * scale
+  const qrBlock = qrDataUrl
+    ? `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <div style="background:#FFFFFF;border-radius:18px;padding:10px;box-shadow:0 10px 30px rgba(1,12,45,0.35);">
+          <img src="${qrDataUrl}" style="width:130px;height:130px;display:block;" />
+        </div>
+       </div>`
+    : ''
 
   return `
-    <div style="width:1032px;height:336px;background:linear-gradient(135deg, ${C_DARK} 0%, ${C_BLUE} 100%);display:flex;align-items:center;justify-content:center;overflow:hidden;">
-      <div style="position:relative;width:${scaledWidth}px;height:336px;">
-        <div style="position:absolute;left:0;top:0;width:856px;height:540px;transform:scale(${scale});transform-origin:top left;border-radius:28px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.35);">
-          ${cardSvg}
+    <div style="position:relative;width:1032px;height:336px;background:linear-gradient(115deg, #042651 0%, #0C4A83 45%, #007DFF 100%);overflow:hidden;font-family:'Inter',system-ui,sans-serif;">
+      <!-- décor discret -->
+      <div style="position:absolute;right:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,0.06);"></div>
+      <div style="position:absolute;right:40px;bottom:-180px;width:340px;height:340px;border-radius:50%;background:rgba(61,168,255,0.14);"></div>
+      <div style="position:absolute;left:-90px;bottom:-160px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+
+      <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 56px;box-sizing:border-box;">
+        <!-- gauche : marque + identité -->
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0;">
+          <img src="${logoUrl}" style="height:40px;width:auto;align-self:flex-start;filter:brightness(0) invert(1);" />
+          <div>
+            <div style="font-size:12px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#3DA8FF;margin-bottom:6px;">Carte Santé Virtuelle</div>
+            <div style="font-size:44px;font-weight:800;line-height:1.05;color:#FFFFFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px;">${fullName}</div>
+          </div>
+          <div style="display:flex;gap:12px;">${chips}</div>
+          <div style="font-size:14px;font-weight:600;letter-spacing:0.08em;color:#B6DAF7;">${cardRef}</div>
+        </div>
+
+        <!-- droite : photo + QR -->
+        <div style="display:flex;align-items:center;gap:28px;">
+          ${photoBlock}
+          ${qrBlock}
         </div>
       </div>
     </div>
