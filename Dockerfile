@@ -1,6 +1,6 @@
 # ── Doctorek backend (Spring Boot) ────────────────────────────────
 # Build stage
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /app
 
 COPY doctorek-backend/mvnw .
@@ -13,11 +13,11 @@ COPY doctorek-backend/src src
 RUN ./mvnw package -DskipTests -q
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
-# Never run as root in production
-RUN addgroup -S doctorek && adduser -S doctorek -G doctorek
+# wget for the container healthcheck; non-root user for production
+RUN apt-get update && apt-get install -y --no-install-recommends wget     && rm -rf /var/lib/apt/lists/*     && groupadd -r doctorek && useradd -r -g doctorek doctorek
 USER doctorek
 
 COPY --from=build --chown=doctorek:doctorek /app/target/*.jar app.jar
