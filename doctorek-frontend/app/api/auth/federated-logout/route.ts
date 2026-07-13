@@ -12,7 +12,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ url: null })
   }
 
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET })
+  // Behind the TLS proxy the request looks like http://, but the browser stores
+  // the session under the __Secure- cookie name — force secure cookie lookup.
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: (process.env.AUTH_URL ?? '').startsWith('https'),
+  })
 
   // Behind a TLS-terminating proxy req.url is http:// — build the public URL
   // from AUTH_URL so Keycloak's registered post-logout redirect matches.
