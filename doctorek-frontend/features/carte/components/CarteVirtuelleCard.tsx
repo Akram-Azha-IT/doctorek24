@@ -84,6 +84,7 @@ export function CarteVerso({
   profile,
   firstName,
   lastName,
+  flat,
 }: {
   carte: CarteVirtuelle
   profile?: PatientProfile | null
@@ -103,7 +104,14 @@ export function CarteVerso({
 
   return (
     <div
-      style={{ width: '100%', height: '100%' }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        // Panneau arrière du flip 3D : pré-tourné pour être lisible une fois la carte retournée.
+        transform: flat ? undefined : 'rotateY(180deg)',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   )

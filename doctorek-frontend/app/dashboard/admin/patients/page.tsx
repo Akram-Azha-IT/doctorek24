@@ -43,7 +43,7 @@ function PatientCartePanel({ patientId, firstName, lastName }: { patientId: stri
           transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
         }}>
           <CarteRecto carte={data} firstName={firstName} lastName={lastName} />
-          <CarteVerso carte={data} firstName={firstName} lastName={lastName} />
+          <CarteVerso carte={data} firstName={firstName} lastName={lastName} flat />
         </div>
       </div>
       <p className="text-xs text-zinc-400 font-medium tracking-wider select-none">
