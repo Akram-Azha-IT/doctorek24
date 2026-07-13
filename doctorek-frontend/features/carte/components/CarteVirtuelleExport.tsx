@@ -156,9 +156,11 @@ export function renderWalletHeroHtml(opts: {
   origin: string
   qrDataUrl?: string
   photoUrl?: string
+  /** Logo embarqué en data URI — Puppeteer ne peut pas recharger le domaine public depuis le conteneur. */
+  logoDataUrl?: string
 }): string {
-  const { fullName, maskedCin, cnss, cardRef, qrDataUrl, origin, photoUrl } = opts
-  const logoUrl = `${origin}/logo0.png`
+  const { fullName, maskedCin, cnss, cardRef, qrDataUrl, origin, photoUrl, logoDataUrl } = opts
+  const logoUrl = logoDataUrl ?? `${origin}/logo0.png`
 
   const chip = (label: string, value: string) => `
     <div style="display:flex;flex-direction:column;gap:2px;padding:10px 18px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:14px;">

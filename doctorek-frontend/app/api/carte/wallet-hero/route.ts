@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { readFile } from 'fs/promises'
+import path from 'path'
 import puppeteer from 'puppeteer'
 import QRCode from 'qrcode'
 import { renderWalletHeroHtml } from '@/features/carte/components/CarteVirtuelleExport'
@@ -38,7 +40,12 @@ export async function GET(req: Request) {
       color: { dark: '#010C2D', light: '#FFFFFF' },
     })
 
-    const heroHtml = renderWalletHeroHtml({ fullName, maskedCin, cnss, cardRef, origin, qrDataUrl, photoUrl: photo || undefined })
+    // Le conteneur ne peut pas recharger son propre domaine public (hairpin NAT) —
+    // on inline le logo depuis le disque.
+    const logoBuffer = await readFile(path.join(process.cwd(), 'public', 'logo0.png'))
+    const logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`
+
+    const heroHtml = renderWalletHeroHtml({ fullName, maskedCin, cnss, cardRef, origin, qrDataUrl, photoUrl: photo || undefined, logoDataUrl })
 
     const fullHtml = `
       <!DOCTYPE html>
