@@ -34,12 +34,11 @@ export async function POST(req: Request) {
         <head>
           <meta charset="utf-8">
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
             body {
               margin: 0;
               padding: 40px;
               background: #010C2D;
-              font-family: 'Inter', system-ui, -apple-system, sans-serif;
+              font-family: system-ui, -apple-system, sans-serif;
               display: flex;
               flex-direction: column;
               gap: 40px;
@@ -77,7 +76,7 @@ export async function POST(req: Request) {
     await page.setViewport({ width: 936, height: 1180, deviceScaleFactor: 2 })
 
     // Set HTML content and wait for network/fonts
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' })
+    await page.setContent(fullHtml, { waitUntil: 'networkidle0', timeout: 60000 })
 
     // Capture the screenshot
     const buffer = await page.screenshot({ type: 'png', omitBackground: false })
