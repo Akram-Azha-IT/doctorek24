@@ -76,7 +76,9 @@ export async function POST(req: Request) {
     await page.setViewport({ width: 936, height: 1180, deviceScaleFactor: 2 })
 
     // Set HTML content and wait for network/fonts
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0', timeout: 60000 })
+    // Tout est inliné (logo/QR en data URI, polices système) — aucun réseau à attendre.
+    await page.setContent(fullHtml, { waitUntil: 'domcontentloaded', timeout: 30000 })
+    await new Promise((r) => setTimeout(r, 300))
 
     // Capture the screenshot
     const buffer = await page.screenshot({ type: 'png', omitBackground: false })

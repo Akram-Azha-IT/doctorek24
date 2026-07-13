@@ -26,7 +26,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Chromium for the Google Wallet hero image route (puppeteer)
-RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont font-noto
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont font-noto font-noto-arabic
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 import { getGoogleWalletSaveUrl } from '@/features/carte/api'
 import QRCode from 'qrcode'
-import { buildRectoSvg } from './CarteVirtuelleExport'
+import { buildRectoSvg, buildVersoSvg } from './CarteVirtuelleExport'
 
 const C_BLUE  = '#007DFF'
 const C_DARK  = '#003B95'
@@ -84,7 +84,6 @@ export function CarteVerso({
   profile,
   firstName,
   lastName,
-  flat,
 }: {
   carte: CarteVirtuelle
   profile?: PatientProfile | null
@@ -92,278 +91,23 @@ export function CarteVerso({
   lastName?: string
   flat?: boolean
 }) {
-  const nom = lastName?.toUpperCase() || '-'
-  const prenom = firstName || '-'
-  const createdYear = new Date().getFullYear()
-
-  const rows = [
-    { fr: 'Nom',                   ar: 'النسب',            value: nom },
-    { fr: 'Prénom',                 ar: 'الاسم الشخصي',     value: prenom },
-    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',   value: profile?.dateNaissance ?? '-' },
-    { fr: 'C.I.N.',                 ar: 'ب.ت.و',           value: profile?.numIdentite ?? '-' },
-    { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',    value: `01/01/${createdYear}` },
-  ]
+  const svg = buildVersoSvg(
+    lastName?.toUpperCase() || '-',
+    firstName || '-',
+    profile?.dateNaissance ?? '-',
+    profile?.numIdentite ?? '-',
+    `01/01/${new Date().getFullYear()}`,
+    carte.assuranceNumero ?? carte.cardRef ?? '-',
+    '/logo0.png',
+  )
 
   return (
     <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        borderRadius: 'min(3vw, 12px)',
-        overflow: 'hidden',
-        background: '#F8FAFD',
-        boxShadow: '0 4px 24px rgba(0,125,255,0.12), inset 0 0 0 1px rgba(0,125,255,0.1)',
-        fontFamily: 'system-ui,-apple-system,sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-        ...(flat
-          ? {}
-          : {
-              transform: 'rotateY(180deg)',
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden' as const,
-            }),
-      }}
-    >
-      {/* Logo watermark */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-        aria-hidden="true"
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo0.png"
-          alt=""
-          style={{
-            width: '55%',
-            opacity: 0.04,
-            transform: 'rotate(-12deg)',
-            userSelect: 'none',
-            filter: `hue-rotate(0deg) saturate(0)`,
-          }}
-        />
-      </div>
-
-      {/* Top stripe */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0,
-          height: '5px',
-          background: `linear-gradient(90deg, ${C_RED} 50%, ${C_GREEN} 50%)`,
-          zIndex: 3,
-        }}
-      />
-
-      {/* Header */}
-      <div
-        style={{
-          background: `linear-gradient(135deg, ${C_BLUE} 0%, ${C_DARK} 100%)`,
-          padding: 'clamp(10px,2.8vw,16px) clamp(14px,3.5vw,22px)',
-          position: 'relative',
-          zIndex: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '8px',
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo0.png"
-          alt="Doctorek"
-          style={{
-            height: 'clamp(18px,4.5vw,28px)',
-            width: 'auto',
-            filter: 'brightness(0) invert(1)',
-            flexShrink: 0,
-          }}
-        />
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div
-            style={{
-              color: 'rgba(255,255,255,0.6)',
-              fontSize: 'clamp(5px,1.15vw,7px)',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-            }}
-          >
-            N° Immatriculation / رقم التسجيل
-          </div>
-          <div
-            style={{
-              color: '#FFFFFF',
-              fontSize: 'clamp(10px,2.8vw,15px)',
-              fontWeight: 900,
-              fontFamily: '"Courier New", Courier, monospace',
-              letterSpacing: '0.1em',
-              marginTop: '2px',
-            }}
-          >
-            {carte.assuranceNumero ?? carte.cardRef ?? '-'}
-          </div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div
-        style={{
-          flex: 1,
-          padding: 'clamp(8px,2vw,14px) clamp(14px,3.5vw,22px)',
-          position: 'relative',
-          zIndex: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'clamp(3px,0.7vw,5px)',
-        }}
-      >
-        {rows.map((row, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto 1fr',
-              alignItems: 'center',
-              gap: '4px',
-              background: i % 2 === 0 ? 'rgba(0,125,255,0.04)' : 'transparent',
-              borderRadius: '5px',
-              padding: 'clamp(3px,0.7vw,5px) clamp(6px,1.4vw,10px)',
-            }}
-          >
-            <span
-              style={{
-                color: C_LABEL,
-                fontSize: 'clamp(5px,1.2vw,7px)',
-                fontWeight: 700,
-                letterSpacing: '0.03em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {row.fr}
-            </span>
-            <span
-              style={{
-                color: C_TEXT,
-                fontSize: 'clamp(8px,2.1vw,12px)',
-                fontWeight: 800,
-                textAlign: 'center',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                letterSpacing: '0.02em',
-                borderLeft: `2px solid ${C_BLUE}30`,
-                borderRight: `2px solid ${C_BLUE}30`,
-                padding: '0 clamp(6px,1.5vw,10px)',
-              }}
-            >
-              {row.value}
-            </span>
-            <span
-              style={{
-                color: C_LABEL,
-                fontSize: 'clamp(5px,1.2vw,7px)',
-                fontWeight: 700,
-                direction: 'rtl',
-                textAlign: 'right',
-                letterSpacing: '0.01em',
-              }}
-            >
-              {row.ar}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Security notice */}
-      <div
-        style={{
-          margin: '0 clamp(14px,3.5vw,22px) clamp(6px,1.5vw,10px)',
-          background: `linear-gradient(135deg, #EEF6FF 0%, #F0FDF9 100%)`,
-          border: `1px solid ${C_BLUE}25`,
-          borderRadius: '8px',
-          padding: 'clamp(4px,1vw,7px) clamp(8px,2vw,12px)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'clamp(6px,1.5vw,10px)',
-          position: 'relative',
-          zIndex: 2,
-        }}
-      >
-        <svg viewBox="0 0 24 24" style={{ width: 'clamp(12px,3vw,18px)', flexShrink: 0 }} fill="none">
-          <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill={C_BLUE} opacity="0.85" />
-          <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <div style={{ flex: 1 }}>
-          <div style={{ color: C_TEXT, fontSize: 'clamp(5px,1.2vw,7px)', fontWeight: 700, lineHeight: 1.4 }}>
-            Carte strictement personnelle et confidentielle
-          </div>
-          <div style={{ color: C_LABEL, fontSize: 'clamp(4px,0.9vw,6px)', fontWeight: 500, marginTop: '1px', lineHeight: 1.3 }}>
-            En cas de perte ou vol, contactez le Ministère de la Santé.
-          </div>
-        </div>
-        <svg viewBox="0 0 80 80" style={{ width: 'clamp(22px,5.5vw,36px)', flexShrink: 0 }} fill="none">
-          <rect width="80" height="80" rx="4" fill="#F3F4F6" />
-          <path d="M8 8H32V32H8V8ZM16 16H24V24H16V16Z" fill={C_TEXT} />
-          <path d="M48 8H72V32H48V8ZM56 16H64V24H56V16Z" fill={C_TEXT} />
-          <path d="M8 48H32V72H8V48ZM16 56H24V64H16V56Z" fill={C_TEXT} />
-          <rect x="40" y="40" width="8" height="8" fill={C_TEXT} />
-          <rect x="56" y="48" width="16" height="8" fill={C_TEXT} />
-          <rect x="48" y="64" width="8" height="8" fill={C_TEXT} />
-          <rect x="64" y="64" width="8" height="8" fill={C_TEXT} />
-          <rect x="40" y="8" width="8" height="16" fill={C_TEXT} />
-          <rect x="8" y="40" width="16" height="8" fill={C_TEXT} />
-        </svg>
-      </div>
-
-      {/* Footer */}
-      <div
-        style={{
-          background: C_BLUE,
-          padding: 'clamp(5px,1.3vw,8px) clamp(14px,3.5vw,22px)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'relative',
-          zIndex: 2,
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo0.png"
-          alt="Doctorek"
-          style={{
-            height: 'clamp(14px,3.5vw,22px)',
-            width: 'auto',
-            filter: 'brightness(0) invert(1)',
-          }}
-        />
-        <div
-          style={{
-            fontFamily: '"Courier New", Courier, monospace',
-            fontSize: 'clamp(4px,0.95vw,6.5px)',
-            color: 'rgba(255,255,255,0.7)',
-            letterSpacing: '0.08em',
-            fontWeight: 600,
-          }}
-        >
-          CARTE MÉDICALE NATIONALE - MA
-        </div>
-      </div>
-    </div>
+      style={{ width: '100%', height: '100%' }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   )
 }
-
-// ── Composant Principal ──────────────────────────────────────────────────────
 
 export default function CarteVirtuelleCard({
   carte,

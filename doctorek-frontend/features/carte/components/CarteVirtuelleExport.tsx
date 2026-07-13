@@ -218,6 +218,84 @@ export function renderWalletHeroHtml(opts: {
   `
 }
 
+export function buildVersoSvg(
+  nom: string,
+  prenom: string,
+  dateNaissance: string,
+  cin: string,
+  immatDate: string,
+  immatNo: string,
+  logoUrl: string,
+): string {
+  const rows = [
+    { fr: 'NOM', ar: 'النسب', value: nom },
+    { fr: 'PRÉNOM', ar: 'الاسم الشخصي', value: prenom },
+    { fr: 'DATE DE NAISSANCE', ar: 'تاريخ الازدياد', value: dateNaissance },
+    { fr: 'C.I.N.', ar: 'ب.ت.و', value: cin },
+    { fr: "DATE D'IMMATRICULATION", ar: 'تاريخ التسجيل', value: immatDate },
+  ]
+
+  const rowsSvg = rows
+    .map((row, i) => {
+      const y = 128 + i * 62
+      return `
+        <text x="40" y="${y}" font-family="system-ui,-apple-system,sans-serif" font-size="9.5" font-weight="700" fill="#64748B" letter-spacing="2">${row.fr}</text>
+        <text x="816" y="${y}" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700" fill="#94A3B8">${row.ar}</text>
+        <text x="428" y="${y + 2}" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="800" fill="#0F172A" letter-spacing="0.5">${row.value}</text>
+        <line x1="40" y1="${y + 22}" x2="816" y2="${y + 22}" stroke="#EDF2F7" stroke-width="1.2"/>`
+    })
+    .join('')
+
+  return `
+    <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="card-clip-verso"><rect width="856" height="540" rx="24"/></clipPath>
+        <linearGradient id="bg-grad-verso" x1="0" y1="0" x2="0" y2="540" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FBFDFF"/>
+          <stop offset="1" stop-color="#F3F7FC"/>
+        </linearGradient>
+      </defs>
+
+      <g clip-path="url(#card-clip-verso)">
+        <rect width="856" height="540" fill="url(#bg-grad-verso)"/>
+
+        <g stroke="${C_BLUE}" fill="none" opacity="0.05">
+          <path d="M-20 300 C 140 230, 300 370, 460 300 S 740 230, 880 310" stroke-width="1.2"/>
+          <path d="M-20 330 C 150 265, 320 395, 480 330 S 750 265, 880 340" stroke-width="0.8"/>
+        </g>
+
+        <rect x="0" y="0" width="428" height="4" fill="${C_RED}"/>
+        <rect x="428" y="0" width="428" height="4" fill="${C_GREEN}"/>
+
+        <image href="${logoUrl}" x="24" y="18" width="140" height="48" preserveAspectRatio="xMinYMid meet"/>
+        <text x="832" y="38" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">N° IMMATRICULATION · رقم التسجيل</text>
+        <text x="832" y="64" text-anchor="end" font-family="'Courier New',Courier,monospace" font-size="21" font-weight="800" fill="#0F172A" letter-spacing="3">${immatNo}</text>
+
+        <line x1="24" y1="88" x2="832" y2="88" stroke="#E2E8F0" stroke-width="1"/>
+
+        ${rowsSvg}
+
+        <!-- Encart confidentialité -->
+        <rect x="40" y="428" width="776" height="42" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2"/>
+        <g transform="translate(56, 438)">
+          <path d="M11 1L3 4v6c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V4l-8-3z" fill="${C_BLUE}" opacity="0.9"/>
+          <path d="M7.5 11.5l2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+        <text x="88" y="446" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">Carte strictement personnelle et confidentielle</text>
+        <text x="88" y="461" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="500" fill="#64748B">En cas de perte ou de vol, contactez le 080 100 2000 ou votre espace patient.</text>
+        <text x="800" y="454" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="#94A3B8">بطاقة شخصية وسرية</text>
+
+        <!-- Pied officiel -->
+        <rect x="0" y="486" width="856" height="54" fill="#010C2D"/>
+        <image href="${logoUrl}" x="24" y="497" width="100" height="32" preserveAspectRatio="xMinYMid meet" style="filter:brightness(0) invert(1);"/>
+        <text x="140" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="300" fill="rgba(255,255,255,0.3)">|</text>
+        <text x="154" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">www.doctorek.ma</text>
+        <text x="832" y="518" text-anchor="end" font-family="'Courier New',Courier,monospace" font-size="8" font-weight="700" fill="rgba(255,255,255,0.55)" letter-spacing="2">CARTE MÉDICALE NATIONALE · MA</text>
+      </g>
+    </svg>
+  `
+}
+
 export function renderCarteVersoHtml(
   carte: CarteVirtuelle,
   profile: PatientProfile | null | undefined,
@@ -225,77 +303,14 @@ export function renderCarteVersoHtml(
   lastName: string | undefined,
   { origin, logoDataUrl }: RenderOptions,
 ): string {
-  const nom = lastName?.toUpperCase() || '-'
-  const prenom = firstName || '-'
-  const createdYear = new Date().getFullYear()
   const logoUrl = logoDataUrl ?? `${origin}/logo0.png`
-
-  const rows = [
-    { fr: 'Nom',                    ar: 'النسب',           value: nom },
-    { fr: 'Prénom',                 ar: 'الاسم الشخصي',     value: prenom },
-    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',    value: profile?.dateNaissance ?? '-' },
-    { fr: 'C.I.N.',                 ar: 'ب.ت.و',            value: profile?.numIdentite ?? '-' },
-    { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',     value: `01/01/${createdYear}` },
-  ]
-
-  const rowsHtml = rows
-    .map(
-      (row, i) => `
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;background:${i % 2 === 0 ? 'rgba(0,125,255,0.04)' : 'transparent'};border-radius:5px;padding:5px 10px;">
-        <span style="color:${C_LABEL};font-size:7px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;">${row.fr}</span>
-        <span style="color:${C_TEXT};font-size:12px;font-weight:800;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:0.02em;border-left:2px solid ${C_BLUE}30;border-right:2px solid ${C_BLUE}30;padding:0 10px;">${row.value}</span>
-        <span style="color:${C_LABEL};font-size:7px;font-weight:700;direction:rtl;text-align:right;letter-spacing:0.01em;">${row.ar}</span>
-      </div>`,
-    )
-    .join('')
-
-  return `
-    <div style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;background:#F8FAFD;box-shadow:0 4px 24px rgba(0,125,255,0.12), inset 0 0 0 1px rgba(0,125,255,0.1);font-family:system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;">
-      <div style="position:absolute;inset:0;z-index:0;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-        <img src="${logoUrl}" alt="" style="width:55%;opacity:0.04;transform:rotate(-12deg);filter:saturate(0);"/>
-      </div>
-
-      <div style="position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg, ${C_RED} 50%, ${C_GREEN} 50%);z-index:3;"></div>
-
-      <div style="background:linear-gradient(135deg, ${C_BLUE} 0%, ${C_DARK} 100%);padding:16px 22px;position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <img src="${logoUrl}" alt="Doctorek" style="height:28px;width:auto;filter:brightness(0) invert(1);flex-shrink:0;"/>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="color:rgba(255,255,255,0.6);font-size:7px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">N° Immatriculation / رقم التسجيل</div>
-          <div style="color:#FFFFFF;font-size:15px;font-weight:900;font-family:'Courier New',Courier,monospace;letter-spacing:0.1em;margin-top:2px;">${carte.assuranceNumero ?? carte.cardRef ?? '-'}</div>
-        </div>
-      </div>
-
-      <div style="flex:1;padding:14px 22px;position:relative;z-index:2;display:flex;flex-direction:column;gap:5px;">
-        ${rowsHtml}
-      </div>
-
-      <div style="margin:0 22px 10px;background:linear-gradient(135deg, #EEF6FF 0%, #F0FDF9 100%);border:1px solid ${C_BLUE}25;border-radius:8px;padding:7px 12px;display:flex;align-items:center;gap:10px;position:relative;z-index:2;">
-        <svg viewBox="0 0 24 24" style="width:18px;flex-shrink:0;" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" fill="${C_BLUE}" opacity="0.85"/>
-          <path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div style="flex:1;">
-          <div style="color:${C_TEXT};font-size:7px;font-weight:700;line-height:1.4;">Carte strictement personnelle et confidentielle</div>
-          <div style="color:${C_LABEL};font-size:6px;font-weight:500;margin-top:1px;line-height:1.3;">En cas de perte ou vol, contactez le Ministère de la Santé.</div>
-        </div>
-        <svg viewBox="0 0 80 80" style="width:36px;flex-shrink:0;" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="80" height="80" rx="4" fill="#F3F4F6"/>
-          <path d="M8 8H32V32H8V8ZM16 16H24V24H16V16Z" fill="${C_TEXT}"/>
-          <path d="M48 8H72V32H48V8ZM56 16H64V24H56V16Z" fill="${C_TEXT}"/>
-          <path d="M8 48H32V72H8V48ZM16 56H24V64H16V56Z" fill="${C_TEXT}"/>
-          <rect x="40" y="40" width="8" height="8" fill="${C_TEXT}"/>
-          <rect x="56" y="48" width="16" height="8" fill="${C_TEXT}"/>
-          <rect x="48" y="64" width="8" height="8" fill="${C_TEXT}"/>
-          <rect x="64" y="64" width="8" height="8" fill="${C_TEXT}"/>
-          <rect x="40" y="8" width="8" height="16" fill="${C_TEXT}"/>
-          <rect x="8" y="40" width="16" height="8" fill="${C_TEXT}"/>
-        </svg>
-      </div>
-
-      <div style="background:${C_BLUE};padding:8px 22px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2;">
-        <img src="${logoUrl}" alt="Doctorek" style="height:22px;width:auto;filter:brightness(0) invert(1);"/>
-        <div style="font-family:'Courier New',Courier,monospace;font-size:6.5px;color:rgba(255,255,255,0.7);letter-spacing:0.08em;font-weight:600;">CARTE MÉDICALE NATIONALE - MA</div>
-      </div>
-    </div>
-  `
+  return buildVersoSvg(
+    lastName?.toUpperCase() || '-',
+    firstName || '-',
+    profile?.dateNaissance ?? '-',
+    profile?.numIdentite ?? '-',
+    `01/01/${new Date().getFullYear()}`,
+    carte.assuranceNumero ?? carte.cardRef ?? '-',
+    logoUrl,
+  )
 }
