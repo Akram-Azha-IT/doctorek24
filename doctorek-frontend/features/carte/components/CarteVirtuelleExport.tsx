@@ -113,7 +113,7 @@ export function renderCarteRectoHtml(
       : rawCin || '-'
 
   const cnss = carte.assuranceNumero ?? '-'
-  const logoUrl = `${origin}/icone-doctorek.png`
+  const logoUrl = `${origin}/logo0.png`
 
   const photoBlock = profile?.photoUrl
     ? `<image href="${profile.photoUrl}" x="50" y="210" width="164" height="164" clip-path="url(#photo-clip-recto)" preserveAspectRatio="xMidYMid slice"/>`
