@@ -60,8 +60,8 @@ export function HeroSection() {
         }}
       />
 
-      {/* Decorative watermark */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
+      {/* Decorative watermark — desktop only: on narrow screens it bleeds behind the content */}
+      <div className="hidden md:block absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
         <svg
           className="absolute right-0 bottom-0 opacity-[0.05]"
           width="640" height="180" viewBox="0 0 640 180"
@@ -163,7 +163,7 @@ export function HeroSection() {
             <h1 className="text-[28px] text-center sm:text-left font-bold tracking-tight text-[#010C2D] sm:text-[42px] lg:text-[58px] mb-5 md:mb-3 leading-[1.18]">
               Votre santé entre<br />de bonnes mains
             </h1>
-            <p className="hidden sm:block text-[#465058] text-[16px] mb-8 leading-relaxed max-w-lg">
+            <p className="text-center sm:text-left text-[#465058] text-[14px] sm:text-[16px] mb-6 sm:mb-8 leading-relaxed max-w-lg mx-auto sm:mx-0 px-2 sm:px-0">
               Trouvez votre médecin, prenez rendez-vous en ligne et gérez votre dossier médical partout au Maroc.
             </p>
           </div>
