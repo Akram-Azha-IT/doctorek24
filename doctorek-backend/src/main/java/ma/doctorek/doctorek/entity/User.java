@@ -60,6 +60,9 @@ public class User {
     @Column(name = "keycloak_id", unique = true, length = 36)
     private String keycloakId;
 
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

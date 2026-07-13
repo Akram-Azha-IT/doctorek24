@@ -1,18 +1,61 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  addDocumentsRequis,
   annulerRdv,
   confirmerRdv,
   defineDisponibilite,
   deleteDisponibilite,
+  deleteDocumentRequis,
   getCreneaux,
   getDisponibilites,
+  getDocumentsRequis,
   getPatientsMedecin,
   getRdvsPatient,
   getRdvsMedecin,
+  marquerDocumentFourni,
   prendreRdv,
   reprogrammerRdv,
   terminerRdv,
 } from './api'
+
+export function useDocumentsRequis(rdvId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['documents-requis', rdvId],
+    queryFn: () => getDocumentsRequis(rdvId),
+    enabled: !!rdvId && enabled,
+  })
+}
+
+export function useAddDocumentsRequis(rdvId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (libelles: string[]) => addDocumentsRequis(rdvId, libelles),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['documents-requis', rdvId] })
+    },
+  })
+}
+
+export function useDeleteDocumentRequis(rdvId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (docId: string) => deleteDocumentRequis(rdvId, docId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['documents-requis', rdvId] })
+    },
+  })
+}
+
+export function useMarquerDocumentFourni(rdvId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ docId, fourni }: { docId: string; fourni: boolean }) =>
+      marquerDocumentFourni(rdvId, docId, fourni),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['documents-requis', rdvId] })
+    },
+  })
+}
 
 export function useCreneaux(medecinId: string, date: string) {
   return useQuery({
@@ -104,6 +147,7 @@ export function useReprogrammerRdv(patientId: string) {
       reprogrammerRdv(id, date, heure),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rdvs', patientId] })
+      qc.invalidateQueries({ queryKey: ['creneaux'] })
     },
   })
 }
@@ -125,12 +169,8 @@ export function usePatientsMedecin(
 export function useDefineDisponibilite(medecinId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: {
-      jourSemaine: string
-      heureDebut: string
-      heureFin: string
-      dureeConsultation: number
-    }) => defineDisponibilite(medecinId, payload),
+    mutationFn: (payload: Parameters<typeof defineDisponibilite>[1]) =>
+      defineDisponibilite(medecinId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['disponibilites', medecinId] })
     },

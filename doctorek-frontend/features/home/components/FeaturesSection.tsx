@@ -16,7 +16,7 @@ export function FeaturesSection() {
 
       <div className="flex flex-col lg:flex-row gap-5">
 
-        <Link href="/login" className="group lg:w-[34%]">
+        <a href="/login" className="group lg:w-[34%]">
           <div className="bg-[#00263C] rounded-2xl shadow-md p-7 h-full relative overflow-hidden group-hover:shadow-xl transition-shadow flex flex-col min-h-[320px]">
             <div className="absolute top-3 right-3 z-20 w-14 h-14 pointer-events-none">
               <Image src="/free-badge.png" alt="100% Gratuit" fill className="object-contain" />
@@ -46,7 +46,7 @@ export function FeaturesSection() {
               </div>
             </div>
           </div>
-        </Link>
+        </a>
 
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2 bg-[#EBF4FF] rounded-2xl shadow-sm p-6 border border-[#D0E8FF] flex items-start gap-5">

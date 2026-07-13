@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api-client'
-import type { Creneau, Disponibilite, PatientSummaryPage, RendezVous } from '@/lib/types'
+import type { Creneau, Disponibilite, DocumentRequis, PatientSummaryPage, RendezVous } from '@/lib/types'
 
 export function getCreneaux(medecinId: string, date: string): Promise<Creneau[]> {
   return apiFetch<Creneau[]>(
@@ -37,13 +37,37 @@ export function annulerRdv(id: string): Promise<RendezVous> {
 
 export function reprogrammerRdv(
   id: string,
-  nouvelleDateRdv: string,
-  nouvelleHeureRdv: string,
+  dateRdv: string,
+  heureRdv: string,
 ): Promise<RendezVous> {
   return apiFetch<RendezVous>(`/api/v1/agenda/rdv/${id}/reprogrammer`, {
     method: 'PUT',
-    body: JSON.stringify({ nouvelleDateRdv, nouvelleHeureRdv }),
+    body: JSON.stringify({ dateRdv, heureRdv }),
   })
+}
+
+export function getDocumentsRequis(rdvId: string): Promise<DocumentRequis[]> {
+  return apiFetch<DocumentRequis[]>(`/api/v1/agenda/rdv/${rdvId}/documents-requis`)
+}
+
+export function addDocumentsRequis(rdvId: string, libelles: string[]): Promise<DocumentRequis[]> {
+  return apiFetch<DocumentRequis[]>(`/api/v1/agenda/rdv/${rdvId}/documents-requis`, {
+    method: 'POST',
+    body: JSON.stringify({ libelles }),
+  })
+}
+
+export function deleteDocumentRequis(rdvId: string, docId: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/agenda/rdv/${rdvId}/documents-requis/${docId}`, {
+    method: 'DELETE',
+  })
+}
+
+export function marquerDocumentFourni(rdvId: string, docId: string, fourni: boolean): Promise<DocumentRequis> {
+  return apiFetch<DocumentRequis>(
+    `/api/v1/agenda/rdv/${rdvId}/documents-requis/${docId}/fournir?fourni=${fourni}`,
+    { method: 'PUT' },
+  )
 }
 
 export function confirmerRdv(id: string): Promise<RendezVous> {

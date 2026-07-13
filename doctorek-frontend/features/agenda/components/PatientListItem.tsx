@@ -10,10 +10,10 @@ const STATUT_LABELS: Record<StatutRdv, string> = {
 }
 
 const STATUT_COLORS: Record<StatutRdv, string> = {
-  EN_ATTENTE: 'bg-yellow-100 text-yellow-700',
-  CONFIRME: 'bg-emerald-100 text-emerald-700',
-  ANNULE: 'bg-red-100 text-red-600',
-  TERMINE: 'bg-zinc-100 text-zinc-500',
+  EN_ATTENTE: 'bg-[#FFF8E6] text-[#B7791F]',
+  CONFIRME: 'bg-[#E6F8F0] text-[#1B7A4E]',
+  ANNULE: 'bg-[#FFDEDE] text-[#B4232A]',
+  TERMINE: 'bg-[#F0F2F5] text-[#6B7A99]',
 }
 
 function hslFromName(firstName: string, lastName: string): string {
@@ -23,7 +23,7 @@ function hslFromName(firstName: string, lastName: string): string {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)
   }
   const h = ((hash % 360) + 360) % 360
-  return `hsl(${h}, 60%, 50%)`
+  return `hsl(${h} 55% 45%)`
 }
 
 function formatDateShortFR(dateStr: string): string {
@@ -50,36 +50,38 @@ export function PatientListItem({ patient, onClick }: PatientListItemProps) {
       <button
         type="button"
         onClick={onClick}
-        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-zinc-50 transition-colors text-left"
+        className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-[#FAFBFC] focus-visible:bg-[#FAFBFC] focus-visible:outline-none"
       >
         <span
-          className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
           style={{ backgroundColor: color }}
           aria-hidden
         >
           {initials}
         </span>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-zinc-900 truncate">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-[#010C2D]">
             {patient.firstName} {patient.lastName}
           </p>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="mt-0.5 text-xs text-[#A0AEC0]">
             Dernier RDV : {formatDateShortFR(patient.dernierRdvDate)}
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex shrink-0 items-center gap-2.5">
           {patient.hasFutureRdv && (
-            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
+            <span className="hidden rounded-full bg-[#EBF4FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#007DFF] sm:inline-flex">
               RDV à venir
             </span>
           )}
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUT_COLORS[patient.dernierRdvStatut]}`}>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUT_COLORS[patient.dernierRdvStatut]}`}
+          >
             {STATUT_LABELS[patient.dernierRdvStatut]}
           </span>
           <svg
-            className="h-4 w-4 text-zinc-300"
+            className="h-4 w-4 text-[#C4CFDD]"
             fill="none"
             stroke="currentColor"
             strokeWidth={2}

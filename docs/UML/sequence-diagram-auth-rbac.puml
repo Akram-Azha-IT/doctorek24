@@ -1,0 +1,77 @@
+@startuml Doctorek-AuthRBAC
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam monochrome true
+skinparam sequence {
+    ArrowColor #000000
+    LifeLineBorderColor #000000
+    LifeLineBackgroundColor #FFFFFF
+    ParticipantBorderColor #000000
+    ParticipantBackgroundColor #FFFFFF
+    ParticipantFontName Arial
+    ParticipantFontSize 11
+    ActorBackgroundColor #FFFFFF
+    ActorBorderColor #000000
+    BoxBorderColor #000000
+    BoxFontColor #000000
+}
+skinparam title {
+    FontSize 16
+    FontStyle bold
+}
+
+title Doctorek - Flux d'authentification et d'autorisation par role
+
+actor "Utilisateur\n(Patient / Medecin / Admin)" as User
+
+box "Frontend (Next.js)"
+  participant "Interface" as UI
+  participant "Auth.js (NextAuth)" as Auth
+end box
+
+participant "Keycloak\n(OAuth 2.0 / OIDC)" as KC
+
+box "Backend (Spring Boot)"
+  participant "SecurityConfig" as SecConf
+  participant "JwtAuthConverter" as Conv
+  participant "Controller\n(@PreAuthorize)" as Ctrl
+end box
+
+== Authentification (Authorization Code + PKCE) ==
+
+User -> UI : Cliquer "Connexion"
+UI -> KC : Redirection vers le formulaire Keycloak (PKCE)
+User -> KC : Saisir identifiants (jamais vus par le frontend)
+KC --> UI : Authorization code
+UI -> KC : Echange code + PKCE
+KC --> UI : JWT signe (claim realm_access.roles)
+UI -> SecConf : GET /api/v1/auth/me (Bearer token)
+SecConf --> UI : Profil utilisateur local
+UI -> UI : Session active (role, access token)
+
+== Requete protegee ==
+
+User -> UI : Action sur une ressource\n(ex. prendre un RDV)
+UI -> SecConf : Requete HTTP\nAuthorization: Bearer <JWT>
+SecConf -> SecConf : Valider signature et expiration\n(cles JWK de Keycloak)
+
+alt Token invalide ou expire
+    SecConf --> UI : 401 Unauthorized
+else Token valide
+    SecConf -> Conv : convert(jwt)
+    Conv -> Conv : Extraire realm_access.roles\nConvertir en GrantedAuthority\n(prefixe ROLE_)
+    Conv --> SecConf : Authentication (roles)
+    SecConf -> Ctrl : Requete autorisee\navec roles attaches
+
+    alt Role requis absent
+        Ctrl --> UI : 403 Forbidden
+    else Role requis present
+        Ctrl -> Ctrl : Executer la logique metier
+        Ctrl --> UI : 200 OK
+    end
+end
+
+UI --> User : Resultat affiche
+
+@enduml

@@ -1,0 +1,91 @@
+@startuml Doctorek-UseCaseDiagram
+
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    ArrowColor #000000
+    FontColor #000000
+    FontSize 12
+}
+skinparam nodesep 18
+skinparam ranksep 45
+
+title Doctorek — Diagramme de cas d'utilisation
+
+actor Patient
+actor "Médecin" as Medecin
+actor Administrateur
+
+rectangle Doctorek {
+  usecase "S'authentifier" as UC0
+
+  ' --- Commun ---
+  usecase "Gérer son profil" as UC1
+  usecase "Messagerie" as UC2
+
+  ' --- Patient ---
+  usecase "Rechercher médecin" as UC3
+  usecase "Prendre RDV" as UC4
+  usecase "Consulter créneaux" as UC5
+  usecase "Remplir questionnaire" as UC6
+  usecase "Annuler RDV" as UC7
+  usecase "Gérer sa carte médicale" as UC8
+  usecase "Consulter ses ordonnances\net documents" as UC9
+
+  ' --- Médecin ---
+  usecase "Gérer son agenda" as UC10
+  usecase "Gérer les RDV" as UC11
+  usecase "Consulter ses patients" as UC12
+  usecase "Rédiger une ordonnance" as UC13
+  usecase "Ajouter un document médical" as UC14
+
+  ' --- Administrateur ---
+  usecase "Gérer les comptes" as UC15
+  usecase "Consulter les statistiques" as UC16
+  usecase "Superviser les cartes médicales" as UC17
+
+  ' include fonctionnels
+  UC4 ..> UC5 : <<include>>
+  UC4 ..> UC6 : <<include>>
+
+  ' include authentification (points d'entrée par rôle)
+  UC4 ..> UC0 : <<include>>
+  UC8 ..> UC0 : <<include>>
+  UC2 ..> UC0 : <<include>>
+  UC10 ..> UC0 : <<include>>
+  UC11 ..> UC0 : <<include>>
+  UC13 ..> UC0 : <<include>>
+  UC15 ..> UC0 : <<include>>
+  UC16 ..> UC0 : <<include>>
+}
+
+' --- Patient ---
+Patient --> UC1
+Patient --> UC2
+Patient --> UC3
+Patient --> UC4
+Patient --> UC7
+Patient --> UC8
+Patient --> UC9
+
+' --- Médecin ---
+Medecin --> UC1
+Medecin --> UC2
+Medecin --> UC10
+Medecin --> UC11
+Medecin --> UC12
+Medecin --> UC13
+Medecin --> UC14
+
+' --- Administrateur ---
+Administrateur --> UC15
+Administrateur --> UC16
+Administrateur --> UC17
+
+@enduml

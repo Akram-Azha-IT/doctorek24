@@ -7,7 +7,10 @@ import {
   Search, Settings, ChevronDown, MessageCircle,
 } from 'lucide-react'
 import { NotificationPanel } from '@/features/notifications/components/NotificationPanel'
-import { getSession, saveSession, clearSession } from '@/lib/session'
+import { NotificationToasts } from '@/features/notifications/components/NotificationToasts'
+import { getSession, saveSession } from '@/lib/session'
+import { useRoleGuard } from '@/lib/useRoleGuard'
+import { logout } from '@/lib/auth'
 import { apiFetch } from '@/lib/api-client'
 import Logo from '@/components/Logo'
 import { useUnreadCount } from '@/features/messaging/useUnreadCount'
@@ -25,6 +28,8 @@ function getInitials(firstName: string, lastName: string): string {
 }
 
 export default function MedecinLayout({ children }: { children: React.ReactNode }) {
+  useRoleGuard('MEDECIN')
+
   const pathname = usePathname()
   const router = useRouter()
   const [firstName, setFirstName] = useState('')
@@ -55,13 +60,21 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     const session = getSession()
     if (!session) return
-    if (session.firstName || session.lastName) return
-    apiFetch<{ firstName: string; lastName: string }>(`/api/v1/annuaire/medecins/${session.id}`)
+    // Name + photo persist in the backend (medecin_details); the session-only enrichment is
+    // wiped on logout, so reload from the profile when either is missing and re-seed the session.
+    if (session.firstName && session.photoUrl) return
+    apiFetch<{ firstName: string; lastName: string; photoUrl?: string | null }>(`/api/v1/annuaire/medecins/${session.id}`)
       .then((profile) => {
-        const updated = { ...session, firstName: profile.firstName, lastName: profile.lastName }
+        const updated = {
+          ...session,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          photoUrl: profile.photoUrl ?? session.photoUrl ?? null,
+        }
         saveSession(updated)
         setFirstName(profile.firstName ?? '')
         setLastName(profile.lastName ?? '')
+        if (profile.photoUrl) setPhotoUrl(profile.photoUrl)
       })
       .catch(() => {})
   }, [])
@@ -103,8 +116,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   }, [handleMouseMove, handleMouseUp])
 
   function handleLogout() {
-    clearSession()
-    router.push('/login')
+    void logout()
   }
 
   function isActive(item: (typeof NAV_ITEMS)[number]): boolean {
@@ -329,6 +341,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
           {/* Right actions */}
           <div className="flex items-center gap-2 xl:gap-3 shrink-0">
             <NotificationPanel />
+            <NotificationToasts />
             {/* Settings — desktop only */}
             <button
               aria-label="Paramètres du profil"

@@ -27,6 +27,9 @@ public class CacheConfig implements CachingConfigurer {
     @Value("${spring.cache.redis.ttl-minutes.medecins:10}")
     private long medecinsTtlMinutes;
 
+    @Value("${spring.cache.redis.ttl-minutes.medecins-search:3}")
+    private long medecinsSearchTtlMinutes;
+
     @Value("${spring.cache.redis.ttl-minutes.creneaux:5}")
     private long creneauxTtlMinutes;
 
@@ -43,6 +46,7 @@ public class CacheConfig implements CachingConfigurer {
 
         var perCache = Map.of(
                 "medecins", defaults.entryTtl(Duration.ofMinutes(medecinsTtlMinutes)),
+                "medecins-search", defaults.entryTtl(Duration.ofMinutes(medecinsSearchTtlMinutes)),
                 "creneaux", defaults.entryTtl(Duration.ofMinutes(creneauxTtlMinutes))
         );
 

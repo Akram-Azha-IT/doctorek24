@@ -16,14 +16,14 @@ let refreshingPromise: Promise<boolean> | null = null
 
 function buildHeaders(init?: RequestInit): Record<string, string> {
   const session = typeof window !== 'undefined' ? getSession() : null
-  const authHeader = session?.accessToken
-    ? { Authorization: `Bearer ${session.accessToken}` }
-    : {}
-  return {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...authHeader,
     ...(init?.headers as Record<string, string> | undefined),
   }
+  if (session?.accessToken) {
+    headers.Authorization = `Bearer ${session.accessToken}`
+  }
+  return headers
 }
 
 async function doFetch(path: string, init?: RequestInit): Promise<Response> {

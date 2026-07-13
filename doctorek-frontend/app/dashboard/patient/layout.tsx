@@ -4,10 +4,13 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Search, CreditCard,
-  LogOut, Settings, Heart, ChevronRight, FileText, MessageCircle,
+  LogOut, Settings, ChevronRight, FileText, MessageCircle,
 } from 'lucide-react'
 import { NotificationPanel } from '@/features/notifications/components/NotificationPanel'
-import { getSession, saveSession, clearSession } from '@/lib/session'
+import { NotificationToasts } from '@/features/notifications/components/NotificationToasts'
+import { getSession, saveSession } from '@/lib/session'
+import { useRoleGuard } from '@/lib/useRoleGuard'
+import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
 import { useCarteByPatient } from '@/features/carte/hooks'
 import { usePatientProfile } from '@/features/patient/hooks'
@@ -18,11 +21,10 @@ const NAV_ITEMS = [
   { href: '/dashboard/patient/rdvs', label: 'Mes Rendez-vous', icon: Calendar },
   { href: '/dashboard/patient/messages', label: 'Messages', icon: MessageCircle },
   { href: '/recherche', label: 'Trouver un médecin', icon: Search },
-  { href: '/dashboard/patient/carte', label: 'Carte Médicale', icon: CreditCard },
 ]
 
 const HEALTH_ITEMS = [
-  { href: '/dashboard/patient/carte', label: 'Carte Médicale', icon: Heart },
+  { href: '/dashboard/patient/carte', label: 'Carte Médicale', icon: CreditCard },
   { href: '/dashboard/patient/dossier', label: 'Mes Documents', icon: FileText },
 ]
 
@@ -33,6 +35,8 @@ function getInitials(firstName: string, lastName: string): string {
 }
 
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
+  useRoleGuard('PATIENT')
+
   const pathname = usePathname()
   const router = useRouter()
   const [firstName, setFirstName] = useState('')
@@ -47,13 +51,20 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   const startWidthRef = useRef(248)
 
   useEffect(() => {
-    const session = getSession()
-    if (session) {
-      setFirstName(session.firstName ?? '')
-      setLastName(session.lastName ?? '')
-      setPatientId(session.id ?? '')
-      setPhotoUrl(session.photoUrl ?? null)
+    // Re-read on 'session-updated' (not a one-shot read): on a fresh login SessionBridge
+    // populates the cache after mount, and name/photo are backfilled later.
+    function syncFromSession() {
+      const session = getSession()
+      if (session) {
+        setFirstName(session.firstName ?? '')
+        setLastName(session.lastName ?? '')
+        setPatientId(session.id ?? '')
+        setPhotoUrl(session.photoUrl ?? null)
+      }
     }
+    syncFromSession()
+    window.addEventListener('session-updated', syncFromSession)
+    return () => window.removeEventListener('session-updated', syncFromSession)
   }, [])
 
   const { data: carte } = useCarteByPatient(patientId || null)
@@ -115,8 +126,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   }, [handleMouseMove, handleMouseUp])
 
   function handleLogout() {
-    clearSession()
-    router.push('/login')
+    void logout()
   }
 
   function isActive(item: (typeof NAV_ITEMS)[number]): boolean {
@@ -318,6 +328,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
           {/* Right controls */}
           <div className="flex items-center gap-2 lg:gap-3 shrink-0">
             <NotificationPanel />
+            <NotificationToasts />
             {/* Settings — desktop only */}
             <button
               aria-label="Paramètres"

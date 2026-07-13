@@ -9,6 +9,7 @@ import ma.doctorek.doctorek.service.DossierService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -74,10 +75,12 @@ public class DossierController {
 
     @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @GetMapping("/ordonnances/{ordonnanceId}/fichier")
-    public ResponseEntity<Resource> downloadOrdonnanceFichier(@PathVariable UUID ordonnanceId) {
+    public ResponseEntity<Resource> downloadOrdonnanceFichier(@PathVariable UUID ordonnanceId) throws Exception {
         var result = dossierService.downloadOrdonnanceFichier(ordonnanceId);
+        MediaType contentType = MediaTypeFactory.getMediaType(result.nom()).orElse(MediaType.APPLICATION_OCTET_STREAM);
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + result.nom() + "\"")
+            .contentType(contentType)
             .body(result.resource());
     }
 
@@ -109,11 +112,12 @@ public class DossierController {
     @GetMapping("/patients/{patientId}/documents/{id}/download")
     public ResponseEntity<Resource> downloadDocument(
             @PathVariable UUID patientId,
-            @PathVariable UUID id) {
+            @PathVariable UUID id) throws Exception {
         var result = dossierService.downloadDocument(id);
+        MediaType contentType = MediaTypeFactory.getMediaType(result.nom()).orElse(MediaType.APPLICATION_OCTET_STREAM);
         return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.nom() + "\"")
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + result.nom() + "\"")
+            .contentType(contentType)
             .body(result.resource());
     }
 }

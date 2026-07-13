@@ -1,18 +1,17 @@
 package ma.doctorek.doctorek.web;
 
 import jakarta.validation.Valid;
-import ma.doctorek.doctorek.dto.LoginRequest;
-import ma.doctorek.doctorek.dto.LoginResponse;
+import ma.doctorek.doctorek.dto.CurrentUserResponse;
 import ma.doctorek.doctorek.dto.MedecinRegisteredResponse;
 import ma.doctorek.doctorek.dto.PatientRegisteredResponse;
-import ma.doctorek.doctorek.dto.RefreshRequest;
-import ma.doctorek.doctorek.dto.RefreshResponse;
 import ma.doctorek.doctorek.dto.RegisterMedecinRequest;
 import ma.doctorek.doctorek.dto.RegisterPatientRequest;
 import ma.doctorek.doctorek.dto.VerifyEmailRequest;
 import ma.doctorek.doctorek.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -46,17 +45,15 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
-        LoginResponse response = authService.login(request);
-        return ResponseEntity.ok(ApiResponse.ok(response));
-    }
-
-    @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<RefreshResponse>> refresh(
-            @Valid @RequestBody RefreshRequest request) {
-        RefreshResponse response = authService.refresh(request);
+    /**
+     * Resolves the local app account (DB id, role, names) for the caller's Keycloak JWT.
+     * The frontend's session.user.id is the Keycloak subject — every other endpoint
+     * keys off the local DB id, so the SPA calls this once after login to bridge the two.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<CurrentUserResponse>> me(JwtAuthenticationToken authentication) {
+        Jwt jwt = (Jwt) authentication.getCredentials();
+        CurrentUserResponse response = authService.getCurrentUser(jwt);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

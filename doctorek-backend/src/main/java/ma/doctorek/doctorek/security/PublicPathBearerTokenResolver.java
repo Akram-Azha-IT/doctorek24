@@ -22,8 +22,6 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         "/api/v1/auth/register/patient",
         "/api/v1/auth/register/medecin",
         "/api/v1/auth/verify-email",
-        "/api/v1/auth/login",
-        "/api/v1/auth/refresh",
         "/actuator/health",
         "/swagger-ui",
         "/api-docs"
@@ -34,7 +32,9 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         Pattern.compile("^/api/v1/annuaire/medecins(/[^/]+)?/?$"),
         Pattern.compile("^/api/v1/annuaire/medecins/nearby/?$"),
         // GET /api/v1/agenda/medecins/{id}/creneaux (booking flow only)
-        Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$")
+        Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$"),
+        // GET /api/v1/carte/ref/{cardRef} (emergency QR scan)
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/?$")
     );
 
     private final DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();

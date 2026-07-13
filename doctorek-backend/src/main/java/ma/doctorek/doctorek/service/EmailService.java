@@ -103,6 +103,58 @@ public class EmailService {
     }
 
     @Async
+    public void sendRdvConfirmeParMedecin(String toEmail, RendezVousEntity rdv, String medecinNom) {
+        if (!shouldSend(toEmail)) return;
+
+        String subject = "Votre rendez-vous est confirmé — Doctorek";
+        String body = """
+                Bonjour,
+
+                %s a confirmé votre rendez-vous.
+
+                Date : %s
+                Heure : %s
+                Durée : %d minutes
+
+                Référence : %s
+
+                À très bientôt,
+                — L'équipe Doctorek
+                """.formatted(
+                medecinNom,
+                DATE_FR.format(rdv.getDateRdv()),
+                HOUR_FR.format(rdv.getHeureRdv()),
+                rdv.getDuree(),
+                rdv.getId());
+
+        send(toEmail, subject, body, "rdv-confirme", rdv.getId().toString());
+    }
+
+    @Async
+    public void sendRappelRdv30Min(String toEmail, RendezVousEntity rdv, String medecinNom) {
+        if (!shouldSend(toEmail)) return;
+
+        String subject = "Rappel : votre rendez-vous dans 30 minutes — Doctorek";
+        String body = """
+                Bonjour,
+
+                Votre consultation avec %s commence dans 30 minutes.
+
+                Heure : %s
+                Durée : %d minutes
+
+                Pensez à apporter les documents demandés par votre médecin.
+
+                — L'équipe Doctorek
+                """.formatted(
+                medecinNom,
+                HOUR_FR.format(rdv.getHeureRdv()),
+                rdv.getDuree());
+
+        send(toEmail, subject, body, "rappel-30min", rdv.getId().toString());
+    }
+
+    @Async
     public void sendRappelRdv(String toEmail, RendezVousEntity rdv, int joursAvant) {
         if (!shouldSend(toEmail)) return;
 

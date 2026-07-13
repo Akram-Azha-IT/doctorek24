@@ -9,6 +9,7 @@ import ma.doctorek.doctorek.entity.User;
 import ma.doctorek.doctorek.exception.MedecinNotFoundException;
 import ma.doctorek.doctorek.repository.MedecinDetailRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,22 +44,24 @@ public class AnnuaireService {
             .orElseThrow(() -> new MedecinNotFoundException(id));
     }
 
-    public PagedMedecinsResponse searchMedecins(String specialite, String ville,
+    @Cacheable(value = "medecins-search",
+        key = "#specialite + ':' + #ville + ':' + #nom + ':' + #disponibilite + ':' + #page + ':' + #size")
+    public PagedMedecinsResponse searchMedecins(String specialite, String ville, String nom,
                                                  String disponibilite, int page, int size) {
         PageRequest pageable = PageRequest.of(page - 1, size);
         Page<MedecinDetailEntity> result;
 
         if ("today".equals(disponibilite)) {
             List<String> days = List.of(LocalDate.now().getDayOfWeek().name());
-            result = medecinRepository.searchActiveMedecinsWithDispoPaged(specialite, ville, days, pageable);
+            result = medecinRepository.searchActiveMedecinsWithDispoPaged(specialite, ville, nom, days, pageable);
         } else if ("week".equals(disponibilite)) {
             List<String> days = IntStream.range(0, 7)
                 .mapToObj(i -> LocalDate.now().plusDays(i).getDayOfWeek().name())
                 .distinct()
                 .toList();
-            result = medecinRepository.searchActiveMedecinsWithDispoPaged(specialite, ville, days, pageable);
+            result = medecinRepository.searchActiveMedecinsWithDispoPaged(specialite, ville, nom, days, pageable);
         } else {
-            result = medecinRepository.searchActiveMedecinsPaged(specialite, ville, pageable);
+            result = medecinRepository.searchActiveMedecinsPaged(specialite, ville, nom, pageable);
         }
 
         return new PagedMedecinsResponse(
@@ -90,6 +93,7 @@ public class AnnuaireService {
     }
 
     @Transactional
+    @CacheEvict(value = "medecins", key = "#id")
     public MedecinProfile updateMedecinProfile(UUID id, UpdateMedecinProfileRequest req) {
         MedecinDetailEntity md = medecinRepository.findById(id)
             .orElseThrow(() -> new MedecinNotFoundException(id));
@@ -105,6 +109,7 @@ public class AnnuaireService {
     }
 
     @Transactional
+    @CacheEvict(value = "medecins", key = "#id")
     public MedecinProfile updateMedecinPhoto(UUID id, UpdateMedecinPhotoRequest req) {
         MedecinDetailEntity md = medecinRepository.findById(id)
             .orElseThrow(() -> new MedecinNotFoundException(id));

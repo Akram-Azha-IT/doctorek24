@@ -6,9 +6,9 @@ import type { MedecinProfile } from '@/lib/types'
 import { MedecinAvatar } from './MedecinAvatar'
 
 const SECTEUR_LABELS: Record<1 | 2 | 3, string> = {
-  1: 'Secteur 1 — Honoraires conventionnés',
-  2: 'Secteur 2 — Honoraires libres',
-  3: 'Secteur 3 — Non conventionné',
+  1: 'Secteur 1 : Honoraires conventionnés',
+  2: 'Secteur 2 : Honoraires libres',
+  3: 'Secteur 3 : Non conventionné',
 }
 
 const SECTEUR_REMB: Record<1 | 2 | 3, string> = {
@@ -161,7 +161,7 @@ export function MedecinProfileCard({ medecin }: Props) {
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                       <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M15 9l-6 6M9 9l6 6"/>
                     </svg>
-                    Complet — n'accepte plus de nouveaux patients
+                    Complet : n'accepte plus de nouveaux patients
                   </span>
                 )}
                 {medecin.consultationVideo && (

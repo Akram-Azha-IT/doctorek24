@@ -34,12 +34,19 @@ const LEGAL = [
 ]
 
 function LinkItem({ href, children }: { href: string; children: React.ReactNode }) {
+  const className =
+    'text-[#8BAFC8] text-[13px] leading-relaxed hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[#007DFF]'
+  // /login is a route handler that 307s to Keycloak — plain <a> avoids a doomed RSC fetch.
+  if (href.startsWith('/login')) {
+    return (
+      <li>
+        <a href={href} className={className}>{children}</a>
+      </li>
+    )
+  }
   return (
     <li>
-      <Link
-        href={href}
-        className="text-[#8BAFC8] text-[13px] leading-relaxed hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[#007DFF]"
-      >
+      <Link href={href} className={className}>
         {children}
       </Link>
     </li>

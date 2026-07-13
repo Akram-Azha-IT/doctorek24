@@ -41,14 +41,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/register/patient").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/register/medecin").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/verify-email").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
                 // public annuaire (read-only)
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins/nearby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins/*").permitAll()
                 // public creneaux (booking flow)
                 .requestMatchers(HttpMethod.GET, "/api/v1/agenda/medecins/*/creneaux").permitAll()
+                // public emergency QR scan — exposes only the carte fields, never profile/rdv/dossier
+                .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*").permitAll()
                 // websocket handshake (JWT auth via STOMP CONNECT interceptor)
                 .requestMatchers("/ws/**").permitAll()
                 // infrastructure

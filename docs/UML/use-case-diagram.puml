@@ -1,0 +1,108 @@
+@startuml Doctorek-UseCaseDiagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam monochrome true
+skinparam usecase {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    ArrowColor #000000
+    FontColor #000000
+    FontName Arial
+    FontSize 12
+}
+skinparam actor {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    FontName Arial
+    FontSize 12
+}
+skinparam title {
+    FontSize 16
+    FontStyle bold
+}
+
+left to right direction
+
+actor "Patient" as Patient
+actor "Médecin" as Medecin
+actor "Administrateur" as Admin
+
+rectangle "Plateforme Doctorek" {
+
+  package "Authentification" {
+    usecase "S'inscrire (Patient)" as UC1
+    usecase "S'inscrire (Médecin)" as UC2
+    usecase "Se connecter" as UC3
+    usecase "Gérer son profil" as UC4
+  }
+
+  package "Annuaire" {
+    usecase "Rechercher un médecin\n(spécialité, ville, proximité)" as UC5
+    usecase "Consulter le profil\npublic d'un médecin" as UC6
+    usecase "Compléter le profil\n(spécialité, langues, tarifs)" as UC7
+  }
+
+  package "Agenda & Rendez-vous" {
+    usecase "Définir ses disponibilités" as UC8
+    usecase "Consulter les créneaux\ndisponibles" as UC9
+    usecase "Prendre un rendez-vous" as UC10
+    usecase "Remplir le questionnaire\npré-consultation" as UC11
+    usecase "Annuler un rendez-vous" as UC12
+    usecase "Consulter son agenda /\nliste de RDV" as UC13
+    usecase "Recevoir des rappels\nautomatiques" as UC14
+  }
+
+  package "Carte Médicale Digitale" {
+    usecase "Émettre une ordonnance" as UC15
+    usecase "Consulter ses ordonnances\net documents" as UC16
+    usecase "Accéder à sa carte\nmédicale digitale\n(groupe sanguin, allergies,\nantécédents)" as UC17
+    usecase "Consulter l'historique\ndes consultations" as UC18
+  }
+
+  package "Messagerie" {
+    usecase "Échanger des messages\nen temps réel" as UC19
+  }
+
+  package "Administration" {
+    usecase "Superviser les comptes\net audits" as UC20
+  }
+}
+
+' ===== Relations Patient =====
+Patient --> UC1
+Patient --> UC3
+Patient --> UC4
+Patient --> UC5
+Patient --> UC6
+Patient --> UC9
+Patient --> UC10
+Patient --> UC12
+Patient --> UC13
+Patient --> UC14
+Patient --> UC16
+Patient --> UC17
+Patient --> UC18
+Patient --> UC19
+
+UC10 ..> UC11 : <<include>>
+UC10 ..> UC9 : <<include>>
+
+' ===== Relations Médecin =====
+Medecin --> UC2
+Medecin --> UC3
+Medecin --> UC4
+Medecin --> UC7
+Medecin --> UC8
+Medecin --> UC12
+Medecin --> UC13
+Medecin --> UC15
+Medecin --> UC18
+Medecin --> UC19
+
+' ===== Relations Admin =====
+Admin --> UC3
+Admin --> UC20
+
+@enduml

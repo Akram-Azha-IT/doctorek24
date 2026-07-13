@@ -1,0 +1,38 @@
+sequenceDiagram
+    title Figure 7 : Diagramme de séquences - Annuaire (recherche médecin)
+    autonumber
+    actor P as Patient
+    participant UI as Frontend
+    participant Ann as Annuaire
+    participant Cache as Redis
+    participant DB as PostgreSQL
+
+    P->>UI: Rechercher (spécialité, ville)
+    UI->>Ann: GET /annuaire/medecins?specialite=&ville=
+    Ann->>Cache: GET medecins-search:{specialite,ville,page}
+
+    alt Cache hit
+        Cache-->>Ann: Résultat en cache
+    else Cache miss
+        Ann->>DB: SELECT medecins
+        DB-->>Ann: Liste médecins
+        Ann->>Cache: SET medecins-search (TTL 3 min)
+    end
+
+    Ann-->>UI: 200 OK
+    UI-->>P: Affiche résultats
+
+    P->>UI: Ouvrir profil médecin
+    UI->>Ann: GET /annuaire/medecins/{id}
+    Ann->>Cache: GET medecins:{id}
+
+    alt Cache hit
+        Cache-->>Ann: Profil en cache
+    else Cache miss
+        Ann->>DB: SELECT medecin
+        DB-->>Ann: Profil complet
+        Ann->>Cache: SET medecins:{id} (TTL 10 min)
+    end
+
+    Ann-->>UI: 200 OK
+    UI-->>P: Affiche profil

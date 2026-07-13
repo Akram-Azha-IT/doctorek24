@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { CalendarClock, ChevronDown, ChevronUp } from 'lucide-react'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { MedecinAvatar } from '@/features/annuaire/components/MedecinAvatar'
-import { useCreneaux } from '@/features/agenda/hooks'
+import { useCreneaux, useDocumentsRequis } from '@/features/agenda/hooks'
 import type { QuestionnairePreConsult, RendezVous, StatutRdv } from '@/lib/types'
+import { toLocalISODate } from '@/lib/date'
+import { DocumentsRequisSection } from './DocumentsRequisSection'
 
-const DUREE_LABELS: Record<string, string> = {
-  moins_7j: 'Moins de 7 jours',
-  '1_4sem': '1 à 4 semaines',
-  plus_1mois: "Plus d'un mois",
+const TYPE_CONSULTATION_LABELS: Record<string, string> = {
+  CONSULTATION: 'Consultation',
+  URGENCE: 'Urgence',
 }
 
 const RESCHEDULABLE: StatutRdv[] = ['EN_ATTENTE', 'CONFIRME']
@@ -47,7 +49,7 @@ function formatDateParts(dateStr: string): { day: string; month: string } {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+  return toLocalISODate(new Date())
 }
 
 interface RescheduleFormProps {
@@ -74,14 +76,17 @@ function RescheduleForm({
   const available = creneaux?.filter((c) => c.disponible && c.debut !== currentHeure) ?? []
 
   return (
-    <div className="border-t border-zinc-100 bg-[#F0F2F5] px-5 py-4 space-y-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-400">
-        Modifier la date / heure
+    <div className="border-t border-zinc-100 bg-[#F0F2F5] px-5 py-4 space-y-4">
+      <p className="text-sm font-bold text-[#010C2D]">
+        Changer la date du rendez-vous
       </p>
 
       <div>
-        <label className="block text-xs text-zinc-500 mb-1.5">Nouvelle date</label>
+        <label htmlFor={`reschedule-date-${medecinId}`} className="block text-sm font-semibold text-[#333333] mb-1.5">
+          1. Choisissez un nouveau jour
+        </label>
         <input
+          id={`reschedule-date-${medecinId}`}
           type="date"
           min={todayISO()}
           value={date}
@@ -89,17 +94,21 @@ function RescheduleForm({
             setDate(e.target.value)
             setHeure('')
           }}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30 focus:border-[#007DFF]"
+          className="w-full sm:w-auto rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30 focus:border-[#007DFF]"
         />
       </div>
 
       {date && (
         <div>
-          <label className="block text-xs text-zinc-500 mb-1.5">Créneau disponible</label>
+          <p className="text-sm font-semibold text-[#333333] mb-1.5">
+            2. Choisissez une heure
+          </p>
           {isLoading ? (
-            <p className="text-xs text-zinc-400">Chargement…</p>
+            <p className="text-sm text-zinc-400">Chargement des heures…</p>
           ) : available.length === 0 ? (
-            <p className="text-xs text-zinc-400">Aucun créneau disponible ce jour</p>
+            <p className="text-sm text-zinc-500">
+              Ce jour est complet. Essayez un autre jour.
+            </p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {available.map((c) => (
@@ -107,7 +116,7 @@ function RescheduleForm({
                   key={c.debut}
                   type="button"
                   onClick={() => setHeure(c.debut)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`min-h-[44px] rounded-xl border px-4 py-2 text-sm font-semibold transition-colors ${
                     heure === c.debut
                       ? 'border-[#007DFF] bg-[#007DFF] text-white'
                       : 'border-zinc-200 bg-white text-zinc-700 hover:border-[#007DFF]/40 hover:text-[#007DFF]'
@@ -121,20 +130,20 @@ function RescheduleForm({
         </div>
       )}
 
-      <div className="flex gap-2 pt-1">
+      <div className="flex flex-col sm:flex-row gap-2 pt-1">
         <button
           type="button"
           disabled={!date || !heure || isPending}
           onClick={() => onSubmit(date, heure)}
-          className="rounded-lg bg-[#007DFF] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#00263C] disabled:opacity-40"
+          className="min-h-[44px] rounded-xl bg-[#007DFF] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00263C] disabled:opacity-40"
         >
-          {isPending ? 'Modification…' : 'Confirmer le changement'}
+          {isPending ? 'Un instant…' : 'Valider la nouvelle date'}
         </button>
         <button
           type="button"
           disabled={isPending}
           onClick={onCancel}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:opacity-40"
+          className="min-h-[44px] rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 disabled:opacity-40"
         >
           Annuler
         </button>
@@ -146,26 +155,17 @@ function RescheduleForm({
 function QuestionnaireDetails({ questionnaire: q }: { questionnaire: QuestionnairePreConsult }) {
   return (
     <div className="border-t border-zinc-100 bg-[#F0F2F5] px-5 py-4">
-      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-zinc-400 mb-3">
-        Questionnaire pré-consultation
+      <p className="text-sm font-bold text-[#010C2D] mb-3">
+        Vos réponses avant la consultation
       </p>
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-        <Row label="Motif" value={q.motif} />
-        <Row label="Premier RDV" value={q.premierConsultation ? 'Oui' : 'Non'} />
-        {q.dureeSymptoomes && (
-          <Row
-            label="Durée symptômes"
-            value={DUREE_LABELS[q.dureeSymptoomes] ?? q.dureeSymptoomes}
-          />
-        )}
-        {q.intensiteDouleur != null && (
-          <Row label="Intensité gêne" value={`${q.intensiteDouleur} / 5`} />
-        )}
-        {q.notesComplementaires && (
-          <div className="sm:col-span-2">
-            <Row label="Notes" value={q.notesComplementaires} />
-          </div>
-        )}
+        <Row
+          label="Type"
+          value={TYPE_CONSULTATION_LABELS[q.typeConsultation] ?? q.typeConsultation}
+        />
+        <div className="sm:col-span-2">
+          <Row label="Message" value={q.message} />
+        </div>
       </dl>
     </div>
   )
@@ -195,8 +195,13 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
   const config = STATUT_CONFIG[rdv.statut]
   const { day, month } = formatDateParts(rdv.dateRdv)
   const canReschedule = RESCHEDULABLE.includes(rdv.statut)
-  const motif = q?.motif ?? rdv.motif
+  const motif = q?.message ?? rdv.motif
   const isPast = rdv.statut === 'ANNULE' || rdv.statut === 'TERMINE'
+
+  // Les documents demandés par le médecin sont affichés d'office (pas cachés
+  // derrière un clic) : le patient doit les voir sans avoir à chercher.
+  const { data: documentsRequis = [] } = useDocumentsRequis(rdv.id, canReschedule)
+  const hasDocuments = documentsRequis.length > 0
 
   const medecinFirstName = medecin?.firstName ?? ''
   const medecinLastName = medecin?.lastName ?? ''
@@ -277,9 +282,9 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
               </div>
             </div>
 
-            {/* Footer actions */}
+            {/* Footer actions — gros boutons clairs, cibles tactiles ≥40px */}
             {hasFooter && (
-              <div className="flex items-center gap-3 px-4 py-2 border-t border-zinc-50 bg-zinc-50/60">
+              <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-t border-zinc-50 bg-zinc-50/60">
                 {q && (
                   <button
                     type="button"
@@ -287,14 +292,12 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
                       setShowQuestionnaire((v) => !v)
                       setShowReschedule(false)
                     }}
-                    className="text-[11px] font-semibold text-zinc-400 hover:text-zinc-600 transition-colors"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-[#465058] transition-colors hover:bg-zinc-100"
                     aria-expanded={showQuestionnaire}
                   >
-                    {showQuestionnaire ? '↑ Masquer' : '↓ Détails'}
+                    {showQuestionnaire ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    {showQuestionnaire ? 'Masquer mes réponses' : 'Voir mes réponses'}
                   </button>
-                )}
-                {q && canReschedule && (
-                  <span className="h-3 w-px bg-zinc-200" />
                 )}
                 {canReschedule && (
                   <button
@@ -304,9 +307,10 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
                       setShowQuestionnaire(false)
                     }}
                     disabled={isReprogramming}
-                    className="text-[11px] font-semibold text-[#007DFF] hover:text-[#00263C] transition-colors disabled:opacity-40"
+                    className="flex items-center gap-1.5 rounded-lg bg-[#EBF4FF] px-3 py-2 text-xs font-semibold text-[#007DFF] transition-colors hover:bg-[#DFEFFE] disabled:opacity-40"
                   >
-                    Reprogrammer →
+                    <CalendarClock className="h-3.5 w-3.5" />
+                    Changer la date
                   </button>
                 )}
               </div>
@@ -330,6 +334,13 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
         )}
 
         {q && showQuestionnaire && <QuestionnaireDetails questionnaire={q} />}
+
+        {/* Toujours visible quand le médecin a demandé des documents */}
+        {hasDocuments && (
+          <div className="border-t border-zinc-100 bg-[#FFF8E6]/60 px-5 py-4">
+            <DocumentsRequisSection rdvId={rdv.id} mode="patient" />
+          </div>
+        )}
       </div>
     </li>
   )

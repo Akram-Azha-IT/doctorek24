@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import puppeteer from 'puppeteer'
+import QRCode from 'qrcode'
 import { renderCarteRectoHtml, renderCarteVersoHtml } from '@/features/carte/components/CarteVirtuelleExport'
 
 export async function POST(req: Request) {
@@ -10,8 +11,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Carte data is required' }, { status: 400 })
     }
 
-    const rectoHtml = renderCarteRectoHtml(carte, profile, firstName, lastName)
-    const versoHtml = renderCarteVersoHtml(carte, profile, firstName, lastName)
+    const origin = new URL(req.url).origin
+    const qrUrl = carte.cardRef ? `${origin}/carte/${carte.cardRef}` : undefined
+    const qrDataUrl = qrUrl
+      ? await QRCode.toDataURL(qrUrl, { width: 168, margin: 1, color: { dark: '#010C2D', light: '#FFFFFF' } })
+      : undefined
+
+    const renderOptions = { origin, qrDataUrl }
+    const rectoHtml = renderCarteRectoHtml(carte, profile, firstName, lastName, renderOptions)
+    const versoHtml = renderCarteVersoHtml(carte, profile, firstName, lastName, renderOptions)
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -34,8 +42,8 @@ export async function POST(req: Request) {
             }
             .card-container {
               position: relative;
-              width: 480px;
-              height: 302px;
+              width: 856px;
+              height: 540px;
             }
           </style>
         </head>
@@ -55,18 +63,18 @@ export async function POST(req: Request) {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
     })
-    
+
     const page = await browser.newPage()
-    
+
     // Set a high deviceScaleFactor for retina-quality rendering
-    await page.setViewport({ width: 560, height: 780, deviceScaleFactor: 3 })
-    
+    await page.setViewport({ width: 936, height: 1180, deviceScaleFactor: 2 })
+
     // Set HTML content and wait for network/fonts
     await page.setContent(fullHtml, { waitUntil: 'networkidle0' })
-    
+
     // Capture the screenshot
     const buffer = await page.screenshot({ type: 'png', omitBackground: false })
-    
+
     await browser.close()
 
     // Return the image

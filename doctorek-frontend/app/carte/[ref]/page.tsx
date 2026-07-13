@@ -7,7 +7,7 @@ import { getCarteByRef } from '@/features/carte/api'
 import LogoLoader from '@/components/LogoLoader'
 import { getPatientProfile } from '@/features/patient/api'
 import { getRdvsPatient } from '@/features/agenda/api'
-import { getOrdonnances, getDocuments, getDocumentDownloadUrl } from '@/features/dossier/api'
+import { getOrdonnances, getDocuments, getDocumentDownloadUrl, getOrdonnanceFichierUrl, openProtectedFile } from '@/features/dossier/api'
 import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
 import type { CarteVirtuelle, PatientProfile, RendezVous } from '@/lib/types'
 
@@ -154,7 +154,7 @@ export default function CarteScanPage() {
   }
 
   // ── Computed values ────────────────────────────────────────────────────────
-  const fullName = [carte.firstName, carte.lastName?.toUpperCase()].filter(Boolean).join(' ') || '—'
+  const fullName = [carte.firstName, carte.lastName?.toUpperCase()].filter(Boolean).join(' ') || '-'
   const age = profile?.dateNaissance
     ? Math.floor((Date.now() - new Date(profile.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000))
     : null
@@ -737,26 +737,45 @@ export default function CarteScanPage() {
                         <span className="text-xs font-semibold" style={{ color: C_BODY }}>
                           {new Date(ord.dateEmission).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
-                        <span className="text-xs font-bold" style={{ color: C_BLUE }}>
-                          {ord.medicaments.length} médicament{ord.medicaments.length > 1 ? 's' : ''}
-                        </span>
+                        {ord.medicaments.length > 0 && (
+                          <span className="text-xs font-bold" style={{ color: C_BLUE }}>
+                            {ord.medicaments.length} médicament{ord.medicaments.length > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
-                      <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                        {ord.medicaments.map((med, i) => (
-                          <div key={i} className="min-w-0">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <span className="text-sm font-bold truncate" style={{ color: C_DARK }}>{med.nom}</span>
-                              <span
-                                className="text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                                style={{ background: `${C_BLUE}10`, color: C_BLUE }}
-                              >
-                                {med.dosage}
-                              </span>
+                      {ord.medicaments.length > 0 && (
+                        <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                          {ord.medicaments.map((med, i) => (
+                            <div key={i} className="min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-sm font-bold truncate" style={{ color: C_DARK }}>{med.nom}</span>
+                                <span
+                                  className="text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                  style={{ background: `${C_BLUE}10`, color: C_BLUE }}
+                                >
+                                  {med.dosage}
+                                </span>
+                              </div>
+                              <p className="text-xs" style={{ color: `${C_BODY}80` }}>{med.frequence} · {med.duree}</p>
                             </div>
-                            <p className="text-xs" style={{ color: `${C_BODY}80` }}>{med.frequence} · {med.duree}</p>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
+                      {ord.fichierNom && (
+                        <div className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => openProtectedFile(getOrdonnanceFichierUrl(ord.id)).catch(() => {})}
+                            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+                            style={{ background: `${C_BLUE}10`, color: C_BLUE }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                            {ord.fichierNom}
+                          </button>
+                        </div>
+                      )}
                       {ord.notes && (
                         <div
                           className="px-4 py-2.5"
@@ -794,12 +813,11 @@ export default function CarteScanPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {documents.map((doc) => (
-                    <a
+                    <button
                       key={doc.id}
-                      href={getDocumentDownloadUrl(doc.patientId, doc.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start gap-2.5 py-2.5 px-3 rounded-xl transition-colors hover:bg-gray-50"
+                      type="button"
+                      onClick={() => openProtectedFile(getDocumentDownloadUrl(doc.patientId, doc.id)).catch(() => {})}
+                      className="flex items-start gap-2.5 py-2.5 px-3 rounded-xl transition-colors hover:bg-gray-50 text-left"
                       style={{ border: '1px solid #E5E7EB' }}
                     >
                       <div
@@ -817,7 +835,7 @@ export default function CarteScanPage() {
                           {doc.typeDoc}{doc.taille ? ` · ${(doc.taille / 1024).toFixed(0)} Ko` : ''}
                         </p>
                       </div>
-                    </a>
+                    </button>
                   ))}
                 </div>
               </div>

@@ -45,6 +45,16 @@ export default function ProfilPage() {
         adresse: profile.adresse ?? '', lang: 'fr',
         latitude: profile.latitude ?? null, longitude: profile.longitude ?? null,
       })
+      // Photo persists in the backend (medecin_details.photo_url); the session-only enrichment
+      // is wiped on logout, so reload it from the fetched profile and re-seed the session.
+      if (profile.photoUrl) {
+        setPhotoUrl(profile.photoUrl)
+        const s = getSession()
+        if (s) {
+          saveSession({ ...s, photoUrl: profile.photoUrl })
+          window.dispatchEvent(new Event('session-updated'))
+        }
+      }
     }
   }, [profile])
 

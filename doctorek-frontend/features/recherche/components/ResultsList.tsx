@@ -2,14 +2,10 @@
 
 import { MedecinCardList } from '@/features/annuaire/components/MedecinCardList'
 import LogoLoader from '@/components/LogoLoader'
-import type { BookingSlot } from '@/lib/types'
+import type { BookingSlot, MedecinNearbyResult, MedecinProfile } from '@/lib/types'
+import type { DisponibiliteFilter } from '@/lib/disponibilite'
 import { SearchIcon, LocationIcon } from './icons'
 import { Pagination } from './Pagination'
-
-interface NearbyResult {
-  medecin: { id: string; latitude?: number | null; longitude?: number | null; [key: string]: unknown }
-  distanceKm: number
-}
 
 interface ResultsListProps {
   nearbyMode: boolean
@@ -18,10 +14,10 @@ interface ResultsListProps {
   isError: boolean
   error: unknown
   resultLabel: string
-  filter: string
-  nearbyMedecins: NearbyResult[]
-  pagedNearby: NearbyResult[]
-  searchContent: { id: string; [key: string]: unknown }[]
+  filter: DisponibiliteFilter
+  nearbyMedecins: MedecinNearbyResult[]
+  pagedNearby: MedecinNearbyResult[]
+  searchContent: MedecinProfile[]
   availableTodayIds: Set<string>
   hasSearchData: boolean
   page: number
@@ -29,7 +25,7 @@ interface ResultsListProps {
   onPage: (p: number) => void
   onHover: (id: string | null) => void
   onBookSlot: (slot: BookingSlot) => void
-  onFilterChange?: (f: string) => void
+  onFilterChange?: (f: DisponibiliteFilter) => void
   mobileView: 'list' | 'map'
 }
 
@@ -107,7 +103,7 @@ export function ResultsList({
             {pagedNearby.map((r) => (
               <MedecinCardList
                 key={r.medecin.id}
-                medecin={r.medecin as Parameters<typeof MedecinCardList>[0]['medecin']}
+                medecin={r.medecin}
                 availableToday={false}
                 distanceKm={r.distanceKm}
                 onMouseEnter={() => onHover(r.medecin.id)}
@@ -172,7 +168,7 @@ export function ResultsList({
             {searchContent.map((medecin) => (
               <MedecinCardList
                 key={medecin.id}
-                medecin={medecin as Parameters<typeof MedecinCardList>[0]['medecin']}
+                medecin={medecin}
                 availableToday={availableTodayIds.has(medecin.id)}
                 onMouseEnter={() => onHover(medecin.id)}
                 onMouseLeave={() => onHover(null)}

@@ -1,0 +1,17 @@
+sequenceDiagram
+    title Figure 6 : Diagramme de séquences - Authentification (Keycloak)
+    autonumber
+    actor U as Utilisateur
+    participant UI as Frontend
+    participant KC as Keycloak
+
+    U->>UI: Cliquer "Connexion"
+    UI->>KC: Redirection vers Keycloak (PKCE)
+    U->>KC: Saisir identifiants (ou Google)
+    KC-->>UI: Token (rôle inclus)
+    UI-->>U: Accès au tableau de bord
+
+    U->>UI: Cliquer "Déconnexion"
+    UI->>KC: Terminer la session Keycloak
+    KC-->>UI: Session terminée
+    UI-->>U: Retour /login

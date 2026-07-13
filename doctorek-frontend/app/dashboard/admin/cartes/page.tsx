@@ -12,7 +12,7 @@ const STATUT_STYLES: Record<string, string> = {
 }
 
 function GroupeSanguinBadge({ value }: { value: string | null }) {
-  if (!value) return <span className="text-zinc-400">—</span>
+  if (!value) return <span className="text-zinc-400">-</span>
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-600">
       <Heart className="h-3 w-3" />
@@ -37,7 +37,7 @@ function CarteRow({ carte }: { carte: CarteSummary }) {
         month: 'short',
         year: 'numeric',
       })
-    : '—'
+    : '-'
 
   return (
     <tr className="border-b border-zinc-50 hover:bg-[#F8F9FB] transition-colors">
@@ -114,7 +114,7 @@ export default function AdminCartesPage() {
                         ))}
                       </tr>
                     ))
-                  : data?.cartes.length === 0
+                  : data?.content?.length === 0
                   ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-16 text-center">
@@ -123,7 +123,7 @@ export default function AdminCartesPage() {
                         </td>
                       </tr>
                     )
-                  : data?.cartes.map((carte) => <CarteRow key={carte.id} carte={carte} />)
+                  : data?.content?.map((carte) => <CarteRow key={carte.id} carte={carte} />)
                 }
               </tbody>
             </table>

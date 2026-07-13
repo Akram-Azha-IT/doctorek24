@@ -106,12 +106,20 @@ export interface Disponibilite {
 
 export type StatutRdv = 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE' | 'TERMINE'
 
+/** Document (médical ou administratif) demandé au patient en amont d'un RDV. */
+export interface DocumentRequis {
+  id: string
+  rdvId: string
+  libelle: string
+  fourni: boolean
+  createdAt: string
+}
+
+export type TypeConsultation = 'CONSULTATION' | 'URGENCE'
+
 export interface QuestionnairePreConsult {
-  motif: string
-  premierConsultation: boolean
-  intensiteDouleur?: 1 | 2 | 3 | 4 | 5
-  dureeSymptoomes?: 'moins_7j' | '1_4sem' | 'plus_1mois' | null
-  notesComplementaires?: string
+  typeConsultation: TypeConsultation
+  message: string
 }
 
 // ── Carte Virtuelle ─────────────────────────────────────────────────────────

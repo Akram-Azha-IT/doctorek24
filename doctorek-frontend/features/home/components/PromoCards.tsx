@@ -7,7 +7,7 @@ export function PromoCards() {
     <div className="relative z-20 mt-4 md:-mt-30 px-4 md:px-8">
       <div className="mx-auto max-w-[1400px] grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        <Link href="/login" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
+        <a href="/login" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
           <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
             <div className="absolute rounded-full bg-[#D0E8FF] w-[180px] h-[180px] sm:w-[210px] sm:h-[210px] right-4 bottom-4 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
             <div className="absolute rounded-full bg-[#B6DAF7] w-[130px] h-[130px] sm:w-[155px] sm:h-[155px] right-10 bottom-8 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
@@ -19,7 +19,7 @@ export function PromoCards() {
                 Votre carte médicale digitale,<br />toujours sur vous
               </h3>
               <p className="text-[#465058] text-[13px] leading-relaxed">
-                Groupe sanguin, allergies, contacts d&apos;urgence — accessibles même sans connexion.
+                Groupe sanguin, allergies, contacts d&apos;urgence : accessibles même sans connexion.
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-[#007DFF] font-semibold text-[14px] mt-5 group-hover:gap-2 transition-all">
@@ -40,7 +40,7 @@ export function PromoCards() {
               />
             </div>
           </div>
-        </Link>
+        </a>
 
         <Link href="/inscription?role=medecin" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
           <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
@@ -54,7 +54,7 @@ export function PromoCards() {
                 Rejoignez Doctorek Pro<br />et gérez votre cabinet
               </h3>
               <p className="text-[#465058] text-[13px] leading-relaxed">
-                Agenda en ligne, rendez-vous patients et dossiers médicaux — tout en un.
+                Agenda en ligne, rendez-vous patients et dossiers médicaux : tout en un.
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-[#007DFF] font-semibold text-[14px] mt-5 group-hover:gap-2 transition-all">

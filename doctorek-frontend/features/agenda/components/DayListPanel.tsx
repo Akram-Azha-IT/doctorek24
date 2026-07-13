@@ -92,7 +92,7 @@ export function DayListPanel({
                   {isAddingHere && (
                     <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: '#DFEFFE', background: '#F5F9FF' }}>
                       <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: '#007DFF' }}>
-                        Nouveau créneau — {day.long}
+                        Nouveau créneau : {day.long}
                       </p>
                       <DisponibiliteForm
                         medecinId={medecinId}

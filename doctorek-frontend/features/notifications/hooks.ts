@@ -20,8 +20,11 @@ export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: getNotifications,
-    staleTime: 30_000,
-    refetchOnWindowFocus: false,
+    // STOMP pushes invalidations in real time; polling + focus refetch act as a
+    // safety net so the badge stays fresh even if the socket drops (WhatsApp-like).
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   })
 }
 

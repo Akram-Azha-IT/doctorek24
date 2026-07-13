@@ -42,7 +42,7 @@ function VerificationForm() {
       {
         onSuccess: () => {
           toast.success('Email vérifié ! Vous pouvez maintenant vous connecter.')
-          router.push('/login')
+          window.location.assign('/login')
         },
         onError: (err) => {
           toast.error(err.message || 'Code invalide ou expiré')
@@ -87,7 +87,7 @@ function VerificationForm() {
         <div className="rounded-xl bg-[#DFEFFE]/50 px-4 py-3 ring-1 ring-[#B6DAF7]/50">
           <p className="text-xs leading-relaxed text-[#1863A9]">
             <span className="font-semibold">Pas reçu ?</span> Vérifiez vos spams.
-            Le code expire dans 15 minutes — vous pouvez recommencer l’inscription si besoin.
+            Le code expire dans 15 minutes. Vous pouvez recommencer l’inscription si besoin.
           </p>
         </div>
 

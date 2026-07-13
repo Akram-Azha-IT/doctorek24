@@ -227,12 +227,12 @@ function LoginPrompt({ onClose, slot }: { onClose: () => void; slot: BookingSlot
       </p>
 
       <div className="mt-8 flex w-full flex-col gap-3">
-        <Link
+        <a
           href={`/login?redirect=${returnUrl}`}
           className="flex w-full items-center justify-center rounded-xl bg-[#007DFF] py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#00263C]"
         >
           Se connecter
-        </Link>
+        </a>
         <Link
           href="/inscription"
           className="flex w-full items-center justify-center rounded-xl border border-zinc-200 bg-white py-3 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50"

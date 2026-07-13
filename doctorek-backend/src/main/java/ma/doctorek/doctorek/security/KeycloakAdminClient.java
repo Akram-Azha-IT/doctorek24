@@ -32,9 +32,6 @@ public class KeycloakAdminClient {
     @Value("${keycloak.admin.client-secret}")
     private String clientSecret;
 
-    @Value("${keycloak.frontend.client-id:doctorek-frontend}")
-    private String frontendClientId;
-
     public KeycloakAdminClient(RestClient.Builder restClientBuilder) {
         this.restClient = restClientBuilder.build();
     }
@@ -50,6 +47,15 @@ public class KeycloakAdminClient {
         assignRole(adminToken, userId, role);
 
         return userId;
+    }
+
+    /**
+     * Assigns a realm role to an existing Keycloak user. Used to grant the app role to users
+     * created outside the register flow (e.g. brokered Google sign-in), since the realm role
+     * gates the API and is otherwise absent from their token.
+     */
+    public void assignRealmRole(String keycloakUserId, Role role) {
+        assignRole(getAdminToken(), keycloakUserId, role);
     }
 
     private String getAdminToken() {
@@ -79,7 +85,9 @@ public class KeycloakAdminClient {
             "email", email,
             "firstName", firstName,
             "lastName", lastName,
-            "enabled", true,
+            // Disabled until the email verification code is validated — an
+            // unverified account must not be able to log in.
+            "enabled", false,
             "emailVerified", false,
             "credentials", List.of(Map.of(
                 "type", "password",
@@ -136,6 +144,7 @@ public class KeycloakAdminClient {
     public void markEmailVerified(String keycloakUserId) {
         String adminToken = getAdminToken();
         Map<String, Object> update = Map.of(
+            "enabled", true,
             "emailVerified", true,
             "requiredActions", List.of()
         );
@@ -146,58 +155,6 @@ public class KeycloakAdminClient {
             .body(update)
             .retrieve()
             .toBodilessEntity();
-    }
-
-    public record TokenPair(String accessToken, String refreshToken) {}
-
-    /**
-     * Proxies ROPC to Keycloak. Returns both access_token and refresh_token.
-     */
-    public TokenPair loginUser(String email, String password) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "password");
-        form.add("client_id", frontendClientId);
-        form.add("username", email);
-        form.add("password", password);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restClient.post()
-            .uri(keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token")
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .body(form)
-            .retrieve()
-            .body(Map.class);
-
-        if (response == null || !response.containsKey("access_token")) {
-            throw new KeycloakIntegrationException("Keycloak did not return an access token");
-        }
-        return new TokenPair(
-            (String) response.get("access_token"),
-            (String) response.getOrDefault("refresh_token", null)
-        );
-    }
-
-    /**
-     * Uses a Keycloak refresh_token to obtain a new access_token.
-     */
-    public String refreshToken(String refreshToken) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "refresh_token");
-        form.add("client_id", frontendClientId);
-        form.add("refresh_token", refreshToken);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> response = restClient.post()
-            .uri(keycloakUrl + "/realms/" + realm + "/protocol/openid-connect/token")
-            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-            .body(form)
-            .retrieve()
-            .body(Map.class);
-
-        if (response == null || !response.containsKey("access_token")) {
-            throw new KeycloakIntegrationException("Keycloak did not return a refreshed access token");
-        }
-        return (String) response.get("access_token");
     }
 
     /**

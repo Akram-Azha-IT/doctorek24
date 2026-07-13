@@ -1,0 +1,21 @@
+sequenceDiagram
+    title Figure 10 : Diagramme de séquences - Messagerie
+    autonumber
+    actor P as Patient
+    actor M as Médecin
+    participant UI as Frontend
+    participant Msg as Messagerie
+    participant DB as PostgreSQL
+    participant N as Notification
+
+    P->>UI: Envoyer message
+    UI->>Msg: POST /messagerie/messages
+    Msg->>DB: INSERT message
+    Msg->>N: Notifier médecin
+    Msg-->>UI: 201 Created
+
+    M->>UI: Lire conversation
+    UI->>Msg: GET /messagerie/conversations/{id}/messages
+    Msg->>DB: SELECT messages
+    DB-->>Msg: Liste messages
+    Msg-->>UI: 200 OK

@@ -14,18 +14,12 @@ import ma.doctorek.doctorek.entity.OrdonnanceEntity;
 import ma.doctorek.doctorek.repository.DocumentMedicalRepository;
 import ma.doctorek.doctorek.repository.InfosMedicalesRepository;
 import ma.doctorek.doctorek.repository.OrdonnanceRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,16 +33,16 @@ public class DossierService {
     private final InfosMedicalesRepository infosRepo;
     private final OrdonnanceRepository ordonnanceRepo;
     private final DocumentMedicalRepository documentRepo;
-    private final String uploadDir;
+    private final MinioStorageService storageService;
 
     public DossierService(InfosMedicalesRepository infosRepo,
                            OrdonnanceRepository ordonnanceRepo,
                            DocumentMedicalRepository documentRepo,
-                           @Value("${doctorek.upload.dir:${user.home}/doctorek-uploads}") String uploadDir) {
+                           MinioStorageService storageService) {
         this.infosRepo      = infosRepo;
         this.ordonnanceRepo = ordonnanceRepo;
         this.documentRepo   = documentRepo;
-        this.uploadDir      = uploadDir;
+        this.storageService = storageService;
     }
 
     @Transactional(readOnly = true)
@@ -111,30 +105,22 @@ public class DossierService {
     public DocumentMedicalResponse uploadDocument(UUID patientId, String typeDoc, MultipartFile file) throws IOException {
         if (file.isEmpty()) throw new IllegalArgumentException("Le fichier est vide");
 
-        Path dir = Paths.get(uploadDir, "dossier", patientId.toString());
-        Files.createDirectories(dir);
-
         String originalName = file.getOriginalFilename() != null
                 ? file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_")
                 : "document";
-        String fileName = UUID.randomUUID() + "_" + originalName;
-        Path filePath = dir.resolve(fileName).normalize();
+        String objectKey = "dossier/" + patientId + "/" + UUID.randomUUID() + "_" + originalName;
+        storageService.upload(objectKey, file);
 
-        // Files.copy is more reliable than transferTo on all OS
-        try (var in = file.getInputStream()) {
-            Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        return saveDocumentRecord(patientId, originalName, typeDoc, filePath, file.getSize());
+        return saveDocumentRecord(patientId, originalName, typeDoc, objectKey, file.getSize());
     }
 
     @Transactional
-    protected DocumentMedicalResponse saveDocumentRecord(UUID patientId, String nom, String typeDoc, Path filePath, long taille) {
+    protected DocumentMedicalResponse saveDocumentRecord(UUID patientId, String nom, String typeDoc, String objectKey, long taille) {
         DocumentMedicalEntity e = new DocumentMedicalEntity();
         e.setPatientId(patientId);
         e.setNom(nom);
         e.setTypeDoc(typeDoc);
-        e.setChemin(filePath.toString());
+        e.setChemin(objectKey);
         e.setTaille(taille);
         e.setCreatedAt(LocalDateTime.now());
         return DocumentMedicalResponse.from(documentRepo.save(e));
@@ -142,21 +128,17 @@ public class DossierService {
 
     @Transactional
     public void deleteDocument(UUID id) {
-        documentRepo.findById(id).ifPresent(doc -> {
-            try {
-                Files.deleteIfExists(Paths.get(doc.getChemin()));
-            } catch (IOException ignored) {}
-        });
+        documentRepo.findById(id).ifPresent(doc -> storageService.delete(doc.getChemin()));
         documentRepo.deleteById(id);
     }
 
     public record DownloadResult(Resource resource, String nom) {}
 
     @Transactional(readOnly = true)
-    public DownloadResult downloadDocument(UUID id) {
+    public DownloadResult downloadDocument(UUID id) throws IOException {
         DocumentMedicalEntity doc = documentRepo.findById(id)
             .orElseThrow(() -> new RuntimeException("Document not found: " + id));
-        Resource resource = new PathResource(Paths.get(doc.getChemin()));
+        Resource resource = storageService.download(doc.getChemin());
         return new DownloadResult(resource, doc.getNom());
     }
 
@@ -186,16 +168,12 @@ public class DossierService {
         OrdonnanceEntity ord = ordonnanceRepo.findById(ordonnanceId)
             .orElseThrow(() -> new IllegalArgumentException("Ordonnance introuvable: " + ordonnanceId));
 
-        Path dir = Paths.get(uploadDir, "ordonnances", ord.getPatientId().toString());
-        Files.createDirectories(dir);
         String originalName = file.getOriginalFilename() != null
             ? file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_") : "ordonnance";
-        String fileName = UUID.randomUUID() + "_" + originalName;
-        Path filePath = dir.resolve(fileName).normalize();
-        try (var in = file.getInputStream()) {
-            Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
-        }
-        ord.setFichierChemin(filePath.toString());
+        String objectKey = "ordonnances/" + ord.getPatientId() + "/" + UUID.randomUUID() + "_" + originalName;
+        storageService.upload(objectKey, file);
+
+        ord.setFichierChemin(objectKey);
         ord.setFichierNom(originalName);
         return toOrdonnanceResponse(ordonnanceRepo.save(ord));
     }
@@ -208,11 +186,11 @@ public class DossierService {
 
     public record OrdonnanceFichierResult(Resource resource, String nom) {}
 
-    public OrdonnanceFichierResult downloadOrdonnanceFichier(UUID ordonnanceId) {
+    public OrdonnanceFichierResult downloadOrdonnanceFichier(UUID ordonnanceId) throws IOException {
         OrdonnanceEntity ord = ordonnanceRepo.findById(ordonnanceId)
             .orElseThrow(() -> new IllegalArgumentException("Ordonnance introuvable: " + ordonnanceId));
         if (ord.getFichierChemin() == null) throw new IllegalStateException("Aucun fichier joint");
-        Resource resource = new PathResource(Paths.get(ord.getFichierChemin()));
+        Resource resource = storageService.download(ord.getFichierChemin());
         return new OrdonnanceFichierResult(resource, ord.getFichierNom() != null ? ord.getFichierNom() : "ordonnance");
     }
 }

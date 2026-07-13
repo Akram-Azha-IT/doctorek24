@@ -3,7 +3,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, LogOut, Search, Sun, Moon, Bell, Mail, Settings, CreditCard, Stethoscope, UserRound, Users } from 'lucide-react'
-import { getSession, clearSession } from '@/lib/session'
+import { useSession } from 'next-auth/react'
+import { getSession } from '@/lib/session'
+import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
 
 const NAV_ITEMS = [
@@ -17,6 +19,7 @@ const NAV_ITEMS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { status: authStatus, data: authSession } = useSession()
   const [adminName, setAdminName] = useState('Admin')
   const [sidebarWidth, setSidebarWidth] = useState(260)
   const [isDragging, setIsDragging] = useState(false)
@@ -25,18 +28,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const startWidthRef = useRef(260)
 
   useEffect(() => {
+    if (authStatus === 'loading') return // Auth.js still resolving — avoid a premature redirect
+
+    if (authStatus === 'unauthenticated' || !authSession?.user || authSession.error) {
+      // /login 307s to Keycloak (cross-origin) — needs a full browser navigation.
+      window.location.replace('/login')
+      return
+    }
+    if (authSession.user.role !== 'ADMIN') {
+      router.replace(authSession.user.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient')
+      return
+    }
     const session = getSession()
-    if (!session) {
-      router.replace('/login')
-      return
-    }
-    if (session.role !== 'ADMIN') {
-      router.replace(session.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient')
-      return
-    }
-    const name = [session.firstName, session.lastName].filter(Boolean).join(' ')
+    const name = session ? [session.firstName, session.lastName].filter(Boolean).join(' ') : ''
     if (name) setAdminName(name)
-  }, [router])
+  }, [authStatus, authSession, router])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!dragRef.current) return
@@ -75,8 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [handleMouseMove, handleMouseUp])
 
   function handleLogout() {
-    clearSession()
-    router.push('/login')
+    void logout()
   }
 
   function isActive(item: (typeof NAV_ITEMS)[number]): boolean {

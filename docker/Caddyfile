@@ -1,0 +1,19 @@
+# Doctorek — reverse proxy + TLS automatique (Let's Encrypt)
+# DOMAIN vient de l'environnement du conteneur caddy.
+
+app.{$DOMAIN} {
+	reverse_proxy frontend:3000
+}
+
+api.{$DOMAIN} {
+	reverse_proxy app:8080
+	# En-têtes de sécurité API
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+	}
+}
+
+auth.{$DOMAIN} {
+	reverse_proxy keycloak:8080
+}

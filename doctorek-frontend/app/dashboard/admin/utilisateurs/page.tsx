@@ -132,7 +132,7 @@ export default function AdminUtilisateursPage() {
       <div>
         <h1 className="text-2xl font-extrabold text-[#010C2D]">Utilisateurs</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Gestion des comptes — activation, rôles, recherche.
+          Gestion des comptes : activation, rôles, recherche.
         </p>
       </div>
 
@@ -215,14 +215,14 @@ export default function AdminUtilisateursPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {!data?.users.length ? (
+                {!data?.content?.length ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-sm text-zinc-400">
                       Aucun utilisateur trouvé.
                     </td>
                   </tr>
                 ) : (
-                  data.users.map((user: UserSummary) => (
+                  data.content.map((user: UserSummary) => (
                     <Fragment key={user.id}>
                       <tr
                         className={`transition-colors ${
@@ -256,7 +256,7 @@ export default function AdminUtilisateursPage() {
                         <td className="py-3.5 px-5 hidden lg:table-cell text-zinc-500">
                           {user.specialite || user.ville
                             ? [user.specialite, user.ville].filter(Boolean).join(' · ')
-                            : '—'}
+                            : '-'}
                         </td>
                         <td className="py-3.5 px-5">
                           {user.active ? (

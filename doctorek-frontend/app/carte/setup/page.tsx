@@ -64,7 +64,7 @@ export default function CarteSetupPage() {
 
   const onSubmit = async (data: CarteFormData) => {
     if (!session) {
-      router.push('/login')
+      window.location.assign('/login')
       return
     }
     const {
@@ -85,8 +85,8 @@ export default function CarteSetupPage() {
       adressePays: adressePays ?? null,
     })
 
+    // Backend resolves the patient from the JWT — no patientId in the payload.
     await createCarte.mutateAsync({
-      patientId: session.id,
       ...carteData,
       allergies: (carteData.allergies ?? []).filter(Boolean) as string[],
       maladiesChroniques: (carteData.maladiesChroniques ?? []).filter(Boolean) as string[],
@@ -112,7 +112,7 @@ export default function CarteSetupPage() {
             <span>Carte Médicale Virtuelle</span>
           </div>
           <h1 className="text-2xl font-bold text-white">Créer votre carte</h1>
-          <p className="text-[#B6DAF7] text-sm mt-1">Étape {step + 1} sur {STEPS.length} — {STEPS[step]}</p>
+          <p className="text-[#B6DAF7] text-sm mt-1">Étape {step + 1} sur {STEPS.length} : {STEPS[step]}</p>
         </div>
 
         {/* Progress */}

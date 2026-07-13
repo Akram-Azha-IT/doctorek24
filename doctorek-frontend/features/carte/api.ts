@@ -29,3 +29,7 @@ export async function updateCarte(
 export async function getCarteByRef(cardRef: string): Promise<CarteVirtuelle> {
   return apiFetch<CarteVirtuelle>(`/api/v1/carte/ref/${cardRef}`)
 }
+
+export async function getGoogleWalletSaveUrl(patientId: string): Promise<{ saveUrl: string }> {
+  return apiFetch<{ saveUrl: string }>(`/api/v1/carte/patient/${patientId}/wallet/google`)
+}

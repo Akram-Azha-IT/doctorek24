@@ -4,6 +4,8 @@ import './globals.css'
 import { QueryProvider } from '@/lib/query-provider'
 import { StompProvider } from '@/lib/stomp-context'
 import { AutoRefreshProvider } from '@/lib/AutoRefreshProvider'
+import { AuthSessionProvider } from '@/lib/AuthSessionProvider'
+import { SessionBridge } from '@/lib/SessionBridge'
 import { Toaster } from '@/components/ui/sonner'
 
 const geist = Geist({
@@ -20,7 +22,7 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Doctorek — Trouvez votre médecin',
+  title: 'Doctorek : Trouvez votre médecin',
   description: 'Recherchez un médecin par spécialité et ville au Maroc',
   icons: {
     icon: '/icone-doctorek.png',
@@ -39,12 +41,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Aller au contenu principal
         </a>
         <QueryProvider>
-          <AutoRefreshProvider>
-            <StompProvider>
-              {children}
-              <Toaster position="top-right" richColors />
-            </StompProvider>
-          </AutoRefreshProvider>
+          <AuthSessionProvider>
+            <SessionBridge />
+            <AutoRefreshProvider>
+              <StompProvider>
+                {children}
+                <Toaster position="top-right" richColors />
+              </StompProvider>
+            </AutoRefreshProvider>
+          </AuthSessionProvider>
         </QueryProvider>
       </body>
     </html>

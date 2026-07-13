@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    actor P as Patient
+    actor M as Médecin
+    participant UI as Frontend
+    participant Auth as Keycloak
+    participant Ann as Annuaire
+    participant Ag as Agenda
+    participant C as Carte Médicale
+    participant N as Notification
+    participant DB as PostgreSQL
+
+    Note over P,Auth: 1. Authentification
+    P->>UI: Login
+    UI->>Auth: Redirection Keycloak (PKCE)
+    Auth-->>UI: JWT (rôle)
+
+    Note over P,Ann: 2. Recherche médecin
+    P->>UI: Rechercher (spécialité, ville)
+    UI->>Ann: GET /annuaire/medecins
+    Ann->>DB: SELECT medecins
+    Ann-->>UI: Liste médecins
+
+    Note over P,N: 3. Prise de RDV
+    P->>UI: Choisir créneau
+    UI->>Ag: POST /agenda/rdv
+    Ag->>DB: INSERT rendez_vous
+    Ag->>N: Notifier médecin
+    Ag-->>UI: 201 Created
+
+    Note over M,C: 4. Carte & ordonnance
+    M->>UI: Émettre ordonnance
+    UI->>C: POST /carte/ordonnances
+    C->>DB: INSERT ordonnance
+    C->>N: Notifier patient
+    C-->>UI: 201 Created
+
+    Note over P,C: 5. Consultation carte
+    P->>UI: Voir carte médicale
+    UI->>C: GET /carte/patient/{id}
+    C->>DB: SELECT carte_virtuelle
+    C-->>UI: Données carte

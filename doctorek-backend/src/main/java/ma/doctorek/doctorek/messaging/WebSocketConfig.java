@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.messaging;
 
+import ma.doctorek.doctorek.security.JwtAuthConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -11,17 +12,13 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-
-import java.util.List;
-import java.util.Map;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -30,9 +27,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private static final Logger log = LoggerFactory.getLogger(WebSocketConfig.class);
 
     private final JwtDecoder jwtDecoder;
+    private final JwtAuthConverter jwtAuthConverter;
 
-    public WebSocketConfig(JwtDecoder jwtDecoder) {
+    public WebSocketConfig(JwtDecoder jwtDecoder, JwtAuthConverter jwtAuthConverter) {
         this.jwtDecoder = jwtDecoder;
+        this.jwtAuthConverter = jwtAuthConverter;
     }
 
     @Override
@@ -67,10 +66,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
                 try {
                     Jwt jwt = jwtDecoder.decode(authHeader.substring(7));
-                    // principal name = email, consistent with JwtAuthConverter REST behaviour
-                    String email = jwt.getClaimAsString("preferred_username");
-                    List<SimpleGrantedAuthority> authorities = extractAuthorities(jwt);
-                    accessor.setUser(new UsernamePasswordAuthenticationToken(email, null, authorities));
+                    // même conversion JWT -> Authentication que pour le flux REST
+                    AbstractAuthenticationToken authentication = jwtAuthConverter.convert(jwt);
+                    accessor.setUser(authentication);
                 } catch (JwtException ex) {
                     log.warn("WS JWT validation failed: {}", ex.getMessage());
                     throw new SecurityException("Invalid JWT");
@@ -78,17 +76,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 return message;
             }
         });
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<SimpleGrantedAuthority> extractAuthorities(Jwt jwt) {
-        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
-        if (realmAccess == null) return List.of();
-        Object roles = realmAccess.get("roles");
-        if (!(roles instanceof List<?> roleList)) return List.of();
-        return roleList.stream()
-                .filter(String.class::isInstance)
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                .toList();
     }
 }

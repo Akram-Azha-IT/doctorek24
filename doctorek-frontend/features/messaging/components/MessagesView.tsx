@@ -6,6 +6,7 @@ import type { Conversation } from '@/lib/types'
 import { useConversations } from '../hooks'
 import { ConversationList } from './ConversationList'
 import { ChatWindow } from './ChatWindow'
+import { NewConversationButton } from './NewConversationButton'
 
 function MessagesContent() {
   const searchParams = useSearchParams()
@@ -37,13 +38,9 @@ function MessagesContent() {
         w-full sm:w-72 sm:flex-none sm:flex
         ${selectedConv ? 'hidden sm:flex' : 'flex'}
       `}>
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2">
           <h2 className="text-base font-bold text-[#333333]">Messages</h2>
-          {conversations.length > 0 && (
-            <span className="text-xs font-semibold text-zinc-400">
-              {conversations.length} conversation{conversations.length > 1 ? 's' : ''}
-            </span>
-          )}
+          <NewConversationButton onStarted={handleSelect} />
         </div>
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
@@ -58,7 +55,8 @@ function MessagesContent() {
                 </svg>
               </div>
               <p className="text-sm font-semibold text-zinc-700">Aucune conversation</p>
-              <p className="text-xs text-zinc-400 mt-1">Prenez un RDV pour démarrer une conversation avec un médecin.</p>
+              <p className="text-xs text-zinc-400 mt-1 mb-3">Contactez un médecin avec qui vous avez un rendez-vous.</p>
+              <NewConversationButton onStarted={handleSelect} />
             </div>
           ) : (
             <ConversationList

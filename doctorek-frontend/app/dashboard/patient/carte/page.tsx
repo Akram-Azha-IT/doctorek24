@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -123,7 +124,7 @@ export default function CarteEditPage() {
   const mutateError = isUpdating ? updateCarte.isError : createCarte.isError
 
   const onSubmit = async (data: CarteFormData) => {
-    if (!session) { router.push('/login'); return }
+    if (!session) { window.location.assign('/login'); return }
     const {
       firstName, lastName,
       dateNaissance, genre, nationalite, numIdentite, photoUrl,
@@ -215,51 +216,49 @@ export default function CarteEditPage() {
 
         {/* Motivation banner — shown only for first-time card creation */}
         {!existingCarte && (
-          <div className="mb-6 rounded-2xl overflow-hidden shadow-md">
-            {/* Top strip — urgency / loss aversion */}
-            <div className="bg-[#00263C] px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-[#E01E5A]/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#E01E5A]">
-                    <path d="M12 2L2 19h20L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M12 9v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-white font-semibold text-sm">Et si vous étiez inconscient aux urgences ?</p>
-                  <p className="text-[#B6DAF7] text-xs mt-0.5">Les secours ont besoin de votre groupe sanguin, allergies et contacts en quelques secondes.</p>
-                </div>
+          <div className="mb-6 rounded-2xl overflow-hidden shadow-sm border border-[#E2E8F0] bg-white">
+            {/* Top — why it matters, calm and clinical, not alarmist */}
+            <div className="bg-gradient-to-r from-[#007DFF] to-[#0C4A83] px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm">Soyez identifié en cas d&apos;urgence</p>
+                <p className="text-[#DFEFFE] text-xs mt-0.5">Groupe sanguin, allergies et contacts disponibles en quelques secondes pour les secours.</p>
               </div>
-              <span className="self-start sm:self-auto bg-[#2EB67D] text-white text-[11px] font-bold px-3 py-1 rounded-full flex-shrink-0">
-                100% Gratuit
-              </span>
+              <div className="self-start sm:self-auto relative w-14 h-14 flex-shrink-0">
+                <Image src="/free-badge.png" alt="100% Gratuit" fill className="object-contain" />
+              </div>
             </div>
 
-            {/* Bottom strip — benefits + goal gradient */}
-            <div className="bg-[#007DFF] px-6 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-              <div className="flex items-center gap-1.5 text-white text-[13px]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Bottom — benefits, light surface for contrast/depth */}
+            <div className="bg-[#F8FAFC] px-6 py-3.5 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#E2E8F0]">
+              <div className="flex items-center gap-1.5 text-[#333333] text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2EB67D" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span>Prêt en <strong>5 minutes</strong></span>
+                <span>Prêt en <strong>1 minute</strong></span>
               </div>
-              <div className="flex items-center gap-1.5 text-white text-[13px]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="flex items-center gap-1.5 text-[#333333] text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2EB67D" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span>Reconnu dans tous les établissements</span>
               </div>
-              <div className="flex items-center gap-1.5 text-white text-[13px]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="flex items-center gap-1.5 text-[#333333] text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2EB67D" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span>Téléchargeable en PDF</span>
               </div>
-              <div className="ml-auto flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-white">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <div className="flex items-center gap-1.5 text-[#333333] text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2EB67D" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="text-white text-[11px] font-semibold">Service Doctorek certifié</span>
+                <span>Google Wallet</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[#333333] text-[13px]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2EB67D" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Apple Wallet</span>
               </div>
             </div>
           </div>
@@ -773,7 +772,7 @@ function FormListField({
         ))}
         {items.length === 0 && (
           <div className="border border-dashed border-[#E2E8F0] rounded-xl p-4 text-center">
-            <p className="text-sm text-[#CBD5E0]">Aucun élément — cliquez sur «&nbsp;Ajouter&nbsp;» pour commencer</p>
+            <p className="text-sm text-[#CBD5E0]">Aucun élément. Cliquez sur «&nbsp;Ajouter&nbsp;» pour commencer</p>
           </div>
         )}
       </div>

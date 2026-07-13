@@ -1,0 +1,106 @@
+@startuml Doctorek-ClassDiagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam monochrome true
+skinparam classAttributeIconSize 0
+skinparam padding 2
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    ArrowColor #000000
+    FontColor #000000
+    FontName Arial
+    FontSize 12
+}
+skinparam title {
+    FontSize 16
+    FontStyle bold
+}
+
+title Doctorek — Modèle de données simplifié (Diagramme de classes)
+
+package "Authentification & Profils" {
+  class User {
+    +id : UUID
+    +email : String
+    +role : Role
+    +active : boolean
+  }
+
+  class MedecinDetail {
+    +specialite : String
+    +ville : String
+    +adresse : String
+    +secteurTarifaire : int
+  }
+
+  class PatientDetail {
+    +dateNaissance : LocalDate
+    +genre : String
+  }
+}
+
+package "Agenda & Rendez-vous" {
+  class Disponibilite {
+    +jourSemaine : String
+    +heureDebut : LocalTime
+    +heureFin : LocalTime
+  }
+
+  class RendezVous {
+    +dateRdv : LocalDate
+    +heureRdv : LocalTime
+    +statut : Statut
+    +motif : String
+  }
+}
+
+package "Messagerie" {
+  class Conversation {
+    +lastMessageAt : Instant
+  }
+
+  class Message {
+    +content : String
+    +sentAt : Instant
+  }
+}
+
+package "Carte Médicale Digitale" {
+  class CarteVirtuelle {
+    +cardRef : String
+    +groupeSanguin : String
+    +allergies : String
+    +antecedents : String
+  }
+
+  class Ordonnance {
+    +dateEmission : LocalDate
+    +medicaments : String
+  }
+
+  class DocumentMedical {
+    +nom : String
+    +typeDoc : String
+  }
+}
+
+' ===== Relations =====
+User "1" -- "1" MedecinDetail : extension >
+User "1" -- "1" PatientDetail : extension >
+
+MedecinDetail "1" -- "0..*" Disponibilite : définit >
+MedecinDetail "1" -- "0..*" RendezVous : reçoit >
+PatientDetail "1" -- "0..*" RendezVous : prend >
+
+MedecinDetail "1" -- "0..*" Conversation
+PatientDetail "1" -- "0..*" Conversation
+Conversation "1" -- "0..*" Message : contient >
+
+PatientDetail "1" -- "1" CarteVirtuelle : possède >
+CarteVirtuelle "1" -- "0..*" Ordonnance : regroupe >
+CarteVirtuelle "1" -- "0..*" DocumentMedical : regroupe >
+MedecinDetail "1" -- "0..*" Ordonnance : émet >
+
+@enduml

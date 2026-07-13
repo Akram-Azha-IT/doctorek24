@@ -1,146 +1,194 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Bell } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Bell, BellOff, ChevronRight } from 'lucide-react'
 import type { AppNotification } from '@/lib/types'
+import { getSession } from '@/lib/session'
 import { useMarkAllRead, useMarkRead, useNotifications } from '../hooks'
-
-const TYPE_ICON: Record<string, string> = {
-  CARTE_CREEE:    '💳',
-  MESSAGE_RECU:   '💬',
-  ANNIVERSAIRE:   '🎂',
-  DOCUMENT_RECU:  '📄',
-  RDV_RAPPEL:     '⏰',
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffMin = Math.floor(diffMs / 60_000)
-  if (diffMin < 1) return "À l'instant"
-  if (diffMin < 60) return `Il y a ${diffMin} min`
-  const diffH = Math.floor(diffMin / 60)
-  if (diffH < 24) return `Il y a ${diffH}h`
-  return d.toLocaleDateString('fr-MA', { day: 'numeric', month: 'short' })
-}
+import {
+  NOTIF_DEFAULT_CONFIG,
+  NOTIF_TYPE_CONFIG,
+  formatNotifTime,
+} from '../notif-config'
 
 interface NotificationItemProps {
   notif: AppNotification
-  onRead: (id: string) => void
+  role: 'PATIENT' | 'MEDECIN'
+  onOpen: (notif: AppNotification, href: string | null) => void
 }
 
-function NotificationItem({ notif, onRead }: NotificationItemProps) {
+function NotificationItem({ notif, role, onOpen }: NotificationItemProps) {
+  const config = NOTIF_TYPE_CONFIG[notif.type] ?? NOTIF_DEFAULT_CONFIG
+  const href = config.href[role]
+
   return (
-    <div
-      onClick={() => !notif.read && onRead(notif.id)}
-      className={`flex gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-[#F5F7FA] ${
+    <button
+      type="button"
+      onClick={() => onOpen(notif, href)}
+      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F5F7FA] focus-visible:bg-[#F5F7FA] focus-visible:outline-none ${
         notif.read ? '' : 'bg-[#EBF4FF]/50'
       }`}
     >
-      <div className="shrink-0 mt-0.5 w-8 h-8 rounded-full bg-[#EBF4FF] flex items-center justify-center text-base">
-        {TYPE_ICON[notif.type] ?? '🔔'}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm leading-snug truncate ${notif.read ? 'text-[#465058]' : 'font-semibold text-[#010C2D]'}`}>
+      <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${config.chipClass}`}>
+        {config.icon}
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex items-start justify-between gap-2">
+          <span className={`text-sm leading-snug ${notif.read ? 'text-[#465058]' : 'font-semibold text-[#010C2D]'}`}>
             {notif.title}
-          </p>
+          </span>
           {!notif.read && (
-            <span className="shrink-0 w-2 h-2 rounded-full bg-[#007DFF] mt-1.5" />
+            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#007DFF]" aria-label="Non lue" />
           )}
-        </div>
+        </span>
         {notif.body && (
-          <p className="text-xs text-[#94A3B8] mt-0.5 line-clamp-2">{notif.body}</p>
+          <span className="mt-0.5 block text-xs leading-relaxed text-[#6B7A99] line-clamp-2">
+            {notif.body}
+          </span>
         )}
-        <p className="text-[10px] text-[#B0BAC9] mt-1">{formatTime(notif.createdAt)}</p>
-      </div>
-    </div>
+        <span className="mt-1 flex items-center gap-1 text-[11px] text-[#A0AEC0]">
+          {formatNotifTime(notif.createdAt)}
+          {href && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="flex items-center font-semibold text-[#007DFF]">
+                Voir <ChevronRight className="h-3 w-3" />
+              </span>
+            </>
+          )}
+        </span>
+      </span>
+    </button>
   )
 }
 
 export function NotificationPanel() {
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
   const { data: notifications = [], isLoading } = useNotifications()
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
   const unread = notifications.filter(n => !n.read).length
 
-  // Close on outside click
+  const role = getSession()?.role === 'MEDECIN' ? 'MEDECIN' : 'PATIENT'
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setOpen(false)
       }
     }
-    if (open) document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClick)
+      document.addEventListener('keydown', handleKey)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [open])
+
+  function handleOpenNotification(notif: AppNotification, href: string | null) {
+    if (!notif.read) markRead.mutate(notif.id)
+    if (href) {
+      setOpen(false)
+      router.push(href)
+    }
+  }
 
   return (
     <div ref={panelRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[#E5E9F0] bg-white transition-colors hover:border-[#B6DAF7]"
+        aria-label={unread > 0 ? `Notifications, ${unread} non lue${unread > 1 ? 's' : ''}` : 'Notifications'}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E9F0] bg-white transition-colors hover:border-[#B6DAF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40"
       >
-        <Bell className="h-4 w-4" style={{ color: '#6B7A99' }} />
+        <Bell className={`h-[18px] w-[18px] ${unread > 0 ? 'text-[#010C2D]' : 'text-[#6B7A99]'}`} />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#E01E5A] text-[9px] font-bold text-white border-2 border-white">
-            {unread > 9 ? '9+' : unread}
+          <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center">
+            {/* Halo animé — attire l'œil comme WhatsApp/Instagram */}
+            <span
+              aria-hidden
+              className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#E01E5A] opacity-30"
+            />
+            <span className="relative flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#E01E5A] px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white shadow-[0_2px_6px_rgba(224,30,90,0.45)]">
+              {unread > 9 ? '9+' : unread}
+            </span>
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-2xl bg-white shadow-xl border border-[#E5E9F0] overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E9F0]">
+        <div
+          role="dialog"
+          aria-label="Notifications"
+          className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-[#E5E9F0] bg-white shadow-[0_12px_40px_-8px_rgba(1,12,45,0.18)]"
+        >
+          <div className="flex items-center justify-between border-b border-[#E5E9F0] px-4 py-3">
             <span className="text-sm font-bold text-[#010C2D]">
-              Notifications {unread > 0 && <span className="text-[#007DFF]">({unread})</span>}
+              Notifications
+              {unread > 0 && (
+                <span className="ml-2 rounded-full bg-[#EBF4FF] px-2 py-0.5 text-[11px] font-semibold text-[#007DFF]">
+                  {unread} nouvelle{unread > 1 ? 's' : ''}
+                </span>
+              )}
             </span>
             {unread > 0 && (
               <button
                 type="button"
                 onClick={() => markAll.mutate()}
-                className="text-xs font-medium text-[#007DFF] hover:text-[#00263C] transition-colors"
+                className="text-xs font-semibold text-[#007DFF] transition-colors hover:text-[#00263C]"
               >
                 Tout marquer lu
               </button>
             )}
           </div>
 
-          {/* List */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-[#F0F2F5]">
+          <div className="max-h-[420px] divide-y divide-[#F0F2F5] overflow-y-auto">
             {isLoading ? (
-              <div className="flex items-center justify-center py-10">
-                <div className="w-5 h-5 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin" />
+              <div className="space-y-3 p-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-9 w-9 animate-pulse rounded-full bg-[#F0F2F5]" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 w-3/4 animate-pulse rounded bg-[#F0F2F5]" />
+                      <div className="h-2.5 w-1/2 animate-pulse rounded bg-[#F0F2F5]" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2 text-[#94A3B8]">
-                <Bell className="h-8 w-8 opacity-30" />
-                <p className="text-sm">Aucune notification</p>
+              <div className="flex flex-col items-center justify-center gap-3 py-12">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F0F2F5]">
+                  <BellOff className="h-5 w-5 text-[#A0AEC0]" />
+                </span>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-[#010C2D]">Rien de nouveau</p>
+                  <p className="mt-0.5 text-xs text-[#A0AEC0]">
+                    Vos notifications apparaîtront ici.
+                  </p>
+                </div>
               </div>
             ) : (
               notifications.map(n => (
                 <NotificationItem
                   key={n.id}
                   notif={n}
-                  onRead={(id) => markRead.mutate(id)}
+                  role={role}
+                  onOpen={handleOpenNotification}
                 />
               ))
             )}
           </div>
-
-          {/* Footer */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2.5 border-t border-[#E5E9F0] bg-[#F8FAFC]">
-              <p className="text-xs text-[#94A3B8] text-center">
-                {notifications.length} notification{notifications.length > 1 ? 's' : ''}
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>

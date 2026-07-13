@@ -1,0 +1,513 @@
+/* Doctorek — full-page Keycloak login, faithful replica of the app's design:
+   components/Header.tsx (top nav) + features/auth/components/AuthShell.tsx
+   (white card on #EBF4FF, dark left panel with blobs, form on the right). */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+}
+
+.dk-body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #EBF4FF;
+  color: #333333;
+  display: flex;
+  flex-direction: column;
+}
+
+.dk-visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Header — Header.tsx replica ─────────────────────── */
+.dk-header {
+  background: #EBF4FF;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.dk-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dk-logo img { height: 36px; width: auto; display: block; }
+
+.dk-header-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.dk-btn-soignant {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #007DFF;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 200ms ease;
+}
+
+.dk-btn-soignant:hover { background: #00263C; }
+
+.dk-link-aide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #465058;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.dk-link-aide:hover { color: #007DFF; }
+
+.dk-link-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #007DFF;
+}
+
+.dk-link-connect-text { display: flex; flex-direction: column; text-align: left; }
+.dk-link-connect-title { font-size: 14px; font-weight: 700; line-height: 1.2; }
+.dk-link-connect-sub { font-size: 11px; line-height: 1.2; opacity: 0.7; }
+
+@media (max-width: 768px) {
+  .dk-btn-soignant, .dk-link-aide { display: none; }
+  .dk-header-inner { padding: 16px; }
+}
+
+/* ── Shell — AuthShell.tsx replica ───────────────────── */
+.dk-shell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  min-height: 0;
+}
+
+.dk-card {
+  width: 100%;
+  max-width: 1120px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px -10px rgba(0, 125, 255, 0.18);
+  display: flex;
+  background: #FFFFFF;
+  max-height: calc(100vh - 56px);
+}
+
+/* Left — dark panel */
+.dk-left {
+  display: none;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #00263C;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .dk-left { display: flex; }
+}
+
+.dk-blob {
+  position: absolute;
+  background: #007DFF;
+  pointer-events: none;
+}
+
+.dk-blob-tl {
+  top: -80px; left: -80px;
+  width: 260px; height: 240px;
+  filter: blur(64px);
+  opacity: 0.50;
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+.dk-blob-tr {
+  top: -56px; right: -56px;
+  width: 200px; height: 180px;
+  filter: blur(40px);
+  opacity: 0.35;
+  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+}
+
+.dk-blob-bl {
+  bottom: -80px; left: -56px;
+  width: 220px; height: 200px;
+  filter: blur(40px);
+  opacity: 0.35;
+  border-radius: 70% 30% 50% 50% / 30% 60% 40% 70%;
+}
+
+.dk-blob-br {
+  bottom: -56px; right: -80px;
+  width: 240px; height: 220px;
+  filter: blur(64px);
+  opacity: 0.45;
+  border-radius: 30% 70% 40% 60% / 50% 40% 60% 50%;
+}
+
+.dk-left-logo {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding-top: 32px;
+}
+
+.dk-left-logo img {
+  height: 44px;
+  width: auto;
+  /* white logo on dark panel — same trick as AuthShell */
+  filter: brightness(0) invert(1);
+}
+
+.dk-left-illustration {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.dk-left-illustration img {
+  width: 100%;
+  max-width: 290px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.15));
+}
+
+.dk-left-tagline {
+  position: relative;
+  z-index: 10;
+  padding: 0 32px 32px;
+  text-align: center;
+}
+
+.dk-eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3DA8FF;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.dk-tagline-text {
+  margin: 6px auto 0;
+  font-size: 12px;
+  color: rgba(182, 218, 247, 0.8);
+  max-width: 220px;
+  line-height: 1.6;
+}
+
+/* Right — form panel */
+.dk-right {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #FFFFFF;
+  padding: 20px 32px;
+  overflow-y: auto;
+}
+
+.dk-mobile-logo { margin-bottom: 20px; }
+.dk-mobile-logo img { height: 32px; width: auto; }
+
+@media (min-width: 1024px) {
+  .dk-mobile-logo { display: none; }
+}
+
+.dk-right-heading { margin-bottom: 12px; }
+
+.dk-right-heading h2 {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #010C2D;
+  margin: 0;
+}
+
+.dk-right-heading p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: rgba(70, 80, 88, 0.8);
+}
+
+/* ── Alerts ──────────────────────────────────────────── */
+.dk-alert {
+  border-radius: 10px;
+  padding: 9px 13px;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.dk-alert-error   { background: #FFDEDE; color: #B4232A; }
+.dk-alert-warning { background: #FFF3CD; color: #856404; }
+.dk-alert-success { background: #E6F7EF; color: #1B7A4E; }
+.dk-alert-info    { background: #DFEFFE; color: #0C4A83; }
+
+/* ── Social (Google) — app's Google button style ─────── */
+#kc-social-providers { display: flex; flex-direction: column; }
+#kc-social-providers ul { order: -1; }
+#kc-social-providers hr { display: none; }
+
+#kc-social-providers h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(70, 80, 88, 0.5);
+  margin: 10px 0;
+}
+
+#kc-social-providers h2::before,
+#kc-social-providers h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #EBF4FF;
+}
+
+#kc-social-providers ul { list-style: none; margin: 0; padding: 0; }
+
+#kc-social-providers a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid #E3E8EF;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1F2937;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+#kc-social-providers a:hover {
+  border-color: #C7D2E0;
+  box-shadow: 0 4px 12px rgba(0, 125, 255, 0.10);
+  transform: translateY(-1px);
+}
+
+#kc-social-providers a i { display: none; }
+
+#social-google::before {
+  content: '';
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18'%3E%3Cpath fill='%234285F4' d='M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.71-1.57 2.68-3.89 2.68-6.62z'/%3E%3Cpath fill='%2334A853' d='M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.02-3.7H.96v2.33A9 9 0 0 0 9 18z'/%3E%3Cpath fill='%23FBBC05' d='M3.98 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.02-2.33z'/%3E%3Cpath fill='%23EA4335' d='M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.02 2.33C4.68 5.16 6.66 3.58 9 3.58z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* ── Form — AuthField.tsx look ───────────────────────── */
+#kc-form-login .form-group,
+#kc-form-login > div {
+  margin-bottom: 12px;
+}
+
+#kc-form-login label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333333;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+input#username,
+input#password {
+  border-radius: 12px;
+  border: 1px solid #E3E8EF;
+  background: #FFFFFF;
+  color: #010C2D;
+  height: 46px;
+  width: 100%;
+  padding: 0 14px;
+  font-size: 15px;
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+
+input#username::placeholder,
+input#password::placeholder { color: #9aa4ad; }
+
+input#username:focus,
+input#password:focus {
+  outline: none;
+  border-color: #007DFF;
+  box-shadow: 0 0 0 4px rgba(0, 125, 255, 0.12);
+}
+
+input#password { padding-right: 44px; }
+
+.pf-c-input-group,
+div:has(> input#password) { position: relative; }
+
+button[data-password-toggle] {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  color: #9aa4ad;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+button[data-password-toggle]:hover {
+  color: #465058;
+  background: #F0F2F5;
+}
+
+/* Options row: remember me / forgot password */
+#kc-form-options { display: inline-block; }
+
+#kc-form-options .checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #465058;
+  margin: 0;
+}
+
+#kc-form-login > .form-group:has(#kc-form-options) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#kc-form-login a {
+  font-size: 13px;
+  font-weight: 600;
+  color: #007DFF;
+  text-decoration: none;
+}
+
+#kc-form-login a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+#input-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: #E01E5A;
+}
+
+/* Submit — PrimaryButton style */
+#kc-form-buttons { margin-top: 4px; }
+
+#kc-login {
+  background: #007DFF;
+  border: none;
+  border-radius: 12px;
+  height: 48px;
+  width: 100%;
+  font-weight: 600;
+  font-size: 15px;
+  color: #FFFFFF;
+  cursor: pointer;
+  box-shadow: 0 6px 20px -6px rgba(0, 125, 255, 0.5);
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+
+#kc-login:hover {
+  background: #00263C;
+  box-shadow: 0 8px 24px -6px rgba(0, 125, 255, 0.4);
+}
+
+#kc-login:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Register link + privacy note ────────────────────── */
+.dk-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 8px;
+}
+
+.dk-divider::before,
+.dk-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #EBF4FF;
+}
+
+.dk-divider span {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(70, 80, 88, 0.5);
+}
+
+.dk-register { text-align: center; margin: 0; }
+
+.dk-register a {
+  font-size: 14px;
+  font-weight: 600;
+  color: #007DFF;
+  text-decoration: none;
+}
+
+.dk-register a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+.dk-privacy {
+  margin: 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(70, 80, 88, 0.5);
+}
+
+#kc-registration-container { display: none; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .dk-right { padding: 24px 20px; }
+  .dk-card { max-height: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

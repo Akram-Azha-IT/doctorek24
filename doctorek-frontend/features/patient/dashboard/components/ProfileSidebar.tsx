@@ -72,15 +72,15 @@ export function ProfileSidebar({ firstName, lastName, profile, carte, hasCarte, 
         {carte && (
           <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#F0F2F5] pt-4">
             <div className="text-center">
-              <p className="text-xs font-bold text-[#007DFF]">{carte.groupeSanguin ?? '—'}</p>
+              <p className="text-xs font-bold text-[#007DFF]">{carte.groupeSanguin ?? '-'}</p>
               <p className="text-[10px] text-[#465058] mt-0.5">Groupe</p>
             </div>
             <div className="text-center border-x border-[#F0F2F5]">
-              <p className="text-xs font-bold text-[#333333]">{carte.tailleCm ? `${carte.tailleCm} cm` : '—'}</p>
+              <p className="text-xs font-bold text-[#333333]">{carte.tailleCm ? `${carte.tailleCm} cm` : '-'}</p>
               <p className="text-[10px] text-[#465058] mt-0.5">Taille</p>
             </div>
             <div className="text-center">
-              <p className="text-xs font-bold text-[#333333]">{carte.poidsKg ? `${carte.poidsKg} kg` : '—'}</p>
+              <p className="text-xs font-bold text-[#333333]">{carte.poidsKg ? `${carte.poidsKg} kg` : '-'}</p>
               <p className="text-[10px] text-[#465058] mt-0.5">Poids</p>
             </div>
           </div>

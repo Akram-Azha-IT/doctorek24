@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CarteVirtuelle, PatientProfile } from '@/lib/types'
+import { getGoogleWalletSaveUrl } from '@/features/carte/api'
 import QrCodeDisplay from './QrCodeDisplay'
 
 const C_BLUE  = '#007DFF'
@@ -42,9 +43,9 @@ export function CarteRecto({
   const maskedCin =
     rawCin.length >= 3
       ? rawCin[0] + '*'.repeat(rawCin.length - 2) + rawCin[rawCin.length - 1]
-      : rawCin || '—'
+      : rawCin || '-'
 
-  const cnss = carte.assuranceNumero ?? '—'
+  const cnss = carte.assuranceNumero ?? '-'
 
   return (
     <svg
@@ -336,15 +337,15 @@ export function CarteVerso({
   lastName?: string
   flat?: boolean
 }) {
-  const nom = lastName?.toUpperCase() || '—'
-  const prenom = firstName || '—'
+  const nom = lastName?.toUpperCase() || '-'
+  const prenom = firstName || '-'
   const createdYear = new Date().getFullYear()
 
   const rows = [
     { fr: 'Nom',                   ar: 'النسب',            value: nom },
     { fr: 'Prénom',                 ar: 'الاسم الشخصي',     value: prenom },
-    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',   value: profile?.dateNaissance ?? '—' },
-    { fr: 'C.I.N.',                 ar: 'ب.ت.و',           value: profile?.numIdentite ?? '—' },
+    { fr: 'Date de naissance',      ar: 'تاريخ الازدياد',   value: profile?.dateNaissance ?? '-' },
+    { fr: 'C.I.N.',                 ar: 'ب.ت.و',           value: profile?.numIdentite ?? '-' },
     { fr: "Date d'immatriculation", ar: 'تاريخ التسجيل',    value: `01/01/${createdYear}` },
   ]
 
@@ -454,7 +455,7 @@ export function CarteVerso({
               marginTop: '2px',
             }}
           >
-            {carte.assuranceNumero ?? carte.cardRef ?? '—'}
+            {carte.assuranceNumero ?? carte.cardRef ?? '-'}
           </div>
         </div>
       </div>
@@ -600,7 +601,7 @@ export function CarteVerso({
             fontWeight: 600,
           }}
         >
-          CARTE MÉDICALE NATIONALE — MA
+          CARTE MÉDICALE NATIONALE - MA
         </div>
       </div>
     </div>
@@ -617,6 +618,7 @@ export default function CarteVirtuelleCard({
   onEdit,
 }: CarteVirtuelleCardProps) {
   const [downloading, setDownloading] = useState(false)
+  const [addingToWallet, setAddingToWallet] = useState(false)
   const [flipped, setFlipped] = useState(false)
   const qrUrl = carte.cardRef
     ? `${typeof window !== 'undefined' ? window.location.origin : 'https://doctorek.ma'}/carte/${carte.cardRef}`
@@ -642,6 +644,18 @@ export default function CarteVirtuelleCard({
       alert("Erreur lors de l'exportation de la carte. Veuillez réessayer.")
     } finally {
       setDownloading(false)
+    }
+  }
+
+  const addToGoogleWallet = async () => {
+    setAddingToWallet(true)
+    try {
+      const { saveUrl } = await getGoogleWalletSaveUrl(carte.patientId)
+      window.location.href = saveUrl
+    } catch {
+      alert("Erreur lors de l'ajout à Google Wallet. Veuillez réessayer.")
+    } finally {
+      setAddingToWallet(false)
     }
   }
 
@@ -713,29 +727,20 @@ export default function CarteVirtuelleCard({
         )}
       </div>
 
-      {/* Trust badges */}
-      <div className="mt-5 grid grid-cols-3 gap-2">
-        <div className="flex flex-col items-center gap-1.5 bg-[#F0F7FF] rounded-xl py-3 px-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#007DFF]">
-            <path d="M12 2L4 5v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V5l-8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-[11px] font-semibold text-[#1863A9] text-center leading-tight">Reconnu partout</span>
-        </div>
-        <div className="flex flex-col items-center gap-1.5 bg-[#F0FDF8] rounded-xl py-3 px-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#2EB67D]">
-            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.8" />
-            <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-          <span className="text-[11px] font-semibold text-[#1a7a52] text-center leading-tight">Données sécurisées</span>
-        </div>
-        <div className="flex flex-col items-center gap-1.5 bg-[#FFF8F0] rounded-xl py-3 px-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-[#ECB22E]">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-[11px] font-semibold text-[#92600a] text-center leading-tight">Service Certifié</span>
-        </div>
-      </div>
+      {/* Google Wallet */}
+      <button
+        onClick={addToGoogleWallet}
+        disabled={addingToWallet}
+        className="w-full mt-3 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-white text-[#1F1F1F] border-2 border-[#007DFF] shadow-lg shadow-blue-500/15 hover:bg-[#F0F7FF] transition-colors disabled:opacity-50"
+      >
+        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+          <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.32-9.08H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+          <path fill="#FBBC05" d="M11.68 28.17A13.93 13.93 0 0 1 10.95 24c0-1.45.25-2.86.73-4.17v-5.7H4.34A23.93 23.93 0 0 0 2 24c0 3.86.92 7.51 2.34 10.7l7.34-5.7z"/>
+          <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.13l7.34 5.7c1.74-5.21 6.59-9.08 12.32-9.08z"/>
+        </svg>
+        {addingToWallet ? 'Ajout en cours...' : 'Ajouter à Google Wallet'}
+      </button>
     </div>
   )
 }

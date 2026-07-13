@@ -302,7 +302,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
               {/* Address */}
               <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
                 <PinIcon />
-                {[medecin.adresse, medecin.ville].filter(Boolean).join(', ') || medecin.ville || '—'}
+                {[medecin.adresse, medecin.ville].filter(Boolean).join(', ') || medecin.ville || '-'}
                 {distanceKm !== undefined && (
                   <span className="ml-1 font-medium text-[#007DFF]">
                     · {distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`}

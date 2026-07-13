@@ -21,13 +21,17 @@ function StatCard({ label, value, icon: Icon, iconColor, iconBg }: StatCardProps
         </div>
       </div>
       <p className="text-3xl font-extrabold text-[#010C2D]">
-        {value !== undefined ? value.toLocaleString('fr-FR') : '—'}
+        {value !== undefined ? value.toLocaleString('fr-FR') : '-'}
       </p>
     </div>
   )
 }
 
-const STAT_CARDS: Omit<StatCardProps, 'value'>[] & { key: keyof import('@/features/admin/types').AdminStats }[] = [
+type StatCardDef = Omit<StatCardProps, 'value'> & {
+  key: keyof import('@/features/admin/types').AdminStats
+}
+
+const STAT_CARDS: StatCardDef[] = [
   { key: 'totalPatients', label: 'Patients', icon: Users, iconColor: 'text-[#007DFF]', iconBg: 'bg-[#E8F2FC]' },
   { key: 'totalMedecins', label: 'Médecins', icon: UserCheck, iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
   { key: 'totalRdvs', label: 'Total RDV', icon: Calendar, iconColor: 'text-purple-600', iconBg: 'bg-purple-50' },

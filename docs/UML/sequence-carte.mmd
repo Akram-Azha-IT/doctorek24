@@ -1,0 +1,24 @@
+sequenceDiagram
+    title Figure 9 : Diagramme de séquences - Carte Médicale Virtuelle
+    autonumber
+    actor P as Patient
+    actor M as Médecin
+    participant UI as Frontend
+    participant C as Carte Médicale
+    participant DB as PostgreSQL
+
+    P->>UI: Voir carte médicale
+    UI->>C: GET /carte/patient/{id}
+    C->>DB: SELECT carte_virtuelle
+    DB-->>C: Données carte
+    C-->>UI: 200 OK
+
+    M->>UI: Émettre ordonnance
+    UI->>C: POST /carte/ordonnances
+    C->>DB: INSERT ordonnance
+    C-->>UI: 201 Created
+
+    M->>UI: Déposer document médical
+    UI->>C: POST /carte/documents
+    C->>DB: INSERT document_medical
+    C-->>UI: 201 Created

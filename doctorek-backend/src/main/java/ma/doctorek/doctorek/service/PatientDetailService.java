@@ -32,7 +32,9 @@ public class PatientDetailService {
         PatientDetailEntity detail = repository.findById(userId)
                 .orElseGet(() -> new PatientDetailEntity(user));
 
-        return PatientDetailResponse.from(detail, user.getFirstName(), user.getLastName());
+        // Fall back to the social-login avatar when no photo was uploaded.
+        return PatientDetailResponse.from(detail, user.getFirstName(), user.getLastName(),
+                user.getAvatarUrl());
     }
 
     @Transactional

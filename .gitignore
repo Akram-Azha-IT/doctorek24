@@ -65,3 +65,12 @@ coverage/
 *.tmp
 *.bak
 *.swp
+# Personal docs / scratch artifacts
+*.docx
+rapport_extracted.txt
+presentation/
+doctorek-frontend/page*.html
+doctorek-frontend/public/logo-datauri.txt
+
+# Keycloak realm export — contient des secrets, transférer par scp uniquement
+docker/doctorek-realm.json

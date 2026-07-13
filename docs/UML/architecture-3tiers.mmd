@@ -1,0 +1,33 @@
+graph TB
+    subgraph P1["1. Présentation (Frontend)"]
+        Frontend["Next.js 15 + React 18 + TypeScript<br/>auth, annuaire, agenda, carte,<br/>dossier, messaging, admin"]
+    end
+
+    subgraph P2["2. Backend (Spring Boot 3)"]
+        Controllers["Contrôleurs REST<br/>Auth/Annuaire/Agenda/Carte/Dossier/Admin"]
+        Services["Services métier"]
+        Repos["Repositories JPA"]
+        Ws["WebSocket<br/>MessagingService"]
+        Security["Sécurité<br/>JwtAuthConverter / SecurityConfig"]
+
+        Controllers --> Services
+        Services --> Repos
+        Ws --> Services
+        Controllers -.-> Security
+    end
+
+    subgraph P3["3. Services externes et données"]
+        Keycloak["Keycloak<br/>OAuth2 / OIDC"]
+        Postgres[("PostgreSQL")]
+        Redis["Redis (cache)"]
+        Mail["Mailhog / SMTP"]
+    end
+
+    Frontend -->|"REST JSON (Bearer JWT)"| Controllers
+    Frontend -->|"WebSocket"| Ws
+    Frontend -->|"Authentification (Authorization Code + PKCE)"| Keycloak
+
+    Security -->|"Validation JWT<br/>backend = pur resource server"| Keycloak
+    Repos --> Postgres
+    Services --> Redis
+    Services --> Mail

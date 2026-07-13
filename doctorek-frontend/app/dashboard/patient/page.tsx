@@ -19,12 +19,20 @@ export default function DashboardPatientPage() {
   const [lastName, setLastName] = useState<string | null>(null)
 
   useEffect(() => {
-    const session = getSession()
-    if (session?.role === 'PATIENT' && session.id) {
-      setPatientId(session.id)
-      setFirstName(session.firstName ?? null)
-      setLastName(session.lastName ?? null)
+    // SessionBridge mirrors the Auth.js session into the synchronous cache *after* mount on a
+    // fresh login, and backfills name/photo later — so re-read on every 'session-updated' event
+    // instead of a one-shot read, otherwise patientId can stay empty and the carte never loads.
+    function syncFromSession() {
+      const session = getSession()
+      if (session?.role === 'PATIENT' && session.id) {
+        setPatientId(session.id)
+        setFirstName(session.firstName ?? null)
+        setLastName(session.lastName ?? null)
+      }
     }
+    syncFromSession()
+    window.addEventListener('session-updated', syncFromSession)
+    return () => window.removeEventListener('session-updated', syncFromSession)
   }, [])
 
   const { data: rdvs = [], isLoading } = useRdvsPatient(patientId)
@@ -98,7 +106,7 @@ export default function DashboardPatientPage() {
         {/* Welcome — inline, no wrapper component */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[#333333]">
-            Bonjour {firstName ?? 'Patient'},
+            Salam {firstName ?? 'Patient'},
           </h1>
           <p className="text-sm text-[#465058] mt-1">
             {rdvsAVenir === 0

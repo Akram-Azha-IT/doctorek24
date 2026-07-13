@@ -99,7 +99,7 @@ export function AuthShell({
           {/* Footer note */}
           <p className="mt-3 flex items-center gap-1.5 text-[10px] text-[#465058]/50">
             <ShieldIcon />
-            {`Données médicales protégées — CNDP Maroc`}
+            {`Données médicales protégées · CNDP Maroc`}
           </p>
         </div>
       </div>

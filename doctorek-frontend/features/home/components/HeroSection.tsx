@@ -112,10 +112,10 @@ export function HeroSection() {
               <HelpCircle className="h-4 w-4 mr-1.5" aria-hidden="true" />
               Aide
             </Link>
-            <Link href="/login" className="inline-flex items-center text-[#007DFF] hover:text-[#00263C] transition-colors gap-1.5">
+            <a href="/login" className="inline-flex items-center text-[#007DFF] hover:text-[#00263C] transition-colors gap-1.5">
               <UserRound className="h-5 w-5" aria-hidden="true" />
               <span className="text-sm font-bold leading-tight">Se connecter</span>
-            </Link>
+            </a>
           </div>
         </div>
       </nav>

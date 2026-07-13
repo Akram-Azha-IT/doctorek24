@@ -7,7 +7,7 @@ export function WelcomeBar({ firstName, rdvsAVenir }: WelcomeBarProps) {
   return (
     <div className="mb-6">
       <h1 className="text-2xl font-bold text-[#333333]">
-        Bonjour {firstName ?? 'Patient'},
+        Salam {firstName ?? 'Patient'},
       </h1>
       <p className="text-sm text-[#465058] mt-1">
         {rdvsAVenir === 0

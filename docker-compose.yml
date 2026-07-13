@@ -27,6 +27,24 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  minio:
+    image: minio/minio:latest
+    container_name: doctorek-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-doctorek}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-doctorek123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
     container_name: doctorek-keycloak
@@ -43,6 +61,8 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
     ports:
       - "9080:9080"
+    volumes:
+      - ./docker/keycloak-themes:/opt/keycloak/themes
     depends_on:
       - postgres
 
@@ -54,6 +74,7 @@ services:
       - redis
       - keycloak
       - mailhog
+      - minio
     ports:
       - "8080:8080"
     environment:
@@ -68,10 +89,21 @@ services:
       KEYCLOAK_REALM: doctorek
       KEYCLOAK_ADMIN_CLIENT_ID: doctorek-admin-cli
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
-      MAIL_HOST: mailhog
-      MAIL_PORT: 1025
+      # Mail — defaults to MailHog (dev); set MAIL_* in .env to use a real SMTP (Brevo)
+      MAIL_HOST: ${MAIL_HOST:-mailhog}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@doctorek.ma}
       MAIL_ENABLED: "true"
       JAVA_TOOL_OPTIONS: -Xms256m -Xmx512m
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-doctorek}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-doctorek123}
+      MINIO_BUCKET: doctorek-uploads
 
 volumes:
   postgres_data:
+  minio_data:

@@ -5,7 +5,7 @@ interface PhotoSectionProps {
   photoStatus: 'idle' | 'success'
   firstName: string
   lastName: string
-  photoInputRef: React.RefObject<HTMLInputElement>
+  photoInputRef: React.RefObject<HTMLInputElement | null>
   onUploadClick: () => void
   onRemove: () => void
   onPhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void

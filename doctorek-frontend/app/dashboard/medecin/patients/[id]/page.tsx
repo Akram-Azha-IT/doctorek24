@@ -17,7 +17,8 @@ import {
   useUploadDocument,
   useDeleteDocument,
 } from '@/features/dossier/hooks'
-import { getDocumentDownloadUrl } from '@/features/dossier/api'
+import { getDocumentDownloadUrl, openProtectedFile } from '@/features/dossier/api'
+import { DocumentsRequisSection } from '@/features/agenda/components/DocumentsRequisSection'
 import type { MedicamentDto } from '@/features/dossier/api'
 import {
   ArrowLeft,
@@ -37,6 +38,7 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  FileImage,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -71,7 +73,7 @@ function formatDateShortFR(dateStr: string) {
 }
 
 function formatFileSize(bytes: number | null): string {
-  if (!bytes) return '—'
+  if (!bytes) return '-'
   return bytes < 1024 * 1024
     ? `${(bytes / 1024).toFixed(1)} Ko`
     : `${(bytes / 1024 / 1024).toFixed(1)} Mo`
@@ -108,10 +110,10 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-zinc-100 px-5 py-3">
+    <div className="rounded-2xl border border-[#EEF1F6] bg-white overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-[#F0F2F5] px-5 py-3.5">
         {icon}
-        <p className="text-sm font-semibold text-zinc-700">{title}</p>
+        <p className="text-sm font-bold text-[#010C2D]">{title}</p>
       </div>
       <div className="px-5 py-4">{children}</div>
     </div>
@@ -136,11 +138,13 @@ function TabBtn({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={() => onClick(id)}
-      className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+      className={`flex items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-sm font-semibold transition-colors ${
         active
-          ? 'bg-[#1863A9] text-white shadow-sm'
-          : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
+          ? 'border-[#007DFF] text-[#007DFF]'
+          : 'border-transparent text-[#6B7A99] hover:text-[#010C2D]'
       }`}
     >
       {icon}
@@ -168,7 +172,6 @@ function InfosTab({ patientId }: { patientId: string }) {
 
   function saveCarteField(patch: Partial<CarteVirtuelleRequest>) {
     const base: CarteVirtuelleRequest = {
-      patientId,
       tailleCm: carte?.tailleCm,
       poidsKg: carte?.poidsKg,
       donneurOrganes: carte?.donneurOrganes,
@@ -293,8 +296,8 @@ function InfosTab({ patientId }: { patientId: string }) {
               onClick={() => saveCarteField({ groupeSanguin: g })}
               className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
                 carte?.groupeSanguin === g
-                  ? 'border-[#1863A9] bg-[#1863A9] text-white'
-                  : 'border-zinc-200 text-zinc-600 hover:border-[#1863A9] hover:text-[#1863A9]'
+                  ? 'border-[#007DFF] bg-[#007DFF] text-white'
+                  : 'border-zinc-200 text-zinc-600 hover:border-[#007DFF] hover:text-[#007DFF]'
               }`}
             >
               {g}
@@ -328,12 +331,12 @@ function InfosTab({ patientId }: { patientId: string }) {
             onChange={(e) => setNewAllergie(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addAllergie()}
             placeholder="Ajouter une allergie…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <button
             type="button"
             onClick={addAllergie}
-            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -341,7 +344,7 @@ function InfosTab({ patientId }: { patientId: string }) {
       </Card>
 
       {/* Maladies chroniques */}
-      <Card icon={<ClipboardList className="h-4 w-4 text-[#1863A9]" />} title="Maladies chroniques">
+      <Card icon={<ClipboardList className="h-4 w-4 text-[#007DFF]" />} title="Maladies chroniques">
         <div className="flex flex-wrap gap-2 mb-3">
           {(carte?.maladiesChroniques ?? []).length === 0 && (
             <p className="text-sm text-zinc-400">Aucune maladie chronique enregistrée</p>
@@ -365,12 +368,12 @@ function InfosTab({ patientId }: { patientId: string }) {
             onChange={(e) => setNewMaladie(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addMaladie()}
             placeholder="Ajouter une maladie chronique…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <button
             type="button"
             onClick={addMaladie}
-            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -378,7 +381,7 @@ function InfosTab({ patientId }: { patientId: string }) {
       </Card>
 
       {/* Médicaments actuels */}
-      <Card icon={<Pill className="h-4 w-4 text-purple-500" />} title="Médicaments actuels">
+      <Card icon={<Pill className="h-4 w-4 text-[#007DFF]" />} title="Médicaments actuels">
         <ul className="space-y-1.5 mb-3">
           {(carte?.medicamentsActuels ?? []).length === 0 && (
             <li className="text-sm text-zinc-400">Aucun médicament enregistré</li>
@@ -406,19 +409,19 @@ function InfosTab({ patientId }: { patientId: string }) {
             onChange={(e) => setNewMedicament((p) => ({ ...p, nom: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && addMedicament()}
             placeholder="Nom du médicament…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <input
             type="text"
             value={newMedicament.dosage}
             onChange={(e) => setNewMedicament((p) => ({ ...p, dosage: e.target.value }))}
             placeholder="Dosage (optionnel)"
-            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <button
             type="button"
             onClick={addMedicament}
-            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -454,19 +457,19 @@ function InfosTab({ patientId }: { patientId: string }) {
             onChange={(e) => setNewAntecedent((p) => ({ ...p, description: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && addAntecedentChir()}
             placeholder="Description (ex: Appendicectomie)…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <input
             type="text"
             value={newAntecedent.date ?? ''}
             onChange={(e) => setNewAntecedent((p) => ({ ...p, date: e.target.value }))}
             placeholder="Date (optionnel)"
-            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <button
             type="button"
             onClick={addAntecedentChir}
-            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -498,12 +501,12 @@ function InfosTab({ patientId }: { patientId: string }) {
             onChange={(e) => setNewVaccin(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addVaccin()}
             placeholder="Ajouter un vaccin…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
           />
           <button
             type="button"
             onClick={addVaccin}
-            className="rounded-lg bg-[#1863A9] px-3 py-2 text-white hover:bg-[#064178] transition-colors"
+            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -517,7 +520,7 @@ function InfosTab({ patientId }: { patientId: string }) {
           defaultValue={notesGenerales}
           onBlur={(e) => saveNotes(e.target.value)}
           placeholder="Observations, remarques importantes du médecin…"
-          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30 resize-none"
+          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30 resize-none"
         />
       </Card>
     </div>
@@ -599,7 +602,7 @@ function OrdonnancesTab({
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 rounded-xl bg-[#1863A9] px-4 py-2 text-sm font-semibold text-white hover:bg-[#064178] transition-colors"
+          className="flex items-center gap-2 rounded-xl bg-[#007DFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#00263C] transition-colors"
         >
           <Plus className="h-4 w-4" />
           Nouvelle ordonnance
@@ -607,9 +610,9 @@ function OrdonnancesTab({
       </div>
 
       {showForm && (
-        <div className="rounded-xl border border-[#1863A9]/30 bg-[#E8F2FC] p-5 space-y-4">
+        <div className="rounded-xl border border-[#007DFF]/30 bg-[#EBF4FF] p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-[#1863A9]">Nouvelle ordonnance</p>
+            <p className="text-sm font-bold text-[#007DFF]">Nouvelle ordonnance</p>
             <button
               type="button"
               onClick={() => setShowForm(false)}
@@ -628,7 +631,7 @@ function OrdonnancesTab({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Renouvellement traitement HTA"
-              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
             />
           </div>
 
@@ -656,28 +659,28 @@ function OrdonnancesTab({
                     value={drug.nom}
                     onChange={(e) => updateDrug(idx, { nom: e.target.value })}
                     placeholder="Nom du médicament"
-                    className="col-span-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+                    className="col-span-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
                   />
                   <input
                     type="text"
                     value={drug.dosage}
                     onChange={(e) => updateDrug(idx, { dosage: e.target.value })}
                     placeholder="Dosage (ex: 500mg)"
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
                   />
                   <input
                     type="text"
                     value={drug.duree}
                     onChange={(e) => updateDrug(idx, { duree: e.target.value })}
                     placeholder="Durée (ex: 30 jours)"
-                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+                    className="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
                   />
                   <input
                     type="text"
                     value={drug.frequence}
                     onChange={(e) => updateDrug(idx, { frequence: e.target.value })}
                     placeholder="Fréquence (ex: 1 cp matin)"
-                    className="col-span-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#1863A9]/30"
+                    className="col-span-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
                   />
                 </div>
               </div>
@@ -686,7 +689,7 @@ function OrdonnancesTab({
             <button
               type="button"
               onClick={addDrug}
-              className="flex items-center gap-1.5 text-sm text-[#1863A9] font-medium hover:underline"
+              className="flex items-center gap-1.5 text-sm text-[#007DFF] font-medium hover:underline"
             >
               <Plus className="h-3.5 w-3.5" />
               Ajouter un médicament
@@ -698,7 +701,7 @@ function OrdonnancesTab({
               type="button"
               onClick={submitOrdonnance}
               disabled={create.isPending}
-              className="flex-1 rounded-xl bg-[#1863A9] py-2.5 text-sm font-bold text-white hover:bg-[#064178] transition-colors disabled:opacity-60"
+              className="flex-1 rounded-xl bg-[#007DFF] py-2.5 text-sm font-bold text-white hover:bg-[#00263C] transition-colors disabled:opacity-60"
             >
               {create.isPending ? 'Enregistrement…' : "Enregistrer l'ordonnance"}
             </button>
@@ -728,7 +731,7 @@ function OrdonnancesTab({
             className="rounded-xl border border-zinc-200 bg-white overflow-hidden"
           >
             <div className="flex items-center gap-4 px-5 py-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EBF4FF] text-[#007DFF]">
                 <Pill className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -771,7 +774,7 @@ function OrdonnancesTab({
                     key={i}
                     className="flex items-start gap-3 rounded-lg bg-white border border-zinc-100 px-4 py-3"
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-100 text-xs font-bold text-purple-700">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EBF4FF] text-xs font-bold text-[#007DFF]">
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -822,10 +825,13 @@ function DocumentsTab({ patientId }: { patientId: string }) {
     })
   }
 
-  function fileIcon(typeDoc: string) {
-    if (typeDoc === 'IMAGE') return '🖼️'
-    if (typeDoc === 'PDF') return '📄'
-    return '📎'
+  function FileIcon({ typeDoc }: { typeDoc: string }) {
+    const Icon = typeDoc === 'IMAGE' ? FileImage : typeDoc === 'PDF' ? FileText : Paperclip
+    return (
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EBF4FF]">
+        <Icon className="h-4 w-4 text-[#007DFF]" />
+      </span>
+    )
   }
 
   if (isLoading)
@@ -834,7 +840,7 @@ function DocumentsTab({ patientId }: { patientId: string }) {
   return (
     <div className="space-y-4">
       <div
-        className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center cursor-pointer hover:border-[#1863A9] hover:bg-[#E8F2FC]/50 transition-colors"
+        className="rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center cursor-pointer hover:border-[#007DFF] hover:bg-[#EBF4FF]/50 transition-colors"
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
@@ -843,13 +849,13 @@ function DocumentsTab({ patientId }: { patientId: string }) {
         }}
       >
         {upload.isPending ? (
-          <p className="text-sm font-medium text-[#1863A9]">Téléversement en cours…</p>
+          <p className="text-sm font-medium text-[#007DFF]">Téléversement en cours…</p>
         ) : (
           <>
             <Upload className="mx-auto h-8 w-8 text-zinc-300 mb-2" />
             <p className="text-sm font-medium text-zinc-500">
               Glissez des fichiers ici ou{' '}
-              <span className="text-[#1863A9] font-semibold">parcourir</span>
+              <span className="text-[#007DFF] font-semibold">parcourir</span>
             </p>
             <p className="mt-1 text-xs text-zinc-400">PDF, images, comptes-rendus…</p>
           </>
@@ -872,9 +878,7 @@ function DocumentsTab({ patientId }: { patientId: string }) {
         <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white overflow-hidden">
           {documents.map((doc) => (
             <div key={doc.id} className="flex items-center gap-3 px-4 py-3">
-              <span className="text-xl" aria-hidden>
-                {fileIcon(doc.typeDoc)}
-              </span>
+              <FileIcon typeDoc={doc.typeDoc} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-zinc-800 truncate">{doc.nom}</p>
                 <p className="text-xs text-zinc-400">
@@ -882,14 +886,14 @@ function DocumentsTab({ patientId }: { patientId: string }) {
                   {formatFileSize(doc.taille)}
                 </p>
               </div>
-              <a
-                href={getDocumentDownloadUrl(patientId, doc.id)}
-                download={doc.nom}
-                className="text-zinc-400 hover:text-[#1863A9] transition-colors p-1"
+              <button
+                type="button"
+                onClick={() => openProtectedFile(getDocumentDownloadUrl(patientId, doc.id)).catch(() => {})}
+                className="text-zinc-400 hover:text-[#007DFF] transition-colors p-1"
                 title="Télécharger"
               >
                 <Download className="h-4 w-4" />
-              </a>
+              </button>
               {confirmId === doc.id ? (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-xs text-zinc-500">Supprimer ?</span>
@@ -932,6 +936,7 @@ function DocumentsTab({ patientId }: { patientId: string }) {
 
 function HistoriqueTab({ rdvs }: { rdvs: RendezVous[] }) {
   const [openId, setOpenId] = useState<string | null>(null)
+  const canPrepare = (statut: StatutRdv) => statut === 'EN_ATTENTE' || statut === 'CONFIRME'
 
   if (rdvs.length === 0)
     return (
@@ -945,14 +950,15 @@ function HistoriqueTab({ rdvs }: { rdvs: RendezVous[] }) {
     <div className="space-y-3">
       {rdvs.map((rdv) => {
         const isOpen = openId === rdv.id
-        const hasQ = !!rdv.questionnaire?.motif
+        const hasQ = !!rdv.questionnaire?.message
+        const showPrep = canPrepare(rdv.statut)
         return (
           <div
             key={rdv.id}
             className="rounded-xl border border-zinc-200 bg-white overflow-hidden"
           >
             <div className="flex items-center gap-4 px-5 py-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#E8F2FC] text-[#1863A9]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EBF4FF] text-[#007DFF]">
                 <Calendar className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -969,46 +975,45 @@ function HistoriqueTab({ rdvs }: { rdvs: RendezVous[] }) {
                 >
                   {STATUT_LABEL[rdv.statut]}
                 </span>
-                {hasQ && (
+                {(hasQ || showPrep) && (
                   <button
                     type="button"
                     onClick={() => setOpenId(isOpen ? null : rdv.id)}
-                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-100 flex items-center gap-1"
+                    aria-expanded={isOpen}
+                    className={`flex min-h-[36px] items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      showPrep
+                        ? 'bg-[#EBF4FF] text-[#007DFF] hover:bg-[#DFEFFE]'
+                        : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                    }`}
                   >
-                    <ClipboardList className="h-3 w-3" />
+                    <ClipboardList className="h-3.5 w-3.5" />
+                    {showPrep ? 'Préparer le RDV' : 'Détails'}
                     {isOpen ? (
-                      <ChevronUp className="h-3 w-3" />
+                      <ChevronUp className="h-3.5 w-3.5" />
                     ) : (
-                      <ChevronDown className="h-3 w-3" />
+                      <ChevronDown className="h-3.5 w-3.5" />
                     )}
                   </button>
                 )}
               </div>
             </div>
-            {hasQ && isOpen && rdv.questionnaire && (
-              <div className="border-t border-zinc-100 bg-zinc-50 px-5 py-4 space-y-2 text-sm">
-                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                  Questionnaire
-                </p>
-                <p>
-                  <span className="text-zinc-500">Motif :</span> {rdv.questionnaire.motif}
-                </p>
-                <p>
-                  <span className="text-zinc-500">1ère consultation :</span>{' '}
-                  {rdv.questionnaire.premierConsultation ? 'Oui' : 'Non'}
-                </p>
-                {rdv.questionnaire.intensiteDouleur != null && (
-                  <p>
-                    <span className="text-zinc-500">Douleur :</span>{' '}
-                    {rdv.questionnaire.intensiteDouleur}/5
-                  </p>
+            {isOpen && (hasQ || showPrep) && (
+              <div className="border-t border-zinc-100 bg-zinc-50 px-5 py-4 space-y-4 text-sm">
+                {hasQ && rdv.questionnaire && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                      Questionnaire
+                    </p>
+                    <p>
+                      <span className="text-zinc-500">Type :</span>{' '}
+                      {rdv.questionnaire.typeConsultation === 'URGENCE' ? 'Urgence' : 'Consultation'}
+                    </p>
+                    <p>
+                      <span className="text-zinc-500">Message :</span> {rdv.questionnaire.message}
+                    </p>
+                  </div>
                 )}
-                {rdv.questionnaire.notesComplementaires && (
-                  <p>
-                    <span className="text-zinc-500">Notes :</span>{' '}
-                    {rdv.questionnaire.notesComplementaires}
-                  </p>
-                )}
+                {showPrep && <DocumentsRequisSection rdvId={rdv.id} mode="medecin" />}
               </div>
             )}
           </div>
@@ -1103,24 +1108,20 @@ export default function DossierPatientPage() {
 
       {/* Patient header */}
       <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-5">
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
           <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white shadow-sm"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white"
             style={{ backgroundColor: avatarColor }}
           >
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-zinc-900">{fullName}</h1>
-            <p className="mt-0.5 text-sm text-zinc-400">ID patient : {patientId.slice(0, 8)}…</p>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl bg-[#E8F2FC] px-3 py-2">
-            <Stethoscope className="h-4 w-4 text-[#1863A9]" />
-            <span className="text-sm font-semibold text-[#1863A9]">Dossier médical</span>
+            <h1 className="text-xl font-extrabold tracking-tight text-[#010C2D]">{fullName}</h1>
+            <p className="mt-0.5 text-sm text-[#A0AEC0]">Dossier médical · ID {patientId.slice(0, 8)}</p>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-4 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: 'RDV total', value: rdvs.length },
             { label: 'Consultations', value: rdvsTermines },
@@ -1129,17 +1130,17 @@ export default function DossierPatientPage() {
           ].map((s) => (
             <div
               key={s.label}
-              className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3 text-center"
+              className="rounded-xl border border-[#EEF1F6] bg-[#FAFBFC] px-4 py-3"
             >
-              <p className="text-2xl font-bold text-zinc-800">{s.value}</p>
-              <p className="mt-0.5 text-xs text-zinc-400">{s.label}</p>
+              <p className="text-2xl font-extrabold tabular-nums text-[#010C2D]">{s.value}</p>
+              <p className="mt-0.5 text-xs text-[#6B7A99]">{s.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div role="tablist" className="flex flex-wrap gap-5 border-b border-[#EEF1F6]">
         <TabBtn
           id="infos"
           active={tab === 'infos'}

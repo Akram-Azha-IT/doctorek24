@@ -1,0 +1,26 @@
+sequenceDiagram
+    title Doctorek - Authentification et autorisation par rôle
+    autonumber
+    actor U as Utilisateur
+    participant UI as Frontend
+    participant KC as Keycloak
+    participant BE as Backend
+
+    U->>UI: Cliquer "Connexion"
+    UI->>KC: Redirection vers Keycloak (PKCE)
+    U->>KC: Saisir identifiants
+    KC-->>UI: JWT signé (rôle inclus)
+    UI->>UI: Session active
+
+    U->>UI: Action sur une ressource
+    UI->>BE: Requête + Bearer JWT
+    BE->>BE: Valider signature JWT (JWK Keycloak)
+    BE->>BE: Extraire le rôle du token
+
+    alt Token invalide ou rôle insuffisant
+        BE-->>UI: 401 / 403
+    else Autorisé
+        BE-->>UI: 200 OK
+    end
+
+    UI-->>U: Résultat affiché

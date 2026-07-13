@@ -104,7 +104,7 @@ export default function AdminPatientsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-[#010C2D]">Patients</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">Gestion des comptes patients — activation, cartes virtuelles.</p>
+          <p className="mt-0.5 text-sm text-zinc-500">Gestion des comptes patients : activation, cartes virtuelles.</p>
         </div>
         {data && (
           <span className="ml-auto inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">
@@ -150,12 +150,12 @@ export default function AdminPatientsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {!data?.users.length ? (
+                {!data?.content?.length ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-sm text-zinc-400">Aucun patient trouvé.</td>
                   </tr>
                 ) : (
-                  data.users.map((user: UserSummary) => (
+                  data.content.map((user: UserSummary) => (
                     <Fragment key={user.id}>
                       <tr
                         className={`transition-colors ${
@@ -173,7 +173,7 @@ export default function AdminPatientsPage() {
                               <CreditCard className="h-3 w-3" /> Active
                             </span>
                           ) : (
-                            <span className="text-xs text-zinc-400 font-medium">—</span>
+                            <span className="text-xs text-zinc-400 font-medium">-</span>
                           )}
                         </td>
                         <td className="py-3.5 px-5">

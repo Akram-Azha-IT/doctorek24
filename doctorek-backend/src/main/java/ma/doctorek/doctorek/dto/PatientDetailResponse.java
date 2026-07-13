@@ -23,6 +23,18 @@ public record PatientDetailResponse(
         Instant updatedAt) {
 
     public static PatientDetailResponse from(PatientDetailEntity e, String firstName, String lastName) {
+        return from(e, firstName, lastName, null);
+    }
+
+    /**
+     * @param fallbackPhotoUrl used when the patient never uploaded a photo (e.g. a Google
+     *                         sign-in's avatar) so the dashboard/carte still show a picture.
+     */
+    public static PatientDetailResponse from(PatientDetailEntity e, String firstName, String lastName,
+                                             String fallbackPhotoUrl) {
+        String photoUrl = (e.getPhotoUrl() != null && !e.getPhotoUrl().isBlank())
+                ? e.getPhotoUrl()
+                : fallbackPhotoUrl;
         return new PatientDetailResponse(
                 e.getUserId(),
                 firstName,
@@ -31,7 +43,7 @@ public record PatientDetailResponse(
                 e.getGenre(),
                 e.getNationalite(),
                 e.getNumIdentite(),
-                e.getPhotoUrl(),
+                photoUrl,
                 e.getTelephone(),
                 e.getAdresseRue(),
                 e.getAdresseVille(),

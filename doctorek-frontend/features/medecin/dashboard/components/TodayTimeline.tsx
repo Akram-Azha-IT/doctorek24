@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CalendarDays, Clock4 } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import type { RendezVous } from '@/lib/types'
 
 export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
@@ -33,48 +33,27 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
   for (let h = startHour; h <= endHour; h++) hourMarks.push(h)
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ background: '#FFFFFF', border: '1px solid #EEF1F6', boxShadow: '0 1px 4px rgba(16,30,54,0.06)' }}
-    >
-      <div className="px-5 pt-5 pb-4 flex items-center justify-between border-b" style={{ borderColor: '#F0F2F5' }}>
-        <div>
-          <p className="text-sm font-bold" style={{ color: '#010C2D' }}>Programme du jour</p>
-          <p className="text-xs mt-0.5" style={{ color: '#A0AEC0' }}>
-            {active.length === 0 ? 'Journée libre' : `${active.length} rendez-vous`}
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 rounded-xl px-3 py-1.5" style={{ background: '#EBF4FF' }}>
-          <Clock4 className="h-3.5 w-3.5" style={{ color: '#007DFF' }} />
-          <span className="text-xs font-bold" style={{ color: '#007DFF' }}>
-            {String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:{String(nowMinutes % 60).padStart(2, '0')}
+    <div className="overflow-hidden rounded-2xl border border-[#EEF1F6] bg-white">
+      <div className="flex items-center justify-between border-b border-[#F0F2F5] px-5 py-4">
+        <p className="text-sm font-bold text-[#010C2D]">
+          Programme du jour
+          <span className="ml-2 font-semibold text-[#A0AEC0]">
+            {active.length === 0 ? '—' : active.length}
           </span>
-        </div>
+        </p>
+        <span className="text-xs font-semibold tabular-nums text-[#6B7A99]">
+          {String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:{String(nowMinutes % 60).padStart(2, '0')}
+        </span>
       </div>
 
       {active.length === 0 ? (
-        <div className="px-5 pb-5 pt-4">
-          <div className="relative" style={{ height: 260 }}>
-            {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((h) => {
-              const pct = ((h * 60 - 8 * 60) / (10 * 60)) * 100
-              return (
-                <div key={h} className="absolute left-0 right-0 flex items-center gap-2" style={{ top: `${pct}%` }}>
-                  <span className="text-[10px] font-semibold w-7 shrink-0 text-right leading-none" style={{ color: '#E0E6EF' }}>
-                    {h}h
-                  </span>
-                  <div className="flex-1 h-px" style={{ background: '#F0F2F5' }} />
-                </div>
-              )
-            })}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-              <div className="h-14 w-14 rounded-2xl flex items-center justify-center" style={{ background: '#F5F7FA' }}>
-                <CalendarDays className="h-6 w-6" style={{ color: '#C4CFDD' }} />
-              </div>
-              <p className="text-sm text-center" style={{ color: '#A0AEC0' }}>
-                Aucun rendez-vous<br />aujourd&apos;hui
-              </p>
-            </div>
+        <div className="flex flex-col items-center gap-3 py-14">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F2F5]">
+            <CalendarDays className="h-5 w-5 text-[#A0AEC0]" />
           </div>
+          <p className="text-center text-sm text-[#A0AEC0]">
+            Aucun rendez-vous aujourd&apos;hui
+          </p>
         </div>
       ) : (
         <div className="px-5 pb-5 pt-4">
@@ -83,20 +62,23 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
               const pct = toPercent(h * 60)
               return (
                 <div key={h} className="absolute left-0 right-0 flex items-center gap-2" style={{ top: `${pct}%` }}>
-                  <span className="text-[10px] font-semibold w-7 shrink-0 text-right leading-none" style={{ color: '#C4CFDD' }}>
+                  <span className="w-7 shrink-0 text-right text-[10px] leading-none tabular-nums text-[#C4CFDD]">
                     {h}h
                   </span>
-                  <div className="flex-1 h-px" style={{ background: '#F0F2F5' }} />
+                  <div className="h-px flex-1 bg-[#F0F2F5]" />
                 </div>
               )
             })}
 
             {nowVisible && (
-              <div className="absolute left-0 right-0 z-20 flex items-center gap-2 pointer-events-none" style={{ top: `${nowPct}%` }}>
+              <div
+                className="pointer-events-none absolute left-0 right-0 z-20 flex items-center gap-2"
+                style={{ top: `${nowPct}%` }}
+              >
                 <span className="w-7 shrink-0" />
-                <div className="flex-1 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full shrink-0 animate-pulse" style={{ background: '#E01E5A', boxShadow: '0 0 0 3px rgba(224,30,90,0.2)' }} />
-                  <div className="flex-1 h-px" style={{ background: '#E01E5A', opacity: 0.4 }} />
+                <div className="flex flex-1 items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#E01E5A]" />
+                  <div className="h-px flex-1 bg-[#E01E5A]/40" />
                 </div>
               </div>
             )}
@@ -112,32 +94,34 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
                   style={{ top: `${pct}%`, transform: 'translateY(-50%)' }}
                 >
                   <span className="w-7 shrink-0" />
-                  <div className="flex-1 flex items-center gap-2">
+                  <div className="flex flex-1 items-center gap-2">
                     <span
-                      className="h-3 w-3 rounded-full shrink-0 ring-2 ring-white"
-                      style={{ background: past ? '#C4CFDD' : '#007DFF', opacity: past ? 0.5 : 1 }}
+                      className={`h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white ${
+                        past ? 'bg-[#C4CFDD]' : 'bg-[#007DFF]'
+                      }`}
                     />
                     <span
-                      className="rounded-lg px-2.5 py-1 text-xs font-bold"
-                      style={past ? { background: '#F5F7FA', color: '#A0AEC0' } : { background: '#EBF4FF', color: '#007DFF' }}
+                      className={`rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums ${
+                        past ? 'bg-[#F0F2F5] text-[#A0AEC0]' : 'bg-[#EBF4FF] text-[#007DFF]'
+                      }`}
                     >
                       {rdv.heureRdv.slice(0, 5)}
                     </span>
-                    <span className="text-[10px] font-medium" style={{ color: '#C4CFDD' }}>{rdv.duree}min</span>
+                    <span className="text-[10px] text-[#A0AEC0]">{rdv.duree} min</span>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          <div className="mt-2 flex items-center gap-4">
+          <div className="mt-3 flex items-center gap-4 border-t border-[#F0F2F5] pt-3">
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: '#007DFF' }} />
-              <span className="text-[10px] font-semibold" style={{ color: '#A0AEC0' }}>À venir</span>
+              <span className="h-2 w-2 rounded-full bg-[#007DFF]" />
+              <span className="text-[10px] font-medium text-[#A0AEC0]">À venir</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ background: '#C4CFDD' }} />
-              <span className="text-[10px] font-semibold" style={{ color: '#A0AEC0' }}>Passé</span>
+              <span className="h-2 w-2 rounded-full bg-[#C4CFDD]" />
+              <span className="text-[10px] font-medium text-[#A0AEC0]">Passé</span>
             </div>
           </div>
         </div>

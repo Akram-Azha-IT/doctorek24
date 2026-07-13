@@ -75,12 +75,12 @@ export default function InscriptionPage() {
 
           <p className="text-center text-sm text-[#465058]">
             Déjà un compte ?{' '}
-            <Link
+            <a
               href="/login"
               className="font-semibold text-[#007DFF] underline-offset-4 hover:underline"
             >
               Se connecter
-            </Link>
+            </a>
           </p>
         </div>
       </AuthShell>

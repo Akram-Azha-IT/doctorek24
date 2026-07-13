@@ -136,9 +136,9 @@ function RdvBlock({ rdv, onSelect, isSelected }: RdvBlockProps) {
           <p className={clsx('text-[11px] font-medium truncate', colors.text)}>
             {getPatientLabel(rdv)}
           </p>
-          {height >= 60 && rdv.questionnaire?.motif && (
+          {height >= 60 && rdv.questionnaire?.message && (
             <p className="text-[10px] text-zinc-500 italic truncate mt-0.5">
-              {rdv.questionnaire.motif}
+              {rdv.questionnaire.message}
             </p>
           )}
         </>
@@ -158,7 +158,7 @@ interface RdvDetailPanelProps {
 }
 
 function RdvDetailPanel({ rdv, onClose, onConfirm, onCancel, onTerminate }: RdvDetailPanelProps) {
-  const motif = rdv.questionnaire?.motif ?? rdv.motif
+  const motif = rdv.questionnaire?.message ?? rdv.motif
   const colors = STATUT_COLORS[rdv.statut]
   const endTime = `${String(Math.floor((timeToMinutes(rdv.heureRdv) + rdv.duree) / 60)).padStart(2, '0')}:${String((timeToMinutes(rdv.heureRdv) + rdv.duree) % 60).padStart(2, '0')}`
 
@@ -204,15 +204,15 @@ function RdvDetailPanel({ rdv, onClose, onConfirm, onCancel, onTerminate }: RdvD
         {/* Motif */}
         {motif && (
           <div className="rounded-lg bg-zinc-50 px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mb-0.5">Motif</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mb-0.5">Message</p>
             <p className="text-sm text-zinc-700">{motif}</p>
           </div>
         )}
 
-        {/* Questionnaire details */}
-        {rdv.questionnaire?.premierConsultation !== undefined && (
+        {/* Type de consultation */}
+        {rdv.questionnaire?.typeConsultation && (
           <p className="text-xs text-zinc-500">
-            {rdv.questionnaire.premierConsultation ? '1ère consultation' : 'Consultation de suivi'}
+            {rdv.questionnaire.typeConsultation === 'URGENCE' ? 'Urgence' : 'Consultation'}
           </p>
         )}
       </div>

@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useDefineDisponibilite } from '../hooks'
 import type { Disponibilite } from '@/lib/types'
+import { toLocalISODate } from '@/lib/date'
 
 const Schema = z
   .object({
@@ -34,7 +35,7 @@ interface DisponibiliteFormProps {
 const DUREE_OPTIONS = [10, 15, 20, 30, 45, 60, 90, 120]
 
 function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  return toLocalISODate(d)
 }
 
 function todayISO(): string {

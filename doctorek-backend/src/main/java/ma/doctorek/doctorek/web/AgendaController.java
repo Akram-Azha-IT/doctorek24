@@ -1,7 +1,9 @@
 package ma.doctorek.doctorek.web;
 
 import jakarta.validation.Valid;
+import ma.doctorek.doctorek.dto.AddDocumentsRequisRequest;
 import ma.doctorek.doctorek.dto.CreneauResponse;
+import ma.doctorek.doctorek.dto.DocumentRequisResponse;
 import ma.doctorek.doctorek.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.dto.DisponibiliteResponse;
 import ma.doctorek.doctorek.dto.PatientsPageResponse;
@@ -9,6 +11,7 @@ import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
 import ma.doctorek.doctorek.dto.ReprogrammerRdvRequest;
 import ma.doctorek.doctorek.service.AgendaService;
+import ma.doctorek.doctorek.service.RdvPreparationService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +27,12 @@ import java.util.UUID;
 public class AgendaController {
 
     private final AgendaService agendaService;
+    private final RdvPreparationService rdvPreparationService;
 
-    public AgendaController(AgendaService agendaService) {
+    public AgendaController(AgendaService agendaService,
+                             RdvPreparationService rdvPreparationService) {
         this.agendaService = agendaService;
+        this.rdvPreparationService = rdvPreparationService;
     }
 
     @PreAuthorize("hasRole('MEDECIN')")
@@ -108,6 +114,41 @@ public class AgendaController {
             @Valid @RequestBody ReprogrammerRdvRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(
             agendaService.reprogrammerRdv(id, request.dateRdv(), request.heureRdv())));
+    }
+
+    // ── Préparation du RDV : documents demandés au patient ───────────────────
+
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN')")
+    @GetMapping("/rdv/{id}/documents-requis")
+    public ResponseEntity<ApiResponse<List<DocumentRequisResponse>>> listDocumentsRequis(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(rdvPreparationService.list(id)));
+    }
+
+    @PreAuthorize("hasRole('MEDECIN')")
+    @PostMapping("/rdv/{id}/documents-requis")
+    public ResponseEntity<ApiResponse<List<DocumentRequisResponse>>> addDocumentsRequis(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddDocumentsRequisRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.ok(rdvPreparationService.add(id, request.libelles())));
+    }
+
+    @PreAuthorize("hasRole('MEDECIN')")
+    @DeleteMapping("/rdv/{id}/documents-requis/{docId}")
+    public ResponseEntity<ApiResponse<Void>> removeDocumentRequis(
+            @PathVariable UUID id,
+            @PathVariable UUID docId) {
+        rdvPreparationService.remove(id, docId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN')")
+    @PutMapping("/rdv/{id}/documents-requis/{docId}/fournir")
+    public ResponseEntity<ApiResponse<DocumentRequisResponse>> marquerDocumentFourni(
+            @PathVariable UUID id,
+            @PathVariable UUID docId,
+            @RequestParam(defaultValue = "true") boolean fourni) {
+        return ResponseEntity.ok(ApiResponse.ok(rdvPreparationService.marquerFourni(id, docId, fourni)));
     }
 
     @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")

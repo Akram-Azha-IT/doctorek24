@@ -181,7 +181,7 @@ export default function RdvPage() {
             {/* Left — calendar (hidden on mobile, use date strip above) */}
             <div className="hidden md:block p-6">
               <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
-                Étape 1 — Sélectionnez une date
+                Étape 1 : Sélectionnez une date
               </p>
               <CalendarPicker
                 selected={selectedDate}
@@ -196,7 +196,7 @@ export default function RdvPage() {
             {/* Right — time slots */}
             <div className="p-4 md:p-6 md:overflow-y-auto md:max-h-[480px]">
               <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">
-                <span className="md:hidden">Étape 2 — </span>Choisissez un horaire
+                <span className="md:hidden">Étape 2 : </span>Choisissez un horaire
               </p>
               <TimeSlotList
                 creneaux={creneaux}

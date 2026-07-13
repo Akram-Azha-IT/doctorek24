@@ -41,11 +41,12 @@ public class AnnuaireController {
     public ResponseEntity<ApiResponse<PagedMedecinsResponse>> searchMedecins(
             @RequestParam(required = false) String specialite,
             @RequestParam(required = false) String ville,
+            @RequestParam(required = false) String nom,
             @RequestParam(defaultValue = "all") String disponibilite,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(ApiResponse.ok(
-            annuaireService.searchMedecins(specialite, ville, disponibilite, page, size)));
+            annuaireService.searchMedecins(specialite, ville, nom, disponibilite, page, size)));
     }
 
     @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")

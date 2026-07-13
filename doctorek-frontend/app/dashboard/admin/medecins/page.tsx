@@ -53,7 +53,7 @@ export default function AdminMedecinsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-[#010C2D]">Médecins</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">Gestion des comptes médecins — activation, spécialités.</p>
+          <p className="mt-0.5 text-sm text-zinc-500">Gestion des comptes médecins : activation, spécialités.</p>
         </div>
         {data && (
           <span className="ml-auto inline-flex items-center rounded-full bg-[#E8F2FC] px-3 py-1 text-sm font-bold text-[#007DFF]">
@@ -100,12 +100,12 @@ export default function AdminMedecinsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {!data?.users.length ? (
+                {!data?.content?.length ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-sm text-zinc-400">Aucun médecin trouvé.</td>
                   </tr>
                 ) : (
-                  data.users.map((user: UserSummary) => (
+                  data.content.map((user: UserSummary) => (
                     <tr key={user.id} className="transition-colors hover:bg-[#E8F2FC]/30">
                       <td className="py-3.5 px-5">
                         <p className="font-semibold text-[#010C2D]">{user.firstName} {user.lastName}</p>
@@ -117,11 +117,11 @@ export default function AdminMedecinsPage() {
                             {user.specialite}
                           </span>
                         ) : (
-                          <span className="text-xs text-zinc-400 font-medium">—</span>
+                          <span className="text-xs text-zinc-400 font-medium">-</span>
                         )}
                       </td>
                       <td className="py-3.5 px-5 text-zinc-500 text-sm">
-                        {user.ville ?? <span className="text-zinc-400">—</span>}
+                        {user.ville ?? <span className="text-zinc-400">-</span>}
                       </td>
                       <td className="py-3.5 px-5">
                         {user.active ? (

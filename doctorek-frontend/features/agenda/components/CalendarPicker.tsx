@@ -1,6 +1,6 @@
 'use client'
 
-import { DayPicker } from 'react-day-picker'
+import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -9,23 +9,9 @@ const FR_MONTHS = [
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ]
 
-interface DayModifiers {
-  selected: boolean
-  today: boolean
-  disabled: boolean
-  outside: boolean
-  hidden: boolean
-  [key: string]: boolean
-}
-
 // Custom day button — fully Tailwind-styled, no default CSS needed
-function CalDayButton(
-  props: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    day?: unknown
-    modifiers?: DayModifiers
-  },
-) {
-  const { modifiers = {}, children, day: _day, ...buttonProps } = props
+function CalDayButton(props: DayButtonProps) {
+  const { modifiers, children, day: _day, ...buttonProps } = props
   return (
     <button
       {...buttonProps}
@@ -64,7 +50,7 @@ export function CalendarPicker({ selected, onSelect, disabledDays }: CalendarPic
       showOutsideDays
       startMonth={new Date()}
       components={{
-        DayButton: CalDayButton as React.ComponentType<React.ButtonHTMLAttributes<HTMLButtonElement>>,
+        DayButton: CalDayButton,
         Chevron: ({ orientation }: { orientation?: string }) =>
           orientation === 'left'
             ? <ChevronLeft className="w-4 h-4" />

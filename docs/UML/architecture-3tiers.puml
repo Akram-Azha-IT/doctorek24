@@ -1,0 +1,65 @@
+@startuml Doctorek-Architecture3Tiers
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam monochrome true
+skinparam linetype ortho
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    FontName Arial
+    FontSize 12
+}
+skinparam package {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    FontName Arial
+    FontSize 13
+    FontStyle bold
+}
+skinparam title {
+    FontSize 16
+    FontStyle bold
+}
+
+title Doctorek : Architecture applicative
+
+package "1. Couche Presentation (Frontend)" {
+  rectangle "Next.js 15 + React 18 + TypeScript\norganise par domaine fonctionnel :\nauth, annuaire, agenda, carte,\ndossier, messaging, admin" as Frontend
+}
+
+package "2. Couche Backend (Spring Boot 3)" {
+
+  rectangle "Controleurs REST\n(AuthController, AnnuaireController,\nAgendaController, CarteController,\nDossierController, AdminController)" as Controllers
+
+  rectangle "Services metier\n(AuthService, AnnuaireService,\nAgendaService, CarteService,\nDossierService, AdminService)" as Services
+
+  rectangle "Repositories JPA\n(acces aux entites)" as Repos
+
+  rectangle "WebSocket\n(MessagingService, ChatController)" as Ws
+
+  rectangle "Securite\n(JwtAuthConverter, SecurityConfig)" as Security
+
+  Controllers --> Services
+  Services --> Repos
+  Ws --> Services
+  Controllers ..> Security : verification token
+}
+
+package "3. Services externes et donnees" {
+  rectangle "Keycloak\n(fournisseur d'identite,\nOAuth2 / OIDC)" as Keycloak
+  database "PostgreSQL\n(donnees applicatives)" as Postgres
+  rectangle "Redis\n(cache)" as Redis
+  rectangle "Mailhog / SMTP\n(envoi d'emails)" as Mail
+}
+
+Frontend -down-> Controllers : Requetes API REST\n(JSON sur HTTPS, Bearer JWT)
+Frontend -down-> Ws : Connexion WebSocket\n(messagerie temps reel)
+Frontend -right-> Keycloak : Authentification\n(Authorization Code + PKCE)
+
+Security -down-> Keycloak : Validation des jetons JWT\n(backend = pur resource server)
+Repos -down-> Postgres : Requetes SQL\n(Spring Data JPA)
+Services -down-> Redis : Lecture / ecriture cache
+Services -down-> Mail : Envoi des emails\n(verification de compte)
+
+@enduml

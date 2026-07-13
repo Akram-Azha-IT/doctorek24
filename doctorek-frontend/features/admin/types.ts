@@ -18,7 +18,8 @@ export interface CarteSummary {
 }
 
 export interface CartesPage {
-  cartes: CarteSummary[]
+  // Matches the backend Spring-style page payload (data.content), not "cartes".
+  content: CarteSummary[]
   total: number
   page: number
   size: number
@@ -39,7 +40,8 @@ export interface UserSummary {
 }
 
 export interface UsersPage {
-  users: UserSummary[]
+  // Matches the backend Spring-style page payload (data.content), not "users".
+  content: UserSummary[]
   total: number
   page: number
   size: number

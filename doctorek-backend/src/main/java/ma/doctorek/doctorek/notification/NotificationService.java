@@ -5,6 +5,7 @@ import ma.doctorek.doctorek.entity.RendezVousEntity;
 import ma.doctorek.doctorek.repository.PatientDetailRepository;
 import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
+import ma.doctorek.doctorek.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -29,17 +30,20 @@ public class NotificationService {
     private final RendezVousRepository rdvRepo;
     private final PatientDetailRepository patientDetailRepo;
     private final UserRepository userRepo;
+    private final EmailService emailService;
 
     public NotificationService(NotificationRepository repo,
                                 SimpMessagingTemplate stomp,
                                 RendezVousRepository rdvRepo,
                                 PatientDetailRepository patientDetailRepo,
-                                UserRepository userRepo) {
+                                UserRepository userRepo,
+                                EmailService emailService) {
         this.repo              = repo;
         this.stomp             = stomp;
         this.rdvRepo           = rdvRepo;
         this.patientDetailRepo = patientDetailRepo;
         this.userRepo          = userRepo;
+        this.emailService      = emailService;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -132,6 +136,10 @@ public class NotificationService {
                     "RDV_RAPPEL",
                     "Rappel : rendez-vous dans 30 minutes",
                     "Votre consultation avec " + medecinNom + " est prévue à " + rdv.getHeureRdv() + ".");
+
+            // Rappel aussi par email — le patient n'a pas forcément l'app ouverte
+            userRepo.findById(rdv.getPatientId()).ifPresent(patient ->
+                    emailService.sendRappelRdv30Min(patient.getEmail(), rdv, medecinNom));
         });
     }
 }

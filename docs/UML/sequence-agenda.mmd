@@ -1,0 +1,38 @@
+sequenceDiagram
+    title Figure 8 : Diagramme de séquences - Agenda (prise et annulation de RDV)
+    autonumber
+    actor P as Patient
+    participant UI as Frontend
+    participant Ag as Agenda
+    participant Cache as Redis
+    participant DB as PostgreSQL
+    participant N as Notification
+
+    P->>UI: Consulter créneaux
+    UI->>Ag: GET /agenda/medecins/{id}/creneaux
+    Ag->>Cache: GET creneaux:{medecinId,date}
+
+    alt Cache hit
+        Cache-->>Ag: Créneaux en cache
+    else Cache miss
+        Ag->>DB: SELECT disponibilités
+        DB-->>Ag: Créneaux libres
+        Ag->>Cache: SET creneaux (TTL 5 min)
+    end
+
+    Ag-->>UI: 200 OK
+
+    P->>UI: Réserver créneau
+    UI->>Ag: POST /agenda/rdv
+    Ag->>DB: INSERT rendez_vous
+    Ag->>Cache: EVICT creneaux (invalidation)
+    Ag->>N: Notifier médecin
+    Ag-->>UI: 201 Created
+    UI-->>P: Confirmation
+
+    P->>UI: Annuler RDV
+    UI->>Ag: PUT /agenda/rdv/{id}/annuler
+    Ag->>DB: UPDATE statut=ANNULE
+    Ag->>Cache: EVICT creneaux (invalidation)
+    Ag->>N: Notifier médecin
+    Ag-->>UI: 200 OK

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { HelpCircle, UserRound } from 'lucide-react'
-import { getSession, clearSession, type Session } from '@/lib/session'
+import { getSession, type Session } from '@/lib/session'
+import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
 
 export function Header({ sticky = true }: { sticky?: boolean }) {
@@ -19,12 +20,15 @@ export function Header({ sticky = true }: { sticky?: boolean }) {
   }, [])
 
   function handleLogout() {
-    clearSession()
-    setSession(null)
-    router.push('/')
+    void logout()
   }
 
-  const dashboardHref = session?.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient'
+  const dashboardHref =
+    session?.role === 'MEDECIN'
+      ? '/dashboard/medecin'
+      : session?.role === 'ADMIN'
+        ? '/dashboard/admin'
+        : '/dashboard/patient'
 
   return (
     <header className={`${sticky ? 'sticky top-0' : ''} z-50 bg-[#EBF4FF] shadow-sm`}>
@@ -55,7 +59,7 @@ export function Header({ sticky = true }: { sticky?: boolean }) {
 
           {/* Auth */}
           {!session ? (
-            <Link
+            <a
               href="/login"
               className="inline-flex items-center text-[#007DFF] hover:text-[#00263C] transition-colors"
             >
@@ -64,7 +68,7 @@ export function Header({ sticky = true }: { sticky?: boolean }) {
                 <span className="text-sm font-bold leading-tight">Se connecter</span>
                 <span className="text-[11px] leading-tight font-normal opacity-70">Gérer mes RDV</span>
               </div>
-            </Link>
+            </a>
           ) : (
             <div className="flex items-center gap-4">
               <Link

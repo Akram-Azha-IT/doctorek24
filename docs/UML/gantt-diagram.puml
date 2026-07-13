@@ -1,0 +1,33 @@
+@startgantt
+
+
+printscale weekly
+scale 0.85
+
+[Cadrage & conception] lasts 2 weeks
+
+[Sprint 1-2 : Fondations (Auth, Annuaire, Frontend)] lasts 4 weeks
+[Sprint 1-2 : Fondations (Auth, Annuaire, Frontend)] starts at [Cadrage & conception]'s end
+
+[Sprint 3-4 : Agenda, RDV, Profils enrichis] lasts 4 weeks
+[Sprint 3-4 : Agenda, RDV, Profils enrichis] starts at [Sprint 1-2 : Fondations (Auth, Annuaire, Frontend)]'s end
+
+[Sprint 5-6 : Messagerie & Carte médicale digitale] lasts 4 weeks
+[Sprint 5-6 : Messagerie & Carte médicale digitale] starts at [Sprint 3-4 : Agenda, RDV, Profils enrichis]'s end
+
+[Sprint 7 : Sécurité (JWT, RBAC)] lasts 2 weeks
+[Sprint 7 : Sécurité (JWT, RBAC)] starts at [Sprint 5-6 : Messagerie & Carte médicale digitale]'s end
+
+[Tests & rédaction du rapport] lasts 2 weeks
+[Tests & rédaction du rapport] starts at [Sprint 7 : Sécurité (JWT, RBAC)]'s end
+
+[Soutenance] happens at [Tests & rédaction du rapport]'s end
+
+[Cadrage & conception] is colored in Lavender
+[Sprint 1-2 : Fondations (Auth, Annuaire, Frontend)] is colored in Lightblue
+[Sprint 3-4 : Agenda, RDV, Profils enrichis] is colored in Lightgreen
+[Sprint 5-6 : Messagerie & Carte médicale digitale] is colored in Khaki
+[Sprint 7 : Sécurité (JWT, RBAC)] is colored in Salmon
+[Tests & rédaction du rapport] is colored in Lightgrey
+
+@endgantt

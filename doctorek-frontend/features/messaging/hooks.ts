@@ -36,7 +36,7 @@ export function useStartConversation() {
 export function useSendMessage(convId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (content: string) => sendMessageRest(convId, content),
+    mutationFn: (content: string) => sendMessageRest(convId, content, crypto.randomUUID()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['messages', convId] })
       qc.invalidateQueries({ queryKey: ['conversations'] })

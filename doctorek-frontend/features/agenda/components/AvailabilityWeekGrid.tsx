@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Disponibilite, RendezVous } from '@/lib/types'
+import { toLocalISODate } from '@/lib/date'
 
 export const DAYS = [
   { key: 'MONDAY',    short: 'LUN', long: 'Lundi' },
@@ -271,7 +272,7 @@ export function AvailabilityWeekGrid({
           {DAYS.map((day, i) => {
             const slots = (byDay.get(day.key) ?? []).filter(d => isDispoActiveOnDate(d, weekDates[i]))
             const selected = selectedDay === day.key
-            const dateISO = weekDates[i].toISOString().slice(0, 10)
+            const dateISO = toLocalISODate(weekDates[i])
             const dayRdvs = rendezVous.filter(
               (r) => r.dateRdv === dateISO && r.statut !== 'ANNULE',
             )

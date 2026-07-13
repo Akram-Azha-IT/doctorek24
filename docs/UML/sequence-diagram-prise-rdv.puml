@@ -1,0 +1,143 @@
+@startuml Doctorek-SequenceGlobal
+
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam monochrome true
+skinparam maxMessageSize 200
+skinparam sequence {
+    ArrowColor #000000
+    ArrowFontSize 14
+    ArrowFontName Arial
+    LifeLineBorderColor #000000
+    LifeLineBackgroundColor #FFFFFF
+    ParticipantBorderColor #000000
+    ParticipantBackgroundColor #FFFFFF
+    ParticipantFontName Arial
+    ParticipantFontSize 16
+    ParticipantFontStyle bold
+    ActorBackgroundColor #FFFFFF
+    ActorBorderColor #000000
+    ActorFontSize 16
+    ActorFontStyle bold
+    BoxBorderColor #000000
+    BoxFontColor #000000
+    BoxFontSize 15
+    BoxFontStyle bold
+    DividerFontSize 15
+    DividerFontStyle bold
+    DividerBackgroundColor #EEEEEE
+}
+skinparam noteFontSize 14
+skinparam title {
+    FontSize 18
+    FontStyle bold
+}
+
+title Doctorek - Diagramme de séquence global
+
+actor "Patient" as Patient
+actor "Médecin" as Medecin
+
+box "Frontend (Next.js)"
+  participant "Interface\nPatient" as UI_P
+  participant "Interface\nMédecin" as UI_M
+end box
+
+box "Backend (Spring Boot)"
+  participant "Annuaire" as Ann
+  participant "Agenda" as Agenda
+  participant "Carte Médicale" as Carte
+  participant "Messagerie" as Msg
+  participant "Notification" as Notif
+end box
+
+database "PostgreSQL" as DB
+participant "Keycloak" as KC
+
+== 1. Authentification ==
+
+Patient -> UI_P : Cliquer "Se connecter"
+UI_P -> KC : Redirection navigateur (Authorization Code + PKCE)
+KC -> KC : Vérifier identifiants + rôle
+KC --> UI_P : Callback avec code → échange contre JWT signé
+UI_P --> Patient : Accès au tableau de bord
+
+newpage
+
+== 2. Recherche d'un médecin ==
+
+Patient -> UI_P : Rechercher médecin\n(spécialité, ville)
+UI_P -> Ann : GET /annuaire/medecins\n?specialite=&ville=
+Ann -> DB : SELECT medecins
+DB --> Ann : liste médecins
+Ann --> UI_P : 200 OK
+UI_P --> Patient : Affiche résultats + profils
+
+newpage
+
+== 3. Prise de rendez-vous ==
+
+Patient -> UI_P : Consulter créneaux\ndisponibles
+UI_P -> Agenda : GET /agenda/medecins/{id}/creneaux?date=
+Agenda -> DB : SELECT disponibilités
+DB --> Agenda : créneaux libres
+Agenda --> UI_P : 200 OK (créneaux)
+UI_P --> Patient : Affiche créneaux
+
+Patient -> UI_P : Choisir créneau +\nquestionnaire pré-consultation
+UI_P -> Agenda : POST /agenda/rdv\n{ medecinId, date, heure, questionnaire }
+
+alt Créneau disponible
+    Agenda -> DB : INSERT rendez_vous\n(statut=EN_ATTENTE)
+    DB --> Agenda : RDV créé
+    Agenda -> Notif : Notifier médecin
+    Notif --> Agenda : OK
+    Agenda --> UI_P : 201 Created
+    UI_P --> Patient : Confirmation de réservation
+else Créneau déjà pris
+    Agenda --> UI_P : 409 Conflict
+    UI_P --> Patient : Créneau indisponible
+end
+
+newpage
+
+== 4. Carte médicale virtuelle ==
+
+Patient -> UI_P : Accéder à ma carte médicale
+UI_P -> Carte : GET /carte/patient/{id}
+Carte -> DB : SELECT carte_virtuelle,\nordonnances, documents
+DB --> Carte : données médicales
+Carte --> UI_P : 200 OK (CarteVirtuelle)
+UI_P --> Patient : Affiche carte (groupe sanguin,\nallergies, ordonnances, documents)
+
+Medecin -> UI_M : Émettre une ordonnance
+UI_M -> Carte : POST /carte/ordonnances\n{ patientId, medicaments }
+Carte -> DB : INSERT ordonnance
+DB --> Carte : ordonnance créée
+Carte -> Notif : Notifier patient
+Notif --> Carte : OK
+Carte --> UI_M : 201 Created
+UI_M --> Medecin : Confirmation d'émission
+
+newpage
+
+== 5. Messagerie ==
+
+Patient -> UI_P : Envoyer un message\nau médecin
+UI_P -> Msg : POST /messagerie/messages\n{ conversationId, content }
+Msg -> DB : INSERT message
+DB --> Msg : message enregistré
+Msg -> Notif : Notifier médecin
+Notif --> Msg : OK
+Msg --> UI_P : 201 Created
+UI_P --> Patient : Message envoyé
+
+Medecin -> UI_M : Lire et répondre\nau message
+UI_M -> Msg : GET /messagerie/conversations/{id}/messages
+Msg -> DB : SELECT messages
+DB --> Msg : liste messages
+Msg --> UI_M : 200 OK
+UI_M --> Medecin : Affiche conversation
+
+@enduml

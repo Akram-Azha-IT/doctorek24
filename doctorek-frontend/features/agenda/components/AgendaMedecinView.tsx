@@ -253,8 +253,8 @@ function DayView({ date, rdvs, disponibilites, medecinId, onConfirm, onCancel, o
                         )}
                       </div>
                     </div>
-                    {rdv.questionnaire?.motif && (
-                      <p className="mt-1 text-xs text-zinc-500 italic">{rdv.questionnaire.motif}</p>
+                    {rdv.questionnaire?.message && (
+                      <p className="mt-1 text-xs text-zinc-500 italic">{rdv.questionnaire.message}</p>
                     )}
                   </div>
                 )

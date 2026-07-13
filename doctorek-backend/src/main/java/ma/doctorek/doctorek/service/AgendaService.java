@@ -25,6 +25,8 @@ import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +65,7 @@ public class AgendaService {
     }
 
     @Transactional
+    @CacheEvict(value = "creneaux", allEntries = true)
     public DisponibiliteResponse defineDisponibilite(UUID medecinId, DefineDisponibiliteRequest req) {
         if (!req.heureDebut().isBefore(req.heureFin())) {
             throw new IllegalArgumentException(
@@ -113,6 +116,7 @@ public class AgendaService {
     }
 
     @Transactional
+    @CacheEvict(value = "creneaux", allEntries = true)
     public void deleteDisponibilite(UUID medecinId, UUID dispoId) {
         DisponibiliteEntity dispo = dispoRepo.findById(dispoId)
             .orElseThrow(() -> new DisponibiliteNotFoundException(dispoId));
@@ -132,6 +136,7 @@ public class AgendaService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "creneaux", key = "#medecinId + ':' + #date")
     public List<CreneauResponse> getCreneauxDisponibles(UUID medecinId, LocalDate date) {
         List<DisponibiliteEntity> dispos = dispoRepo.findAllByMedecinIdAndJourSemaine(
             medecinId, date.getDayOfWeek().name());
@@ -165,6 +170,7 @@ public class AgendaService {
     }
 
     @Transactional
+    @CacheEvict(value = "creneaux", allEntries = true)
     public RendezVousResponse prendreRdv(PrendreRdvRequest request) {
         DisponibiliteEntity dispo = dispoRepo
             .findByMedecinIdAndJourSemaine(request.medecinId(), request.dateRdv().getDayOfWeek().name())
@@ -218,6 +224,7 @@ public class AgendaService {
     }
 
     @Transactional
+    @CacheEvict(value = "creneaux", allEntries = true)
     public RendezVousResponse annulerRdv(UUID rdvId) {
         RendezVousEntity rdv = rdvRepo.findById(rdvId)
             .orElseThrow(() -> new RendezVousNotFoundException(rdvId));
@@ -238,7 +245,16 @@ public class AgendaService {
             throw new RdvNonConfirmableException(rdvId, statut);
         }
         rdv.setStatut(StatutRdv.CONFIRME.name());
-        return RendezVousResponse.from(rdvRepo.save(rdv));
+        RendezVousEntity saved = rdvRepo.save(rdv);
+
+        // Email au patient : son médecin vient de confirmer le rendez-vous
+        String medecinNom = userRepo.findById(saved.getMedecinId())
+            .map(m -> "Dr. " + m.getFirstName() + " " + m.getLastName())
+            .orElse("Votre médecin");
+        userRepo.findById(saved.getPatientId()).ifPresent(
+            patient -> emailService.sendRdvConfirmeParMedecin(patient.getEmail(), saved, medecinNom));
+
+        return RendezVousResponse.from(saved);
     }
 
     @Transactional
@@ -254,6 +270,7 @@ public class AgendaService {
     }
 
     @Transactional
+    @CacheEvict(value = "creneaux", allEntries = true)
     public RendezVousResponse reprogrammerRdv(UUID id, LocalDate newDate, LocalTime newHeure) {
         RendezVousEntity rdv = rdvRepo.findById(id)
             .orElseThrow(() -> new RendezVousNotFoundException(id));

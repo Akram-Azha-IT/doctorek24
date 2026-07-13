@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+docs/
+presentation/
+*.docx
+rapport_extracted.txt
+doctorek-frontend/node_modules
+doctorek-frontend/.next
+doctorek-backend/target
+docker/keycloak-themes

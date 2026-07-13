@@ -17,7 +17,8 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
 
     @Query("SELECT md FROM MedecinDetailEntity md JOIN FETCH md.user u " +
            "WHERE u.active = true AND md.latitude IS NOT NULL AND md.longitude IS NOT NULL " +
-           "AND (:specialite IS NULL OR lower(md.specialite) LIKE %:specialite%)")
+           "AND (:specialite IS NULL OR lower(md.specialite) LIKE %:specialite% " +
+           "     OR lower(concat(u.firstName, ' ', u.lastName)) LIKE %:specialite%)")
     List<MedecinDetailEntity> findActiveMedecinsWithCoords(@Param("specialite") String specialite);
 
     @Query("SELECT md FROM MedecinDetailEntity md JOIN FETCH md.user u " +
@@ -50,13 +51,22 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
             WHERE u.is_active = true
             AND (:specialite IS NULL OR :specialite = ''
                  OR auth.similarity(md.specialite, :specialite) > 0.15
-                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%')))
+                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%'))
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :specialite) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :specialite || '%')))
             AND (:ville IS NULL OR :ville = ''
                  OR auth.similarity(md.ville, :ville) > 0.15
                  OR lower(md.ville) LIKE lower(('%' || :ville || '%')))
+            AND (:nom IS NULL OR :nom = ''
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :nom) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :nom || '%')))
             ORDER BY
+                CASE WHEN :nom IS NOT NULL AND :nom != ''
+                     THEN auth.similarity((u.first_name || ' ' || u.last_name), :nom) ELSE 1 END DESC,
                 CASE WHEN :specialite IS NOT NULL AND :specialite != ''
-                     THEN auth.similarity(md.specialite, :specialite) ELSE 1 END DESC,
+                     THEN GREATEST(auth.similarity(md.specialite, :specialite),
+                                   auth.similarity((u.first_name || ' ' || u.last_name), :specialite))
+                     ELSE 1 END DESC,
                 CASE WHEN :ville IS NOT NULL AND :ville != ''
                      THEN auth.similarity(md.ville, :ville) ELSE 1 END DESC
             """,
@@ -66,16 +76,22 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
             WHERE u.is_active = true
             AND (:specialite IS NULL OR :specialite = ''
                  OR auth.similarity(md.specialite, :specialite) > 0.15
-                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%')))
+                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%'))
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :specialite) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :specialite || '%')))
             AND (:ville IS NULL OR :ville = ''
                  OR auth.similarity(md.ville, :ville) > 0.15
                  OR lower(md.ville) LIKE lower(('%' || :ville || '%')))
+            AND (:nom IS NULL OR :nom = ''
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :nom) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :nom || '%')))
             """,
         nativeQuery = true
     )
     Page<MedecinDetailEntity> searchActiveMedecinsPaged(
         @Param("specialite") String specialite,
         @Param("ville") String ville,
+        @Param("nom") String nom,
         Pageable pageable
     );
 
@@ -86,10 +102,15 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
             WHERE u.is_active = true
             AND (:specialite IS NULL OR :specialite = ''
                  OR auth.similarity(md.specialite, :specialite) > 0.15
-                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%')))
+                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%'))
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :specialite) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :specialite || '%')))
             AND (:ville IS NULL OR :ville = ''
                  OR auth.similarity(md.ville, :ville) > 0.15
                  OR lower(md.ville) LIKE lower(('%' || :ville || '%')))
+            AND (:nom IS NULL OR :nom = ''
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :nom) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :nom || '%')))
             AND EXISTS (
                 SELECT 1 FROM agenda.disponibilites d
                 WHERE d.medecin_id = md.user_id
@@ -98,8 +119,12 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
                 AND d.jour_semaine IN (:joursSemaine)
             )
             ORDER BY
+                CASE WHEN :nom IS NOT NULL AND :nom != ''
+                     THEN auth.similarity((u.first_name || ' ' || u.last_name), :nom) ELSE 1 END DESC,
                 CASE WHEN :specialite IS NOT NULL AND :specialite != ''
-                     THEN auth.similarity(md.specialite, :specialite) ELSE 1 END DESC,
+                     THEN GREATEST(auth.similarity(md.specialite, :specialite),
+                                   auth.similarity((u.first_name || ' ' || u.last_name), :specialite))
+                     ELSE 1 END DESC,
                 CASE WHEN :ville IS NOT NULL AND :ville != ''
                      THEN auth.similarity(md.ville, :ville) ELSE 1 END DESC
             """,
@@ -109,10 +134,15 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
             WHERE u.is_active = true
             AND (:specialite IS NULL OR :specialite = ''
                  OR auth.similarity(md.specialite, :specialite) > 0.15
-                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%')))
+                 OR lower(md.specialite) LIKE lower(('%' || :specialite || '%'))
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :specialite) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :specialite || '%')))
             AND (:ville IS NULL OR :ville = ''
                  OR auth.similarity(md.ville, :ville) > 0.15
                  OR lower(md.ville) LIKE lower(('%' || :ville || '%')))
+            AND (:nom IS NULL OR :nom = ''
+                 OR auth.similarity((u.first_name || ' ' || u.last_name), :nom) > 0.15
+                 OR lower(u.first_name || ' ' || u.last_name) LIKE lower(('%' || :nom || '%')))
             AND EXISTS (
                 SELECT 1 FROM agenda.disponibilites d
                 WHERE d.medecin_id = md.user_id
@@ -126,6 +156,7 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
     Page<MedecinDetailEntity> searchActiveMedecinsWithDispoPaged(
         @Param("specialite") String specialite,
         @Param("ville") String ville,
+        @Param("nom") String nom,
         @Param("joursSemaine") List<String> joursSemaine,
         Pageable pageable
     );
