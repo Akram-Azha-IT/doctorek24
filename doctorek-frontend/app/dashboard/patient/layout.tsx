@@ -44,6 +44,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
   const [patientId, setPatientId] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(248)
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef(false)
@@ -143,7 +144,9 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
     { href: '/dashboard/patient/rdvs', label: 'RDVs', icon: Calendar },
     { href: '/dashboard/patient/messages', label: 'Messages', icon: MessageCircle },
     { href: '/recherche', label: 'Médecins', icon: Search },
-    { href: '/dashboard/patient/dossier', label: 'Dossier', icon: FileText },
+    // La carte est la fonctionnalité signature — accessible en un tap.
+    // « Mes Documents » reste accessible via la fiche profil (avatar).
+    { href: '/dashboard/patient/carte', label: 'Carte', icon: CreditCard },
   ]
 
   return (
@@ -343,13 +346,19 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 <p className="text-sm font-bold text-[#333333]">{fullName}</p>
                 <p className="text-[11px] text-zinc-400 font-medium">Patient</p>
               </div>
-              <div className="h-8 w-8 lg:h-9 lg:w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+              <button
+                type="button"
+                onClick={() => setProfileSheetOpen(true)}
+                aria-label="Ouvrir mon profil"
+                aria-haspopup="dialog"
+                className="h-11 w-11 lg:h-9 lg:w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center cursor-pointer hover:opacity-80 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/50"
+              >
                 {resolvedPhoto ? (
                   <img src={resolvedPhoto} alt={`Photo de profil de ${fullName}`} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
                 )}
-              </div>
+              </button>
             </div>
           </div>
         </header>
@@ -359,6 +368,78 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
           {children}
         </main>
       </div>
+
+      {/* ── Fiche profil (bottom sheet mobile / panneau ancré desktop) ── */}
+      {profileSheetOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mon profil"
+          className="fixed inset-0 z-[60]"
+        >
+          {/* Scrim */}
+          <button
+            type="button"
+            aria-label="Fermer"
+            onClick={() => setProfileSheetOpen(false)}
+            className="absolute inset-0 bg-black/50"
+          />
+
+          <div className="absolute inset-x-0 bottom-0 lg:inset-x-auto lg:bottom-auto lg:right-6 lg:top-20 lg:w-80 rounded-t-3xl lg:rounded-2xl bg-white shadow-2xl overflow-hidden">
+            {/* Poignée (mobile) */}
+            <div className="lg:hidden flex justify-center pt-3">
+              <span className="h-1 w-10 rounded-full bg-zinc-200" />
+            </div>
+
+            {/* Identité */}
+            <div className="flex items-center gap-3 px-6 pt-4 pb-4 border-b border-zinc-100">
+              <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center">
+                {resolvedPhoto ? (
+                  <img src={resolvedPhoto} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-[#007DFF]">{initials}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-base font-bold text-[#333333]">{fullName}</p>
+                <p className="text-xs text-zinc-400 font-medium">Espace patient</p>
+              </div>
+            </div>
+
+            {/* Raccourcis santé */}
+            <div className="px-3 py-2">
+              {HEALTH_ITEMS.map((item) => (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={() => { setProfileSheetOpen(false); router.push(item.href) }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-[15px] font-semibold text-[#333333] hover:bg-[#F1F4F7] active:bg-[#F1F4F7] transition-colors"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EBF4FF]">
+                    <item.icon className="h-4 w-4 text-[#007DFF]" />
+                  </span>
+                  {item.label}
+                  <ChevronRight className="ml-auto h-4 w-4 text-zinc-300" />
+                </button>
+              ))}
+            </div>
+
+            {/* Déconnexion — séparée, destructive */}
+            <div className="px-3 pb-6 lg:pb-3 pt-1 border-t border-zinc-100">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-[15px] font-bold text-red-500 hover:bg-red-50 active:bg-red-50 transition-colors"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50">
+                  <LogOut className="h-4 w-4" />
+                </span>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Mobile bottom navigation ── */}
       <nav
