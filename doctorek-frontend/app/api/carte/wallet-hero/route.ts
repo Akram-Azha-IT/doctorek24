@@ -56,6 +56,8 @@ export async function GET(req: Request) {
 
     const browser = await puppeteer.launch({
       headless: true,
+      // In the Docker image puppeteer's bundled Chrome is absent — use system Chromium.
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
     })
     const page = await browser.newPage()
