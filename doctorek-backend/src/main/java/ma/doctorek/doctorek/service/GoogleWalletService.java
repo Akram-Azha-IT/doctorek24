@@ -146,7 +146,9 @@ public class GoogleWalletService {
         }
     }
 
-    private static final long HERO_IMAGE_TTL_SECONDS = 600;
+    // Google Wallet re-télécharge l'image hero au save ET aux synchronisations
+    // ultérieures — une URL à expiration courte casse la carte. 1 an.
+    private static final long HERO_IMAGE_TTL_SECONDS = 365L * 24 * 3600;
 
     /**
      * Builds a cryptographically signed, short-lived URL to the frontend's hero-image
