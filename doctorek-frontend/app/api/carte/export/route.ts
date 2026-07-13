@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { readFile } from 'fs/promises'
+import path from 'path'
 import puppeteer from 'puppeteer'
 import QRCode from 'qrcode'
 import { renderCarteRectoHtml, renderCarteVersoHtml } from '@/features/carte/components/CarteVirtuelleExport'
@@ -17,7 +19,12 @@ export async function POST(req: Request) {
       ? await QRCode.toDataURL(qrUrl, { width: 168, margin: 1, color: { dark: '#010C2D', light: '#FFFFFF' } })
       : undefined
 
-    const renderOptions = { origin, qrDataUrl }
+    // Le conteneur ne peut pas recharger son propre domaine public (hairpin NAT) —
+    // on inline le logo depuis le disque.
+    const logoBuffer = await readFile(path.join(process.cwd(), 'public', 'logo0.png'))
+    const logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`
+
+    const renderOptions = { origin, qrDataUrl, logoDataUrl }
     const rectoHtml = renderCarteRectoHtml(carte, profile, firstName, lastName, renderOptions)
     const versoHtml = renderCarteVersoHtml(carte, profile, firstName, lastName, renderOptions)
 

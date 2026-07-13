@@ -12,85 +12,116 @@ interface RenderOptions {
   origin: string
   /** Data URI (image/png base64) of the pre-generated QR code, or undefined for placeholder */
   qrDataUrl?: string
+  /** Logo embarqué en data URI — Puppeteer ne peut pas recharger le domaine public depuis le conteneur. */
+  logoDataUrl?: string
 }
 
-function buildRectoSvg(
+export function buildRectoSvg(
   fullName: string,
   maskedCin: string,
   cnss: string,
+  cardRef: string,
   logoUrl: string,
-  photoBlock: string,
-  qrBlock: string,
+  photoUrl?: string,
+  qrDataUrl?: string,
 ): string {
+  const photoBlock = photoUrl
+    ? `<image href="${photoUrl}" x="40" y="124" width="176" height="220" clip-path="url(#photo-clip-recto)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<g clip-path="url(#photo-clip-recto)">
+        <rect x="40" y="124" width="176" height="220" fill="#EDF2F7"/>
+        <circle cx="128" cy="204" r="34" fill="#C4CFDD"/>
+        <ellipse cx="128" cy="300" rx="58" ry="46" fill="#C4CFDD"/>
+      </g>`
+
+  const qrBlock = qrDataUrl
+    ? `<image href="${qrDataUrl}" x="682" y="218" width="96" height="96"/>`
+    : ''
+
   return `
     <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <clipPath id="card-clip-recto"><rect width="856" height="540" rx="28"/></clipPath>
-        <clipPath id="photo-clip-recto"><circle cx="132" cy="292" r="82"/></clipPath>
-        <clipPath id="name-clip-recto"><rect x="248" y="198" width="418" height="54"/></clipPath>
-        <linearGradient id="chip-grad-recto" x1="0" y1="0" x2="60" y2="46" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#E5C158"/>
-          <stop offset="0.5" stop-color="#FCEEAA"/>
-          <stop offset="1" stop-color="#C29B35"/>
+        <clipPath id="card-clip-recto"><rect width="856" height="540" rx="24"/></clipPath>
+        <clipPath id="photo-clip-recto"><rect x="40" y="124" width="176" height="220" rx="12"/></clipPath>
+        <clipPath id="name-clip-recto"><rect x="248" y="130" width="404" height="60"/></clipPath>
+        <linearGradient id="chip-grad-recto" x1="0" y1="0" x2="58" y2="44" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#E7C766"/>
+          <stop offset="0.5" stop-color="#F6E8B1"/>
+          <stop offset="1" stop-color="#C9A23C"/>
         </linearGradient>
-        <pattern id="zellige-recto" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M20 0 L40 20 L20 40 L0 20 Z M10 10 L30 30 M30 10 L10 30" stroke="#0066FF" stroke-width="0.5" fill="none"/>
-          <circle cx="20" cy="20" r="14" stroke="#0066FF" stroke-width="0.3" fill="none"/>
-        </pattern>
+        <linearGradient id="bg-grad-recto" x1="0" y1="0" x2="0" y2="540" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FBFDFF"/>
+          <stop offset="1" stop-color="#F3F7FC"/>
+        </linearGradient>
       </defs>
 
       <g clip-path="url(#card-clip-recto)">
-        <rect width="856" height="540" fill="#FFFFFF"/>
-        <rect width="856" height="540" fill="url(#zellige-recto)" opacity="0.03"/>
+        <rect width="856" height="540" fill="url(#bg-grad-recto)"/>
 
-        <rect x="0" y="0" width="428" height="7" fill="${C_RED}"/>
-        <rect x="428" y="0" width="428" height="7" fill="${C_GREEN}"/>
+        <g stroke="${C_BLUE}" fill="none" opacity="0.05">
+          <path d="M-20 430 C 120 360, 240 500, 400 430 S 700 360, 880 440" stroke-width="1.4"/>
+          <path d="M-20 455 C 130 390, 260 520, 420 455 S 710 390, 880 465" stroke-width="1"/>
+          <path d="M-20 480 C 140 420, 280 540, 440 480 S 720 420, 880 490" stroke-width="0.7"/>
+          <path d="M-20 110 C 160 40, 340 160, 520 90 S 760 50, 880 100" stroke-width="0.8"/>
+        </g>
 
-        <image href="${logoUrl}" x="20" y="16" width="170" height="58" preserveAspectRatio="xMinYMid meet"/>
+        <rect x="0" y="0" width="428" height="4" fill="${C_RED}"/>
+        <rect x="428" y="0" width="428" height="4" fill="${C_GREEN}"/>
 
-        <text x="832" y="44" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="800" fill="${C_TEXT}">المملكة المغربية</text>
-        <text x="832" y="65" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="700" fill="${C_BLUE}" letter-spacing="0.5">Carte Santé Virtuelle</text>
+        <image href="${logoUrl}" x="24" y="18" width="170" height="58" preserveAspectRatio="xMinYMid meet"/>
+        <text x="832" y="38" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="800" fill="#0F172A">المملكة المغربية</text>
+        <text x="832" y="56" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="3">ROYAUME DU MAROC</text>
+        <text x="832" y="76" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" font-weight="800" fill="${C_BLUE}" letter-spacing="1.2">CARTE SANTÉ VIRTUELLE</text>
 
-        <line x1="24" y1="96" x2="832" y2="96" stroke="${C_BLUE}" stroke-width="0.6" opacity="0.15"/>
-        <path d="M24 96 L310 96 L326 96 L336 80 L346 112 L356 80 L366 96 L392 96 L832 96" stroke="${C_BLUE}" stroke-width="1.5" opacity="0.45" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <line x1="24" y1="96" x2="832" y2="96" stroke="#E2E8F0" stroke-width="1"/>
 
-        <circle cx="132" cy="292" r="90" fill="none" stroke="${C_BLUE}" stroke-width="3" opacity="0.75"/>
+        <rect x="36" y="120" width="184" height="228" rx="15" fill="none" stroke="#0F2A4A" stroke-opacity="0.15" stroke-width="1.5"/>
+        <rect x="40" y="124" width="176" height="220" rx="12" fill="#FFFFFF"/>
         ${photoBlock}
 
+        <text x="248" y="142" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">NOM COMPLET</text>
+        <text x="652" y="142" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">الاسم الكامل</text>
         <g clip-path="url(#name-clip-recto)">
-          <text x="248" y="236" font-family="system-ui,-apple-system,sans-serif" font-size="22" font-weight="900" fill="${C_TEXT}" letter-spacing="0.3">${fullName}</text>
+          <text x="248" y="176" font-family="system-ui,-apple-system,sans-serif" font-size="25" font-weight="900" fill="#0F172A" letter-spacing="0.3">${fullName}</text>
+        </g>
+        <line x1="248" y1="196" x2="652" y2="196" stroke="#EDF2F7" stroke-width="1.2"/>
+
+        <text x="248" y="222" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">C.I.N.</text>
+        <text x="652" y="222" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">ب.ت.و</text>
+        <text x="248" y="252" font-family="'Courier New',Courier,monospace" font-size="19" font-weight="800" fill="#0F172A" letter-spacing="3">${maskedCin}</text>
+        <line x1="248" y1="270" x2="652" y2="270" stroke="#EDF2F7" stroke-width="1.2"/>
+
+        <text x="248" y="296" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">N° CNSS / AMO</text>
+        <text x="652" y="296" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">رقم الضمان الاجتماعي</text>
+        <text x="248" y="326" font-family="'Courier New',Courier,monospace" font-size="18" font-weight="800" fill="#0F172A" letter-spacing="2.5">${cnss}</text>
+        <line x1="248" y1="344" x2="652" y2="344" stroke="#EDF2F7" stroke-width="1.2"/>
+
+        <text x="248" y="370" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">N° DE CARTE</text>
+        <text x="652" y="370" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">رقم البطاقة</text>
+        <text x="248" y="400" font-family="'Courier New',Courier,monospace" font-size="17" font-weight="800" fill="${C_BLUE}" letter-spacing="3">${cardRef}</text>
+
+        <g transform="translate(694, 122)">
+          <rect width="58" height="44" rx="8" fill="url(#chip-grad-recto)" stroke="#B08A2E" stroke-width="0.8"/>
+          <line x1="18" y1="0" x2="18" y2="44" stroke="rgba(0,0,0,0.18)" stroke-width="0.9"/>
+          <line x1="40" y1="0" x2="40" y2="44" stroke="rgba(0,0,0,0.18)" stroke-width="0.9"/>
+          <line x1="0" y1="15" x2="58" y2="15" stroke="rgba(0,0,0,0.18)" stroke-width="0.9"/>
+          <line x1="0" y1="29" x2="58" y2="29" stroke="rgba(0,0,0,0.18)" stroke-width="0.9"/>
+          <rect x="18" y="15" width="22" height="14" rx="2" fill="none" stroke="rgba(0,0,0,0.14)" stroke-width="0.8"/>
         </g>
 
-        <text x="248" y="272" font-family="system-ui,-apple-system,sans-serif" font-size="8" font-weight="700" fill="${C_LABEL}" letter-spacing="2">CIN</text>
-        <text x="248" y="295" font-family="'Courier New',Courier,monospace" font-size="17" font-weight="800" fill="${C_TEXT}" letter-spacing="2">${maskedCin}</text>
-        <line x1="248" y1="307" x2="562" y2="307" stroke="#E5E7EB" stroke-width="1"/>
-
-        <text x="248" y="327" font-family="system-ui,-apple-system,sans-serif" font-size="8" font-weight="700" fill="${C_LABEL}" letter-spacing="2">N° CNSS / AMO</text>
-        <text x="248" y="350" font-family="'Courier New',Courier,monospace" font-size="16" font-weight="800" fill="${C_TEXT}" letter-spacing="1.5">${cnss}</text>
-
-        <g transform="translate(694, 226)">
-          <rect width="62" height="48" rx="8" fill="url(#chip-grad-recto)"/>
-          <line x1="19" y1="0" x2="19" y2="48" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
-          <line x1="43" y1="0" x2="43" y2="48" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
-          <line x1="0" y1="16" x2="62" y2="16" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
-          <line x1="0" y1="32" x2="62" y2="32" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
-          <rect x="19" y="16" width="24" height="16" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="0.8"/>
-          <circle cx="31" cy="24" r="3.5" stroke="rgba(0,0,0,0.1)" stroke-width="0.8" fill="none"/>
-        </g>
-
+        <rect x="670" y="206" width="120" height="120" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2"/>
         ${qrBlock}
+        <text x="730" y="346" text-anchor="middle" font-family="system-ui,-apple-system,sans-serif" font-size="7.5" font-weight="700" fill="#94A3B8" letter-spacing="2.5">VÉRIFICATION</text>
 
-        <rect x="0" y="460" width="856" height="80" fill="${C_BLUE}"/>
-        <image href="${logoUrl}" x="24" y="472" width="120" height="38" preserveAspectRatio="xMinYMid meet" style="filter:brightness(0) invert(1);"/>
-
-        <text x="158" y="500" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="300" fill="rgba(255,255,255,0.35)">|</text>
-        <text x="174" y="500" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">www.doctorek.ma</text>
-        <text x="334" y="500" font-family="system-ui,-apple-system,sans-serif" font-size="18" font-weight="300" fill="rgba(255,255,255,0.35)">|</text>
-
-        <g transform="translate(352, 488)" stroke="rgba(255,255,255,0.85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <rect x="0" y="486" width="856" height="54" fill="#010C2D"/>
+        <image href="${logoUrl}" x="24" y="497" width="100" height="32" preserveAspectRatio="xMinYMid meet" style="filter:brightness(0) invert(1);"/>
+        <text x="140" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="300" fill="rgba(255,255,255,0.3)">|</text>
+        <text x="154" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">www.doctorek.ma</text>
+        <text x="296" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="14" font-weight="300" fill="rgba(255,255,255,0.3)">|</text>
+        <g transform="translate(312, 506)" stroke="rgba(255,255,255,0.85)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
           <path d="M14 10.5v2a1.5 1.5 0 01-1.6 1.5 12 12 0 01-5.2-1.8 12 12 0 01-3.6-3.6A12 12 0 011.8 3.1 1.5 1.5 0 013.3 1.5h2a1.5 1.5 0 011.5 1.3c.1.7.3 1.4.5 2.1a1.5 1.5 0 01-.3 1.6L6.2 7.3A12 12 0 009.7 10.8l.8-.8a1.5 1.5 0 011.6-.3c.7.2 1.4.4 2.1.5A1.5 1.5 0 0114 10.5z"/>
         </g>
-        <text x="376" y="500" font-family="system-ui,-apple-system,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">080 100 2000</text>
+        <text x="336" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">080 100 2000</text>
+        <text x="832" y="518" text-anchor="end" font-family="'Courier New',Courier,monospace" font-size="8" font-weight="700" fill="rgba(255,255,255,0.55)" letter-spacing="2">DOCUMENT OFFICIEL · وثيقة رسمية</text>
       </g>
     </svg>
   `
@@ -101,7 +132,7 @@ export function renderCarteRectoHtml(
   profile: PatientProfile | null | undefined,
   firstName: string | undefined,
   lastName: string | undefined,
-  { origin, qrDataUrl }: RenderOptions,
+  { origin, qrDataUrl, logoDataUrl }: RenderOptions,
 ): string {
   const fullName =
     [firstName, lastName?.toUpperCase()].filter(Boolean).join(' ') || 'NOM ET PRÉNOM'
@@ -113,38 +144,9 @@ export function renderCarteRectoHtml(
       : rawCin || '-'
 
   const cnss = carte.assuranceNumero ?? '-'
-  const logoUrl = `${origin}/logo0.png`
+  const logoUrl = logoDataUrl ?? `${origin}/logo0.png`
 
-  const photoBlock = profile?.photoUrl
-    ? `<image href="${profile.photoUrl}" x="50" y="210" width="164" height="164" clip-path="url(#photo-clip-recto)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<g clip-path="url(#photo-clip-recto)">
-        <circle cx="132" cy="292" r="82" fill="${C_BLUE}"/>
-        <circle cx="132" cy="264" r="29" fill="white" opacity="0.9"/>
-        <ellipse cx="132" cy="344" rx="44" ry="36" fill="white" opacity="0.9"/>
-      </g>`
-
-  const qrBlock = qrDataUrl
-    ? `<g transform="translate(682, 290)">
-        <rect width="84" height="84" rx="5" fill="#FFFFFF"/>
-        <image href="${qrDataUrl}" x="2" y="2" width="80" height="80"/>
-      </g>`
-    : `<g transform="translate(682, 290)">
-        <rect width="84" height="84" rx="5" fill="#F3F4F6"/>
-        <rect x="8" y="8" width="24" height="24" rx="2" fill="none" stroke="${C_TEXT}" stroke-width="2"/>
-        <rect x="14" y="14" width="12" height="12" fill="${C_TEXT}"/>
-        <rect x="52" y="8" width="24" height="24" rx="2" fill="none" stroke="${C_TEXT}" stroke-width="2"/>
-        <rect x="58" y="14" width="12" height="12" fill="${C_TEXT}"/>
-        <rect x="8" y="52" width="24" height="24" rx="2" fill="none" stroke="${C_TEXT}" stroke-width="2"/>
-        <rect x="14" y="58" width="12" height="12" fill="${C_TEXT}"/>
-        <rect x="42" y="44" width="8" height="8" fill="${C_TEXT}"/>
-        <rect x="58" y="52" width="16" height="8" fill="${C_TEXT}"/>
-        <rect x="50" y="68" width="8" height="8" fill="${C_TEXT}"/>
-        <rect x="66" y="68" width="8" height="8" fill="${C_TEXT}"/>
-        <rect x="42" y="10" width="8" height="16" fill="${C_TEXT}"/>
-        <rect x="10" y="42" width="16" height="8" fill="${C_TEXT}"/>
-      </g>`
-
-  return buildRectoSvg(fullName, maskedCin, cnss, logoUrl, photoBlock, qrBlock)
+  return buildRectoSvg(fullName, maskedCin, cnss, carte.cardRef ?? '-', logoUrl, profile?.photoUrl ?? undefined, qrDataUrl)
 }
 
 /** Modern full-bleed hero banner for the Google Wallet pass (recommended ratio ~1032x336). */
@@ -221,12 +223,12 @@ export function renderCarteVersoHtml(
   profile: PatientProfile | null | undefined,
   firstName: string | undefined,
   lastName: string | undefined,
-  { origin }: RenderOptions,
+  { origin, logoDataUrl }: RenderOptions,
 ): string {
   const nom = lastName?.toUpperCase() || '-'
   const prenom = firstName || '-'
   const createdYear = new Date().getFullYear()
-  const logoUrl = `${origin}/logo0.png`
+  const logoUrl = logoDataUrl ?? `${origin}/logo0.png`
 
   const rows = [
     { fr: 'Nom',                    ar: 'النسب',           value: nom },

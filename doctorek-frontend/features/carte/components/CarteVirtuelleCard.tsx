@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 import { getGoogleWalletSaveUrl } from '@/features/carte/api'
-import QrCodeDisplay from './QrCodeDisplay'
+import QRCode from 'qrcode'
+import { buildRectoSvg } from './CarteVirtuelleExport'
 
 const C_BLUE  = '#007DFF'
 const C_DARK  = '#003B95'
@@ -20,7 +21,7 @@ interface CarteVirtuelleCardProps {
   onEdit?: () => void
 }
 
-// ── RECTO — inline SVG ──────────────────────────────────────────────────────
+// ── RECTO — même design que l'export (source unique : buildRectoSvg) ────────
 
 export function CarteRecto({
   carte,
@@ -35,6 +36,17 @@ export function CarteRecto({
   lastName?: string
   qrUrl?: string
 }) {
+  const [qrDataUrl, setQrDataUrl] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!qrUrl) { setQrDataUrl(undefined); return }
+    QRCode.toDataURL(qrUrl, { width: 192, margin: 1, color: { dark: '#010C2D', light: '#FFFFFF' } })
+      .then((url) => { if (!cancelled) setQrDataUrl(url) })
+      .catch(() => { if (!cancelled) setQrDataUrl(undefined) })
+    return () => { cancelled = true }
+  }, [qrUrl])
+
   const fullName =
     [firstName, lastName?.toUpperCase()].filter(Boolean).join(' ') ||
     'NOM ET PRÉNOM'
@@ -47,278 +59,21 @@ export function CarteRecto({
 
   const cnss = carte.assuranceNumero ?? '-'
 
+  const svg = buildRectoSvg(
+    fullName,
+    maskedCin,
+    cnss,
+    carte.cardRef ?? '-',
+    '/logo0.png',
+    profile?.photoUrl ?? undefined,
+    qrDataUrl,
+  )
+
   return (
-    <svg
-      viewBox="0 0 856 540"
-      style={{ width: '100%', height: '100%', display: 'block' }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        {/* Card rounded clip */}
-        <clipPath id="card-clip-recto">
-          <rect width="856" height="540" rx="28" />
-        </clipPath>
-        {/* Circular photo clip */}
-        <clipPath id="photo-clip-recto">
-          <circle cx="132" cy="292" r="82" />
-        </clipPath>
-        {/* Name text clip (prevents overflow into chip area) */}
-        <clipPath id="name-clip-recto">
-          <rect x="248" y="198" width="418" height="54" />
-        </clipPath>
-        {/* EMV chip gradient */}
-        <linearGradient id="chip-grad-recto" x1="0" y1="0" x2="60" y2="46" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#E5C158" />
-          <stop offset="0.5" stopColor="#FCEEAA" />
-          <stop offset="1" stopColor="#C29B35" />
-        </linearGradient>
-        {/* Zellige background watermark */}
-        <pattern id="zellige-recto" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M20 0 L40 20 L20 40 L0 20 Z M10 10 L30 30 M30 10 L10 30" stroke="#0066FF" strokeWidth="0.5" fill="none" />
-          <circle cx="20" cy="20" r="14" stroke="#0066FF" strokeWidth="0.3" fill="none" />
-        </pattern>
-      </defs>
-
-      <g clipPath="url(#card-clip-recto)">
-        {/* ── Background ── */}
-        <rect width="856" height="540" fill="#FFFFFF" />
-        <rect width="856" height="540" fill="url(#zellige-recto)" opacity="0.03" />
-
-        {/* ── Top Moroccan stripe ── */}
-        <rect x="0" y="0" width="428" height="7" fill={C_RED} />
-        <rect x="428" y="0" width="428" height="7" fill={C_GREEN} />
-
-        {/* ── HEADER ── */}
-        {/* Left: Logo image */}
-        <image
-          href="/logo0.png"
-          x="20"
-          y="16"
-          width="170"
-          height="58"
-          preserveAspectRatio="xMinYMid meet"
-        />
-
-        {/* Right: Arabic title + subtitle */}
-        <text
-          x="832"
-          y="44"
-          textAnchor="end"
-          fontFamily="system-ui,-apple-system,sans-serif"
-          fontSize="14"
-          fontWeight="800"
-          fill={C_TEXT}
-        >
-          المملكة المغربية
-        </text>
-        <text
-          x="832"
-          y="65"
-          textAnchor="end"
-          fontFamily="system-ui,-apple-system,sans-serif"
-          fontSize="11"
-          fontWeight="700"
-          fill={C_BLUE}
-          letterSpacing="0.5"
-        >
-          Carte Santé Virtuelle
-        </text>
-
-        {/* ── ECG separator ── */}
-        <line x1="24" y1="96" x2="832" y2="96" stroke={C_BLUE} strokeWidth="0.6" opacity="0.15" />
-        <path
-          d="M24 96 L310 96 L326 96 L336 80 L346 112 L356 80 L366 96 L392 96 L832 96"
-          stroke={C_BLUE}
-          strokeWidth="1.5"
-          opacity="0.45"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-
-        {/* ── BODY ── */}
-
-        {/* Photo ring */}
-        <circle cx="132" cy="292" r="90" fill="none" stroke={C_BLUE} strokeWidth="3" opacity="0.75" />
-
-        {/* Photo or silhouette */}
-        {profile?.photoUrl ? (
-          <image
-            href={profile.photoUrl}
-            x="50"
-            y="210"
-            width="164"
-            height="164"
-            clipPath="url(#photo-clip-recto)"
-            preserveAspectRatio="xMidYMid slice"
-          />
-        ) : (
-          <g clipPath="url(#photo-clip-recto)">
-            <circle cx="132" cy="292" r="82" fill={C_BLUE} />
-            <circle cx="132" cy="264" r="29" fill="white" opacity="0.9" />
-            <ellipse cx="132" cy="344" rx="44" ry="36" fill="white" opacity="0.9" />
-          </g>
-        )}
-
-        {/* Patient name */}
-        <g clipPath="url(#name-clip-recto)">
-          <text
-            x="248"
-            y="236"
-            fontFamily="system-ui,-apple-system,sans-serif"
-            fontSize="22"
-            fontWeight="900"
-            fill={C_TEXT}
-            letterSpacing="0.3"
-          >
-            {fullName}
-          </text>
-        </g>
-
-        {/* CIN */}
-        <text
-          x="248"
-          y="272"
-          fontFamily="system-ui,-apple-system,sans-serif"
-          fontSize="8"
-          fontWeight="700"
-          fill={C_LABEL}
-          letterSpacing="2"
-        >
-          CIN
-        </text>
-        <text
-          x="248"
-          y="295"
-          fontFamily="'Courier New',Courier,monospace"
-          fontSize="17"
-          fontWeight="800"
-          fill={C_TEXT}
-          letterSpacing="2"
-        >
-          {maskedCin}
-        </text>
-        <line x1="248" y1="307" x2="562" y2="307" stroke="#E5E7EB" strokeWidth="1" />
-
-        {/* CNSS / AMO */}
-        <text
-          x="248"
-          y="327"
-          fontFamily="system-ui,-apple-system,sans-serif"
-          fontSize="8"
-          fontWeight="700"
-          fill={C_LABEL}
-          letterSpacing="2"
-        >
-          N° CNSS / AMO
-        </text>
-        <text
-          x="248"
-          y="350"
-          fontFamily="'Courier New',Courier,monospace"
-          fontSize="16"
-          fontWeight="800"
-          fill={C_TEXT}
-          letterSpacing="1.5"
-        >
-          {cnss}
-        </text>
-
-        {/* EMV Chip */}
-        <g transform="translate(694, 226)">
-          <rect width="62" height="48" rx="8" fill="url(#chip-grad-recto)" />
-          <line x1="19" y1="0" x2="19" y2="48" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
-          <line x1="43" y1="0" x2="43" y2="48" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
-          <line x1="0" y1="16" x2="62" y2="16" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
-          <line x1="0" y1="32" x2="62" y2="32" stroke="rgba(0,0,0,0.2)" strokeWidth="1" />
-          <rect x="19" y="16" width="24" height="16" fill="none" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" />
-          <circle cx="31" cy="24" r="3.5" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8" fill="none" />
-        </g>
-
-        {/* QR Code — real generated code */}
-        {qrUrl ? (
-          <foreignObject x="682" y="290" width="84" height="84">
-            <div style={{ width: 84, height: 84, borderRadius: 5, overflow: 'hidden' }}>
-              <QrCodeDisplay value={qrUrl} size={84} />
-            </div>
-          </foreignObject>
-        ) : (
-          <g transform="translate(682, 290)">
-            <rect width="84" height="84" rx="5" fill="#F3F4F6" />
-            <rect x="8" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
-            <rect x="14" y="14" width="12" height="12" fill={C_TEXT} />
-            <rect x="52" y="8" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
-            <rect x="58" y="14" width="12" height="12" fill={C_TEXT} />
-            <rect x="8" y="52" width="24" height="24" rx="2" fill="none" stroke={C_TEXT} strokeWidth="2" />
-            <rect x="14" y="58" width="12" height="12" fill={C_TEXT} />
-            <rect x="42" y="44" width="8" height="8" fill={C_TEXT} />
-            <rect x="58" y="52" width="16" height="8" fill={C_TEXT} />
-            <rect x="50" y="68" width="8" height="8" fill={C_TEXT} />
-            <rect x="66" y="68" width="8" height="8" fill={C_TEXT} />
-            <rect x="42" y="10" width="8" height="16" fill={C_TEXT} />
-            <rect x="10" y="42" width="16" height="8" fill={C_TEXT} />
-          </g>
-        )}
-
-        {/* ── FOOTER ── */}
-        <rect x="0" y="460" width="856" height="80" fill={C_BLUE} />
-
-        {/* Footer: Logo white */}
-        <image
-          href="/logo0.png"
-          x="24"
-          y="472"
-          width="120"
-          height="38"
-          preserveAspectRatio="xMinYMid meet"
-          style={{ filter: 'brightness(0) invert(1)' }}
-        />
-
-        {/* Separator 1 */}
-        <text x="158" y="500" fontFamily="system-ui,-apple-system,sans-serif" fontSize="18" fontWeight="300" fill="rgba(255,255,255,0.35)">|</text>
-
-        {/* Website */}
-        <text
-          x="174"
-          y="500"
-          fontFamily="system-ui,-apple-system,sans-serif"
-          fontSize="11"
-          fontWeight="600"
-          fill="rgba(255,255,255,0.85)"
-          letterSpacing="0.5"
-        >
-          www.doctorek.ma
-        </text>
-
-        {/* Separator 2 */}
-        <text x="334" y="500" fontFamily="system-ui,-apple-system,sans-serif" fontSize="18" fontWeight="300" fill="rgba(255,255,255,0.35)">|</text>
-
-        {/* Phone icon */}
-        <g
-          transform="translate(352, 488)"
-          stroke="rgba(255,255,255,0.85)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        >
-          <path d="M14 10.5v2a1.5 1.5 0 01-1.6 1.5 12 12 0 01-5.2-1.8 12 12 0 01-3.6-3.6A12 12 0 011.8 3.1 1.5 1.5 0 013.3 1.5h2a1.5 1.5 0 011.5 1.3c.1.7.3 1.4.5 2.1a1.5 1.5 0 01-.3 1.6L6.2 7.3A12 12 0 009.7 10.8l.8-.8a1.5 1.5 0 011.6-.3c.7.2 1.4.4 2.1.5A1.5 1.5 0 0114 10.5z" />
-        </g>
-
-        {/* Phone number */}
-        <text
-          x="376"
-          y="500"
-          fontFamily="system-ui,-apple-system,sans-serif"
-          fontSize="11"
-          fontWeight="600"
-          fill="rgba(255,255,255,0.85)"
-          letterSpacing="0.5"
-        >
-          080 100 2000
-        </text>
-      </g>
-    </svg>
+    <div
+      style={{ width: '100%', height: '100%' }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   )
 }
 
