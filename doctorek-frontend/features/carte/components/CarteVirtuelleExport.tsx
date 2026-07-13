@@ -113,7 +113,7 @@ export function renderCarteRectoHtml(
       : rawCin || '-'
 
   const cnss = carte.assuranceNumero ?? '-'
-  const logoUrl = `${origin}/logo0.png`
+  const logoUrl = `${origin}/icone-doctorek.png`
 
   const photoBlock = profile?.photoUrl
     ? `<image href="${profile.photoUrl}" x="50" y="210" width="164" height="164" clip-path="url(#photo-clip-recto)" preserveAspectRatio="xMidYMid slice"/>`
@@ -158,7 +158,7 @@ export function renderWalletHeroHtml(opts: {
   photoUrl?: string
 }): string {
   const { fullName, maskedCin, cnss, cardRef, qrDataUrl, origin, photoUrl } = opts
-  const logoUrl = `${origin}/logo0.png`
+  const logoUrl = `${origin}/icone-doctorek.png`
 
   const chip = (label: string, value: string) => `
     <div style="display:flex;flex-direction:column;gap:2px;padding:10px 18px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:14px;">
@@ -193,7 +193,10 @@ export function renderWalletHeroHtml(opts: {
       <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 56px;box-sizing:border-box;">
         <!-- gauche : marque + identité -->
         <div style="display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0;">
-          <img src="${logoUrl}" style="height:40px;width:auto;align-self:flex-start;filter:brightness(0) invert(1);" />
+          <div style="display:flex;align-items:center;gap:10px;align-self:flex-start;">
+            <img src="${logoUrl}" style="height:34px;width:34px;object-fit:contain;filter:brightness(0) invert(1);" />
+            <span style="font-size:26px;font-weight:800;color:#FFFFFF;letter-spacing:-0.02em;">doctorek<span style="color:#3DA8FF;">.</span></span>
+          </div>
           <div>
             <div style="font-size:12px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#3DA8FF;margin-bottom:6px;">Carte Santé Virtuelle</div>
             <div style="font-size:44px;font-weight:800;line-height:1.05;color:#FFFFFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px;">${fullName}</div>
