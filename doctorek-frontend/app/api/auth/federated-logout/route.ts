@@ -14,8 +14,11 @@ export async function GET(req: NextRequest) {
 
   const token = await getToken({ req, secret: process.env.AUTH_SECRET })
 
+  // Behind a TLS-terminating proxy req.url is http:// — build the public URL
+  // from AUTH_URL so Keycloak's registered post-logout redirect matches.
+  const baseUrl = process.env.AUTH_URL ?? req.url
   const params = new URLSearchParams({
-    post_logout_redirect_uri: new URL('/login', req.url).toString(),
+    post_logout_redirect_uri: new URL('/login', baseUrl).toString(),
   })
   if (typeof token?.idToken === 'string') {
     params.set('id_token_hint', token.idToken)
