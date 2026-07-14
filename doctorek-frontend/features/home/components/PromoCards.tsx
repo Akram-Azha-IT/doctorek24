@@ -26,19 +26,14 @@ export function PromoCards() {
               Découvrir <ChevronRight className="h-4 w-4" />
             </span>
           </div>
-          <div className="relative z-20 h-44 sm:h-auto sm:w-[43%] shrink-0">
-            <div
-              className="absolute bottom-0 top-[-16px] inset-x-[10%] sm:inset-x-0 sm:top-[-48px]"
-              style={{ transform: 'rotate(-8deg)' }}
-            >
-              <Image
-                src="/card-hero.png"
-                alt="Carte médicale Doctorek"
-                fill
-                className="object-contain object-bottom drop-shadow-2xl"
-                sizes="(max-width: 640px) 70vw, 260px"
-              />
-            </div>
+          <div className="relative z-20 h-44 sm:h-auto sm:w-[43%] shrink-0 overflow-hidden rounded-b-2xl sm:rounded-b-none sm:rounded-r-2xl">
+            <Image
+              src="/carte-home.jpg"
+              alt="Carte médicale Doctorek affichée sur un smartphone"
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 640px) 100vw, 480px"
+            />
           </div>
         </a>
 
