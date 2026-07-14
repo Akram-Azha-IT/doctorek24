@@ -26,9 +26,28 @@ export async function POST(req: Request) {
     const logoBuffer = await readFile(path.join(process.cwd(), 'public', 'logo0.png'))
     const logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`
 
+    // La photo du patient peut être une URL externe (avatar Google) : le rendu
+    // n'attend plus le réseau, donc on l'inline en data URI côté serveur.
+    let photoDataUrl: string | undefined = profile?.photoUrl ?? undefined
+    if (photoDataUrl && !photoDataUrl.startsWith('data:')) {
+      try {
+        const resp = await fetch(photoDataUrl, { signal: AbortSignal.timeout(8000) })
+        if (resp.ok) {
+          const buf = Buffer.from(await resp.arrayBuffer())
+          const ct = resp.headers.get('content-type') ?? 'image/jpeg'
+          photoDataUrl = `data:${ct};base64,${buf.toString('base64')}`
+        } else {
+          photoDataUrl = undefined
+        }
+      } catch {
+        photoDataUrl = undefined // silhouette de repli
+      }
+    }
+    const profileInline = profile ? { ...profile, photoUrl: photoDataUrl ?? null } : profile
+
     const renderOptions = { origin, qrDataUrl, logoDataUrl }
-    const rectoHtml = renderCarteRectoHtml(carte, profile, firstName, lastName, renderOptions)
-    const versoHtml = renderCarteVersoHtml(carte, profile, firstName, lastName, renderOptions)
+    const rectoHtml = renderCarteRectoHtml(carte, profileInline, firstName, lastName, renderOptions)
+    const versoHtml = renderCarteVersoHtml(carte, profileInline, firstName, lastName, renderOptions)
 
     const fullHtml = `
       <!DOCTYPE html>
@@ -39,7 +58,7 @@ export async function POST(req: Request) {
             body {
               margin: 0;
               padding: 40px;
-              background: #010C2D;
+              background: #FFFFFF;
               font-family: system-ui, -apple-system, sans-serif;
               display: flex;
               flex-direction: column;
