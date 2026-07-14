@@ -27,7 +27,7 @@ export function SpecialtiesSection() {
             className="group flex items-center gap-2.5 md:gap-3 rounded-xl bg-[#EBF4FF] p-3 md:p-4 text-left shadow-sm transition-all hover:shadow-md border border-transparent hover:border-[#007DFF]/20 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] focus-visible:ring-offset-2"
           >
             <div className="flex h-9 w-9 md:h-11 md:w-11 shrink-0 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br from-[#D0E8FF] to-[#B6DAF7]">
-              <Image src={spec.icon} alt="" width={22} height={22} aria-hidden="true" />
+              <Image src={spec.icon} alt="" width={26} height={26} aria-hidden="true" />
             </div>
             <span className="flex-1 text-[12px] md:text-[13px] font-bold text-[#00263C] leading-snug">{spec.name}</span>
             <ChevronRight className="h-4 w-4 text-[#007DFF] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true" />

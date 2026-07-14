@@ -30,9 +30,9 @@ export function CarteSection({ carte, carteLoading, hasCarte, profile, firstName
             <h2 className="text-base font-bold text-[#333333]">Votre carte digitale</h2>
             {hasCarte && (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#2EB67D]" />
-                <p className="text-[11px] text-[#465058] font-medium">
-                  Active{updatedAt ? ` · mise à jour le ${updatedAt.toLocaleDateString('fr-FR')}` : ''}
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#2EB67D]" />
+                <p className="text-[11px] text-[#465058] font-medium whitespace-nowrap">
+                  Active{updatedAt ? ` · ${updatedAt.toLocaleDateString('fr-FR')}` : ''}
                 </p>
               </div>
             )}

@@ -1,12 +1,13 @@
+// Icônes : Healthicons (healthicons.org, licence MIT) — set médical cohérent
 export const POPULAR_SPECIALTIES = [
-  { name: 'Médecin généraliste', icon: '/medecin.png' },
-  { name: 'Chirurgien-dentiste', icon: '/dentiste.png' },
-  { name: 'Pédiatre', icon: '/therapie.png' },
-  { name: 'Gynécologue médical', icon: '/gynecologue.png' },
-  { name: 'Ophtalmologue', icon: '/cardiologue.png' },
-  { name: 'Dermatologue', icon: '/dermatologue.png' },
-  { name: 'Ostéopathe', icon: '/massotherapie.png' },
-  { name: 'Masseur-kinésithérapeute', icon: '/massotherapie.png' },
+  { name: 'Médecin généraliste', icon: '/specialites/generaliste.svg' },
+  { name: 'Chirurgien-dentiste', icon: '/specialites/dentiste.svg' },
+  { name: 'Pédiatre', icon: '/specialites/pediatre.svg' },
+  { name: 'Gynécologue médical', icon: '/specialites/gynecologue.svg' },
+  { name: 'Ophtalmologue', icon: '/specialites/ophtalmologue.svg' },
+  { name: 'Dermatologue', icon: '/specialites/dermatologue.svg' },
+  { name: 'Ostéopathe', icon: '/specialites/osteopathe.svg' },
+  { name: 'Masseur-kinésithérapeute', icon: '/specialites/kinesitherapeute.svg' },
 ]
 
 export const FEATURES = [
