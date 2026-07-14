@@ -68,7 +68,7 @@ export function buildRectoSvg(
         <rect x="428" y="0" width="428" height="4" fill="${C_GREEN}"/>
 
         <image href="${logoUrl}" x="24" y="18" width="170" height="58" preserveAspectRatio="xMinYMid meet"/>
-        <text x="832" y="38" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="15" font-weight="800" fill="#0F172A">المملكة المغربية</text>
+        <text x="832" y="38" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="15" font-weight="800" fill="#0F172A">المملكة المغربية</text>
         <text x="832" y="56" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="3">ROYAUME DU MAROC</text>
         <text x="832" y="76" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="11.5" font-weight="800" fill="${C_BLUE}" letter-spacing="1.2">CARTE SANTÉ VIRTUELLE</text>
 
@@ -79,24 +79,24 @@ export function buildRectoSvg(
         ${photoBlock}
 
         <text x="248" y="142" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">NOM COMPLET</text>
-        <text x="652" y="142" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">الاسم الكامل</text>
+        <text x="652" y="142" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">الاسم الكامل</text>
         <g clip-path="url(#name-clip-recto)">
           <text x="248" y="176" font-family="system-ui,-apple-system,sans-serif" font-size="25" font-weight="900" fill="#0F172A" letter-spacing="0.3">${fullName}</text>
         </g>
         <line x1="248" y1="196" x2="652" y2="196" stroke="#EDF2F7" stroke-width="1.2"/>
 
         <text x="248" y="222" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">C.I.N.</text>
-        <text x="652" y="222" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">ب.ت.و</text>
+        <text x="652" y="222" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">ب.ت.و</text>
         <text x="248" y="252" font-family="'Courier New',Courier,monospace" font-size="19" font-weight="800" fill="#0F172A" letter-spacing="3">${maskedCin}</text>
         <line x1="248" y1="270" x2="652" y2="270" stroke="#EDF2F7" stroke-width="1.2"/>
 
         <text x="248" y="296" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">N° CNSS / AMO</text>
-        <text x="652" y="296" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">رقم الضمان الاجتماعي</text>
+        <text x="652" y="296" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">رقم الضمان الاجتماعي</text>
         <text x="248" y="326" font-family="'Courier New',Courier,monospace" font-size="18" font-weight="800" fill="#0F172A" letter-spacing="2.5">${cnss}</text>
         <line x1="248" y1="344" x2="652" y2="344" stroke="#EDF2F7" stroke-width="1.2"/>
 
         <text x="248" y="370" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">N° DE CARTE</text>
-        <text x="652" y="370" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">رقم البطاقة</text>
+        <text x="652" y="370" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="9" font-weight="700" fill="#94A3B8">رقم البطاقة</text>
         <text x="248" y="400" font-family="'Courier New',Courier,monospace" font-size="17" font-weight="800" fill="${C_BLUE}" letter-spacing="3">${cardRef}</text>
 
         <g transform="translate(694, 122)">
@@ -121,7 +121,7 @@ export function buildRectoSvg(
           <path d="M14 10.5v2a1.5 1.5 0 01-1.6 1.5 12 12 0 01-5.2-1.8 12 12 0 01-3.6-3.6A12 12 0 011.8 3.1 1.5 1.5 0 013.3 1.5h2a1.5 1.5 0 011.5 1.3c.1.7.3 1.4.5 2.1a1.5 1.5 0 01-.3 1.6L6.2 7.3A12 12 0 009.7 10.8l.8-.8a1.5 1.5 0 011.6-.3c.7.2 1.4.4 2.1.5A1.5 1.5 0 0114 10.5z"/>
         </g>
         <text x="336" y="518" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="600" fill="rgba(255,255,255,0.85)" letter-spacing="0.5">080 100 2000</text>
-        <text x="832" y="518" text-anchor="end" font-family="'Courier New',Courier,monospace" font-size="8" font-weight="700" fill="rgba(255,255,255,0.55)" letter-spacing="2">DOCUMENT OFFICIEL · وثيقة رسمية</text>
+        <text x="832" y="518" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.55)">DOCUMENT OFFICIEL · وثيقة رسمية</text>
       </g>
     </svg>
   `
@@ -268,7 +268,7 @@ export function buildVersoSvg(
         <rect x="428" y="0" width="428" height="4" fill="${C_GREEN}"/>
 
         <image href="${logoUrl}" x="24" y="18" width="140" height="48" preserveAspectRatio="xMinYMid meet"/>
-        <text x="832" y="38" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="700" fill="#64748B" letter-spacing="2">N° IMMATRICULATION · رقم التسجيل</text>
+        <text x="832" y="38" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="9" font-weight="700" fill="#64748B">N° IMMATRICULATION · رقم التسجيل</text>
         <text x="832" y="64" text-anchor="end" font-family="'Courier New',Courier,monospace" font-size="21" font-weight="800" fill="#0F172A" letter-spacing="3">${immatNo}</text>
 
         <line x1="24" y1="88" x2="832" y2="88" stroke="#E2E8F0" stroke-width="1"/>
@@ -283,7 +283,7 @@ export function buildVersoSvg(
         </g>
         <text x="88" y="446" font-family="system-ui,-apple-system,sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">Carte strictement personnelle et confidentielle</text>
         <text x="88" y="461" font-family="system-ui,-apple-system,sans-serif" font-size="9" font-weight="500" fill="#64748B">En cas de perte ou de vol, contactez le 080 100 2000 ou votre espace patient.</text>
-        <text x="800" y="454" text-anchor="end" font-family="system-ui,-apple-system,sans-serif" font-size="10" font-weight="700" fill="#94A3B8">بطاقة شخصية وسرية</text>
+        <text x="800" y="454" text-anchor="end" font-family="'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif" font-size="10" font-weight="700" fill="#94A3B8">بطاقة شخصية وسرية</text>
 
         <!-- Pied officiel -->
         <rect x="0" y="486" width="856" height="54" fill="#010C2D"/>
