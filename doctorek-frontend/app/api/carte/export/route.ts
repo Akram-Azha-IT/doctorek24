@@ -13,7 +13,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Carte data is required' }, { status: 400 })
     }
 
-    const origin = new URL(req.url).origin
+    // Derrière le proxy, req.url = adresse interne du conteneur (0.0.0.0:3000) —
+    // le QR doit pointer vers le domaine public.
+    const origin = process.env.AUTH_URL ?? new URL(req.url).origin
     const qrUrl = carte.cardRef ? `${origin}/carte/${carte.cardRef}` : undefined
     const qrDataUrl = qrUrl
       ? await QRCode.toDataURL(qrUrl, { width: 168, margin: 1, color: { dark: '#010C2D', light: '#FFFFFF' } })

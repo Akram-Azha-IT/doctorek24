@@ -32,7 +32,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
     }
 
-    const origin = url.origin
+    // Domaine public (le conteneur voit 0.0.0.0:3000 en interne)
+    const origin = process.env.AUTH_URL ?? url.origin
     const qrUrl = `${origin}/carte/${cardRef}`
     const qrDataUrl = await QRCode.toDataURL(qrUrl, {
       width: 168,
