@@ -35,6 +35,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(256)
   const [isDragging, setIsDragging] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -352,8 +353,10 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
             </button>
             <div className="hidden xl:block h-7 w-px mx-1" style={{ background: '#E5E9F0' }} />
             <button
-              className="flex items-center gap-2 xl:gap-2.5 rounded-xl xl:px-3 xl:py-1.5 transition-colors hover:bg-[#F5F7FA]"
-              onClick={() => router.push('/dashboard/medecin/profil')}
+              className="flex items-center gap-2 xl:gap-2.5 rounded-xl xl:px-3 xl:py-1.5 transition-colors hover:bg-[#F5F7FA] active:scale-95"
+              onClick={() => setProfileSheetOpen(true)}
+              aria-label="Ouvrir mon profil"
+              aria-haspopup="dialog"
             >
               {photoUrl ? (
                 <img src={photoUrl} alt={`Photo de ${fullName}`}
@@ -383,6 +386,74 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
           {children}
         </main>
       </div>
+
+
+      {/* ── Fiche profil (bottom sheet mobile / panneau ancré desktop) ── */}
+      {profileSheetOpen && (
+        <div role="dialog" aria-modal="true" aria-label="Mon profil" className="fixed inset-0 z-[60]">
+          <button
+            type="button"
+            aria-label="Fermer"
+            onClick={() => setProfileSheetOpen(false)}
+            className="absolute inset-0 bg-black/50"
+          />
+          <div className="absolute inset-x-0 bottom-0 xl:inset-x-auto xl:bottom-auto xl:right-6 xl:top-20 xl:w-80 rounded-t-3xl xl:rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div className="xl:hidden flex justify-center pt-3">
+              <span className="h-1 w-10 rounded-full bg-zinc-200" />
+            </div>
+
+            <div className="flex items-center gap-3 px-6 pt-4 pb-4 border-b border-zinc-100">
+              {photoUrl ? (
+                <img src={photoUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover border-2 border-[#007DFF]/20" />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white bg-[#007DFF]">
+                  {initials}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-base font-bold text-[#010C2D]">Dr. {fullName}</p>
+                <p className="text-xs text-[#A0AEC0] font-medium">Espace médecin</p>
+              </div>
+            </div>
+
+            <div className="px-3 py-2">
+              <button
+                type="button"
+                onClick={() => { setProfileSheetOpen(false); router.push('/dashboard/medecin/profil') }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-[15px] font-semibold text-[#333333] hover:bg-[#F1F4F7] active:bg-[#F1F4F7] transition-colors"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EBF4FF]">
+                  <UserCircle className="h-4 w-4 text-[#007DFF]" />
+                </span>
+                Mon profil
+              </button>
+              <button
+                type="button"
+                onClick={() => { setProfileSheetOpen(false); router.push('/dashboard/medecin/disponibilites') }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-[15px] font-semibold text-[#333333] hover:bg-[#F1F4F7] active:bg-[#F1F4F7] transition-colors"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#EBF4FF]">
+                  <Calendar className="h-4 w-4 text-[#007DFF]" />
+                </span>
+                Mes disponibilités
+              </button>
+            </div>
+
+            <div className="px-3 pb-6 xl:pb-3 pt-1 border-t border-zinc-100">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-[15px] font-bold text-red-500 hover:bg-red-50 active:bg-red-50 transition-colors"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50">
+                  <LogOut className="h-4 w-4" />
+                </span>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Mobile bottom navigation ── */}
       <nav

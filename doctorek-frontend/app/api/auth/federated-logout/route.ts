@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   // from AUTH_URL so Keycloak's registered post-logout redirect matches.
   const baseUrl = process.env.AUTH_URL ?? req.url
   const params = new URLSearchParams({
-    post_logout_redirect_uri: new URL('/login', baseUrl).toString(),
+    post_logout_redirect_uri: new URL('/logged-out', baseUrl).toString(),
   })
   if (typeof token?.idToken === 'string') {
     params.set('id_token_hint', token.idToken)

@@ -41,7 +41,13 @@ export function getTokenExpiry(token: string): number | null {
   }
 }
 
-/** Ends both the Auth.js session and the Keycloak SSO session (RP-initiated logout). */
+/**
+ * Ends both the Keycloak SSO session and the Auth.js session.
+ * Order matters: navigate to Keycloak FIRST while the local session is still
+ * alive — killing it here would trigger the layout auth guards, whose
+ * redirect races (and cancels) the end-session navigation. Keycloak then
+ * redirects to /logged-out, which clears the local session and lands on /login.
+ */
 export async function logout(): Promise<void> {
   let endSessionUrl: string | null = null
   try {
@@ -49,9 +55,7 @@ export async function logout(): Promise<void> {
     const body = await res.json()
     endSessionUrl = body.url ?? null
   } catch {
-    // fall through to a local-only sign-out
+    // Keycloak unreachable — fall back to the local cleanup page directly.
   }
-  clearSession()
-  await nextAuthSignOut({ redirect: false })
-  window.location.href = endSessionUrl ?? '/login'
+  window.location.href = endSessionUrl ?? '/logged-out'
 }

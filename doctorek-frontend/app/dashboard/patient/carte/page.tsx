@@ -640,12 +640,13 @@ export default function CarteEditPage() {
 
                 {/* Card footer — navigation */}
                 <div className="px-6 py-4 border-t border-[#E2E8F0] bg-[#F8FAFC] rounded-b-2xl">
-                  <div className="flex items-center gap-3">
+                  {/* Mobile : boutons empilés pleine largeur (le libellé long débordait de l'écran) */}
+                  <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3">
                     {step > 0 && (
                       <button
                         type="button"
                         onClick={() => setStep(s => s - 1)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-[#4A5568] border border-[#E2E8F0] hover:bg-[#F8FAFC] hover:border-[#CBD5E0] transition-all"
+                        className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-medium bg-white text-[#4A5568] border border-[#E2E8F0] hover:bg-[#F8FAFC] hover:border-[#CBD5E0] transition-all"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                           <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -653,12 +654,12 @@ export default function CarteEditPage() {
                         Précédent
                       </button>
                     )}
-                    <div className="flex-1" />
+                    <div className="hidden sm:block flex-1" />
                     {step < STEPS.length - 1 && (
                       <button
                         type="button"
                         onClick={() => setStep(s => s + 1)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#007DFF] text-white hover:bg-[#0065D0] transition-all"
+                        className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#007DFF] text-white hover:bg-[#0065D0] transition-all"
                       >
                         Suivant
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -670,7 +671,7 @@ export default function CarteEditPage() {
                       <button
                         type="submit"
                         disabled={isMutating}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#2EB67D] text-white hover:bg-[#25A06C] transition-all disabled:opacity-60"
+                        className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold bg-[#2EB67D] text-white hover:bg-[#25A06C] transition-all disabled:opacity-60"
                       >
                         {isMutating ? (
                           <>
@@ -682,7 +683,8 @@ export default function CarteEditPage() {
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                               <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
-                            {isUpdating ? 'Enregistrer les modifications' : 'Créer ma carte'}
+                            <span className="sm:hidden">{isUpdating ? 'Enregistrer' : 'Créer ma carte'}</span>
+                            <span className="hidden sm:inline">{isUpdating ? 'Enregistrer les modifications' : 'Créer ma carte'}</span>
                           </>
                         )}
                       </button>
