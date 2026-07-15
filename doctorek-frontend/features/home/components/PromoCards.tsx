@@ -27,14 +27,15 @@ export function PromoCards() {
             </span>
           </div>
           <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
-            <div className="absolute bottom-2 top-2 inset-x-[5%] sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-1/2 sm:-translate-y-1/2 sm:h-[150px] sm:w-[250px]">
-              <div className="relative h-full w-full" style={{ transform: 'rotate(-8deg)' }}>
+            {/* L'inclinaison est intégrée au mockup — pas de rotation CSS ici */}
+            <div className="absolute bottom-2 top-2 inset-x-[20%] sm:inset-x-auto sm:bottom-auto sm:right-9 sm:top-1/2 sm:-translate-y-1/2 sm:h-[215px] sm:w-[150px]">
+              <div className="relative h-full w-full">
                 <Image
                   src="/carte-phone.png"
                   alt="Carte médicale Doctorek affichée sur un smartphone"
                   fill
                   className="object-contain object-center drop-shadow-2xl"
-                  sizes="(max-width: 640px) 80vw, 250px"
+                  sizes="(max-width: 640px) 40vw, 150px"
                 />
               </div>
             </div>
