@@ -165,7 +165,10 @@ public class GoogleWalletService {
         if (properties.getHeroSecret() == null || properties.getHeroSecret().isBlank()) {
             return null;
         }
-        String photo = photoUrl == null ? "" : photoUrl;
+        // Manual uploads are data: URIs — embedding one in the hero query string balloons the
+        // save URL past Google's request-size limit (HTTP 400 on the save page). Only pass
+        // publicly fetchable http(s) photos; the hero renders its silhouette placeholder otherwise.
+        String photo = isPublicHttpUrl(photoUrl) ? photoUrl : "";
         String exp = String.valueOf(Instant.now().getEpochSecond() + HERO_IMAGE_TTL_SECONDS);
         // photo is part of the signed payload: it's patient data and the renderer must not accept
         // an arbitrary attacker-supplied image URL.
