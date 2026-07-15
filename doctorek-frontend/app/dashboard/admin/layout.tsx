@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, LogOut, Search, Sun, Moon, Bell, Mail, Settings, CreditCard, Stethoscope, UserRound, Users } from 'lucide-react'
+import { LayoutDashboard, LogOut, Users, CreditCard, ChevronDown, ShieldCheck } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { getSession } from '@/lib/session'
 import { logout } from '@/lib/auth'
@@ -11,27 +11,27 @@ import Logo from '@/components/Logo'
 const NAV_ITEMS = [
   { href: '/dashboard/admin', label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
   { href: '/dashboard/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
-  { href: '/dashboard/admin/patients', label: 'Patients', icon: UserRound },
-  { href: '/dashboard/admin/medecins', label: 'Médecins', icon: Stethoscope },
   { href: '/dashboard/admin/cartes', label: 'Cartes virtuelles', icon: CreditCard },
 ]
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard/admin': "Vue d'ensemble",
+  '/dashboard/admin/utilisateurs': 'Utilisateurs',
+  '/dashboard/admin/cartes': 'Cartes virtuelles',
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const { status: authStatus, data: authSession } = useSession()
-  const [adminName, setAdminName] = useState('Admin')
-  const [sidebarWidth, setSidebarWidth] = useState(260)
-  const [isDragging, setIsDragging] = useState(false)
-  const dragRef = useRef(false)
-  const startXRef = useRef(0)
-  const startWidthRef = useRef(260)
+  const [adminName, setAdminName] = useState('Administrateur')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (authStatus === 'loading') return // Auth.js still resolving — avoid a premature redirect
+    if (authStatus === 'loading') return
 
     if (authStatus === 'unauthenticated' || !authSession?.user || authSession.error) {
-      // /login 307s to Keycloak (cross-origin) — needs a full browser navigation.
       window.location.replace('/login')
       return
     }
@@ -44,169 +44,132 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (name) setAdminName(name)
   }, [authStatus, authSession, router])
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!dragRef.current) return
-    const delta = e.clientX - startXRef.current
-    const next = Math.min(400, Math.max(180, startWidthRef.current + delta))
-    setSidebarWidth(next)
-  }, [])
-
-  const handleMouseUp = useCallback(() => {
-    if (!dragRef.current) return
-    dragRef.current = false
-    setIsDragging(false)
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-    document.removeEventListener('mousemove', handleMouseMove)
-    document.removeEventListener('mouseup', handleMouseUp)
-  }, [handleMouseMove])
-
-  function handleDividerMouseDown(e: React.MouseEvent) {
-    e.preventDefault()
-    dragRef.current = true
-    startXRef.current = e.clientX
-    startWidthRef.current = sidebarWidth
-    setIsDragging(true)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }
-
   useEffect(() => {
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
     }
-  }, [handleMouseMove, handleMouseUp])
-
-  function handleLogout() {
-    void logout()
-  }
+    if (menuOpen) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
 
   function isActive(item: (typeof NAV_ITEMS)[number]): boolean {
     if (item.exact) return pathname === item.href
     return pathname.startsWith(item.href)
   }
 
+  const initials = adminName
+    .split(' ')
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'A'
+
+  const pageTitle = PAGE_TITLES[pathname] ?? 'Administration'
+
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FB]">
+    <div className="flex h-screen overflow-hidden bg-[#F4F6F9]">
       {/* Sidebar */}
-      <aside className="flex shrink-0 flex-col bg-[#F8F9FA]" style={{ width: sidebarWidth }}>
-        {/* Logo */}
-        <div className="flex h-24 items-center gap-3 px-8">
-          <Logo className="h-8 w-auto" width={110} height={37} priority />
-          <span className="text-sm font-bold rounded-md px-2 py-0.5" style={{ background: '#EBF4FF', color: '#007DFF' }}>Admin</span>
+      <aside className="flex w-[260px] shrink-0 flex-col border-r border-zinc-200 bg-white">
+        <div className="flex h-[72px] items-center gap-2.5 border-b border-zinc-100 px-6">
+          <Logo className="h-7 w-auto" width={100} height={34} priority />
+          <span className="rounded-md bg-[#010C2D] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
+            Admin
+          </span>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-2 px-4 space-y-1">
-          <p className="px-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-4">
+        <nav className="flex-1 overflow-y-auto px-3 py-5">
+          <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
             Administration
           </p>
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(item)
-            return (
-              <button
-                key={item.href}
-                type="button"
-                onClick={() => router.push(item.href)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
-                  active
-                    ? 'bg-[#E8F2FC] text-[#007DFF]'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-[#010C2D]'
-                }`}
-              >
-                <item.icon
-                  className={`h-5 w-5 shrink-0 ${active ? 'text-[#007DFF]' : 'text-zinc-400'}`}
-                />
-                {item.label}
-              </button>
-            )
-          })}
+          <div className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item)
+              return (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={() => router.push(item.href)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                    active
+                      ? 'bg-[#E8F2FC] text-[#007DFF]'
+                      : 'text-zinc-600 hover:bg-zinc-50 hover:text-[#010C2D]'
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[#007DFF]" />
+                  )}
+                  <item.icon className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-[#007DFF]' : 'text-zinc-400'}`} />
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
         </nav>
 
-        {/* Logout */}
-        <div className="px-4 py-8">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            Déconnexion
-          </button>
+        <div className="border-t border-zinc-100 px-3 py-4">
+          <div className="flex items-center gap-2 rounded-xl bg-[#F4F6F9] px-3 py-2.5">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-[#010C2D]">Console sécurisée</p>
+              <p className="truncate text-[11px] text-zinc-400">Accès réservé aux administrateurs</p>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* Drag divider */}
-      <div
-        onMouseDown={handleDividerMouseDown}
-        className={`group relative flex w-1 shrink-0 cursor-col-resize items-center justify-center transition-colors ${
-          isDragging ? 'bg-[#007DFF]' : 'bg-zinc-200 hover:bg-[#007DFF]'
-        }`}
-      >
-        <div
-          className={`flex flex-col gap-[3px] opacity-0 transition-opacity group-hover:opacity-100 ${
-            isDragging ? 'opacity-100' : ''
-          }`}
-        >
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-1 w-1 rounded-full bg-white shadow-sm" />
-          ))}
-        </div>
-      </div>
-
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Topbar */}
-        <header className="flex h-24 shrink-0 items-center justify-between px-8 z-10 mt-2">
-          <div className="flex items-center gap-2 rounded-full bg-white px-5 py-3 shadow-sm border border-zinc-100 focus-within:ring-2 focus-within:ring-[#007DFF]/20 transition-all w-[380px]">
-            <Search className="h-4 w-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="Recherche globale..."
-              className="flex-1 bg-transparent text-sm text-[#010C2D] placeholder:text-zinc-400 outline-none font-medium"
-            />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-8">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Administration</p>
+            <h2 className="text-lg font-bold text-[#010C2D]">{pageTitle}</h2>
           </div>
 
-          <div className="flex items-center gap-6 rounded-full bg-white px-4 py-2 shadow-sm border border-zinc-100">
-            <div className="flex items-center gap-3 text-zinc-500">
-              <div className="flex items-center gap-1 rounded-full bg-[#F8F9FA] border border-zinc-100 p-1">
-                <button className="rounded-full bg-white p-1.5 shadow-sm text-zinc-600">
-                  <Sun className="h-4 w-4" />
-                </button>
-                <button className="rounded-full p-1.5 text-zinc-400 hover:text-zinc-600 transition-colors">
-                  <Moon className="h-4 w-4" />
-                </button>
-              </div>
-              <button className="relative rounded-full p-1.5 hover:text-zinc-600 transition-colors bg-[#F8F9FA] border border-zinc-100">
-                <Bell className="h-4 w-4" />
-              </button>
-              <button className="rounded-full p-1.5 hover:text-zinc-600 transition-colors bg-[#F8F9FA] border border-zinc-100">
-                <Mail className="h-4 w-4" />
-              </button>
-            </div>
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-expanded={menuOpen}
+              aria-haspopup="true"
+              className="flex items-center gap-2.5 rounded-full border border-zinc-200 bg-white py-1.5 pl-1.5 pr-3 transition-colors hover:bg-zinc-50"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#007DFF] text-sm font-bold text-white">
+                {initials}
+              </span>
+              <span className="hidden text-left sm:block">
+                <span className="block text-sm font-bold leading-tight text-[#010C2D]">{adminName}</span>
+                <span className="block text-[11px] font-semibold leading-tight text-[#007DFF]">Administrateur</span>
+              </span>
+              <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-            <div className="h-8 w-px bg-zinc-200 mx-1" />
-
-            <div className="flex items-center gap-3 pl-1 pr-1">
-              <div className="text-right">
-                <p className="text-sm font-bold text-[#010C2D]">{adminName}</p>
-                <p className="text-[11px] font-semibold text-[#007DFF]">Administrateur</p>
+            {menuOpen && (
+              <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_12px_40px_-8px_rgba(1,12,45,0.18)]">
+                <div className="flex items-center gap-3 border-b border-zinc-100 px-4 py-3.5">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#007DFF] text-sm font-bold text-white">
+                    {initials}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-[#010C2D]">{adminName}</p>
+                    <p className="truncate text-xs text-zinc-400">{authSession?.user?.email ?? 'Administrateur'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setMenuOpen(false); void logout() }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Déconnexion
+                </button>
               </div>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#007DFF] text-sm font-bold text-white shadow-sm border-2 border-white">
-                A
-              </div>
-              <button className="rounded-full p-1 text-zinc-400 hover:text-[#010C2D] transition-colors">
-                <Settings className="h-5 w-5" />
-              </button>
-            </div>
+            )}
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto px-8 pb-8">{children}</main>
+        <main className="flex-1 overflow-y-auto px-8 py-7">{children}</main>
       </div>
     </div>
   )
