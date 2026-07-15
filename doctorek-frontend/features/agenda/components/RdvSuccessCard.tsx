@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CheckCircle2, Mail } from 'lucide-react'
 import type { RendezVous } from '@/lib/types'
 
 interface RdvSuccessCardProps {
@@ -10,7 +11,7 @@ export function RdvSuccessCard({ rdv, medecinName }: RdvSuccessCardProps) {
   return (
     <div className="mt-8 border border-green-200 bg-green-50 rounded-xl p-6">
       <div className="flex items-start gap-3">
-        <span className="text-green-600 text-xl leading-none mt-0.5" aria-hidden>✓</span>
+        <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" aria-hidden />
         <div>
           <p className="font-semibold text-green-900">Rendez-vous confirmé !</p>
           <p className="text-sm text-green-800 mt-1">
@@ -22,7 +23,7 @@ export function RdvSuccessCard({ rdv, medecinName }: RdvSuccessCardProps) {
             </p>
           )}
           <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-green-700 bg-white/60 border border-green-200 rounded-full px-2.5 py-1">
-            <span aria-hidden>✉</span>
+            <Mail className="h-3.5 w-3.5" aria-hidden />
             Un email de confirmation vous a été envoyé.
           </p>
           <p className="text-xs text-green-600 mt-2">Référence : {rdv.id}</p>

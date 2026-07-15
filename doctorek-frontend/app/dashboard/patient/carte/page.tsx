@@ -14,13 +14,14 @@ import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 import CarteVirtuelleCard from '@/features/carte/components/CarteVirtuelleCard'
 import LogoLoader from '@/components/LogoLoader'
 
+// Icônes : Healthicons (healthicons.org, MIT) — cohérence avec le reste du site
 const STEPS = [
-  { label: 'Identité', icon: '👤', desc: 'Informations personnelles' },
-  { label: 'Contact', icon: '📍', desc: 'Adresse & téléphone' },
-  { label: 'Données médicales', icon: '🩺', desc: 'Groupe sanguin & morphologie' },
-  { label: 'Antécédents', icon: '📋', desc: 'Allergies & traitements' },
-  { label: 'Urgence', icon: '🚨', desc: 'Contacts & médecin traitant' },
-  { label: 'Assurance', icon: '🏥', desc: 'Organisme & numéro' },
+  { label: 'Identité', icon: '/carte-steps/identite.svg', desc: 'Informations personnelles' },
+  { label: 'Contact', icon: '/carte-steps/contact.svg', desc: 'Adresse & téléphone' },
+  { label: 'Données médicales', icon: '/carte-steps/donnees-medicales.svg', desc: 'Groupe sanguin & morphologie' },
+  { label: 'Antécédents', icon: '/carte-steps/antecedents.svg', desc: 'Allergies & traitements' },
+  { label: 'Urgence', icon: '/carte-steps/urgence.svg', desc: 'Contacts & médecin traitant' },
+  { label: 'Assurance', icon: '/carte-steps/assurance.svg', desc: 'Organisme & numéro' },
 ]
 
 const GROUPES_SANGUINS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
@@ -331,8 +332,8 @@ export default function CarteEditPage() {
                 {/* Card header */}
                 <div className="px-6 py-5 border-b border-[#E2E8F0]">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#007DFF]/10 flex items-center justify-center text-xl">
-                      {STEPS[step].icon}
+                    <div className="w-10 h-10 rounded-xl bg-[#007DFF]/10 flex items-center justify-center">
+                      <Image src={STEPS[step].icon} alt={STEPS[step].label} width={22} height={22} unoptimized />
                     </div>
                     <div>
                       <h2 className="text-lg font-semibold text-[#1A202C]">{STEPS[step].label}</h2>

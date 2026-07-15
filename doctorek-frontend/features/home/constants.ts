@@ -12,17 +12,17 @@ export const POPULAR_SPECIALTIES = [
 
 export const FEATURES = [
   {
-    icon: '/liste-de-controle.png',
+    icon: '/engagements/acces-soins.svg',
     title: 'Accès rapide aux soins',
     desc: 'Trouvez un praticien disponible et prenez rendez-vous en ligne en quelques clics, 24h/24.',
   },
   {
-    icon: '/securite-du-cloud.png',
+    icon: '/engagements/donnees-securisees.svg',
     title: 'Données sécurisées',
     desc: 'Vos informations médicales sont protégées selon les standards de sécurité les plus stricts.',
   },
   {
-    icon: '/chronologie.png',
+    icon: '/engagements/gain-temps.svg',
     title: 'Gagnez du temps',
     desc: 'Rappels SMS automatiques, annulation en ligne et gestion de vos RDV en totale autonomie.',
   },

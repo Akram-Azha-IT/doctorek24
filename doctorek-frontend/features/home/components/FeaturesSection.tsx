@@ -51,7 +51,7 @@ export function FeaturesSection() {
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2 bg-[#EBF4FF] rounded-2xl shadow-sm p-6 border border-[#D0E8FF] flex items-start gap-5">
             <div className="w-14 h-14 rounded-xl bg-[#D0E8FF] flex items-center justify-center flex-shrink-0">
-              <Image src={FEATURES[0].icon} alt={FEATURES[0].title} width={32} height={32} />
+              <Image src={FEATURES[0].icon} alt={FEATURES[0].title} width={32} height={32} unoptimized />
             </div>
             <div>
               <h3 className="text-[17px] font-bold text-[#00263C] mb-2">{FEATURES[0].title}</h3>
@@ -61,7 +61,7 @@ export function FeaturesSection() {
           {FEATURES.slice(1).map((f, i) => (
             <div key={i} className="bg-[#EBF4FF] rounded-2xl shadow-sm p-6 border border-[#D0E8FF] flex flex-col">
               <div className="w-12 h-12 rounded-xl bg-[#D0E8FF] flex items-center justify-center mb-4 flex-shrink-0">
-                <Image src={f.icon} alt={f.title} width={28} height={28} />
+                <Image src={f.icon} alt={f.title} width={28} height={28} unoptimized />
               </div>
               <h3 className="text-[16px] font-bold text-[#00263C] mb-2">{f.title}</h3>
               <p className="text-[#465058] text-[13px] leading-relaxed">{f.desc}</p>

@@ -42,20 +42,14 @@ export function getTokenExpiry(token: string): number | null {
 }
 
 /**
- * Ends both the Keycloak SSO session and the Auth.js session.
- * Order matters: navigate to Keycloak FIRST while the local session is still
- * alive — killing it here would trigger the layout auth guards, whose
- * redirect races (and cancels) the end-session navigation. Keycloak then
- * redirects to /logged-out, which clears the local session and lands on /login.
+ * Ends both the Auth.js session and the Keycloak SSO session.
+ * Everything happens on /logged-out (a page with no auth guards, so no
+ * redirect race): it clears the local session FIRST — guaranteeing the user
+ * is logged out on the first click even if Keycloak's SSO session already
+ * expired (stale id_token_hint makes Keycloak error out without redirecting) —
+ * then navigates to the Keycloak end-session endpoint, which returns to
+ * /logged-out?done=1 and finally lands on /login.
  */
 export async function logout(): Promise<void> {
-  let endSessionUrl: string | null = null
-  try {
-    const res = await fetch('/api/auth/federated-logout')
-    const body = await res.json()
-    endSessionUrl = body.url ?? null
-  } catch {
-    // Keycloak unreachable — fall back to the local cleanup page directly.
-  }
-  window.location.href = endSessionUrl ?? '/logged-out'
+  window.location.href = '/logged-out'
 }

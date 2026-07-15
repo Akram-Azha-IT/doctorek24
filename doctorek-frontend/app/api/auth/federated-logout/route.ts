@@ -23,8 +23,10 @@ export async function GET(req: NextRequest) {
   // Behind a TLS-terminating proxy req.url is http:// — build the public URL
   // from AUTH_URL so Keycloak's registered post-logout redirect matches.
   const baseUrl = process.env.AUTH_URL ?? req.url
+  // done=1 tells /logged-out the Keycloak round-trip already happened —
+  // without it the page would fetch this endpoint again and loop.
   const params = new URLSearchParams({
-    post_logout_redirect_uri: new URL('/logged-out', baseUrl).toString(),
+    post_logout_redirect_uri: new URL('/logged-out?done=1', baseUrl).toString(),
   })
   if (typeof token?.idToken === 'string') {
     params.set('id_token_hint', token.idToken)

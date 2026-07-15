@@ -131,7 +131,7 @@ export function NotificationPanel() {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-[#E5E9F0] bg-white shadow-[0_12px_40px_-8px_rgba(1,12,45,0.18)]"
+          className="fixed inset-x-3 top-[72px] z-[60] overflow-hidden rounded-2xl border border-[#E5E9F0] bg-white shadow-[0_12px_40px_-8px_rgba(1,12,45,0.18)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[min(360px,calc(100vw-24px))]"
         >
           <div className="flex items-center justify-between border-b border-[#E5E9F0] px-4 py-3">
             <span className="text-sm font-bold text-[#010C2D]">
@@ -153,7 +153,7 @@ export function NotificationPanel() {
             )}
           </div>
 
-          <div className="max-h-[420px] divide-y divide-[#F0F2F5] overflow-y-auto">
+          <div className="max-h-[60vh] sm:max-h-[420px] divide-y divide-[#F0F2F5] overflow-y-auto">
             {isLoading ? (
               <div className="space-y-3 p-4">
                 {Array.from({ length: 3 }).map((_, i) => (
