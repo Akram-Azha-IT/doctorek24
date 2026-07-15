@@ -75,7 +75,9 @@ public class GoogleWalletService {
         // the stored data and ignores the JWT's fields — so edits (photo, CIN, CNSS...) never show.
         // Version the object id with a hash of the displayed content: any change yields a new object
         // the user adds fresh, always reflecting current data.
-        String contentVersion = shortHash(String.join("|",
+        // "v2" = refonte visuelle (hero officiel + fond marine) : force un nouvel objet
+        // pour que les utilisateurs ré-ajoutant la carte voient le nouveau design.
+        String contentVersion = shortHash(String.join("|", "v2",
                 fullName, nullToEmpty(numIdentite), nullToEmpty(assuranceNumero), nullToEmpty(photoUrl)));
         String objectSuffix = sanitize(cardRef) + "-" + contentVersion;
         String fullObjectId = issuerId + "." + objectSuffix;
@@ -88,7 +90,8 @@ public class GoogleWalletService {
         genericObject.put("cardTitle", textValue("Doctorek"));
         genericObject.put("subheader", textValue("Carte Santé Virtuelle"));
         genericObject.put("header", textValue(fullName.isBlank() ? "Patient Doctorek" : fullName.trim()));
-        genericObject.put("hexBackgroundColor", "#007DFF");
+        // Marine "document officiel" — aligné sur le fond du hero et de la carte (#042651).
+        genericObject.put("hexBackgroundColor", "#042651");
         // Google fetches the logo server-side: a non-public (e.g. localhost) URL breaks pass creation,
         // so dev/test falls back to a publicly reachable placeholder until a public domain is deployed.
         // TODO: switch to frontendUrl + "/icone-doctorek.png" once a public HTTPS domain is deployed

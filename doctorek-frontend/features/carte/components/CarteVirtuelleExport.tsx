@@ -164,54 +164,82 @@ export function renderWalletHeroHtml(opts: {
   const { fullName, maskedCin, cnss, cardRef, qrDataUrl, origin, photoUrl, logoDataUrl } = opts
   const logoUrl = logoDataUrl ?? `${origin}/logo0.png`
 
-  const chip = (label: string, value: string) => `
-    <div style="display:flex;flex-direction:column;gap:2px;padding:10px 18px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-radius:14px;">
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#B6DAF7;">${label}</span>
-      <span style="font-size:17px;font-weight:700;color:#FFFFFF;">${value}</span>
+  // Le grand QR du pass est déjà affiché par Google Wallet juste au-dessus du hero —
+  // le dupliquer ici encombre la carte. qrDataUrl est ignoré volontairement.
+  void qrDataUrl
+
+  const arabicFont = `font-family:'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif;`
+
+  const field = (labelFr: string, labelAr: string, value: string) => `
+    <div style="display:flex;flex-direction:column;gap:3px;min-width:150px;">
+      <div style="display:flex;align-items:baseline;gap:8px;">
+        <span style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8FB8E8;">${labelFr}</span>
+        <span style="${arabicFont}font-size:10px;color:#8FB8E8;">${labelAr}</span>
+      </div>
+      <span style="font-size:19px;font-weight:700;color:#FFFFFF;letter-spacing:0.04em;">${value}</span>
     </div>`
 
-  const chips = [
-    maskedCin && maskedCin !== '-' ? chip('CIN', maskedCin) : '',
-    cnss && cnss !== '-' ? chip('N° CNSS / AMO', cnss) : '',
+  const fields = [
+    maskedCin && maskedCin !== '-' ? field('C.I.N.', 'ب.ت.و', maskedCin) : '',
+    cnss && cnss !== '-' ? field('N° CNSS / AMO', 'الضمان الاجتماعي', cnss) : '',
   ].join('')
 
   const photoBlock = photoUrl
-    ? `<img src="${photoUrl}" style="width:140px;height:140px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,0.35);box-shadow:0 10px 30px rgba(1,12,45,0.35);" />`
-    : ''
-
-  const qrBlock = qrDataUrl
-    ? `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-        <div style="background:#FFFFFF;border-radius:18px;padding:10px;box-shadow:0 10px 30px rgba(1,12,45,0.35);">
-          <img src="${qrDataUrl}" style="width:130px;height:130px;display:block;" />
-        </div>
+    ? `<div style="width:132px;height:158px;border-radius:10px;overflow:hidden;border:3px solid rgba(255,255,255,0.85);box-shadow:0 8px 26px rgba(0,0,0,0.35);flex-shrink:0;">
+         <img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" />
        </div>`
     : ''
 
   return `
-    <div style="position:relative;width:1032px;height:336px;background:linear-gradient(115deg, #042651 0%, #0C4A83 45%, #007DFF 100%);overflow:hidden;font-family:'Inter',system-ui,sans-serif;">
-      <!-- décor discret -->
-      <div style="position:absolute;right:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:rgba(255,255,255,0.06);"></div>
-      <div style="position:absolute;right:40px;bottom:-180px;width:340px;height:340px;border-radius:50%;background:rgba(61,168,255,0.14);"></div>
-      <div style="position:absolute;left:-90px;bottom:-160px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+    <div style="position:relative;width:1032px;height:336px;background:#042651;overflow:hidden;font-family:'Inter',system-ui,sans-serif;">
+      <!-- guilloche discret (arcs concentriques, motif document officiel) -->
+      <svg style="position:absolute;inset:0;" width="1032" height="336" viewBox="0 0 1032 336" fill="none">
+        ${Array.from({ length: 9 }, (_, i) =>
+          `<circle cx="1000" cy="360" r="${120 + i * 34}" stroke="rgba(255,255,255,0.045)" stroke-width="1.2"/>`
+        ).join('')}
+        ${Array.from({ length: 7 }, (_, i) =>
+          `<circle cx="30" cy="-20" r="${90 + i * 30}" stroke="rgba(61,168,255,0.07)" stroke-width="1.2"/>`
+        ).join('')}
+      </svg>
 
-      <div style="position:relative;height:100%;display:flex;align-items:center;justify-content:space-between;padding:0 56px;box-sizing:border-box;">
-        <!-- gauche : marque + identité -->
-        <div style="display:flex;flex-direction:column;justify-content:center;gap:16px;min-width:0;">
-          <div style="align-self:flex-start;background:#FFFFFF;border-radius:12px;padding:8px 18px;box-shadow:0 6px 20px rgba(1,12,45,0.25);">
-            <img src="${logoUrl}" style="height:36px;width:auto;display:block;" />
+      <!-- liseré drapeau (rouge → vert) -->
+      <div style="position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,#C1272D 0%,#C1272D 48%,#006233 52%,#006233 100%);"></div>
+
+      <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:26px 52px 20px;box-sizing:border-box;">
+        <!-- en-tête : marque + mention officielle bilingue -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <div style="background:#FFFFFF;border-radius:10px;padding:7px 16px;box-shadow:0 4px 14px rgba(0,0,0,0.3);">
+            <img src="${logoUrl}" style="height:30px;width:auto;display:block;" />
           </div>
-          <div>
-            <div style="font-size:12px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#3DA8FF;margin-bottom:6px;">Carte Santé Virtuelle</div>
-            <div style="font-size:44px;font-weight:800;line-height:1.05;color:#FFFFFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px;">${fullName}</div>
+          <div style="text-align:right;">
+            <div style="${arabicFont}font-size:15px;font-weight:700;color:#FFFFFF;line-height:1.3;">المملكة المغربية</div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.26em;color:#B6DAF7;margin-top:2px;">ROYAUME DU MAROC</div>
+            <div style="font-size:11px;font-weight:800;letter-spacing:0.2em;color:#3DA8FF;margin-top:4px;">CARTE SANTÉ VIRTUELLE</div>
           </div>
-          <div style="display:flex;gap:12px;">${chips}</div>
-          <div style="font-size:14px;font-weight:600;letter-spacing:0.08em;color:#B6DAF7;">${cardRef}</div>
         </div>
 
-        <!-- droite : photo + QR -->
-        <div style="display:flex;align-items:center;gap:28px;">
+        <!-- identité -->
+        <div style="display:flex;align-items:center;gap:32px;min-width:0;">
           ${photoBlock}
-          ${qrBlock}
+          <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+            <div>
+              <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
+                <span style="font-size:10px;font-weight:700;letter-spacing:0.18em;color:#8FB8E8;">NOM COMPLET</span>
+                <span style="${arabicFont}font-size:10px;color:#8FB8E8;">الاسم الكامل</span>
+              </div>
+              <div style="font-size:40px;font-weight:800;line-height:1.05;color:#FFFFFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:560px;">${fullName}</div>
+            </div>
+            <div style="display:flex;gap:44px;">${fields}</div>
+          </div>
+        </div>
+
+        <!-- pied : référence + mention officielle -->
+        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.14);padding-top:10px;">
+          <span style="font-size:13px;font-weight:700;letter-spacing:0.12em;color:#3DA8FF;">${cardRef}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <span style="font-size:10px;font-weight:600;letter-spacing:0.14em;color:#8FB8E8;">DOCUMENT OFFICIEL ·</span>
+            <span style="${arabicFont}font-size:11px;color:#8FB8E8;">وثيقة رسمية</span>
+          </div>
         </div>
       </div>
     </div>
