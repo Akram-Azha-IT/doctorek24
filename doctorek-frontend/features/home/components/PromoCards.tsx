@@ -9,8 +9,8 @@ export function PromoCards() {
 
         <a href="/login" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
           <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
-            <div className="absolute rounded-full bg-[#D0E8FF] w-[180px] h-[180px] sm:w-[210px] sm:h-[210px] right-4 bottom-4 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
-            <div className="absolute rounded-full bg-[#B6DAF7] w-[130px] h-[130px] sm:w-[155px] sm:h-[155px] right-10 bottom-8 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
+            <div className="absolute rounded-full bg-[#D0E8FF] w-[200px] h-[200px] sm:w-[210px] sm:h-[210px] left-1/2 -translate-x-1/2 bottom-2 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
+            <div className="absolute rounded-full bg-[#B6DAF7] w-[148px] h-[148px] sm:w-[155px] sm:h-[155px] left-1/2 -translate-x-1/2 bottom-6 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
           </div>
           <div className="relative z-10 flex-1 p-6 sm:p-7 flex flex-col justify-between">
             <div>
