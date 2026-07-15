@@ -61,17 +61,16 @@ export function PromoCards() {
             </span>
           </div>
           <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
-            <div
-              className="absolute bottom-0 top-[-28px] inset-x-[5%] sm:inset-x-0 sm:top-[-48px]"
-              style={{ transform: 'rotate(8deg)' }}
-            >
-              <Image
-                src="/medecin-carte-hero.png"
-                alt="Dashboard médecin Doctorek"
-                fill
-                className="object-contain object-bottom drop-shadow-2xl"
-                sizes="(max-width: 640px) 80vw, 260px"
-              />
+            <div className="absolute bottom-2 top-2 inset-x-[20%] sm:inset-x-auto sm:bottom-auto sm:right-10 sm:top-1/2 sm:-translate-y-1/2 sm:h-[215px] sm:w-[140px]">
+              <div className="relative h-full w-full" style={{ transform: 'rotate(8deg)' }}>
+                <Image
+                  src="/medecin-carte-hero.png"
+                  alt="Dashboard médecin Doctorek"
+                  fill
+                  className="object-contain object-center drop-shadow-2xl"
+                  sizes="(max-width: 640px) 40vw, 140px"
+                />
+              </div>
             </div>
           </div>
         </Link>
