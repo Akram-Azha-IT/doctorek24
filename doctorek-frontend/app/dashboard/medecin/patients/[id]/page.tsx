@@ -127,12 +127,14 @@ function TabBtn({
   active,
   label,
   icon,
+  count,
   onClick,
 }: {
   id: TabId
   active: boolean
   label: string
   icon: React.ReactNode
+  count?: number
   onClick: (id: TabId) => void
 }) {
   return (
@@ -141,7 +143,7 @@ function TabBtn({
       role="tab"
       aria-selected={active}
       onClick={() => onClick(id)}
-      className={`flex items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-sm font-semibold transition-colors ${
+      className={`flex shrink-0 items-center gap-2 border-b-2 px-1 pb-3 pt-1 text-sm font-semibold transition-colors focus-visible:outline-none ${
         active
           ? 'border-[#007DFF] text-[#007DFF]'
           : 'border-transparent text-[#6B7A99] hover:text-[#010C2D]'
@@ -149,6 +151,15 @@ function TabBtn({
     >
       {icon}
       {label}
+      {count != null && count > 0 && (
+        <span
+          className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+            active ? 'bg-[#DFEFFE] text-[#007DFF]' : 'bg-[#F1F4F7] text-[#6B7A99]'
+          }`}
+        >
+          {count}
+        </span>
+      )}
     </button>
   )
 }
@@ -1062,7 +1073,7 @@ export default function DossierPatientPage() {
 
   if (!mounted || rdvsLoading) {
     return (
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 space-y-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 space-y-6">
         <div className="h-8 w-40 animate-pulse rounded-lg bg-zinc-200" />
         <div className="h-40 animate-pulse rounded-2xl bg-zinc-100" />
         <div className="h-96 animate-pulse rounded-2xl bg-zinc-100" />
@@ -1072,7 +1083,7 @@ export default function DossierPatientPage() {
 
   if (!hasAccess) {
     return (
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         <button
           type="button"
           onClick={() => router.back()}
@@ -1095,80 +1106,109 @@ export default function DossierPatientPage() {
     )
   }
 
+  const nextRdv = rdvs.find((r) => r.statut === 'CONFIRME' || r.statut === 'EN_ATTENTE')
+
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 space-y-6">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 space-y-5 sm:py-8">
       <button
         type="button"
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-800 transition-colors"
+        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 -ml-2 text-sm font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 cursor-pointer"
       >
         <ArrowLeft className="h-4 w-4" />
         Retour aux patients
       </button>
 
-      {/* Patient header */}
-      <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-5">
-        <div className="flex items-center gap-4">
-          <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white"
-            style={{ backgroundColor: avatarColor }}
-          >
-            {initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-extrabold tracking-tight text-[#010C2D]">{fullName}</h1>
-            <p className="mt-0.5 text-sm text-[#A0AEC0]">Dossier médical · ID {patientId.slice(0, 8)}</p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            { label: 'RDV total', value: rdvs.length },
-            { label: 'Consultations', value: rdvsTermines },
-            { label: 'Ordonnances', value: ordonnances.length },
-            { label: 'Documents', value: documents.length },
-          ].map((s) => (
+      {/* Patient header — bandeau clinique */}
+      <header className="overflow-hidden rounded-2xl border border-[#E7ECF3] bg-white shadow-sm">
+        <div className="border-l-4 border-[#007DFF] px-5 py-5 sm:px-7 sm:py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div
-              key={s.label}
-              className="rounded-xl border border-[#EEF1F6] bg-[#FAFBFC] px-4 py-3"
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white shadow-sm ring-4 ring-white"
+              style={{ backgroundColor: avatarColor }}
             >
-              <p className="text-2xl font-extrabold tabular-nums text-[#010C2D]">{s.value}</p>
-              <p className="mt-0.5 text-xs text-[#6B7A99]">{s.label}</p>
+              {initials}
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-2xl font-extrabold tracking-tight text-[#010C2D]">{fullName}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F6EE] px-2.5 py-1 text-[11px] font-semibold text-[#0B7A4B]">
+                  <Stethoscope className="h-3 w-3" />
+                  Relation de soin active
+                </span>
+                <span className="rounded-full bg-[#F1F4F7] px-2.5 py-1 text-[11px] font-semibold text-[#6B7A99]">
+                  ID {patientId.slice(0, 8)}
+                </span>
+                {nextRdv && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DFEFFE] px-2.5 py-1 text-[11px] font-semibold text-[#1863A9]">
+                    <Calendar className="h-3 w-3" />
+                    Prochain RDV : {formatDateShortFR(nextRdv.dateRdv)} · {nextRdv.heureRdv}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
 
-      {/* Tabs */}
-      <div role="tablist" className="flex flex-wrap gap-5 border-b border-[#EEF1F6]">
-        <TabBtn
-          id="infos"
-          active={tab === 'infos'}
-          label="Informations médicales"
-          icon={<User className="h-4 w-4" />}
-          onClick={setTab}
-        />
-        <TabBtn
-          id="ordonnances"
-          active={tab === 'ordonnances'}
-          label="Ordonnances"
-          icon={<Pill className="h-4 w-4" />}
-          onClick={setTab}
-        />
-        <TabBtn
-          id="documents"
-          active={tab === 'documents'}
-          label="Documents"
-          icon={<Paperclip className="h-4 w-4" />}
-          onClick={setTab}
-        />
-        <TabBtn
-          id="historique"
-          active={tab === 'historique'}
-          label="Historique RDV"
-          icon={<Calendar className="h-4 w-4" />}
-          onClick={setTab}
-        />
+          {/* KPIs cliniques */}
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: 'RDV au total', value: rdvs.length, icon: <Calendar className="h-4 w-4" /> },
+              { label: 'Consultations', value: rdvsTermines, icon: <Stethoscope className="h-4 w-4" /> },
+              { label: 'Ordonnances', value: ordonnances.length, icon: <Pill className="h-4 w-4" /> },
+              { label: 'Documents', value: documents.length, icon: <Paperclip className="h-4 w-4" /> },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="flex items-center gap-3 rounded-xl border border-[#EEF1F6] bg-[#FAFBFC] px-3.5 py-3"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EBF4FF] text-[#007DFF]">
+                  {s.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xl font-extrabold tabular-nums leading-none text-[#010C2D]">{s.value}</p>
+                  <p className="mt-1 truncate text-[11px] text-[#6B7A99]">{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* Tabs — scrollables sur mobile, badges de comptage */}
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div role="tablist" className="flex min-w-max gap-6 border-b border-[#EEF1F6]">
+          <TabBtn
+            id="infos"
+            active={tab === 'infos'}
+            label="Informations médicales"
+            icon={<User className="h-4 w-4" />}
+            onClick={setTab}
+          />
+          <TabBtn
+            id="ordonnances"
+            active={tab === 'ordonnances'}
+            label="Ordonnances"
+            icon={<Pill className="h-4 w-4" />}
+            count={ordonnances.length}
+            onClick={setTab}
+          />
+          <TabBtn
+            id="documents"
+            active={tab === 'documents'}
+            label="Documents"
+            icon={<Paperclip className="h-4 w-4" />}
+            count={documents.length}
+            onClick={setTab}
+          />
+          <TabBtn
+            id="historique"
+            active={tab === 'historique'}
+            label="Historique RDV"
+            icon={<Calendar className="h-4 w-4" />}
+            count={rdvs.length}
+            onClick={setTab}
+          />
+        </div>
       </div>
 
       {/* Tab content */}

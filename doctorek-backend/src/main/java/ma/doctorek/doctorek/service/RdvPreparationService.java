@@ -5,6 +5,7 @@ import ma.doctorek.doctorek.entity.RdvDocumentRequisEntity;
 import ma.doctorek.doctorek.entity.RendezVousEntity;
 import ma.doctorek.doctorek.exception.RendezVousNotFoundException;
 import ma.doctorek.doctorek.notification.NotificationService;
+import ma.doctorek.doctorek.repository.PatientRepository;
 import ma.doctorek.doctorek.repository.RdvDocumentRequisRepository;
 import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
@@ -24,16 +25,22 @@ public class RdvPreparationService {
     private final RdvDocumentRequisRepository docRepo;
     private final RendezVousRepository rdvRepo;
     private final UserRepository userRepo;
+    private final PatientRepository patientRepo;
     private final NotificationService notificationService;
+    private final NotificationRoutingService notificationRouting;
 
     public RdvPreparationService(RdvDocumentRequisRepository docRepo,
                                   RendezVousRepository rdvRepo,
                                   UserRepository userRepo,
-                                  NotificationService notificationService) {
+                                  PatientRepository patientRepo,
+                                  NotificationService notificationService,
+                                  NotificationRoutingService notificationRouting) {
         this.docRepo = docRepo;
         this.rdvRepo = rdvRepo;
         this.userRepo = userRepo;
+        this.patientRepo = patientRepo;
         this.notificationService = notificationService;
+        this.notificationRouting = notificationRouting;
     }
 
     @Transactional(readOnly = true)
@@ -95,8 +102,8 @@ public class RdvPreparationService {
             List<RdvDocumentRequisEntity> all = docRepo.findByRdvIdOrderByCreatedAtAsc(rdvId);
             long fournis = all.stream().filter(RdvDocumentRequisEntity::isFourni).count();
 
-            String patientNom = userRepo.findById(rdv.getPatientId())
-                    .map(p -> p.getFirstName() + " " + p.getLastName())
+            String patientNom = patientRepo.findById(rdv.getPatientId())
+                    .map(p -> p.getPrenom() + " " + p.getNom())
                     .orElse("Le patient");
 
             String progression = fournis >= all.size()
@@ -114,8 +121,10 @@ public class RdvPreparationService {
             String body = count == 1
                     ? medecinNom + " vous demande de préparer 1 document pour votre rendez-vous du " + rdv.getDateRdv() + "."
                     : medecinNom + " vous demande de préparer " + count + " documents pour votre rendez-vous du " + rdv.getDateRdv() + ".";
-            notificationService.push(rdv.getPatientId(), "DOCUMENTS_REQUIS",
-                    "Documents à préparer pour votre rendez-vous", body);
+            // Compte famille : notif vers le compte du patient ou son gestionnaire
+            notificationRouting.resolveCompteUserId(rdv.getPatientId()).ifPresent(userId ->
+                    notificationService.push(userId, "DOCUMENTS_REQUIS",
+                            "Documents à préparer pour votre rendez-vous", body));
         });
     }
 }

@@ -6,6 +6,7 @@ import ma.doctorek.doctorek.repository.PatientDetailRepository;
 import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
 import ma.doctorek.doctorek.service.EmailService;
+import ma.doctorek.doctorek.service.NotificationRoutingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -31,19 +32,22 @@ public class NotificationService {
     private final PatientDetailRepository patientDetailRepo;
     private final UserRepository userRepo;
     private final EmailService emailService;
+    private final NotificationRoutingService notificationRouting;
 
     public NotificationService(NotificationRepository repo,
                                 SimpMessagingTemplate stomp,
                                 RendezVousRepository rdvRepo,
                                 PatientDetailRepository patientDetailRepo,
                                 UserRepository userRepo,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                NotificationRoutingService notificationRouting) {
         this.repo              = repo;
         this.stomp             = stomp;
         this.rdvRepo           = rdvRepo;
         this.patientDetailRepo = patientDetailRepo;
         this.userRepo          = userRepo;
         this.emailService      = emailService;
+        this.notificationRouting = notificationRouting;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -132,14 +136,18 @@ public class NotificationService {
     private void pushRdvReminder(RendezVousEntity rdv) {
         userRepo.findById(rdv.getMedecinId()).ifPresent(medecin -> {
             String medecinNom = "Dr. " + medecin.getFirstName() + " " + medecin.getLastName();
-            push(rdv.getPatientId(),
-                    "RDV_RAPPEL",
-                    "Rappel : rendez-vous dans 30 minutes",
-                    "Votre consultation avec " + medecinNom + " est prévue à " + rdv.getHeureRdv() + ".");
+
+            // Compte famille : notif in-app vers le compte du patient s'il en a un,
+            // sinon vers son gestionnaire (proche sans compte)
+            notificationRouting.resolveCompteUserId(rdv.getPatientId()).ifPresent(userId ->
+                    push(userId,
+                            "RDV_RAPPEL",
+                            "Rappel : rendez-vous dans 30 minutes",
+                            "Consultation avec " + medecinNom + " prévue à " + rdv.getHeureRdv() + "."));
 
             // Rappel aussi par email — le patient n'a pas forcément l'app ouverte
-            userRepo.findById(rdv.getPatientId()).ifPresent(patient ->
-                    emailService.sendRappelRdv30Min(patient.getEmail(), rdv, medecinNom));
+            notificationRouting.resolveEmail(rdv.getPatientId()).ifPresent(email ->
+                    emailService.sendRappelRdv30Min(email, rdv, medecinNom));
         });
     }
 }

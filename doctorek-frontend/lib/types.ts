@@ -265,6 +265,24 @@ export interface PatientSummaryPage {
   size: number
 }
 
+// ── Compte famille (proches) ────────────────────────────────────────────────
+
+export type RoleGestion = 'PARENT' | 'TUTEUR' | 'AIDANT' | 'REPRESENTANT_LEGAL'
+
+export interface Proche {
+  id: string
+  nom: string
+  prenom: string
+  dateNaissance: string | null   // "YYYY-MM-DD"
+  lieuNaissance?: string | null
+  email?: string | null
+  telephone?: string | null
+  mineur: boolean
+  self: boolean                  // true = le titulaire du compte lui-même
+  role: RoleGestion | null
+  declarationRepresentantLegal: boolean | null
+}
+
 export interface RendezVous {
   id: string
   medecinId: string

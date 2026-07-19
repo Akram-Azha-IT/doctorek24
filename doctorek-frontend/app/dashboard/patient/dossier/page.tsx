@@ -11,6 +11,7 @@ import {
   useDeleteDocument,
 } from '@/features/dossier/hooks'
 import type { MedicamentDto } from '@/features/dossier/api'
+import { useProches } from '@/features/famille/hooks'
 import { getDocumentDownloadUrl, uploadOrdonnanceFichier, getOrdonnanceFichierUrl, openProtectedFile } from '@/features/dossier/api'
 
 const TYPE_OPTIONS = [
@@ -31,11 +32,19 @@ function formatSize(bytes: number) {
 }
 
 export default function DossierPage() {
+  const [selfId, setSelfId] = useState('')
+  // Compte famille : dossier affiché = membre sélectionné (soi par défaut)
   const [patientId, setPatientId] = useState('')
   useEffect(() => {
     const s = getSession()
-    if (s?.id) setPatientId(s.id)
+    if (s?.id) {
+      setSelfId(s.id)
+      setPatientId(s.id)
+    }
   }, [])
+
+  const { data: profils } = useProches(!!selfId)
+  const hasProches = (profils?.length ?? 0) > 1
 
   const [tab, setTab] = useState<'ordonnances' | 'documents'>('ordonnances')
   const [uploadType, setUploadType] = useState(TYPE_OPTIONS[0])
@@ -107,12 +116,32 @@ export default function DossierPage() {
     <div className="px-4 md:px-8 py-8 max-w-3xl mx-auto" id="main-content">
 
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#010C2D]">Dossier médical</h1>
         <p className="text-sm text-[#465058] mt-1">
           Ordonnances transmises par vos médecins et documents que vous partagez.
         </p>
       </div>
+
+      {/* Compte famille : dossier du membre sélectionné */}
+      {hasProches && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {(profils ?? []).map((profil) => (
+            <button
+              key={profil.id}
+              type="button"
+              onClick={() => setPatientId(profil.id)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                patientId === profil.id
+                  ? 'bg-[#007DFF] text-white border-[#007DFF]'
+                  : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
+              }`}
+            >
+              {profil.self ? 'Moi' : profil.prenom}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Tabs */}
       <div

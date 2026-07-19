@@ -5,7 +5,9 @@ import ma.doctorek.doctorek.entity.RdvDocumentRequisEntity;
 import ma.doctorek.doctorek.entity.RendezVousEntity;
 import ma.doctorek.doctorek.entity.User;
 import ma.doctorek.doctorek.exception.RendezVousNotFoundException;
+import ma.doctorek.doctorek.entity.PatientEntity;
 import ma.doctorek.doctorek.notification.NotificationService;
+import ma.doctorek.doctorek.repository.PatientRepository;
 import ma.doctorek.doctorek.repository.RdvDocumentRequisRepository;
 import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
@@ -36,7 +38,9 @@ class RdvPreparationServiceTest {
     @Mock private RdvDocumentRequisRepository docRepo;
     @Mock private RendezVousRepository rdvRepo;
     @Mock private UserRepository userRepo;
+    @Mock private PatientRepository patientRepo;
     @Mock private NotificationService notificationService;
+    @Mock private NotificationRoutingService notificationRouting;
 
     private RdvPreparationService service;
 
@@ -46,7 +50,8 @@ class RdvPreparationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new RdvPreparationService(docRepo, rdvRepo, userRepo, notificationService);
+        service = new RdvPreparationService(docRepo, rdvRepo, userRepo, patientRepo,
+            notificationService, notificationRouting);
     }
 
     private RendezVousEntity rdv() {
@@ -65,6 +70,7 @@ class RdvPreparationServiceTest {
         when(docRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         User medecin = User.builder().firstName("Sara").lastName("Amrani").build();
         when(userRepo.findById(medecinId)).thenReturn(Optional.of(medecin));
+        when(notificationRouting.resolveCompteUserId(patientId)).thenReturn(Optional.of(patientId));
 
         List<DocumentRequisResponse> result =
             service.add(rdvId, List.of("Carte CNSS", "  Analyses sanguines  ", "  "));
@@ -121,8 +127,8 @@ class RdvPreparationServiceTest {
         when(docRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(docRepo.findByRdvIdOrderByCreatedAtAsc(rdvId)).thenReturn(List.of(doc));
         when(rdvRepo.findById(rdvId)).thenReturn(Optional.of(rdv()));
-        User patient = User.builder().firstName("Yassine").lastName("Berrada").build();
-        when(userRepo.findById(patientId)).thenReturn(Optional.of(patient));
+        PatientEntity patient = new PatientEntity("Berrada", "Yassine", null);
+        when(patientRepo.findById(patientId)).thenReturn(Optional.of(patient));
 
         service.marquerFourni(rdvId, doc.getId(), true);
 

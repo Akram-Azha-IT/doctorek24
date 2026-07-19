@@ -3,7 +3,6 @@ package ma.doctorek.doctorek.service;
 import ma.doctorek.doctorek.entity.RendezVousEntity;
 import ma.doctorek.doctorek.enums.StatutRdv;
 import ma.doctorek.doctorek.repository.RendezVousRepository;
-import ma.doctorek.doctorek.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,15 +18,15 @@ public class RappelScheduler {
     private static final Logger log = LoggerFactory.getLogger(RappelScheduler.class);
 
     private final RendezVousRepository rdvRepo;
-    private final UserRepository userRepo;
     private final EmailService emailService;
+    private final NotificationRoutingService notificationRouting;
 
     public RappelScheduler(RendezVousRepository rdvRepo,
-            UserRepository userRepo,
-            EmailService emailService) {
+            EmailService emailService,
+            NotificationRoutingService notificationRouting) {
         this.rdvRepo = rdvRepo;
-        this.userRepo = userRepo;
         this.emailService = emailService;
+        this.notificationRouting = notificationRouting;
     }
 
     // @Transactional here (not on the helper) — self-invocation bypasses the
@@ -43,10 +42,10 @@ public class RappelScheduler {
 
     private void envoyerRappelsPourDate(LocalDate date, int joursAvant) {
         try (Stream<RendezVousEntity> rdvs = rdvRepo.streamByDateRdvAndStatutNot(date, StatutRdv.ANNULE.name())) {
-            rdvs.forEach(rdv -> userRepo.findById(rdv.getPatientId())
+            rdvs.forEach(rdv -> notificationRouting.resolveEmail(rdv.getPatientId())
                     .ifPresentOrElse(
-                            patient -> emailService.sendRappelRdv(patient.getEmail(), rdv, joursAvant),
-                            () -> log.warn("Patient introuvable pour rdv {}, rappel J-{} non envoyé",
+                            email -> emailService.sendRappelRdv(email, rdv, joursAvant),
+                            () -> log.warn("Aucun destinataire pour rdv {}, rappel J-{} non envoyé",
                                     rdv.getId(), joursAvant)));
         }
         log.info("Rappels J-{} traités pour le {}", joursAvant, date);

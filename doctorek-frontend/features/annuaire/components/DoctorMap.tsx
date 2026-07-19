@@ -93,6 +93,11 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
         scrollWheelZoom: true,
       })
 
+      // Vue par défaut (centre Maroc) — garantit que la carte a toujours un
+      // centre valide, même sans résultats ni géoloc. Sinon flyTo/fitBounds
+      // partent d'un centre NaN → "Invalid LatLng (NaN, NaN)".
+      map.setView([31.7917, -7.0926], 6)
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
@@ -147,6 +152,8 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
       existing.set(doc.id, marker)
     }
 
+    const sized = map.getSize().x > 0 && map.getSize().y > 0
+    if (!sized) return // carte masquée/0px : projections NaN → on n'ajuste pas la vue
     if (doctors.length > 0) {
       const points = doctors
         .map((d): [number, number] => [Number(d.lat), Number(d.lng)])
@@ -170,6 +177,8 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
       if (doc) marker.setIcon(makeAvatarIcon(L, doc, id === hoveredId))
     }
 
+    const sized = map.getSize().x > 0 && map.getSize().y > 0
+    if (!sized) return // carte masquée/0px : flyTo/fitBounds projetteraient NaN
     if (hoveredId) {
       const doc = doctors.find((d) => d.id === hoveredId)
       if (doc) {

@@ -3,6 +3,7 @@ import {
   addDocumentsRequis,
   annulerRdv,
   confirmerRdv,
+  creerRdvMedecin,
   defineDisponibilite,
   deleteDisponibilite,
   deleteDocumentRequis,
@@ -183,6 +184,17 @@ export function useDeleteDisponibilite(medecinId: string) {
     mutationFn: (dispoId: string) => deleteDisponibilite(medecinId, dispoId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['disponibilites', medecinId] })
+    },
+  })
+}
+export function useCreerRdvMedecin(medecinId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: creerRdvMedecin,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rdvs', 'medecin', medecinId] })
+      qc.invalidateQueries({ queryKey: ['patients', 'medecin', medecinId] })
+      qc.invalidateQueries({ queryKey: ['creneaux', medecinId] })
     },
   })
 }

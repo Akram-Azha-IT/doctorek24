@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useQueries } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
@@ -87,22 +87,6 @@ function ChevronRightIcon() {
   )
 }
 
-function ChevronUpIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M18 15l-6-6-6 6" />
-    </svg>
-  )
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
-    </svg>
-  )
-}
-
 function CalendarOffIcon() {
   return (
     <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -144,8 +128,12 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
   )
 
   const [selectedDate, setSelectedDate] = useState(allFutureDates[0])
-  const [slotIdx, setSlotIdx] = useState(0)
+  const [showAll, setShowAll] = useState(false)
   const accepte = medecin.acceptNouveauxPatients !== false
+  const MAX_CHIPS = 6
+
+  // Replier les créneaux quand on change de jour
+  useEffect(() => { setShowAll(false) }, [selectedDate])
 
   // Keep selectedDate inside visible window when window shifts
   useEffect(() => {
@@ -209,36 +197,6 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
   const isUnavailable = !isLoading && availableSlots.length === 0
 
-  // Reset slot index when date changes
-  useEffect(() => { setSlotIdx(0) }, [selectedDate])
-
-  const currentSlot = availableSlots[slotIdx] ?? null
-  const canGoUp = slotIdx > 0
-  const canGoDown = slotIdx < availableSlots.length - 1
-  const slotRef = useRef<HTMLDivElement>(null)
-
-  // Non-passive wheel listener so preventDefault actually works
-  useEffect(() => {
-    const el = slotRef.current
-    if (!el || availableSlots.length <= 1) return
-    const onWheel = (e: WheelEvent) => {
-      if (e.deltaY > 0 && slotRef.current && parseInt(slotRef.current.dataset.canDown ?? '0')) {
-        e.preventDefault()
-        setSlotIdx(i => i + 1)
-      } else if (e.deltaY < 0 && slotRef.current && parseInt(slotRef.current.dataset.canUp ?? '0')) {
-        e.preventDefault()
-        setSlotIdx(i => i - 1)
-      }
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
-  }, [availableSlots.length])
-
-  const handleSlotKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown' && canGoDown) { e.preventDefault(); setSlotIdx(i => i + 1) }
-    else if (e.key === 'ArrowUp' && canGoUp) { e.preventDefault(); setSlotIdx(i => i - 1) }
-  }, [canGoUp, canGoDown])
-
   return (
     <div
       className="group relative mb-3 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-200 hover:shadow-[0_6px_28px_rgba(0,125,255,0.11)] overflow-hidden border border-transparent hover:border-[#007DFF]/10"
@@ -251,7 +209,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
       <div className="flex flex-col sm:flex-row sm:items-stretch">
 
         {/* ── Doctor info ─────────────────────────────── */}
-        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 px-5 py-5 overflow-hidden">
+        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 px-5 py-4 overflow-hidden">
           {/* Gradient background blob */}
           <div
             aria-hidden="true"
@@ -335,7 +293,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
         </Link>
 
         {/* ── Slot section ─────────────────────────────── */}
-        <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-4 sm:w-[280px] sm:border-t-0 sm:border-l">
+        <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-3.5 sm:w-[280px] sm:border-t-0 sm:border-l">
 
           {allUnavailable ? (
             /* Fully booked — show next available date or "no availability" */
@@ -380,20 +338,21 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
             </div>
           ) : (
             <>
-              {/* Day tabs + prev/next arrows */}
-              <div className="mb-3 flex items-center gap-1">
+              {/* Bande de jours compacte + flèches */}
+              <div className="mb-2.5 flex items-center gap-1">
                 <button
                   type="button"
+                  aria-label="Jours précédents"
                   onClick={(e) => { e.preventDefault(); setWindowStart(w => Math.max(0, w - 1)) }}
                   disabled={windowStart === 0}
-                  className="flex shrink-0 h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronLeftIcon />
                 </button>
 
                 <div className="flex flex-1 gap-1">
                   {visibleDates.map((date, i) => {
-                    const { day, date: d, month } = formatDayLabel(date)
+                    const { day, date: d } = formatDayLabel(date)
                     const isSelected = date === selectedDate
                     const isToday = windowStart === 0 && i === 0
                     const dayResult = allDaysResults[i]
@@ -403,7 +362,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                         key={date}
                         type="button"
                         onClick={(e) => { e.preventDefault(); setSelectedDate(date) }}
-                        className={`relative flex flex-1 flex-col items-center rounded-xl px-1 py-2 text-center transition-all duration-150 ${
+                        className={`relative flex flex-1 flex-col items-center rounded-lg px-1 py-1 text-center transition-all duration-150 ${
                           isSelected
                             ? 'bg-[#007DFF] text-white shadow-sm'
                             : isToday
@@ -411,11 +370,10 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
                               : 'bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
                         }`}
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-wider leading-tight">{day}</span>
-                        <span className="text-[15px] font-bold leading-snug">{d}</span>
-                        <span className={`text-[10px] leading-tight ${isSelected ? 'opacity-75' : 'text-zinc-400'}`}>{month}</span>
+                        <span className="text-[9px] font-bold uppercase leading-tight">{day}</span>
+                        <span className="text-[13px] font-bold leading-tight">{d}</span>
                         {dayHasSlots && !isSelected && (
-                          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-emerald-400" />
+                          <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-emerald-400" />
                         )}
                       </button>
                     )
@@ -424,68 +382,54 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
                 <button
                   type="button"
+                  aria-label="Jours suivants"
                   onClick={(e) => { e.preventDefault(); setWindowStart(w => Math.min(360, w + 1)) }}
                   disabled={windowStart >= 360}
-                  className="flex shrink-0 h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronRightIcon />
                 </button>
               </div>
 
-              {/* Slot area */}
-              <div className="flex flex-1 flex-col justify-center">
+              {/* Créneaux : rangée de chips horaires (simple à choisir) */}
+              <div className="flex flex-1 items-start">
                 {isLoading ? (
-                  <div className="h-12 animate-pulse rounded-xl bg-zinc-100" />
+                  <div className="grid w-full grid-cols-3 gap-1.5">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="h-8 animate-pulse rounded-lg bg-zinc-100" />
+                    ))}
+                  </div>
                 ) : isUnavailable ? (
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-zinc-50 px-3 py-3 ring-1 ring-inset ring-zinc-100">
+                  <div className="flex w-full items-center justify-center rounded-lg bg-zinc-50 px-3 py-3 ring-1 ring-inset ring-zinc-100">
                     <span className="text-[11px] font-medium text-zinc-400">Aucune dispo ce jour</span>
                   </div>
                 ) : (
-                  <div
-                    ref={slotRef}
-                    className="flex flex-col items-center gap-1.5 rounded-xl outline-none"
-                    onKeyDown={handleSlotKeyDown}
-                    tabIndex={availableSlots.length > 1 ? 0 : -1}
-                    role="spinbutton"
-                    aria-valuenow={slotIdx + 1}
-                    aria-valuemin={1}
-                    aria-valuemax={availableSlots.length}
-                    data-can-up={canGoUp ? '1' : '0'}
-                    data-can-down={canGoDown ? '1' : '0'}
-                  >
-                    {/* Up arrow */}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); setSlotIdx(i => i - 1) }}
-                      className={`flex h-7 w-7 items-center justify-center rounded-full bg-[#EBF4FF] text-[#1863A9] transition-all hover:bg-[#007DFF] hover:text-white ${!canGoUp ? 'invisible' : ''}`}
-                    >
-                      <ChevronUpIcon />
-                    </button>
-
-                    {/* Single slot button */}
-                    {currentSlot && (
+                  <div className="w-full">
+                    <div className="flex flex-wrap gap-1.5">
+                      {(showAll ? availableSlots : availableSlots.slice(0, MAX_CHIPS)).map((s) => (
+                        <button
+                          key={s.debut}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            onBookSlot?.({ medecin, date: selectedDate, debut: s.debut, fin: s.fin })
+                          }}
+                          className="min-w-[52px] flex-1 rounded-lg bg-[#EBF4FF] py-1.5 text-[13px] font-bold text-[#007DFF] transition-colors hover:bg-[#007DFF] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 cursor-pointer"
+                        >
+                          {s.debut}
+                        </button>
+                      ))}
+                    </div>
+                    {availableSlots.length > MAX_CHIPS && (
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          onBookSlot?.({ medecin, date: selectedDate, debut: currentSlot.debut, fin: currentSlot.fin })
-                        }}
-                        className="flex w-full items-center justify-center rounded-xl bg-emerald-500 py-2.5 text-[15px] font-bold text-white shadow-sm transition-all duration-150 hover:bg-emerald-600 hover:scale-[1.02] active:scale-95"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAll(v => !v) }}
+                        className="mt-2 w-full text-center text-[12px] font-semibold text-[#007DFF] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 rounded cursor-pointer"
                       >
-                        {currentSlot.debut}
+                        {showAll ? 'Voir moins' : `Voir plus (${availableSlots.length - MAX_CHIPS} créneaux)`}
                       </button>
                     )}
-
-
-                    {/* Down arrow */}
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); setSlotIdx(i => i + 1) }}
-                      className={`flex h-7 w-7 items-center justify-center rounded-full bg-[#EBF4FF] text-[#1863A9] transition-all hover:bg-[#007DFF] hover:text-white ${!canGoDown ? 'invisible' : ''}`}
-                    >
-                      <ChevronDownIcon />
-                    </button>
                   </div>
                 )}
               </div>

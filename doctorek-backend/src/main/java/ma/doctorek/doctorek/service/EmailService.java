@@ -131,6 +131,39 @@ public class EmailService {
     }
 
     @Async
+    public void sendRdvCreeParMedecin(String toEmail, RendezVousEntity rdv, String medecinNom, String lienRattachement) {
+        if (!shouldSend(toEmail)) return;
+
+        String subject = "Un rendez-vous a été créé pour vous — Doctorek";
+        String body = """
+                Bonjour,
+
+                %s a créé un rendez-vous pour vous ou votre proche.
+
+                Date : %s
+                Heure : %s
+                Motif : %s
+
+                Pour retrouver ce rendez-vous dans votre compte Doctorek et le gérer
+                en famille, cliquez sur ce lien puis vérifiez votre identité :
+
+                %s
+
+                Ce lien est valable 30 jours et ne peut être utilisé qu'une seule fois.
+                Si vous n'êtes pas concerné par ce rendez-vous, ignorez cet email.
+
+                — L'équipe Doctorek
+                """.formatted(
+                medecinNom,
+                DATE_FR.format(rdv.getDateRdv()),
+                HOUR_FR.format(rdv.getHeureRdv()),
+                rdv.getMotif() == null || rdv.getMotif().isBlank() ? "Non précisé" : rdv.getMotif(),
+                lienRattachement);
+
+        send(toEmail, subject, body, "rdv-cree-medecin", rdv.getId().toString());
+    }
+
+    @Async
     public void sendRappelRdv30Min(String toEmail, RendezVousEntity rdv, String medecinNom) {
         if (!shouldSend(toEmail)) return;
 

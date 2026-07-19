@@ -138,3 +138,30 @@ export function deleteDisponibilite(
     { method: 'DELETE' },
   )
 }
+// ── Compte famille : création de RDV par le praticien ──────────────────────
+
+export interface CreerRdvMedecinPayload {
+  patientId?: string
+  nouveauPatient?: {
+    nom: string
+    prenom: string
+    dateNaissance?: string
+    email?: string
+    telephone?: string
+  }
+  dateRdv: string
+  heureRdv: string
+  motif?: string
+}
+
+export interface CreerRdvMedecinResult {
+  rdv: RendezVous
+  emailRattachementEnvoye: boolean
+}
+
+export function creerRdvMedecin(payload: CreerRdvMedecinPayload): Promise<CreerRdvMedecinResult> {
+  return apiFetch<CreerRdvMedecinResult>('/api/v1/agenda/medecins/rdv', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}

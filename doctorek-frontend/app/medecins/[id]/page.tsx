@@ -4,13 +4,14 @@ import { useParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import LogoLoader from '@/components/LogoLoader'
+import { ErrorState } from '@/components/ErrorState'
 import { MedecinProfileCard } from '@/features/annuaire/components/MedecinProfileCard'
 import { MobileStickyBooking } from '@/features/annuaire/components/MobileStickyBooking'
 import { useMedecin } from '@/features/annuaire/hooks'
 
 export default function MedecinPage() {
   const { id } = useParams<{ id: string }>()
-  const { data, isLoading, isError, error } = useMedecin(id)
+  const { data, isLoading, isError, error, isFetching, refetch } = useMedecin(id)
 
   return (
     <>
@@ -23,8 +24,8 @@ export default function MedecinPage() {
         )}
 
         {isError && (
-          <div className="flex items-center justify-center py-24">
-            <p className="text-sm text-red-500">{(error as Error).message}</p>
+          <div className="mx-auto max-w-md px-4 py-16">
+            <ErrorState error={error} onRetry={() => refetch()} isRetrying={isFetching} />
           </div>
         )}
 

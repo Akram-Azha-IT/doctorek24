@@ -2,6 +2,8 @@ package ma.doctorek.doctorek.web;
 
 import jakarta.validation.Valid;
 import ma.doctorek.doctorek.dto.AddDocumentsRequisRequest;
+import ma.doctorek.doctorek.dto.CreerRdvMedecinRequest;
+import ma.doctorek.doctorek.dto.CreerRdvMedecinResponse;
 import ma.doctorek.doctorek.dto.CreneauResponse;
 import ma.doctorek.doctorek.dto.DocumentRequisResponse;
 import ma.doctorek.doctorek.dto.DefineDisponibiliteRequest;
@@ -10,14 +12,18 @@ import ma.doctorek.doctorek.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
 import ma.doctorek.doctorek.dto.ReprogrammerRdvRequest;
+import ma.doctorek.doctorek.repository.UserRepository;
+import ma.doctorek.doctorek.service.AccesPatientService;
 import ma.doctorek.doctorek.service.AgendaService;
 import ma.doctorek.doctorek.service.RdvPreparationService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -28,11 +34,17 @@ public class AgendaController {
 
     private final AgendaService agendaService;
     private final RdvPreparationService rdvPreparationService;
+    private final AccesPatientService accesPatientService;
+    private final UserRepository userRepo;
 
     public AgendaController(AgendaService agendaService,
-                             RdvPreparationService rdvPreparationService) {
+                             RdvPreparationService rdvPreparationService,
+                             AccesPatientService accesPatientService,
+                             UserRepository userRepo) {
         this.agendaService = agendaService;
         this.rdvPreparationService = rdvPreparationService;
+        this.accesPatientService = accesPatientService;
+        this.userRepo = userRepo;
     }
 
     @PreAuthorize("hasRole('MEDECIN')")
@@ -70,15 +82,33 @@ public class AgendaController {
     @PreAuthorize("hasRole('PATIENT')")
     @PostMapping("/rdv")
     public ResponseEntity<ApiResponse<RendezVousResponse>> prendreRdv(
+            Principal principal,
             @Valid @RequestBody PrendreRdvRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.ok(agendaService.prendreRdv(request)));
+            .body(ApiResponse.ok(agendaService.prendreRdv(request, resolveUserId(principal))));
+    }
+
+    /** Compte famille : le praticien crée un RDV (patient existant ou nouveau, sans compte). */
+    @PreAuthorize("hasRole('MEDECIN')")
+    @PostMapping("/medecins/rdv")
+    public ResponseEntity<ApiResponse<CreerRdvMedecinResponse>> creerRdvMedecin(
+            Principal principal,
+            @Valid @RequestBody CreerRdvMedecinRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.ok(agendaService.creerRdvParMedecin(resolveUserId(principal), request)));
     }
 
     @PreAuthorize("hasAnyRole('PATIENT', 'ADMIN')")
     @GetMapping("/patients/{patientId}/rdv")
     public ResponseEntity<ApiResponse<List<RendezVousResponse>>> getRdvsPatient(
+            Authentication authentication,
             @PathVariable UUID patientId) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+            .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (!isAdmin) {
+            // Compte famille : un patient ne voit que ses RDV et ceux de ses proches gérés
+            accesPatientService.verifierAcces(resolveUserId(authentication), patientId);
+        }
         return ResponseEntity.ok(ApiResponse.ok(agendaService.getRdvsPatient(patientId)));
     }
 
@@ -161,5 +191,11 @@ public class AgendaController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.ok(
             agendaService.getPatientsMedecin(medecinId, search, filtre, page, size)));
+    }
+
+    private UUID resolveUserId(Principal principal) {
+        return userRepo.findByEmail(principal.getName())
+            .map(u -> u.getId())
+            .orElseThrow();
     }
 }

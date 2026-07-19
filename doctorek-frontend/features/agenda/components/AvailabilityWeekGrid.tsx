@@ -398,10 +398,23 @@ export function AvailabilityWeekGrid({
       </div>
 
       {/* ── RDV hover popover ────────────────────── */}
-      {hovered && (
+      {hovered && (() => {
+        // Clamp dans le viewport : flip à gauche près du bord droit, borne haut/bas.
+        const W = 224 // w-56
+        const H = 170 // hauteur estimée max
+        const M = 8   // marge écran
+        const vw = typeof window !== 'undefined' ? window.innerWidth : 1280
+        const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+        let left = hovered.x + 14
+        if (left + W > vw - M) left = hovered.x - 14 - W
+        if (left < M) left = M
+        let top = hovered.y - 8
+        if (top + H > vh - M) top = vh - M - H
+        if (top < M) top = M
+        return (
         <div
           className="fixed z-50 w-56 rounded-xl bg-white shadow-xl border border-gray-100 p-3 pointer-events-none"
-          style={{ left: hovered.x + 14, top: hovered.y - 8 }}
+          style={{ left, top }}
         >
           <p className="text-xs font-bold text-gray-800 mb-2 truncate">
             Patient : {hovered.rdv.patientPrenom} {hovered.rdv.patientNom}
@@ -443,7 +456,8 @@ export function AvailabilityWeekGrid({
             </div>
           )}
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

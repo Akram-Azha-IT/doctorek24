@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Search, CreditCard,
-  LogOut, Settings, ChevronRight, FileText, MessageCircle,
+  LogOut, Settings, ChevronRight, FileText, MessageCircle, Users,
 } from 'lucide-react'
 import { NotificationPanel } from '@/features/notifications/components/NotificationPanel'
 import { NotificationToasts } from '@/features/notifications/components/NotificationToasts'
@@ -19,6 +19,7 @@ import { useUnreadCount } from '@/features/messaging/useUnreadCount'
 const NAV_ITEMS = [
   { href: '/dashboard/patient', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/dashboard/patient/rdvs', label: 'Mes Rendez-vous', icon: Calendar },
+  { href: '/dashboard/patient/proches', label: 'Mes Proches', icon: Users },
   { href: '/dashboard/patient/messages', label: 'Messages', icon: MessageCircle },
   { href: '/recherche', label: 'Trouver un médecin', icon: Search },
 ]

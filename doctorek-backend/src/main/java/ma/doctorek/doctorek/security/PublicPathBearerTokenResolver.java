@@ -34,7 +34,9 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         // GET /api/v1/agenda/medecins/{id}/creneaux (booking flow only)
         Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$"),
         // GET /api/v1/carte/ref/{cardRef} (emergency QR scan)
-        Pattern.compile("^/api/v1/carte/ref/[^/]+/?$")
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/?$"),
+        // GET /api/v1/patients/rattachement/{token} (info masquée compte famille)
+        Pattern.compile("^/api/v1/patients/rattachement/[^/]+/?$")
     );
 
     private final DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();

@@ -75,6 +75,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   session: { strategy: 'jwt' },
+  // Remplace la page d'erreur Auth.js par défaut (anglaise, technique) par une
+  // page française rassurante. Auth.js y redirige avec ?error=<code>.
+  pages: { error: '/connexion-erreur' },
   callbacks: {
     async jwt({ token, account, profile }) {
       // Initial sign-in: account/profile are only present right after the Keycloak callback.

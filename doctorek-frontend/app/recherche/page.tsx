@@ -14,6 +14,7 @@ import type { BookingSlot } from '@/lib/types'
 import { SearchBar } from '@/features/recherche/components/SearchBar'
 import { FilterBar } from '@/features/recherche/components/FilterBar'
 import { ResultsList } from '@/features/recherche/components/ResultsList'
+import type { SortKey, ActiveFilter } from '@/features/recherche/components/ResultsToolbar'
 import { DesktopMapPanel, MobileMapOverlay } from '@/features/recherche/components/MapPanel'
 import { MapIcon, ListIcon } from '@/features/recherche/components/icons'
 
@@ -33,6 +34,7 @@ export default function RecherchePage() {
   const _lat = Number(latParam); const _lng = Number(lngParam); const urlCoords = latParam && lngParam && isFinite(_lat) && isFinite(_lng) ? { lat: _lat, lng: _lng } : null
 
   const [filter, setFilter] = useState<DisponibiliteFilter>('all')
+  const [sort, setSort] = useState<SortKey>('pertinence')
   const [nearbyMode, setNearbyMode] = useState(nearbyParam === '1' && urlCoords !== null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
@@ -115,6 +117,11 @@ export default function RecherchePage() {
   const isLoading = nearbyMode ? nearbyResult.isLoading : searchResult.isLoading
   const isError = nearbyMode ? nearbyResult.isError : searchResult.isError
   const error = nearbyMode ? nearbyResult.error : searchResult.error
+  const isFetching = nearbyMode ? nearbyResult.isFetching : searchResult.isFetching
+  const retry = useCallback(() => {
+    if (nearbyMode) nearbyResult.refetch()
+    else searchResult.refetch()
+  }, [nearbyMode, nearbyResult, searchResult])
 
   const nearbyMedecins = nearbyResult.data ?? []
   const searchContent = searchResult.data?.content ?? []
@@ -129,6 +136,18 @@ export default function RecherchePage() {
     : (searchResult.data?.totalPages ?? 1)
   const offset = (page - 1) * PAGE_SIZE
   const pagedNearby = nearbyMedecins.slice(offset, offset + PAGE_SIZE)
+
+  // Tri client-side de l'affichage courant (nom A→Z ; distance = ordre backend nearby)
+  const byNom = (a: { firstName: string; lastName: string }, b: { firstName: string; lastName: string }) =>
+    `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'fr', { sensitivity: 'base' })
+  const sortedSearchContent = useMemo(
+    () => (sort === 'nom' ? [...searchContent].sort(byNom) : searchContent),
+    [sort, searchContent],
+  )
+  const sortedPagedNearby = useMemo(
+    () => (sort === 'nom' ? [...pagedNearby].sort((a, b) => byNom(a.medecin, b.medecin)) : pagedNearby),
+    [sort, pagedNearby],
+  )
 
   const handlePage = useCallback((p: number) => {
     setPage(p)
@@ -163,13 +182,23 @@ export default function RecherchePage() {
     geoState.status === 'loading' ||
     (nearbyMode && geoCoords === null && geoState.status !== 'error')
 
-  const pageStart = totalResults === 0 ? 0 : offset + 1
-  const pageEnd = Math.min(offset + PAGE_SIZE, totalResults)
-  const resultLabel = isLoading
-    ? 'Chargement...'
-    : nearbyMode
-      ? `${totalResults} médecin${totalResults !== 1 ? 's' : ''} dans un rayon de 20 km${query.specialite ? ` · ${query.specialite}` : ''}${totalPages > 1 ? ` · ${pageStart}–${pageEnd} affichés` : ''}`
-      : `${totalResults} médecin${totalResults !== 1 ? 's' : ''} trouvé${totalResults !== 1 ? 's' : ''}${query.specialite ? ` · ${query.specialite}` : ''}${query.ville ? ` à ${query.ville}` : ''}${totalPages > 1 ? ` · ${pageStart}–${pageEnd} affichés` : ''}`
+  // Filtres actifs (chips retirables) façon Booking
+  const activeFilters: ActiveFilter[] = []
+  if (nearbyMode) {
+    activeFilters.push({ key: 'nearby', label: 'À proximité (20 km)', onRemove: handleNearbyClick })
+  } else {
+    if (query.specialite) {
+      activeFilters.push({ key: 'spec', label: query.specialite, onRemove: () => setValue('specialite', '') })
+    }
+    if (query.ville) {
+      activeFilters.push({ key: 'ville', label: query.ville, onRemove: () => setValue('ville', '') })
+    }
+  }
+  if (filter === 'today') {
+    activeFilters.push({ key: 'today', label: "Disponible aujourd'hui", onRemove: () => handleFilterChange('all') })
+  } else if (filter === 'week') {
+    activeFilters.push({ key: 'week', label: 'Disponible cette semaine', onRemove: () => handleFilterChange('all') })
+  }
 
   return (
     <>
@@ -203,11 +232,16 @@ export default function RecherchePage() {
             geoLoading={geoLoading}
             isError={isError}
             error={error}
-            resultLabel={resultLabel}
+            onRetry={retry}
+            isRetrying={isFetching}
+            total={totalResults}
+            sort={sort}
+            onSortChange={setSort}
+            activeFilters={activeFilters}
             filter={filter}
             nearbyMedecins={nearbyMedecins}
-            pagedNearby={pagedNearby}
-            searchContent={searchContent}
+            pagedNearby={sortedPagedNearby}
+            searchContent={sortedSearchContent}
             availableTodayIds={availableTodayIds}
             hasSearchData={!!searchResult.data}
             page={page}

@@ -7,6 +7,7 @@ import { defineDisponibilite } from '@/features/agenda/api'
 import { AvailabilityWeekGrid, DAYS } from '@/features/agenda/components/AvailabilityWeekGrid'
 import { DayListPanel } from '@/features/agenda/components/DayListPanel'
 import { CopySlotModal } from '@/features/agenda/components/CopySlotModal'
+import { CreerRdvModal } from '@/features/agenda/components/CreerRdvModal'
 import { ResizableDivider } from '@/features/agenda/components/ResizableDivider'
 import type { Disponibilite } from '@/lib/types'
 import { getSession } from '@/lib/session'
@@ -24,6 +25,7 @@ export default function DisponibilitesPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [addingDay, setAddingDay] = useState<string | null>(null)
   const [copyingSlot, setCopyingSlot] = useState<Disponibilite | null>(null)
+  const [creatingRdv, setCreatingRdv] = useState(false)
   const [copyTargetDays, setCopyTargetDays] = useState<string[]>([])
   const [isCopying, setIsCopying] = useState(false)
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT)
@@ -174,8 +176,23 @@ export default function DisponibilitesPage() {
             <h1 className="text-[17px] font-bold" style={{ color: '#010C2D' }}>Agenda & Disponibilités</h1>
             <p className="text-xs mt-0.5" style={{ color: '#A0AEC0' }}>Gérez vos créneaux habituels et consultez vos rendez-vous</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setCreatingRdv(true)}
+            className="ml-auto flex items-center gap-2 rounded-lg bg-[#007DFF] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#00263C]"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span className="hidden sm:inline">Nouveau rendez-vous</span>
+            <span className="sm:hidden">RDV</span>
+          </button>
         </div>
       </div>
+
+      {creatingRdv && medecinId && (
+        <CreerRdvModal medecinId={medecinId} onClose={() => setCreatingRdv(false)} />
+      )}
 
       <main ref={containerRef} className="flex overflow-hidden" style={{ height: 'calc(100vh - 128px)', background: '#F0F2F5' }}>
         <div

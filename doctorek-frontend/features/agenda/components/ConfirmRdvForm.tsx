@@ -10,6 +10,9 @@ import { PrendreRdvSchema, type PrendreRdvFormValues } from '../schemas'
 import { usePrendreRdv } from '../hooks'
 import { getSession } from '@/lib/session'
 import type { RendezVous, TypeConsultation } from '@/lib/types'
+import { useAddProche, useProches } from '@/features/famille/hooks'
+import type { ProcheFormValues } from '@/features/famille/schemas'
+import { ProcheForm } from '@/features/famille/components/ProcheForm'
 
 interface ConfirmRdvFormProps {
   medecinId: string
@@ -39,6 +42,11 @@ export function ConfirmRdvForm({
 }: ConfirmRdvFormProps) {
   const { mutate, isPending } = usePrendreRdv(medecinId, dateRdv)
   const [sessionPatientId, setSessionPatientId] = useState<string | null>(null)
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
+  const [addProcheOpen, setAddProcheOpen] = useState(false)
+
+  const { data: profils } = useProches(!!sessionPatientId)
+  const addProche = useAddProche()
 
   const {
     register,
@@ -59,9 +67,27 @@ export function ConfirmRdvForm({
     const session = getSession()
     if (session?.role === 'PATIENT' && session.id) {
       setSessionPatientId(session.id)
+      // Par défaut, le RDV est pour le titulaire lui-même
+      setSelectedPatientId(session.id)
       setValue('patientId', session.id)
     }
   }, [setValue])
+
+  function selectProfil(patientId: string) {
+    setSelectedPatientId(patientId)
+    setValue('patientId', patientId)
+  }
+
+  function handleAddProche(values: ProcheFormValues) {
+    addProche.mutate(values, {
+      onSuccess: (proche) => {
+        toast.success(`${proche.prenom} a été ajouté à vos proches`)
+        setAddProcheOpen(false)
+        selectProfil(proche.id)
+      },
+      onError: (err) => toast.error(err.message || "Erreur lors de l'ajout du proche"),
+    })
+  }
 
   const typeConsultation = watch('questionnaire.typeConsultation')
 
@@ -101,14 +127,62 @@ export function ConfirmRdvForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
-        {/* Require patient session — handled by BookingDrawer / RDV page guard */}
-        {!sessionPatientId && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            Connectez-vous à votre compte patient pour continuer.
-          </div>
-        )}
+      {/* Require patient session — handled by BookingDrawer / RDV page guard */}
+      {!sessionPatientId && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Connectez-vous à votre compte patient pour continuer.
+        </div>
+      )}
 
+      {/* Compte famille : pour qui est ce rendez-vous ?
+          Hors du <form> principal — ProcheForm contient son propre <form>
+          et l'imbrication de formulaires est invalide en HTML. */}
+      {sessionPatientId && (
+        <div className="mb-6 flex flex-col gap-2.5">
+          <Label>Pour qui est ce rendez-vous ?</Label>
+          <div className="flex flex-wrap gap-2">
+            {(profils ?? []).map((profil) => (
+              <button
+                key={profil.id}
+                type="button"
+                onClick={() => selectProfil(profil.id)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  selectedPatientId === profil.id
+                    ? 'bg-[#007DFF] text-white border-[#007DFF]'
+                    : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
+                }`}
+              >
+                {profil.self ? 'Moi' : profil.prenom}
+                {!profil.self && profil.mineur && (
+                  <span className="ml-1.5 text-[11px] opacity-75">(mineur)</span>
+                )}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setAddProcheOpen((o) => !o)}
+              className="px-4 py-1.5 rounded-full text-sm font-medium border border-dashed border-zinc-300 text-zinc-500 hover:border-[#007DFF] hover:text-[#007DFF] transition-colors"
+            >
+              + Ajouter un proche
+            </button>
+          </div>
+
+          {addProcheOpen && (
+            <div className="mt-1 rounded-lg border border-zinc-200 bg-white p-4">
+              <p className="mb-4 text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+                Nouveau proche
+              </p>
+              <ProcheForm
+                isPending={addProche.isPending}
+                onSubmit={handleAddProche}
+                onCancel={() => setAddProcheOpen(false)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         {/* Section questionnaire */}
         <div className="rounded-lg bg-zinc-50 border border-zinc-100 p-4 flex flex-col gap-5">
           <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">

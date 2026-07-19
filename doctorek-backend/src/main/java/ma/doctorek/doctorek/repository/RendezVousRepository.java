@@ -4,6 +4,7 @@ import ma.doctorek.doctorek.entity.RendezVousEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
@@ -32,20 +33,27 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
 
     boolean existsByMedecinIdAndDateRdvAndHeureRdv(UUID medecinId, LocalDate dateRdv, LocalTime heureRdv);
 
+    boolean existsByMedecinIdAndPatientId(UUID medecinId, UUID patientId);
+
+    /** Fusion compte famille : réaffecte les RDV d'un patient orphelin vers un pivot. */
+    @Modifying
+    @Query("UPDATE RendezVousEntity r SET r.patientId = :to WHERE r.patientId = :from")
+    int reassignPatient(@Param("from") UUID from, @Param("to") UUID to);
+
     List<RendezVousEntity> findByDateRdvAndStatutNot(LocalDate dateRdv, String statut);
 
     @Query(value = """
         SELECT r.patient_id AS "patientId",
-               u.first_name AS "firstName",
-               u.last_name  AS "lastName",
+               p.prenom AS "firstName",
+               p.nom    AS "lastName",
                MAX(r.date_rdv) AS "dernierRdvDate",
                (ARRAY_AGG(r.statut ORDER BY r.date_rdv DESC, r.heure_rdv DESC))[1] AS "dernierRdvStatut",
                BOOL_OR(r.date_rdv >= CURRENT_DATE) AS "hasFutureRdv"
         FROM agenda.rendez_vous r
-        JOIN auth.users u ON u.id = r.patient_id
+        JOIN patient.patient p ON p.id = r.patient_id
         WHERE r.medecin_id = :medecinId
-          AND (:search = '' OR LOWER(u.first_name || ' ' || u.last_name) LIKE LOWER(CONCAT('%', :search, '%')))
-        GROUP BY r.patient_id, u.first_name, u.last_name
+          AND (:search = '' OR LOWER(p.prenom || ' ' || p.nom) LIKE LOWER(CONCAT('%', :search, '%')))
+        GROUP BY r.patient_id, p.prenom, p.nom
         HAVING (:filtre = 'TOUS'
              OR (:filtre = 'ACTIFS' AND BOOL_OR(r.date_rdv >= CURRENT_DATE))
              OR (:filtre = 'ANCIENS' AND NOT BOOL_OR(r.date_rdv >= CURRENT_DATE)))
@@ -64,10 +72,10 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
         SELECT COUNT(*) FROM (
           SELECT r.patient_id
           FROM agenda.rendez_vous r
-          JOIN auth.users u ON u.id = r.patient_id
+          JOIN patient.patient p ON p.id = r.patient_id
           WHERE r.medecin_id = :medecinId
-            AND (:search = '' OR LOWER(u.first_name || ' ' || u.last_name) LIKE LOWER(CONCAT('%', :search, '%')))
-          GROUP BY r.patient_id, u.first_name, u.last_name
+            AND (:search = '' OR LOWER(p.prenom || ' ' || p.nom) LIKE LOWER(CONCAT('%', :search, '%')))
+          GROUP BY r.patient_id, p.prenom, p.nom
           HAVING (:filtre = 'TOUS'
                OR (:filtre = 'ACTIFS' AND BOOL_OR(r.date_rdv >= CURRENT_DATE))
                OR (:filtre = 'ANCIENS' AND NOT BOOL_OR(r.date_rdv >= CURRENT_DATE)))

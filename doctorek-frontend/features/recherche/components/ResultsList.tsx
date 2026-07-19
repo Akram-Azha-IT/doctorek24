@@ -4,8 +4,10 @@ import { MedecinCardList } from '@/features/annuaire/components/MedecinCardList'
 import LogoLoader from '@/components/LogoLoader'
 import type { BookingSlot, MedecinNearbyResult, MedecinProfile } from '@/lib/types'
 import type { DisponibiliteFilter } from '@/lib/disponibilite'
-import { SearchIcon, LocationIcon } from './icons'
+import { LocationIcon } from './icons'
 import { Pagination } from './Pagination'
+import { ErrorState } from '@/components/ErrorState'
+import { ResultsToolbar, type SortKey, type ActiveFilter } from './ResultsToolbar'
 
 interface ResultsListProps {
   nearbyMode: boolean
@@ -13,7 +15,12 @@ interface ResultsListProps {
   geoLoading: boolean
   isError: boolean
   error: unknown
-  resultLabel: string
+  onRetry?: () => void
+  isRetrying?: boolean
+  total: number
+  sort: SortKey
+  onSortChange: (s: SortKey) => void
+  activeFilters: ActiveFilter[]
   filter: DisponibiliteFilter
   nearbyMedecins: MedecinNearbyResult[]
   pagedNearby: MedecinNearbyResult[]
@@ -35,7 +42,12 @@ export function ResultsList({
   geoLoading,
   isError,
   error,
-  resultLabel,
+  onRetry,
+  isRetrying,
+  total,
+  sort,
+  onSortChange,
+  activeFilters,
   filter,
   nearbyMedecins,
   pagedNearby,
@@ -54,17 +66,19 @@ export function ResultsList({
 
   return (
     <div className={`flex-1 min-w-0 px-4 py-5 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
-      {!loading && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-sm font-semibold text-zinc-700">{resultLabel}</span>
-        </div>
+      {/* Barre de résultats (compteur + tri + filtres actifs) — cachée en erreur */}
+      {!isError && (
+        <ResultsToolbar
+          total={total}
+          loading={loading}
+          nearbyMode={nearbyMode}
+          sort={sort}
+          onSortChange={onSortChange}
+          activeFilters={activeFilters}
+        />
       )}
 
-      {isError && (
-        <div className="rounded-xl border border-red-400/40 bg-red-900/30 px-4 py-3 text-sm text-red-300">
-          {(error as Error).message}
-        </div>
-      )}
+      {isError && <ErrorState error={error} onRetry={onRetry} isRetrying={isRetrying} />}
 
       {loading && (
         <div className="flex justify-center py-16">
@@ -72,7 +86,7 @@ export function ResultsList({
         </div>
       )}
 
-      {nearbyMode && !loading && nearbyMedecins.length === 0 && (
+      {nearbyMode && !loading && !isError && nearbyMedecins.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
           <div className="relative mb-6">
             <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#EBF4FF] to-[#DFEFFE] flex items-center justify-center">

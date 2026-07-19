@@ -13,6 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -64,17 +69,36 @@ services:
     volumes:
       - ./docker/keycloak-themes:/opt/keycloak/themes
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    # Health endpoint (KC_HEALTH_ENABLED) est servi sur le port de management 9000,
+    # interne au conteneur. L'image quay n'a pas de curl → sonde via /dev/tcp (bash).
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/localhost/9000 &&
+          echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          cat <&3 | grep -q 'UP'
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
 
   app:
     build: .
     container_name: doctorek-app
     depends_on:
-      - postgres
-      - redis
-      - keycloak
-      - mailhog
-      - minio
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailhog:
+        condition: service_started
     ports:
       - "8080:8080"
     environment:

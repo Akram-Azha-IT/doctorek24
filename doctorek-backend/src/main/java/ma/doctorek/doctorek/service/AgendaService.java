@@ -1,5 +1,7 @@
 package ma.doctorek.doctorek.service;
 
+import ma.doctorek.doctorek.dto.CreerRdvMedecinRequest;
+import ma.doctorek.doctorek.dto.CreerRdvMedecinResponse;
 import ma.doctorek.doctorek.dto.CreneauResponse;
 import ma.doctorek.doctorek.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.dto.DisponibiliteResponse;
@@ -8,7 +10,11 @@ import ma.doctorek.doctorek.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
 import ma.doctorek.doctorek.entity.DisponibiliteEntity;
+import ma.doctorek.doctorek.entity.PatientEntity;
 import ma.doctorek.doctorek.entity.RendezVousEntity;
+import ma.doctorek.doctorek.exception.PatientNotFoundException;
+import ma.doctorek.doctorek.notification.NotificationService;
+import ma.doctorek.doctorek.util.Noms;
 import ma.doctorek.doctorek.enums.FrequenceDisponibilite;
 import ma.doctorek.doctorek.enums.StatutRdv;
 import ma.doctorek.doctorek.enums.TypeFinRecurrence;
@@ -20,11 +26,13 @@ import ma.doctorek.doctorek.exception.RdvNonConfirmableException;
 import ma.doctorek.doctorek.exception.RdvNonTerminableException;
 import ma.doctorek.doctorek.exception.RendezVousNotFoundException;
 import ma.doctorek.doctorek.repository.DisponibiliteRepository;
+import ma.doctorek.doctorek.repository.PatientRepository;
 import ma.doctorek.doctorek.repository.PatientSummaryProjection;
 import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
@@ -46,22 +54,45 @@ public class AgendaService {
 
     private static final Logger log = LoggerFactory.getLogger(AgendaService.class);
 
+    private static final int DUREE_DEFAUT_MIN = 30;
+
     private final DisponibiliteRepository dispoRepo;
     private final RendezVousRepository    rdvRepo;
     private final UserRepository          userRepo;
+    private final PatientRepository       patientRepo;
     private final EmailService            emailService;
     private final QuestionnaireSerializer questionnaireSerializer;
+    private final AccesPatientService     accesPatientService;
+    private final NotificationRoutingService notificationRouting;
+    private final RattachementService     rattachementService;
+    private final PatientPivotService     patientPivotService;
+    private final NotificationService     notificationService;
+    private final String frontendUrl;
 
     public AgendaService(DisponibiliteRepository dispoRepo,
                           RendezVousRepository rdvRepo,
                           UserRepository userRepo,
+                          PatientRepository patientRepo,
                           EmailService emailService,
-                          QuestionnaireSerializer questionnaireSerializer) {
+                          QuestionnaireSerializer questionnaireSerializer,
+                          AccesPatientService accesPatientService,
+                          NotificationRoutingService notificationRouting,
+                          RattachementService rattachementService,
+                          PatientPivotService patientPivotService,
+                          NotificationService notificationService,
+                          @Value("${app.frontend-url}") String frontendUrl) {
         this.dispoRepo = dispoRepo;
         this.rdvRepo = rdvRepo;
         this.userRepo = userRepo;
+        this.patientRepo = patientRepo;
         this.emailService = emailService;
         this.questionnaireSerializer = questionnaireSerializer;
+        this.accesPatientService = accesPatientService;
+        this.notificationRouting = notificationRouting;
+        this.rattachementService = rattachementService;
+        this.patientPivotService = patientPivotService;
+        this.notificationService = notificationService;
+        this.frontendUrl = frontendUrl;
     }
 
     @Transactional
@@ -171,7 +202,10 @@ public class AgendaService {
 
     @Transactional
     @CacheEvict(value = "creneaux", allEntries = true)
-    public RendezVousResponse prendreRdv(PrendreRdvRequest request) {
+    public RendezVousResponse prendreRdv(PrendreRdvRequest request, UUID requesterUserId) {
+        // Compte famille : on ne peut réserver que pour soi-même ou un proche géré
+        accesPatientService.verifierAcces(requesterUserId, request.patientId());
+
         DisponibiliteEntity dispo = dispoRepo
             .findByMedecinIdAndJourSemaine(request.medecinId(), request.dateRdv().getDayOfWeek().name())
             .orElseThrow(() -> new MedecinSansAgendaException(request.medecinId()));
@@ -197,12 +231,112 @@ public class AgendaService {
 
         RendezVousEntity saved = rdvRepo.save(rdv);
 
-        userRepo.findById(request.patientId()).ifPresentOrElse(
-            patient -> emailService.sendConfirmationRdv(patient.getEmail(), saved),
-            () -> log.warn("Patient introuvable pour rdv {} — confirmation email non envoyé", saved.getId())
+        // Routage famille : majeur avec email → le patient ; mineur/sans email → le gestionnaire
+        notificationRouting.resolveEmail(saved.getPatientId()).ifPresentOrElse(
+            email -> emailService.sendConfirmationRdv(email, saved),
+            () -> log.warn("Aucun destinataire pour rdv {} — confirmation email non envoyée", saved.getId())
         );
 
         return RendezVousResponse.from(saved);
+    }
+
+    /**
+     * Création d'un RDV par le praticien lui-même — patient existant ou créé
+     * à la volée (sans compte). Si le patient est rattachable (email, pas de
+     * compte, pas de gestionnaire), il reçoit un lien de rattachement.
+     */
+    @Transactional
+    @CacheEvict(value = "creneaux", allEntries = true)
+    public CreerRdvMedecinResponse creerRdvParMedecin(UUID medecinId, CreerRdvMedecinRequest request) {
+        if ((request.patientId() == null) == (request.nouveauPatient() == null)) {
+            throw new IllegalArgumentException(
+                "Renseignez soit un patient existant, soit un nouveau patient (exactement un des deux)");
+        }
+
+        PatientEntity patient;
+        if (request.patientId() != null) {
+            patient = patientRepo.findById(request.patientId())
+                .orElseThrow(() -> new PatientNotFoundException(request.patientId()));
+        } else {
+            patient = resoudreOuCreerPatient(request.nouveauPatient());
+        }
+
+        if (rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdv(medecinId, request.dateRdv(), request.heureRdv())) {
+            throw new CreneauIndisponibleException(
+                "Créneau indisponible : " + request.dateRdv() + " à " + request.heureRdv());
+        }
+
+        // Le médecin peut créer hors de ses disponibilités : durée par défaut alors
+        int duree = dispoRepo
+            .findByMedecinIdAndJourSemaine(medecinId, request.dateRdv().getDayOfWeek().name())
+            .map(DisponibiliteEntity::getDureeConsultation)
+            .orElse(DUREE_DEFAUT_MIN);
+
+        RendezVousEntity rdv = new RendezVousEntity();
+        rdv.setMedecinId(medecinId);
+        rdv.setPatientId(patient.getId());
+        rdv.setDateRdv(request.dateRdv());
+        rdv.setHeureRdv(request.heureRdv());
+        rdv.setDuree(duree);
+        rdv.setStatut(StatutRdv.CONFIRME.name());
+        rdv.setMotif(request.motif());
+        rdv.setCreatedAt(LocalDateTime.now());
+        RendezVousEntity saved = rdvRepo.save(rdv);
+
+        String medecinNom = userRepo.findById(medecinId)
+            .map(m -> "Dr. " + m.getFirstName() + " " + m.getLastName())
+            .orElse("Votre médecin");
+
+        boolean emailRattachement = rattachementService.creerTokenSiEligible(patient, saved.getId())
+            .map(token -> {
+                String lien = frontendUrl + "/rattacher/" + token.getToken();
+                emailService.sendRdvCreeParMedecin(patient.getEmail(), saved, medecinNom, lien);
+                return true;
+            })
+            .orElseGet(() -> {
+                // Patient déjà rattaché ou avec compte : email standard + notif in-app
+                // (vers son compte s'il en a un, sinon vers son gestionnaire)
+                notificationRouting.resolveEmail(patient.getId()).ifPresent(email ->
+                    emailService.sendConfirmationRdv(email, saved));
+                notificationRouting.resolveCompteUserId(patient.getId()).ifPresent(userId ->
+                    notificationService.push(userId, "RDV_CREE_MEDECIN",
+                        "Nouveau rendez-vous créé par " + medecinNom,
+                        medecinNom + " a créé un rendez-vous pour " + patient.getPrenom()
+                            + " le " + saved.getDateRdv() + " à " + saved.getHeureRdv() + "."));
+                return false;
+            });
+
+        return new CreerRdvMedecinResponse(
+            RendezVousResponse.from(saved, patient.getPrenom(), patient.getNom()),
+            emailRattachement);
+    }
+
+    /**
+     * Nouveau patient saisi par le cabinet : si l'email ET le nom/prénom
+     * correspondent à un compte existant, le RDV est lié directement à ce
+     * compte (visible dans son espace, notifié) au lieu de créer un doublon.
+     * Si l'email appartient à quelqu'un d'autre (parent d'un mineur, aidant…),
+     * on crée bien une fiche séparée — le lien de rattachement fera le pont.
+     */
+    private PatientEntity resoudreOuCreerPatient(CreerRdvMedecinRequest.NouveauPatient nouveau) {
+        String email = nouveau.email() == null || nouveau.email().isBlank() ? null : nouveau.email().trim();
+
+        if (email != null) {
+            var existant = userRepo.findByEmail(email)
+                .filter(u -> Noms.identiques(u.getLastName(), nouveau.nom())
+                          && Noms.identiques(u.getFirstName(), nouveau.prenom()))
+                .map(u -> patientPivotService.getOrCreateSelf(u.getId()));
+            if (existant.isPresent()) {
+                log.info("RDV médecin lié directement au compte existant {}", existant.get().getId());
+                return existant.get();
+            }
+        }
+
+        PatientEntity entity = new PatientEntity(
+            nouveau.nom().trim(), nouveau.prenom().trim(), nouveau.dateNaissance());
+        entity.setEmail(email);
+        entity.setTelephone(nouveau.telephone());
+        return patientRepo.save(entity);
     }
 
     @Transactional(readOnly = true)
@@ -217,8 +351,8 @@ public class AgendaService {
     public List<RendezVousResponse> getRdvsMedecin(UUID medecinId) {
         return rdvRepo.findByMedecinId(medecinId, PageRequest.of(0, 500))
             .getContent().stream()
-            .map(rdv -> userRepo.findById(rdv.getPatientId())
-                .map(u -> RendezVousResponse.from(rdv, u.getFirstName(), u.getLastName()))
+            .map(rdv -> patientRepo.findById(rdv.getPatientId())
+                .map(p -> RendezVousResponse.from(rdv, p.getPrenom(), p.getNom()))
                 .orElseGet(() -> RendezVousResponse.from(rdv)))
             .toList();
     }
@@ -251,8 +385,8 @@ public class AgendaService {
         String medecinNom = userRepo.findById(saved.getMedecinId())
             .map(m -> "Dr. " + m.getFirstName() + " " + m.getLastName())
             .orElse("Votre médecin");
-        userRepo.findById(saved.getPatientId()).ifPresent(
-            patient -> emailService.sendRdvConfirmeParMedecin(patient.getEmail(), saved, medecinNom));
+        notificationRouting.resolveEmail(saved.getPatientId()).ifPresent(
+            email -> emailService.sendRdvConfirmeParMedecin(email, saved, medecinNom));
 
         return RendezVousResponse.from(saved);
     }
