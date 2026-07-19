@@ -29,6 +29,13 @@ const HEALTH_ITEMS = [
   { href: '/dashboard/patient/dossier', label: 'Mes Documents', icon: FileText },
 ]
 
+// Fiche profil mobile : la barre du bas est pleine (5 items), donc « Mes Proches »
+// (+ raccourcis santé) est accessible ici, via l'avatar.
+const MOBILE_SHEET_ITEMS = [
+  { href: '/dashboard/patient/proches', label: 'Mes Proches', icon: Users },
+  ...HEALTH_ITEMS,
+]
+
 const COLLAPSED_WIDTH = 64
 
 function getInitials(firstName: string, lastName: string): string {
@@ -407,9 +414,9 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
               </div>
             </div>
 
-            {/* Raccourcis santé */}
+            {/* Raccourcis (proches + santé) */}
             <div className="px-3 py-2">
-              {HEALTH_ITEMS.map((item) => (
+              {MOBILE_SHEET_ITEMS.map((item) => (
                 <button
                   key={item.href}
                   type="button"
