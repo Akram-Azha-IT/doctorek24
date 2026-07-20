@@ -1,6 +1,6 @@
 # ── Doctorek backend (Spring Boot) ────────────────────────────────
 # Build stage
-FROM eclipse-temurin:17-jdk-jammy AS build
+FROM eclipse-temurin:25-jdk-jammy AS build
 WORKDIR /app
 
 COPY doctorek-backend/mvnw .
@@ -13,7 +13,7 @@ COPY doctorek-backend/src src
 RUN ./mvnw package -DskipTests -q
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
 # wget for the container healthcheck; non-root user for production
