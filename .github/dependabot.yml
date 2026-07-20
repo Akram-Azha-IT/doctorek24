@@ -8,6 +8,11 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     labels: [dependencies, backend]
+    ignore:
+      # Bumps majeurs = breaking (Spring Boot 4 exige Java 21+, minio 9 change l'API).
+      # Les correctifs sécurité arrivent en patch/minor sur les lignes actuelles.
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
 
   # Frontend — dépendances npm
   - package-ecosystem: npm
@@ -17,6 +22,9 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     labels: [dependencies, frontend]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     groups:
       # Regroupe les patchs mineurs pour limiter le bruit de PR
       minor-and-patch:
@@ -28,12 +36,18 @@ updates:
     schedule:
       interval: weekly
     labels: [dependencies, docker]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
     directory: /doctorek-frontend
     schedule:
       interval: weekly
     labels: [dependencies, docker]
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
 
   # Actions GitHub elles-mêmes
   - package-ecosystem: github-actions
