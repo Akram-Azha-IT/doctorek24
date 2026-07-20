@@ -21,7 +21,7 @@
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.8.0",
-    "next": "16.2.3",
+    "next": "16.2.6",
     "next-auth": "^5.0.0-beta.31",
     "next-themes": "^0.4.6",
     "puppeteer": "^24.42.0",
@@ -43,8 +43,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.3",
+    "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "fast-uri": "3.1.2",
+    "hono": "4.12.25",
+    "websocket-driver": "0.7.5",
+    "ws": "8.21.0"
   }
 }

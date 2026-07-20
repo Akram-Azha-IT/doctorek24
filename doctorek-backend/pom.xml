@@ -28,6 +28,8 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<!-- Override BOM Spring Boot 3.5.13 : correctif CVE-2026-42198 (DoS SCRAM) -->
+		<postgresql.version>42.7.11</postgresql.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -108,7 +110,8 @@
 		<dependency>
 			<groupId>io.minio</groupId>
 			<artifactId>minio</artifactId>
-			<version>8.5.17</version>
+			<!-- 8.6.0 : correctif CVE-2025-59952 (XML value substitution) -->
+			<version>8.6.0</version>
 		</dependency>
 	</dependencies>
 
