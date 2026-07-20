@@ -7,7 +7,7 @@ Chaîne de sécurité CI/CD complète (GitHub Actions). Données de santé des c
 | # | Contrôle | Outil | Workflow | Déclencheur |
 |---|----------|-------|----------|-------------|
 | 1 | CI/CD (build + tests) | Maven, npm, Docker | `.github/workflows/ci.yml` | push/PR master |
-| 2 | SAST | SonarQube Cloud | `.github/workflows/sonar.yml` | push/PR master |
+| 2 | SAST | SonarQube Community (self-hosted VPS) | `.github/workflows/sonar.yml` | push/PR master |
 | 3 | DAST | OWASP ZAP baseline | `.github/workflows/dast.yml` | hebdo + manuel |
 | 4 | Secret scanning | Gitleaks (historique complet) | `.github/workflows/security.yml` | push/PR + hebdo |
 | 5 | SCA | Trivy (fs + images) + Dependabot | `security.yml` + `.github/dependabot.yml` | push/PR + hebdo |
@@ -17,14 +17,43 @@ Bonus : Trivy `config` scanne les Dockerfiles / docker-compose (misconfiguration
 
 ## Configuration requise (une fois, sur GitHub)
 
-### SonarQube Cloud (SAST)
-1. Créer un compte sur https://sonarcloud.io (gratuit pour repos publics) et importer le repo `doctorek24`.
-2. Créer deux projets : un backend, un frontend (noter les `projectKey`).
-3. Dans le repo GitHub → Settings → Secrets and variables → Actions :
-   - **Secret** `SONAR_TOKEN` : token généré sur SonarCloud (My Account → Security).
-   - **Variables** : `SONAR_ENABLED=true`, `SONAR_ORG`, `SONAR_PROJECT_KEY_BACKEND`, `SONAR_PROJECT_KEY_FRONTEND`.
+### SonarQube Community self-hosted (SAST)
+Repo privé ⇒ SonarCloud gratuit indisponible. SonarQube Community tourne sur le VPS
+(`sonar.$DOMAIN`, service `sonarqube` dans `docker-compose.prod.yml`, base `sonar_db`
+dans le Postgres existant).
+
+**Déploiement VPS (une fois) :**
+```bash
+# 1. DNS : ajouter un A record  sonar.$DOMAIN → IP du VPS
+
+# 2. Prérequis Elasticsearch (persistant après reboot)
+echo "vm.max_map_count=262144" | sudo tee /etc/sysctl.d/99-sonarqube.conf
+sudo sysctl --system
+
+# 3. Créer la base (le script d'init ne rejoue pas sur un volume existant)
+sudo docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres \
+  sh -c 'psql -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE sonar_db;"'
+
+# 4. Démarrer
+git pull
+sudo docker compose -f docker-compose.prod.yml --env-file .env.prod up -d sonarqube caddy
+```
+
+**Config initiale (UI `https://sonar.$DOMAIN`) :**
+1. Login `admin` / `admin` → changement de mot de passe forcé (mot de passe fort, gestionnaire de mots de passe).
+2. Créer 2 projets *locaux* : `doctorek-backend` et `doctorek-frontend` (Project Key = même valeur).
+3. Token CI : My Account → Security → Generate token (type **Global Analysis Token**).
+
+**Côté GitHub (Settings → Secrets and variables → Actions) :**
+- **Secret** `SONAR_TOKEN` : le token généré.
+- **Variables** : `SONAR_ENABLED=true`, `SONAR_HOST_URL=https://sonar.<domaine>`,
+  `SONAR_PROJECT_KEY_BACKEND=doctorek-backend`, `SONAR_PROJECT_KEY_FRONTEND=doctorek-frontend`.
 
 Tant que `SONAR_ENABLED` n'est pas `true`, le workflow Sonar est ignoré (pas d'échec).
+`sonar.qualitygate.wait=true` : le job échoue si le quality gate est rouge (bloquant).
+
+**RAM** : SonarQube bridé à ~1,5 Go (heaps 512m ×3). Vérifier `free -h` sur le VPS ;
+si mémoire insuffisante, envisager un upgrade VPS ou héberger Sonar ailleurs.
 
 ### DAST (OWASP ZAP)
 - **Variable** `DAST_TARGET_URL` : URL publique de l'app (ex. `https://app.<domaine>`).
@@ -60,7 +89,7 @@ Chaque exécution du workflow Security produit deux artifacts CycloneDX JSON :
 
 ## Reste à faire (recommandé)
 
-- [ ] Configurer secrets/variables SonarCloud + `DAST_TARGET_URL` (voir ci-dessus).
+- [ ] Déployer SonarQube sur le VPS + configurer secrets/variables GitHub + `DAST_TARGET_URL` (voir ci-dessus).
 - [ ] Activer Dependabot security updates dans les settings GitHub.
 - [ ] Protéger la branche `master` : require status checks (CI, Security) avant merge.
 - [ ] Après triage IaC : passer `iac-scan` en bloquant.

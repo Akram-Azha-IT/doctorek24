@@ -1,4 +1,4 @@
-name: SAST (SonarQube Cloud)
+name: SAST (SonarQube Community self-hosted)
 
 on:
   push:
@@ -10,11 +10,14 @@ permissions:
   contents: read
   pull-requests: read
 
+# Secrets requis : SONAR_TOKEN
+# Variables requises : SONAR_ENABLED=true, SONAR_HOST_URL (https://sonar.<domaine>),
+#                      SONAR_PROJECT_KEY_BACKEND, SONAR_PROJECT_KEY_FRONTEND
+
 jobs:
   sonar-backend:
-    name: SonarCloud — backend (Java)
+    name: SonarQube — backend (Java)
     runs-on: ubuntu-latest
-    # Secrets requis : SONAR_TOKEN (+ organisation/projectKey créés sur sonarcloud.io)
     if: ${{ vars.SONAR_ENABLED == 'true' }}
     defaults:
       run:
@@ -36,12 +39,12 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
           ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.organization=${{ vars.SONAR_ORG }}
+          -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}
           -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_BACKEND }}
+          -Dsonar.qualitygate.wait=true
 
   sonar-frontend:
-    name: SonarCloud — frontend (TypeScript)
+    name: SonarQube — frontend (TypeScript)
     runs-on: ubuntu-latest
     if: ${{ vars.SONAR_ENABLED == 'true' }}
     steps:
@@ -49,14 +52,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: SonarCloud scan
+      - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
         with:
           projectBaseDir: doctorek-frontend
           args: >
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.organization=${{ vars.SONAR_ORG }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_FRONTEND }}
             -Dsonar.sources=app,features,components,lib
+            -Dsonar.qualitygate.wait=true

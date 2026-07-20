@@ -17,3 +17,11 @@ api.{$DOMAIN} {
 auth.{$DOMAIN} {
 	reverse_proxy keycloak:8080
 }
+
+sonar.{$DOMAIN} {
+	reverse_proxy sonarqube:9000
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+	}
+}
