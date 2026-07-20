@@ -130,7 +130,7 @@
 		<dependency>
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>okhttp-jvm</artifactId>
-			<version>5.1.0</version>
+			<version>5.4.0</version>
 		</dependency>
 		<!--
 		  bcprov-jdk18on arrive en transitif (SDK Google Wallet) en 1.81, hors gestion
