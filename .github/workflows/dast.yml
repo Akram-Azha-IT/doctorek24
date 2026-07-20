@@ -1,0 +1,39 @@
+name: DAST (OWASP ZAP)
+
+on:
+  schedule:
+    # Scan dynamique hebdomadaire contre la prod
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'URL cible (défaut : variable DAST_TARGET_URL)'
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap-baseline:
+    name: ZAP baseline scan
+    runs-on: ubuntu-latest
+    # Variable requise : DAST_TARGET_URL (ex. https://app.mondomaine.com)
+    steps:
+      - name: Resolve target
+        id: target
+        run: |
+          TARGET="${{ github.event.inputs.target || vars.DAST_TARGET_URL }}"
+          if [ -z "$TARGET" ]; then
+            echo "::error::Définir la variable de repo DAST_TARGET_URL ou passer l'input target"
+            exit 1
+          fi
+          echo "url=$TARGET" >> "$GITHUB_OUTPUT"
+
+      - name: ZAP baseline (passif — sans attaque active)
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ steps.target.outputs.url }}
+          # -a : inclut les règles alpha ; rapport en artifact + issue GitHub
+          cmd_options: '-a'
+          allow_issue_writing: true

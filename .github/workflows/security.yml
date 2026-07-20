@@ -1,0 +1,108 @@
+name: Security
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # Scan hebdomadaire — nouvelles CVE détectées même sans commit
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secret-scan:
+    name: Secret scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Historique complet — un secret committé puis supprimé reste exposé
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sca-dependencies:
+    name: SCA — dependency vulnerabilities (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan (pom.xml + package-lock.json)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+
+  iac-scan:
+    name: IaC misconfiguration (Trivy config)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy config scan (Dockerfiles, docker-compose)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '0'   # informatif — durcir à '1' une fois les findings triés
+          format: table
+
+  image-scan:
+    name: Container image scan + SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t doctorek-backend:scan -f Dockerfile .
+
+      - name: Build frontend image
+        run: docker build -t doctorek-frontend:scan -f doctorek-frontend/Dockerfile doctorek-frontend
+
+      - name: Trivy scan — backend image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: doctorek-backend:scan
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+
+      - name: Trivy scan — frontend image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: doctorek-frontend:scan
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+
+      - name: SBOM — backend (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: doctorek-backend:scan
+          format: cyclonedx-json
+          artifact-name: sbom-backend.cyclonedx.json
+
+      - name: SBOM — frontend (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: doctorek-frontend:scan
+          format: cyclonedx-json
+          artifact-name: sbom-frontend.cyclonedx.json
