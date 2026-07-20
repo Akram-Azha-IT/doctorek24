@@ -113,6 +113,17 @@
 			<!-- 8.6.0 : correctif CVE-2025-59952 (XML value substitution) -->
 			<version>8.6.0</version>
 		</dependency>
+		<!--
+		  minio 8.6.0 dépend d'okhttp 5.1.0, publié en artefact Kotlin-Multiplatform :
+		  le jar `okhttp` est vide (agrégateur) et Maven ne suit pas les métadonnées Gradle
+		  qui redirigent vers `okhttp-jvm`. On déclare donc okhttp-jvm explicitement pour
+		  fournir les classes JVM (okhttp3.HttpUrl) au compile.
+		-->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp-jvm</artifactId>
+			<version>5.1.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
