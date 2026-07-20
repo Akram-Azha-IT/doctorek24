@@ -110,8 +110,8 @@
 		<dependency>
 			<groupId>io.minio</groupId>
 			<artifactId>minio</artifactId>
-			<!-- 8.6.0 : correctif CVE-2025-59952 (XML value substitution) -->
-			<version>8.6.0</version>
+			<!-- 9.0.3 : correctif CVE-2025-59952 (XML value substitution) -->
+			<version>9.0.3</version>
 		</dependency>
 	</dependencies>
 
