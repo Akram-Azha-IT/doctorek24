@@ -20,6 +20,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -147,6 +148,51 @@ class MessagingServiceAudioTest {
 
         assertThat(resp.content()).isEqualTo("déjà là");
         verify(messageRepo, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("rejette un fichier vide")
+    void sendAudio_empty_rejected() {
+        var empty = new MockMultipartFile("file", "voice.webm", "audio/webm", new byte[0]);
+        assertThatThrownBy(() -> service.sendAudioMessage(patientId, convId, empty, 10, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("vide");
+    }
+
+    @Test
+    @DisplayName("échec du stockage MinIO → IllegalStateException")
+    void sendAudio_storageFails_throws() throws Exception {
+        doThrow(new java.io.IOException("minio down")).when(storageService).upload(anyString(), any());
+        var f = audio(1024, "audio/webm");
+        assertThatThrownBy(() -> service.sendAudioMessage(patientId, convId, f, 10, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stockage");
+    }
+
+    @Test
+    @DisplayName("course clientMsgId : save en conflit → renvoie le gagnant")
+    void sendText_saveConflict_returnsWinner() {
+        MessageEntity winner = MessageEntity.text(convId, patientId, "gagnant");
+        when(messageRepo.findByClientMsgId("race"))
+                .thenReturn(Optional.empty())          // 1er appel : idempotence
+                .thenReturn(Optional.of(winner));       // 2e appel : après conflit
+        when(messageRepo.save(any()))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("dup"));
+        var req = new ma.doctorek.doctorek.messaging.dto.SendMessageRequest(convId, "perdu", "race");
+
+        var resp = service.sendMessage(patientId, req);
+
+        assertThat(resp.content()).isEqualTo("gagnant");
+    }
+
+    @Test
+    @DisplayName("getAudio sur un message TEXT → introuvable")
+    void getAudio_onTextMessage_notFound() {
+        UUID msgId = UUID.randomUUID();
+        MessageEntity text = MessageEntity.text(convId, patientId, "coucou");
+        when(messageRepo.findById(msgId)).thenReturn(Optional.of(text));
+        assertThatThrownBy(() -> service.getAudio(msgId, patientId))
+                .isInstanceOf(NoSuchElementException.class);
     }
 
     @Test
