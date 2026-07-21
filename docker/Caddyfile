@@ -11,7 +11,8 @@ app.{$DOMAIN} {
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		# Périphériques : géoloc autorisée pour la recherche "près de moi"
-		Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+		# microphone=(self) : requis pour les messages vocaux (getUserMedia). camera reste bloquée.
+		Permissions-Policy "camera=(), microphone=(self), geolocation=(self)"
 		Cross-Origin-Opener-Policy "same-origin"
 		Cross-Origin-Resource-Policy "same-origin"
 		# La CSP est désormais posée par Next.js (proxy.ts) avec un nonce par requête
