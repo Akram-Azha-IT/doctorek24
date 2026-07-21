@@ -53,6 +53,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: doctorek-frontend/package-lock.json
+
+      - name: Tests + couverture (lcov)
+        working-directory: doctorek-frontend
+        run: npm ci && npm run test:coverage
+
       - name: SonarQube scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
@@ -60,7 +71,14 @@ jobs:
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
         with:
           projectBaseDir: doctorek-frontend
+          # Couverture exigée sur lib/features/components (tests unitaires).
+          # app/** exclu de l'exigence de couverture : pages Next.js = surface
+          # d'intégration, couvertes par les tests E2E (pas en unitaire).
           args: >
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_FRONTEND }}
             -Dsonar.sources=app,features,components,lib
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.coverage.exclusions=app/**,**/*.test.*,vitest.*.ts
             -Dsonar.qualitygate.wait=true
