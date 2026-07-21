@@ -217,11 +217,16 @@ export interface PatientProfileRequest {
 
 // ── Messaging ────────────────────────────────────────────────────────────────
 
+export type MessageType = 'TEXT' | 'AUDIO'
+
 export interface Message {
   id: string
   conversationId: string
   senderId: string
-  content: string
+  messageType?: MessageType          // défaut TEXT si absent (rétrocompat)
+  content: string | null
+  mediaUrl?: string | null           // AUDIO : chemin protégé (auth requise)
+  mediaDurationSec?: number | null   // AUDIO : durée en secondes
   sentAt: string
   readAt: string | null
 }

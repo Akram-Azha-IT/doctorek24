@@ -1,5 +1,47 @@
-import { apiFetch } from '@/lib/api-client'
-import type { Conversation, Message } from '@/lib/types'
+import { apiFetch, ApiError } from '@/lib/api-client'
+import { getSession } from '@/lib/session'
+import type { ApiResponse, Conversation, Message } from '@/lib/types'
+
+const BASE = process.env.NEXT_PUBLIC_API_URL
+
+/** Envoi d'un message vocal (multipart). Le navigateur pose la frontière multipart lui-même. */
+export async function sendAudioMessage(
+  convId: string,
+  blob: Blob,
+  durationSec: number,
+  clientMsgId: string,
+): Promise<Message> {
+  const session = getSession()
+  const form = new FormData()
+  form.append('file', blob, 'voice.webm')
+  form.append('durationSec', String(durationSec))
+  form.append('clientMsgId', clientMsgId)
+
+  const res = await fetch(`${BASE}/api/v1/messaging/conversations/${convId}/audio`, {
+    method: 'POST',
+    headers: session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+    body: form,
+  })
+  const body: ApiResponse<Message> = await res.json()
+  if (!res.ok || !body.success) {
+    throw new ApiError(body.message ?? `HTTP ${res.status}`, res.status)
+  }
+  return body.data as Message
+}
+
+/**
+ * Récupère l'audio protégé et renvoie un blob URL lisible par <audio>. La navigation directe
+ * n'enverrait pas le token (stocké hors cookie) → on fetch avec l'en-tête Authorization.
+ */
+export async function fetchAudioObjectUrl(mediaUrl: string): Promise<string> {
+  const session = getSession()
+  const res = await fetch(`${BASE}${mediaUrl}`, {
+    headers: session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+  })
+  if (!res.ok) throw new ApiError(`HTTP ${res.status}`, res.status)
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}
 
 export async function getConversations(): Promise<Conversation[]> {
   return apiFetch<Conversation[]>('/api/v1/messaging/conversations')

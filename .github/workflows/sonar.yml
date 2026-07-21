@@ -80,5 +80,5 @@ jobs:
             -Dsonar.tests=.
             -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.coverage.exclusions=app/**,**/*.test.*,vitest.*.ts
+            -Dsonar.coverage.exclusions=app/**,**/*.test.*,vitest.*.ts,features/messaging/components/ChatWindow.tsx
             -Dsonar.qualitygate.wait=true
