@@ -83,7 +83,7 @@ export default function DossierPage() {
   const uploadDoc = useUploadDocument(patientId)
   const deleteDoc = useDeleteDocument(patientId)
 
-  async function handleUpload(e: React.FormEvent) {
+  async function handleUpload(e: React.SubmitEvent) {
     e.preventDefault()
     setUploadError(null)
     if (!uploadFile) { setUploadError('Sélectionnez un fichier.'); return }

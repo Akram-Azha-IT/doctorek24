@@ -34,7 +34,7 @@ export default function RattacherPage({ params }: { params: Promise<{ token: str
   const [declaration, setDeclaration] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault()
     setFormError(null)
     if (lettres.trim().length !== 3) {

@@ -61,10 +61,10 @@ export const carteStep6Schema = z.object({
 })
 
 export const carteFullSchema = carteStep1Schema
-  .merge(carteStep2Schema)
-  .merge(carteStep3Schema)
-  .merge(carteStep4Schema)
-  .merge(carteStep5Schema)
-  .merge(carteStep6Schema)
+  .extend(carteStep2Schema.shape)
+  .extend(carteStep3Schema.shape)
+  .extend(carteStep4Schema.shape)
+  .extend(carteStep5Schema.shape)
+  .extend(carteStep6Schema.shape)
 
 export type CarteFormData = z.infer<typeof carteFullSchema>

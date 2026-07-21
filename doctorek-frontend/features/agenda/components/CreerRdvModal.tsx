@@ -37,7 +37,7 @@ export function CreerRdvModal({ medecinId, onClose }: CreerRdvModalProps) {
   const [error, setError] = useState<string | null>(null)
   const creerRdv = useCreerRdvMedecin(medecinId)
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault()
     setError(null)
 

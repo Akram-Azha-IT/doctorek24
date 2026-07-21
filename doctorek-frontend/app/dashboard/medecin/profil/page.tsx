@@ -89,7 +89,7 @@ export default function ProfilPage() {
     if (photoInputRef.current) photoInputRef.current.value = ''
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault()
     setSaveStatus('idle'); setSaveError(null)
     const payload: UpdateMedecinProfilePayload = {

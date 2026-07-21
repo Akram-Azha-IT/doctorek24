@@ -11,7 +11,7 @@ export const ProcheSchema = z.object({
     .refine((d) => !Number.isNaN(Date.parse(d)), 'Date invalide')
     .refine((d) => new Date(d) < new Date(), 'La date doit être dans le passé'),
   lieuNaissance: z.string().max(150).optional(),
-  email: z.string().email('Email invalide').or(z.literal('')).optional(),
+  email: z.email('Email invalide').or(z.literal('')).optional(),
   telephone: z.string().max(30).optional(),
   role: z.enum(ROLE_GESTION),
   declarationRepresentantLegal: z.literal(true, {
