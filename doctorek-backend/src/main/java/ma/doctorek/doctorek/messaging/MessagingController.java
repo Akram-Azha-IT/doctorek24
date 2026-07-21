@@ -95,7 +95,7 @@ public class MessagingController {
     @GetMapping("/messages/{messageId}/audio")
     public ResponseEntity<Resource> getAudio(
             @PathVariable UUID messageId,
-            Principal principal) throws Exception {
+            Principal principal) throws java.io.IOException {
         User caller = resolveUser(principal.getName());
         MessagingService.AudioStream audio = messagingService.getAudio(messageId, caller.getId());
         return ResponseEntity.ok()

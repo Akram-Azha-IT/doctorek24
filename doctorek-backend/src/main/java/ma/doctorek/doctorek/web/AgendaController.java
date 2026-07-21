@@ -12,6 +12,7 @@ import ma.doctorek.doctorek.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
 import ma.doctorek.doctorek.dto.ReprogrammerRdvRequest;
+import ma.doctorek.doctorek.entity.User;
 import ma.doctorek.doctorek.repository.UserRepository;
 import ma.doctorek.doctorek.service.AccesPatientService;
 import ma.doctorek.doctorek.service.AgendaService;
@@ -195,7 +196,7 @@ public class AgendaController {
 
     private UUID resolveUserId(Principal principal) {
         return userRepo.findByEmail(principal.getName())
-            .map(u -> u.getId())
+            .map(User::getId)
             .orElseThrow();
     }
 }

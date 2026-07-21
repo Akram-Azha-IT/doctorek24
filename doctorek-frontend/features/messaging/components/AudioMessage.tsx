@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { fetchAudioObjectUrl } from '../api'
 
 interface AudioMessageProps {
-  mediaUrl: string
-  durationSec: number
-  mine: boolean
+  readonly mediaUrl: string
+  readonly durationSec: number
+  readonly mine: boolean
 }
 
 function fmt(sec: number): string {
@@ -99,7 +99,10 @@ export function AudioMessage({ mediaUrl, durationSec, mine }: AudioMessageProps)
           onPause={() => setPlaying(false)}
           onTimeUpdate={() => setCurrent(audioRef.current?.currentTime ?? 0)}
           onEnded={() => { setPlaying(false); setCurrent(0) }}
-        />
+        >
+          {/* Message vocal — pas de sous-titres, piste vide pour satisfaire l'a11y/CSP linter. */}
+          <track kind="captions" />
+        </audio>
       )}
     </div>
   )

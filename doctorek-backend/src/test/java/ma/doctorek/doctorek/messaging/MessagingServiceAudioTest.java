@@ -85,8 +85,8 @@ class MessagingServiceAudioTest {
     @Test
     @DisplayName("rejette une durée > 120 s")
     void sendAudio_tooLong_rejected() {
-        assertThatThrownBy(() ->
-                service.sendAudioMessage(patientId, convId, audio(1024, "audio/webm"), 121, null))
+        var f = audio(1024, "audio/webm");
+        assertThatThrownBy(() -> service.sendAudioMessage(patientId, convId, f, 121, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Durée");
         verifyNoInteractions(storageService);
@@ -95,8 +95,8 @@ class MessagingServiceAudioTest {
     @Test
     @DisplayName("rejette un mime non-audio")
     void sendAudio_badMime_rejected() {
-        assertThatThrownBy(() ->
-                service.sendAudioMessage(patientId, convId, audio(1024, "application/zip"), 10, null))
+        var f = audio(1024, "application/zip");
+        assertThatThrownBy(() -> service.sendAudioMessage(patientId, convId, f, 10, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("non autorisé");
         verifyNoInteractions(storageService);
@@ -105,8 +105,8 @@ class MessagingServiceAudioTest {
     @Test
     @DisplayName("rejette un fichier > 6 Mo")
     void sendAudio_tooBig_rejected() {
-        assertThatThrownBy(() ->
-                service.sendAudioMessage(patientId, convId, audio(7L * 1024 * 1024, "audio/webm"), 10, null))
+        var f = audio(7L * 1024 * 1024, "audio/webm");
+        assertThatThrownBy(() -> service.sendAudioMessage(patientId, convId, f, 10, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("volumineux");
         verifyNoInteractions(storageService);
@@ -116,10 +116,37 @@ class MessagingServiceAudioTest {
     @DisplayName("refuse un non-participant (SecurityException)")
     void sendAudio_notParticipant_denied() {
         UUID intrus = UUID.randomUUID();
-        assertThatThrownBy(() ->
-                service.sendAudioMessage(intrus, convId, audio(1024, "audio/webm"), 10, null))
+        var f = audio(1024, "audio/webm");
+        assertThatThrownBy(() -> service.sendAudioMessage(intrus, convId, f, 10, null))
                 .isInstanceOf(SecurityException.class);
         verifyNoInteractions(storageService);
+    }
+
+    @Test
+    @DisplayName("envoie un message texte et le diffuse")
+    void sendText_valid_dispatches() {
+        when(messageRepo.save(any())).thenAnswer(i -> i.getArgument(0));
+        var req = new ma.doctorek.doctorek.messaging.dto.SendMessageRequest(convId, "Bonjour", "ct-1");
+
+        var resp = service.sendMessage(patientId, req);
+
+        assertThat(resp.messageType()).isEqualTo(ma.doctorek.doctorek.enums.MessageType.TEXT);
+        assertThat(resp.content()).isEqualTo("Bonjour");
+        assertThat(resp.mediaUrl()).isNull();
+        verify(stompTemplate).convertAndSendToUser(eq("dest@x.ma"), eq("/queue/messages"), any());
+    }
+
+    @Test
+    @DisplayName("idempotence : un clientMsgId déjà stocké renvoie l'existant sans réécrire")
+    void sendText_duplicateClientMsgId_returnsExisting() {
+        MessageEntity existing = MessageEntity.text(convId, patientId, "déjà là");
+        when(messageRepo.findByClientMsgId("dup")).thenReturn(Optional.of(existing));
+        var req = new ma.doctorek.doctorek.messaging.dto.SendMessageRequest(convId, "rejoué", "dup");
+
+        var resp = service.sendMessage(patientId, req);
+
+        assertThat(resp.content()).isEqualTo("déjà là");
+        verify(messageRepo, never()).save(any());
     }
 
     @Test
@@ -139,7 +166,7 @@ class MessagingServiceAudioTest {
 
     @Test
     @DisplayName("getAudio refuse un non-participant")
-    void getAudio_notParticipant_denied() throws Exception {
+    void getAudio_notParticipant_denied() {
         UUID msgId = UUID.randomUUID();
         MessageEntity msg = MessageEntity.audio(convId, patientId, "messaging/k", 10, "audio/webm");
         when(messageRepo.findById(msgId)).thenReturn(Optional.of(msg));

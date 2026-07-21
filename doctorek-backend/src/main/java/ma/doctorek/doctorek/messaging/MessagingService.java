@@ -133,7 +133,8 @@ public class MessagingService {
         if (durationSec < 1 || durationSec > MAX_AUDIO_DURATION_SEC) {
             throw new IllegalArgumentException("Durée invalide (1 à " + MAX_AUDIO_DURATION_SEC + " s)");
         }
-        String mime = file.getContentType() != null ? file.getContentType().split(";")[0].trim() : "";
+        String rawMime = file.getContentType();
+        String mime = rawMime != null ? rawMime.split(";")[0].trim() : "";
         if (!ALLOWED_AUDIO_MIME.contains(mime)) {
             throw new IllegalArgumentException("Type audio non autorisé: " + mime);
         }
