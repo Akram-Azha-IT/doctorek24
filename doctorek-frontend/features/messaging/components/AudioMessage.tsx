@@ -55,6 +55,19 @@ export function AudioMessage({ mediaUrl, durationSec, mine }: AudioMessageProps)
   const fill = mine ? 'bg-white' : 'bg-[#007DFF]'
   const pct = durationSec > 0 ? Math.min(100, (current / durationSec) * 100) : 0
 
+  function renderIcon() {
+    if (loading) {
+      return <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+    }
+    if (playing) {
+      return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+    }
+    return <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+  }
+
+  const shownSec = playing || current ? current : durationSec
+  const timeLabel = error ? 'Erreur de lecture' : fmt(shownSec)
+
   return (
     <div className="flex items-center gap-2.5 min-w-[180px]">
       <button
@@ -65,13 +78,7 @@ export function AudioMessage({ mediaUrl, durationSec, mine }: AudioMessageProps)
           mine ? 'bg-white/20 hover:bg-white/30' : 'bg-[#007DFF]/10 hover:bg-[#007DFF]/20'
         } transition-colors ${accent}`}
       >
-        {loading ? (
-          <span className={`h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent`} />
-        ) : playing ? (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-        )}
+        {renderIcon()}
       </button>
 
       <div className="flex-1">
@@ -79,7 +86,7 @@ export function AudioMessage({ mediaUrl, durationSec, mine }: AudioMessageProps)
           <div className={`h-1 rounded-full ${fill}`} style={{ width: `${pct}%` }} />
         </div>
         <div className={`mt-1 text-[10px] ${mine ? 'text-blue-100' : 'text-gray-400'}`}>
-          {error ? 'Erreur de lecture' : fmt(playing || current ? current : durationSec)}
+          {timeLabel}
         </div>
       </div>
 

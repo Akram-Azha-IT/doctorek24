@@ -147,6 +147,10 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     }
   }
 
+  const composerHint = recorder.state === 'recording'
+    ? 'Micro pour envoyer · Corbeille pour annuler'
+    : 'Entrée pour envoyer · Micro pour un vocal (max 2 min)'
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -256,11 +260,11 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
           </div>
         )}
         <p className="text-[10px] text-gray-400 mt-1 text-center">
-          {recorder.error
-            ? <span className="text-red-500">{recorder.error}</span>
-            : recorder.state === 'recording'
-              ? 'Micro pour envoyer · Corbeille pour annuler'
-              : 'Entrée pour envoyer · Micro pour un vocal (max 2 min)'}
+          {recorder.error ? (
+            <span className="text-red-500">{recorder.error}</span>
+          ) : (
+            composerHint
+          )}
         </p>
       </div>
     </div>

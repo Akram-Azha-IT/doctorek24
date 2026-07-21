@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -119,6 +120,21 @@ class MessagingServiceAudioTest {
                 service.sendAudioMessage(intrus, convId, audio(1024, "audio/webm"), 10, null))
                 .isInstanceOf(SecurityException.class);
         verifyNoInteractions(storageService);
+    }
+
+    @Test
+    @DisplayName("getAudio renvoie le flux pour un participant")
+    void getAudio_participant_returnsStream() throws Exception {
+        UUID msgId = UUID.randomUUID();
+        MessageEntity msg = MessageEntity.audio(convId, patientId, "messaging/k", 10, "audio/webm");
+        when(messageRepo.findById(msgId)).thenReturn(Optional.of(msg));
+        Resource res = mock(Resource.class);
+        when(storageService.download("messaging/k")).thenReturn(res);
+
+        var stream = service.getAudio(msgId, medecinId);
+
+        assertThat(stream.mime()).isEqualTo("audio/webm");
+        assertThat(stream.resource()).isSameAs(res);
     }
 
     @Test
