@@ -12,6 +12,9 @@ import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
 import type { CarteVirtuelle, PatientProfile, RendezVous } from '@/lib/types'
 
 // ── Palette (matches home page) ──────────────────────────────────────────────
+// Horodatage au chargement du module — évite Date.now() pendant le rendu (règle purity).
+const PAGE_LOADED_AT = Date.now()
+
 const C_BLUE    = '#007DFF'
 const C_DARK    = '#00263C'
 const C_NAVY    = '#010C2D'
@@ -102,9 +105,15 @@ export default function CarteScanPage() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('alertes')
 
+  // Re-passage en chargement quand la ref change — pendant le rendu, pas dans l'effet.
+  const [prevRef, setPrevRef] = useState(ref)
+  if (prevRef !== ref) {
+    setPrevRef(ref)
+    setLoading(true)
+  }
+
   useEffect(() => {
     if (!ref) return
-    setLoading(true)
     getCarteByRef(ref)
       .then(async (data) => {
         setCarte(data)
@@ -156,7 +165,7 @@ export default function CarteScanPage() {
   // ── Computed values ────────────────────────────────────────────────────────
   const fullName = [carte.firstName, carte.lastName?.toUpperCase()].filter(Boolean).join(' ') || '-'
   const age = profile?.dateNaissance
-    ? Math.floor((Date.now() - new Date(profile.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000))
+    ? Math.floor((PAGE_LOADED_AT - new Date(profile.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000))
     : null
   const bmi =
     carte.tailleCm && carte.poidsKg

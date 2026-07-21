@@ -161,7 +161,7 @@ export function MedecinProfileCard({ medecin }: Props) {
                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                       <circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M15 9l-6 6M9 9l6 6"/>
                     </svg>
-                    Complet : n'accepte plus de nouveaux patients
+                    Complet : n&apos;accepte plus de nouveaux patients
                   </span>
                 )}
                 {medecin.consultationVideo && (
@@ -429,7 +429,7 @@ export function MedecinProfileCard({ medecin }: Props) {
                     <svg className="h-4 w-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
-                    <p className="text-xs text-red-700 font-medium">Ce médecin n'accepte plus de nouveaux patients</p>
+                    <p className="text-xs text-red-700 font-medium">Ce médecin n&apos;accepte plus de nouveaux patients</p>
                   </div>
                 )}
 

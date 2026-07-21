@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { MedecinAvatar } from '@/features/annuaire/components/MedecinAvatar'
 import { ConfirmRdvForm } from './ConfirmRdvForm'
@@ -51,22 +51,18 @@ function ClockIcon() {
 export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
   const [visible, setVisible] = useState(false)
   const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
-  const prevSlotRef = useRef<BookingSlot | null>(null)
 
-  // Reset success state when a new slot is opened
-  useEffect(() => {
-    if (slot && slot !== prevSlotRef.current) {
-      setConfirmedRdv(null)
-      prevSlotRef.current = slot
-    }
-  }, [slot])
+  // Reset success state when a new slot is opened — pendant le rendu, pas en effet.
+  const [prevSlot, setPrevSlot] = useState<BookingSlot | null>(null)
+  if (slot !== prevSlot) {
+    setPrevSlot(slot)
+    if (slot) setConfirmedRdv(null)
+    else if (visible) setVisible(false)
+  }
 
-  // Animate in/out
+  // Animate in
   useEffect(() => {
-    if (!slot) {
-      setVisible(false)
-      return
-    }
+    if (!slot) return
     // Double rAF so CSS transitions pick up the class change
     const id = requestAnimationFrame(() =>
       requestAnimationFrame(() => setVisible(true))
@@ -84,18 +80,18 @@ export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
     return () => { document.body.style.overflow = '' }
   }, [slot])
 
+  function handleClose() {
+    setVisible(false)
+    // Wait for transition before unmounting
+    setTimeout(onClose, 300)
+  }
+
   // Close on ESC
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
-
-  function handleClose() {
-    setVisible(false)
-    // Wait for transition before unmounting
-    setTimeout(onClose, 300)
-  }
 
   if (!slot) return null
 

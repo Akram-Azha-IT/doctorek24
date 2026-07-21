@@ -36,14 +36,16 @@ export function CarteRecto({
   lastName?: string
   qrUrl?: string
 }) {
-  const [qrDataUrl, setQrDataUrl] = useState<string | undefined>(undefined)
+  const [qrGenerated, setQrGenerated] = useState<string | undefined>(undefined)
+  // Sans qrUrl, on ignore la dernière génération au lieu de la réinitialiser dans l'effet.
+  const qrDataUrl = qrUrl ? qrGenerated : undefined
 
   useEffect(() => {
+    if (!qrUrl) return
     let cancelled = false
-    if (!qrUrl) { setQrDataUrl(undefined); return }
     QRCode.toDataURL(qrUrl, { width: 192, margin: 1, color: { dark: '#010C2D', light: '#FFFFFF' } })
-      .then((url) => { if (!cancelled) setQrDataUrl(url) })
-      .catch(() => { if (!cancelled) setQrDataUrl(undefined) })
+      .then((url) => { if (!cancelled) setQrGenerated(url) })
+      .catch(() => { if (!cancelled) setQrGenerated(undefined) })
     return () => { cancelled = true }
   }, [qrUrl])
 

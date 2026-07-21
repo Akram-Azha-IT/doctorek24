@@ -1,21 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
 import { useRdvsPatient, useReprogrammerRdv } from '@/features/agenda/hooks'
 import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { toast } from 'sonner'
 
 export default function PatientRdvsPage() {
   useRoleGuard('PATIENT')
-  const [patientId, setPatientId] = useState('')
-
-  useEffect(() => {
-    const session = getSession()
-    if (session?.role === 'PATIENT' && session.id) setPatientId(session.id)
-  }, [])
+  const session = useSession()
+  const patientId = session?.role === 'PATIENT' && session.id ? session.id : ''
 
   const { data: rdvs, isLoading, isError } = useRdvsPatient(patientId)
   const { mutate: reprogrammer, isPending: isReprogramming } = useReprogrammerRdv(patientId)

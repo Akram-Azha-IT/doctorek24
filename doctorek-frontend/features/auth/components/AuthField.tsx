@@ -17,7 +17,8 @@ type AuthInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
  */
 export const AuthField = React.forwardRef<HTMLInputElement, AuthInputProps>(
   function AuthField({ label, hint, error, leadingIcon, trailing, showPasswordToggle, className, id, type, ...props }, ref) {
-    const fieldId = id ?? React.useId()
+    const generatedId = React.useId()
+    const fieldId = id ?? generatedId
     const errorId = `${fieldId}-error`
     const hasError = Boolean(error)
     const [showPwd, setShowPwd] = React.useState(false)

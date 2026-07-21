@@ -171,7 +171,7 @@ export function AvailabilityWeekGrid({
           onClick={() => setWeekOffset(0)}
           className="rounded-full border border-gray-300 px-3.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          Aujourd'hui
+          Aujourd&apos;hui
         </button>
 
         <button

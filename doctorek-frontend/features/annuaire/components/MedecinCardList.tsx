@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useQueries } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
@@ -132,15 +132,21 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
   const accepte = medecin.acceptNouveauxPatients !== false
   const MAX_CHIPS = 6
 
-  // Replier les créneaux quand on change de jour
-  useEffect(() => { setShowAll(false) }, [selectedDate])
+  // Replier les créneaux quand on change de jour — pendant le rendu, pas en effet.
+  const [prevSelectedDate, setPrevSelectedDate] = useState(selectedDate)
+  if (prevSelectedDate !== selectedDate) {
+    setPrevSelectedDate(selectedDate)
+    setShowAll(false)
+  }
 
   // Keep selectedDate inside visible window when window shifts
-  useEffect(() => {
+  const [prevWindowStart, setPrevWindowStart] = useState(windowStart)
+  if (prevWindowStart !== windowStart) {
+    setPrevWindowStart(windowStart)
     if (!visibleDates.includes(selectedDate)) {
       setSelectedDate(visibleDates[0])
     }
-  }, [windowStart]) // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   const allDaysResults = useQueries({
     queries: visibleDates.map(date => ({
@@ -171,14 +177,15 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
     })),
   })
 
-  const nextAvailableInfo = useMemo(() => {
+  // Calcul direct (le compilateur React mémoïse) — le useMemo manuel empêchait la compilation.
+  const nextAvailableInfo = (() => {
     if (!allUnavailable) return null
     for (let i = 0; i < extendedDates.length; i++) {
       const slot = extendedResults[i]?.data?.find(s => s.disponible)
       if (slot) return { date: extendedDates[i], heure: slot.debut }
     }
     return null
-  }, [allUnavailable, extendedDates, extendedResults])
+  })()
 
   const extendedLoading = allUnavailable && extendedResults.some(r => r.isLoading)
 

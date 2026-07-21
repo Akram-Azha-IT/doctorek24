@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRdvsPatient, useReprogrammerRdv } from '@/features/agenda/hooks'
 import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
 import { useProches } from '@/features/famille/hooks'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { toast } from 'sonner'
 
@@ -13,16 +13,10 @@ const ALL = 'TOUS'
 export default function PatientRdvsPage() {
   useRoleGuard('PATIENT')
 
-  const [patientId, setPatientId] = useState('')
-  const [selected, setSelected] = useState<string>('')
-
-  useEffect(() => {
-    const session = getSession()
-    if (session?.role === 'PATIENT' && session.id) {
-      setPatientId(session.id)
-      setSelected(session.id)
-    }
-  }, [])
+  const session = useSession()
+  const patientId = session?.role === 'PATIENT' && session.id ? session.id : ''
+  const [selectedOverride, setSelected] = useState<string>('')
+  const selected = selectedOverride || patientId
 
   const { data: profils } = useProches(!!patientId)
   const hasProches = (profils?.length ?? 0) > 1

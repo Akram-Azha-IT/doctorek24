@@ -1,10 +1,10 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { CalendarCheck, Link2, ShieldCheck } from 'lucide-react'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import type { RoleGestion } from '@/lib/types'
 import { ROLE_GESTION_LABELS } from '@/features/famille/schemas'
 import { useRattachementInfo, useReclamerRattachement } from '@/features/rattachement/hooks'
@@ -22,11 +22,8 @@ export default function RattacherPage({ params }: { params: Promise<{ token: str
   const { token } = use(params)
   const router = useRouter()
 
-  const [isLogged, setIsLogged] = useState<boolean | null>(null)
-  useEffect(() => {
-    const s = getSession()
-    setIsLogged(s?.role === 'PATIENT')
-  }, [])
+  const session = useSession()
+  const isLogged = session?.role === 'PATIENT'
 
   const { data: info, isLoading, error } = useRattachementInfo(token)
   const reclamer = useReclamerRattachement(token)

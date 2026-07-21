@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, LogOut, Users, CreditCard, ChevronDown, ShieldCheck } from 'lucide-react'
 import { useSession } from 'next-auth/react'
-import { getSession } from '@/lib/session'
+import { useSession as useLocalSession } from '@/lib/useSession'
 import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
 
@@ -24,7 +24,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const router = useRouter()
   const { status: authStatus, data: authSession } = useSession()
-  const [adminName, setAdminName] = useState('Administrateur')
+  const localSession = useLocalSession()
+  const adminName =
+    (localSession ? [localSession.firstName, localSession.lastName].filter(Boolean).join(' ') : '') ||
+    'Administrateur'
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -37,11 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     if (authSession.user.role !== 'ADMIN') {
       router.replace(authSession.user.role === 'MEDECIN' ? '/dashboard/medecin' : '/dashboard/patient')
-      return
     }
-    const session = getSession()
-    const name = session ? [session.firstName, session.lastName].filter(Boolean).join(' ') : ''
-    if (name) setAdminName(name)
   }, [authStatus, authSession, router])
 
   useEffect(() => {

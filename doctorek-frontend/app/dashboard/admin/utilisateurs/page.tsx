@@ -39,10 +39,13 @@ function UtilisateursContent() {
   const toggle = useToggleUserActive()
 
   // Deep link support: /utilisateurs?role=PATIENT preselects the tab.
-  useEffect(() => {
+  // setState pendant le rendu (pattern React "derive state from props") — pas d'effet.
+  const [prevParams, setPrevParams] = useState(searchParams)
+  if (prevParams !== searchParams) {
+    setPrevParams(searchParams)
     setRoleFilter(normalizeRole(searchParams.get('role')))
     setPage(0)
-  }, [searchParams])
+  }
 
   function handleSearch(value: string) {
     setSearch(value)

@@ -10,7 +10,7 @@ export function FeaturesSection() {
         <p className="text-[12px] font-semibold text-[#007DFF] uppercase tracking-widest mb-2">Nos engagements</p>
         <h2 className="text-[24px] font-bold text-[#00263C] mb-1">Pourquoi choisir Doctorek ?</h2>
         <p className="text-[#465058] text-[15px]">
-          Un service conçu pour simplifier l'accès aux soins pour tous les Marocains.
+          Un service conçu pour simplifier l&apos;accès aux soins pour tous les Marocains.
         </p>
       </div>
 

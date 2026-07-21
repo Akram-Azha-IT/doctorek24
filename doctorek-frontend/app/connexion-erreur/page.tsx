@@ -60,7 +60,7 @@ function ErreurContenu() {
           className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-[#465058] transition-colors hover:border-zinc-300 hover:text-[#010C2D]"
         >
           <Home className="h-4 w-4" />
-          Retour à l'accueil
+          Retour à l&apos;accueil
         </Link>
       </div>
 

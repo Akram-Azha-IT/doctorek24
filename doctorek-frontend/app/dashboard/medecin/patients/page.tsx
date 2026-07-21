@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePatientsMedecin } from '@/features/agenda/hooks'
 import { PatientListItem } from '@/features/agenda/components/PatientListItem'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 
 const FILTRES = [
@@ -22,27 +22,25 @@ export default function PatientsPage() {
   useRoleGuard('MEDECIN')
   const router = useRouter()
 
-  const [medecinId, setMedecinId] = useState('')
+  const session = useSession()
+  const medecinId = session?.role === 'MEDECIN' && session.id ? session.id : ''
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filtre, setFiltre] = useState<Filtre>('TOUS')
   const [page, setPage] = useState(0)
 
   useEffect(() => {
-    const session = getSession()
-    if (session?.role === 'MEDECIN' && session.id) {
-      setMedecinId(session.id)
-    }
-  }, [])
-
-  useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(id)
   }, [search])
 
-  useEffect(() => {
+  // Reset pagination quand la recherche/le filtre change — pendant le rendu, pas en effet.
+  const filterKey = `${debouncedSearch}|${filtre}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey)
     setPage(0)
-  }, [debouncedSearch, filtre])
+  }
 
   const { data, isLoading, isError } = usePatientsMedecin(medecinId, debouncedSearch, filtre, page)
 

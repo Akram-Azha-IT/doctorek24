@@ -14,11 +14,15 @@ function MessagesContent() {
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null)
   const { data: conversations = [], isLoading } = useConversations()
 
-  useEffect(() => {
-    if (!convParam || !conversations.length) return
+  // Deep link ?conv=<id> : sélection pendant le rendu (pattern "derive state from props").
+  const [appliedConvParam, setAppliedConvParam] = useState<string | null>(null)
+  if (convParam && convParam !== appliedConvParam && conversations.length) {
     const match = conversations.find((c) => c.id === convParam)
-    if (match) setSelectedConv(match)
-  }, [convParam, conversations])
+    if (match) {
+      setAppliedConvParam(convParam)
+      setSelectedConv(match)
+    }
+  }
 
   function handleSelect(conv: Conversation) {
     setSelectedConv(conv)

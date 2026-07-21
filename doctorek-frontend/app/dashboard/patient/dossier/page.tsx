@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { getSession } from '@/lib/session'
+import { useState, useRef } from 'react'
+import { useSession } from '@/lib/useSession'
 import {
   useOrdonnances,
   useDocuments,
@@ -32,16 +32,11 @@ function formatSize(bytes: number) {
 }
 
 export default function DossierPage() {
-  const [selfId, setSelfId] = useState('')
+  const session = useSession()
+  const selfId = session?.id ?? ''
   // Compte famille : dossier affiché = membre sélectionné (soi par défaut)
-  const [patientId, setPatientId] = useState('')
-  useEffect(() => {
-    const s = getSession()
-    if (s?.id) {
-      setSelfId(s.id)
-      setPatientId(s.id)
-    }
-  }, [])
+  const [selectedId, setPatientId] = useState('')
+  const patientId = selectedId || selfId
 
   const { data: profils } = useProches(!!selfId)
   const hasProches = (profils?.length ?? 0) > 1
@@ -264,7 +259,7 @@ export default function DossierPage() {
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wider">
                   {ordMode === 'photo' ? 'Photo' : 'Fichier'}
                 </span>
-                <h3 className="text-sm font-bold text-[#010C2D]">Joindre l'ordonnance</h3>
+                <h3 className="text-sm font-bold text-[#010C2D]">Joindre l&apos;ordonnance</h3>
               </div>
 
               {/* File preview / picker */}
@@ -364,7 +359,7 @@ export default function DossierPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Date d'émission</label>
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Date d&apos;émission</label>
                   <input
                     type="date"
                     value={ordDate}

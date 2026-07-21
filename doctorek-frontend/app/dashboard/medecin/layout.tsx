@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Users, UserCircle, LogOut,
@@ -80,14 +80,14 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
       .catch(() => {})
   }, [])
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
+  function handleMouseMove(e: MouseEvent) {
     if (!dragRef.current) return
     const delta = e.clientX - startXRef.current
     const next = Math.min(380, Math.max(200, startWidthRef.current + delta))
     setSidebarWidth(next)
-  }, [])
+  }
 
-  const handleMouseUp = useCallback(() => {
+  function handleMouseUp() {
     if (!dragRef.current) return
     dragRef.current = false
     setIsDragging(false)
@@ -95,7 +95,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
     document.body.style.userSelect = ''
     document.removeEventListener('mousemove', handleMouseMove)
     document.removeEventListener('mouseup', handleMouseUp)
-  }, [handleMouseMove])
+  }
 
   function handleDividerMouseDown(e: React.MouseEvent) {
     e.preventDefault()
@@ -114,7 +114,8 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [handleMouseMove, handleMouseUp])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function handleLogout() {
     void logout()

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useRdvsMedecin } from '@/features/agenda/hooks'
 import { getSession } from '@/lib/session'
+import { useMounted } from '@/lib/useMounted'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import type { RendezVous, StatutRdv, CarteVirtuelleRequest, AntecedentChirurgical, MedicamentActuel } from '@/lib/types'
 import { useCarteByPatient, useUpdateCarte, useCreateCarte } from '@/features/carte/hooks'
@@ -1053,8 +1054,7 @@ export default function DossierPatientPage() {
   const medecinId = session?.role === 'MEDECIN' ? (session.id ?? '') : ''
 
   const [tab, setTab] = useState<TabId>('infos')
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
+  const mounted = useMounted()
 
   const { data: allRdvs, isLoading: rdvsLoading } = useRdvsMedecin(medecinId)
   const { data: ordonnances = [] } = useOrdonnances(patientId)
@@ -1098,7 +1098,7 @@ export default function DossierPatientPage() {
           </div>
           <h2 className="mb-2 text-xl font-bold text-zinc-900">Accès non autorisé</h2>
           <p className="mx-auto max-w-sm text-sm text-zinc-500">
-            Vous n'avez aucun rendez-vous avec ce patient. L'accès au dossier médical est
+            Vous n&apos;avez aucun rendez-vous avec ce patient. L&apos;accès au dossier médical est
             réservé aux médecins ayant une relation de soin établie.
           </p>
         </div>

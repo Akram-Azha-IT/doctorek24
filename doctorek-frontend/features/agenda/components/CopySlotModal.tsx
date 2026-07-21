@@ -21,7 +21,7 @@ export function CopySlotModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-80 rounded-xl bg-white shadow-2xl ring-1 ring-gray-200">
         <div className="border-b border-gray-100 px-5 py-4">
-          <p className="text-sm font-semibold text-gray-900">Copier vers d'autres jours</p>
+          <p className="text-sm font-semibold text-gray-900">Copier vers d&apos;autres jours</p>
           <p className="mt-0.5 text-xs text-gray-500">
             {slot.heureDebut} – {slot.heureFin} · {slot.dureeConsultation} min
           </p>

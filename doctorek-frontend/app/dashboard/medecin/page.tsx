@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarDays, Clock4, Users, TrendingUp } from 'lucide-react'
 import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { HeroBanner } from '@/features/medecin/dashboard/components/HeroBanner'
 import { StatCard } from '@/features/medecin/dashboard/components/StatCard'
@@ -18,18 +17,11 @@ export default function MedecinDashboardPage() {
   useRoleGuard('MEDECIN')
   const router = useRouter()
 
-  const [medecinId, setMedecinId] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-
-  useEffect(() => {
-    const session = getSession()
-    if (session?.role === 'MEDECIN' && session.id) {
-      setMedecinId(session.id)
-      setFirstName(session.firstName ?? '')
-      setLastName(session.lastName ?? '')
-    }
-  }, [])
+  const session = useSession()
+  const isMedecin = session?.role === 'MEDECIN' && !!session.id
+  const medecinId = isMedecin ? session.id : ''
+  const firstName = isMedecin ? (session.firstName ?? '') : ''
+  const lastName = isMedecin ? (session.lastName ?? '') : ''
 
   const { data: rdvs } = useRdvsMedecin(medecinId)
   const { data: disponibilites } = useDisponibilites(medecinId)

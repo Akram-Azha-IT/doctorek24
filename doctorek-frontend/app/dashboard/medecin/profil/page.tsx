@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { getSession, saveSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { useMedecin, useUpdateMedecin } from '@/features/annuaire/hooks'
 import { updateMedecinPhoto, type UpdateMedecinProfilePayload } from '@/features/annuaire/api'
 import { compressImage, parseApiError } from '@/features/medecin/profil/utils'
@@ -15,7 +16,8 @@ import type { ProfilForm } from '@/features/medecin/profil/types'
 export default function ProfilPage() {
   useRoleGuard('MEDECIN')
 
-  const [medecinId, setMedecinId] = useState('')
+  const session = useSession()
+  const medecinId = session?.id ?? ''
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoStatus, setPhotoStatus] = useState<'idle' | 'success'>('idle')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success'>('idle')
@@ -26,35 +28,30 @@ export default function ProfilPage() {
   })
 
   const photoInputRef = useRef<HTMLInputElement>(null)
-  const initialised = useRef(false)
-
-  useEffect(() => {
-    const s = getSession()
-    if (s) { setMedecinId(s.id); setPhotoUrl(s.photoUrl ?? null) }
-  }, [])
 
   const { data: profile, isLoading: profileLoading } = useMedecin(medecinId)
   const mutation = useUpdateMedecin(medecinId)
 
+  // Seed du formulaire + de la photo au premier profil chargé — pendant le rendu
+  // (pattern React "derive state from props"), pas dans un effet.
+  const [formSeeded, setFormSeeded] = useState(false)
+  if (profile && !formSeeded) {
+    setFormSeeded(true)
+    setForm({
+      firstName: profile.firstName ?? '', lastName: profile.lastName ?? '',
+      phone: '', specialite: profile.specialite ?? '', ville: profile.ville ?? '',
+      adresse: profile.adresse ?? '', lang: 'fr',
+      latitude: profile.latitude ?? null, longitude: profile.longitude ?? null,
+    })
+    setPhotoUrl(profile.photoUrl ?? session?.photoUrl ?? null)
+  }
+
+  // Photo persists in the backend (medecin_details.photo_url); the session-only enrichment
+  // is wiped on logout, so re-seed the session from the fetched profile.
   useEffect(() => {
-    if (profile && !initialised.current) {
-      initialised.current = true
-      setForm({
-        firstName: profile.firstName ?? '', lastName: profile.lastName ?? '',
-        phone: '', specialite: profile.specialite ?? '', ville: profile.ville ?? '',
-        adresse: profile.adresse ?? '', lang: 'fr',
-        latitude: profile.latitude ?? null, longitude: profile.longitude ?? null,
-      })
-      // Photo persists in the backend (medecin_details.photo_url); the session-only enrichment
-      // is wiped on logout, so reload it from the fetched profile and re-seed the session.
-      if (profile.photoUrl) {
-        setPhotoUrl(profile.photoUrl)
-        const s = getSession()
-        if (s) {
-          saveSession({ ...s, photoUrl: profile.photoUrl })
-          window.dispatchEvent(new Event('session-updated'))
-        }
-      }
+    if (profile?.photoUrl) {
+      const s = getSession()
+      if (s && s.photoUrl !== profile.photoUrl) saveSession({ ...s, photoUrl: profile.photoUrl })
     }
   }, [profile])
 

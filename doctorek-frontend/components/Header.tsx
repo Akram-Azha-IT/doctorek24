@@ -1,23 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { HelpCircle, UserRound } from 'lucide-react'
-import { getSession, type Session } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
 
 export function Header({ sticky = true }: { sticky?: boolean }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    setSession(getSession())
-    function sync() { setSession(getSession()) }
-    window.addEventListener('session-updated', sync)
-    return () => window.removeEventListener('session-updated', sync)
-  }, [])
+  const session = useSession()
 
   function handleLogout() {
     void logout()

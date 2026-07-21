@@ -225,7 +225,7 @@ export default function ProchesPage() {
         <p className="mt-5 flex items-start gap-2 px-1 text-xs text-zinc-400">
           <BellRing className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           Les proches majeurs disposant de leur propre email reçoivent leurs notifications
-          directement ; pour les mineurs, c'est vous qui les recevez.
+          directement ; pour les mineurs, c&apos;est vous qui les recevez.
         </p>
       )}
     </div>

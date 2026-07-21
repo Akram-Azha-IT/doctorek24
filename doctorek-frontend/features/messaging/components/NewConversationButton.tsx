@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { Conversation } from '@/lib/types'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { useRdvsPatient } from '@/features/agenda/hooks'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useStartConversation } from '../hooks'
@@ -18,14 +18,10 @@ interface NewConversationButtonProps {
  * message a doctor you have (or had) a RDV with.
  */
 export function NewConversationButton({ onStarted }: NewConversationButtonProps) {
-  const [patientId, setPatientId] = useState('')
-  const [role, setRole] = useState<string | null>(null)
+  const session = useSession()
+  const patientId = session?.id ?? ''
+  const role = session?.role ?? null
   const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    const s = getSession()
-    if (s) { setPatientId(s.id); setRole(s.role) }
-  }, [])
 
   if (role !== 'PATIENT') return null
 

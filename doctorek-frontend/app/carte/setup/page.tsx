@@ -322,7 +322,7 @@ export default function CarteSetupPage() {
             {step === 5 && (
               <div className="space-y-4">
                 <div>
-                  <label className={labelCls}>Organisme d'assurance</label>
+                  <label className={labelCls}>Organisme d&apos;assurance</label>
                   <input {...register('assuranceNom')} placeholder="ex: CNOPS, CNSS, AXA" className={inputCls} />
                 </div>
                 <div>
