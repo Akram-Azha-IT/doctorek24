@@ -8,10 +8,13 @@ import ma.doctorek.doctorek.messaging.dto.SendMessageRequest;
 import ma.doctorek.doctorek.messaging.dto.StartConversationRequest;
 import ma.doctorek.doctorek.repository.UserRepository;
 import ma.doctorek.doctorek.web.ApiResponse;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
@@ -72,6 +75,34 @@ public class MessagingController {
         User caller = resolveUser(principal.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(messagingService.sendMessage(caller.getId(), request)));
+    }
+
+    @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")
+    @PostMapping(value = "/conversations/{convId}/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<MessageResponse>> sendAudio(
+            @PathVariable UUID convId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("durationSec") int durationSec,
+            @RequestParam(value = "clientMsgId", required = false) String clientMsgId,
+            Principal principal) {
+        User caller = resolveUser(principal.getName());
+        MessageResponse msg = messagingService.sendAudioMessage(
+                caller.getId(), convId, file, durationSec, clientMsgId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(msg));
+    }
+
+    @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")
+    @GetMapping("/messages/{messageId}/audio")
+    public ResponseEntity<Resource> getAudio(
+            @PathVariable UUID messageId,
+            Principal principal) throws java.io.IOException {
+        User caller = resolveUser(principal.getName());
+        MessagingService.AudioStream audio = messagingService.getAudio(messageId, caller.getId());
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(audio.mime()))
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Disposition", "inline")
+                .body(audio.resource());
     }
 
     @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")

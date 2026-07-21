@@ -1,4 +1,5 @@
 import type { Message } from '@/lib/types'
+import { AudioMessage } from './AudioMessage'
 
 interface MessageBubbleProps {
   message: Message
@@ -19,7 +20,15 @@ export function MessageBubble({ message, isMine }: MessageBubbleProps) {
             : 'rounded-bl-sm bg-white text-[#333333]'
         }`}
       >
-        <p className="break-words leading-relaxed">{message.content}</p>
+        {message.messageType === 'AUDIO' && message.mediaUrl ? (
+          <AudioMessage
+            mediaUrl={message.mediaUrl}
+            durationSec={message.mediaDurationSec ?? 0}
+            mine={isMine}
+          />
+        ) : (
+          <p className="break-words leading-relaxed">{message.content}</p>
+        )}
         <div
           className={`mt-1 flex items-center gap-1 text-[10px] ${
             isMine ? 'justify-end text-blue-100' : 'text-gray-400'

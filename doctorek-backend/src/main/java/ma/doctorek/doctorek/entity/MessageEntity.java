@@ -2,6 +2,7 @@ package ma.doctorek.doctorek.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import ma.doctorek.doctorek.enums.MessageType;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -23,8 +24,23 @@ public class MessageEntity {
     @Column(name = "sender_id", nullable = false)
     private UUID senderId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", nullable = false)
+    private MessageType messageType = MessageType.TEXT;
+
+    // Présent pour TEXT ; null pour AUDIO.
+    @Column(columnDefinition = "TEXT")
     private String content;
+
+    // Champs AUDIO (null pour TEXT). media_key = clé de l'objet MinIO.
+    @Column(name = "media_key")
+    private String mediaKey;
+
+    @Column(name = "media_duration_sec")
+    private Integer mediaDurationSec;
+
+    @Column(name = "media_mime")
+    private String mediaMime;
 
     @Column(name = "sent_at", nullable = false, updatable = false)
     private Instant sentAt;
@@ -35,10 +51,25 @@ public class MessageEntity {
     @Column(name = "client_msg_id", unique = true)
     private String clientMsgId;
 
-    public MessageEntity(UUID conversationId, UUID senderId, String content) {
+    private MessageEntity(UUID conversationId, UUID senderId, MessageType type) {
         this.conversationId = conversationId;
         this.senderId = senderId;
-        this.content = content;
+        this.messageType = type;
+    }
+
+    public static MessageEntity text(UUID conversationId, UUID senderId, String content) {
+        MessageEntity m = new MessageEntity(conversationId, senderId, MessageType.TEXT);
+        m.content = content;
+        return m;
+    }
+
+    public static MessageEntity audio(UUID conversationId, UUID senderId,
+                                      String mediaKey, int durationSec, String mediaMime) {
+        MessageEntity m = new MessageEntity(conversationId, senderId, MessageType.AUDIO);
+        m.mediaKey = mediaKey;
+        m.mediaDurationSec = durationSec;
+        m.mediaMime = mediaMime;
+        return m;
     }
 
     @PrePersist
