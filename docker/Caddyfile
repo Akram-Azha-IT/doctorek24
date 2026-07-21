@@ -14,9 +14,8 @@ app.{$DOMAIN} {
 		Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
 		Cross-Origin-Opener-Policy "same-origin"
 		Cross-Origin-Resource-Policy "same-origin"
-		# CSP : 'unsafe-inline'/'unsafe-eval' requis par Next.js (scripts inline hydratation).
-		# img-src https: pour les tuiles OpenStreetMap (Leaflet). Durcir avec nonces plus tard.
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.{$DOMAIN} https://auth.{$DOMAIN} wss://api.{$DOMAIN} https://*.tile.openstreetmap.org https://countriesnow.space; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://auth.{$DOMAIN}"
+		# La CSP est désormais posée par Next.js (proxy.ts) avec un nonce par requête
+		# — impossible à générer ici, statiquement. Voir doctorek-frontend/proxy.ts.
 	}
 }
 
