@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { usePatientsMedecin } from '@/features/agenda/hooks'
 import { PatientListItem } from '@/features/agenda/components/PatientListItem'
 import { useSession } from '@/lib/useSession'
+import { useResetOnChange } from '@/lib/useResetOnChange'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 
 const FILTRES = [
@@ -34,13 +35,8 @@ export default function PatientsPage() {
     return () => clearTimeout(id)
   }, [search])
 
-  // Reset pagination quand la recherche/le filtre change — pendant le rendu, pas en effet.
-  const filterKey = `${debouncedSearch}|${filtre}`
-  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
-  if (prevFilterKey !== filterKey) {
-    setPrevFilterKey(filterKey)
-    setPage(0)
-  }
+  // Reset pagination quand la recherche/le filtre change.
+  useResetOnChange(`${debouncedSearch}|${filtre}`, () => setPage(0))
 
   const { data, isLoading, isError } = usePatientsMedecin(medecinId, debouncedSearch, filtre, page)
 

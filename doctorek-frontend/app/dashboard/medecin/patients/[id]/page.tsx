@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { useRdvsMedecin } from '@/features/agenda/hooks'
 import { getSession } from '@/lib/session'

@@ -15,7 +15,7 @@ export default function PatientRdvsPage() {
 
   const session = useSession()
   const patientId = session?.role === 'PATIENT' && session.id ? session.id : ''
-  const [selectedOverride, setSelected] = useState<string>('')
+  const [selectedOverride, setSelectedOverride] = useState<string>('')
   const selected = selectedOverride || patientId
 
   const { data: profils } = useProches(!!patientId)
@@ -34,12 +34,12 @@ export default function PatientRdvsPage() {
             <FilterChip
               key={profil.id}
               active={selected === profil.id}
-              onClick={() => setSelected(profil.id)}
+              onClick={() => setSelectedOverride(profil.id)}
             >
               {profil.self ? 'Moi' : profil.prenom}
             </FilterChip>
           ))}
-          <FilterChip active={selected === ALL} onClick={() => setSelected(ALL)}>
+          <FilterChip active={selected === ALL} onClick={() => setSelectedOverride(ALL)}>
             Toute la famille
           </FilterChip>
         </div>

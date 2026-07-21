@@ -35,7 +35,7 @@ export default function DossierPage() {
   const session = useSession()
   const selfId = session?.id ?? ''
   // Compte famille : dossier affiché = membre sélectionné (soi par défaut)
-  const [selectedId, setPatientId] = useState('')
+  const [selectedId, setSelectedId] = useState('')
   const patientId = selectedId || selfId
 
   const { data: profils } = useProches(!!selfId)
@@ -125,7 +125,7 @@ export default function DossierPage() {
             <button
               key={profil.id}
               type="button"
-              onClick={() => setPatientId(profil.id)}
+              onClick={() => setSelectedId(profil.id)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                 patientId === profil.id
                   ? 'bg-[#007DFF] text-white border-[#007DFF]'
@@ -359,8 +359,9 @@ export default function DossierPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Date d&apos;émission</label>
+                  <label htmlFor="ord-date-emission" className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Date d&apos;émission</label>
                   <input
+                    id="ord-date-emission"
                     type="date"
                     value={ordDate}
                     onChange={e => setOrdDate(e.target.value)}

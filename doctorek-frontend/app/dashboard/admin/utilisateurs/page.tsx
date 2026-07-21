@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useRef, useState, Fragment } from 'react'
+import { Suspense, useRef, useState, Fragment } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, CreditCard, ChevronUp, ChevronDown } from 'lucide-react'
 import { useAdminUsers, useToggleUserActive } from '@/features/admin/hooks'
