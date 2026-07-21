@@ -21,6 +21,10 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 })
 
+// CSP à base de nonce (proxy.ts) impose le rendu dynamique : le nonce est généré
+// par requête et ne peut pas être injecté dans une page pré-rendue au build.
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Doctorek : Trouvez votre médecin',
   description: 'Recherchez un médecin par spécialité et ville au Maroc',
