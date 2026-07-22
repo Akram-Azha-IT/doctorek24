@@ -1,6 +1,6 @@
 'use client'
 
-import type { Conversation } from '@/lib/types'
+import type { Conversation, Message } from '@/lib/types'
 import { getSession } from '@/lib/session'
 
 interface ConversationListProps {
@@ -12,10 +12,8 @@ interface ConversationListProps {
 function formatRelative(iso: string | null) {
   if (!iso) return ''
   const d = new Date(iso)
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffMin = Math.floor(diffMs / 60_000)
-  if (diffMin < 1) return 'À l\'instant'
+  const diffMin = Math.floor((Date.now() - d.getTime()) / 60_000)
+  if (diffMin < 1) return "à l'instant"
   if (diffMin < 60) return `${diffMin} min`
   const diffH = Math.floor(diffMin / 60)
   if (diffH < 24) return `${diffH} h`
@@ -27,12 +25,35 @@ function getOtherName(conv: Conversation, myId: string) {
 }
 
 function initials(name: string) {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+}
+
+// Couleur d'avatar stable dérivée du nom (teinte douce, lisible).
+function avatarHue(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = (name.codePointAt(i) ?? 0) + ((hash << 5) - hash)
+  return ((hash % 360) + 360) % 360
+}
+
+function Preview({ last }: { readonly last: Message | null }) {
+  if (!last) return <span className="italic text-[#9AA7B5]">Nouvelle conversation</span>
+  if (last.messageType === 'AUDIO') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" /><path strokeLinecap="round" d="M19 10v2a7 7 0 01-14 0v-2" /></svg>
+        Message vocal
+      </span>
+    )
+  }
+  if (last.messageType === 'DOCUMENT') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" /></svg>
+        {last.mediaFilename ?? 'Document'}
+      </span>
+    )
+  }
+  return <>{last.content}</>
 }
 
 export function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
@@ -41,50 +62,58 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
 
   if (conversations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400 p-8">
-        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-        <p className="text-sm text-center">Aucune conversation pour le moment</p>
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-[#9AA7B5]">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EDF2F8]">
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <p className="text-center text-[13px]">Aucune conversation pour le moment</p>
       </div>
     )
   }
 
   return (
-    <ul className="divide-y divide-gray-100">
+    <ul className="py-1">
       {conversations.map((conv) => {
         const name = getOtherName(conv, myId)
         const isSelected = conv.id === selectedId
+        const unread = conv.unreadCount > 0
+        const hue = avatarHue(name)
         return (
-          <li key={conv.id}>
+          <li key={conv.id} className="px-2">
             <button
               onClick={() => onSelect(conv)}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                isSelected ? 'bg-[#DFEFFE]' : 'hover:bg-gray-50'
+              className={`relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors ${
+                isSelected ? 'bg-[#EAF4FF]' : 'hover:bg-[#F4F7FA]'
               }`}
             >
-              <div className="flex-none w-10 h-10 rounded-full bg-[#007DFF] flex items-center justify-center text-white text-sm font-semibold">
+              {isSelected && <span className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-full bg-[#007DFF]" />}
+              <span
+                className="flex-none flex h-11 w-11 items-center justify-center rounded-full text-[13px] font-semibold text-white ring-2 ring-white shadow-sm"
+                style={{ backgroundColor: `hsl(${hue} 58% 52%)` }}
+              >
                 {initials(name)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-[#333333] text-sm truncate">{name}</span>
-                  <span className="flex-none text-[11px] text-gray-400">
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className={`truncate text-[14px] ${unread ? 'font-bold text-[#010C2D]' : 'font-semibold text-[#243547]'}`}>{name}</span>
+                  <span className={`flex-none text-[11px] tabular-nums ${unread ? 'font-semibold text-[#007DFF]' : 'text-[#9AA7B5]'}`}>
                     {formatRelative(conv.lastMessageAt)}
                   </span>
-                </div>
-                <div className="flex items-center justify-between gap-2 mt-0.5">
-                  <p className="text-xs text-gray-500 truncate">
-                    {conv.lastMessage?.content ?? 'Démarrez la conversation'}
-                  </p>
-                  {conv.unreadCount > 0 && (
-                    <span className="flex-none min-w-[18px] h-[18px] rounded-full bg-[#007DFF] text-white text-[10px] font-bold flex items-center justify-center px-1">
+                </span>
+                <span className="mt-0.5 flex items-center justify-between gap-2">
+                  <span className={`truncate text-[12.5px] ${unread ? 'text-[#465058]' : 'text-[#8A97A6]'}`}>
+                    <Preview last={conv.lastMessage} />
+                  </span>
+                  {unread && (
+                    <span className="flex-none flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[#007DFF] px-1.5 text-[10px] font-bold text-white">
                       {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                     </span>
                   )}
-                </div>
-              </div>
+                </span>
+              </span>
             </button>
           </li>
         )

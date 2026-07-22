@@ -217,7 +217,7 @@ export interface PatientProfileRequest {
 
 // ── Messaging ────────────────────────────────────────────────────────────────
 
-export type MessageType = 'TEXT' | 'AUDIO'
+export type MessageType = 'TEXT' | 'AUDIO' | 'DOCUMENT'
 
 export interface Message {
   id: string
@@ -225,8 +225,10 @@ export interface Message {
   senderId: string
   messageType?: MessageType          // défaut TEXT si absent (rétrocompat)
   content: string | null
-  mediaUrl?: string | null           // AUDIO : chemin protégé (auth requise)
+  mediaUrl?: string | null           // AUDIO/DOCUMENT : chemin protégé (auth requise)
   mediaDurationSec?: number | null   // AUDIO : durée en secondes
+  mediaFilename?: string | null      // DOCUMENT : nom d'origine
+  mediaSize?: number | null          // DOCUMENT : taille en octets
   sentAt: string
   readAt: string | null
 }
@@ -240,6 +242,7 @@ export interface Conversation {
   lastMessageAt: string | null
   createdAt: string
   unreadCount: number
+  patientCanReply: boolean           // le médecin peut couper les réponses du patient
   lastMessage: Message | null
 }
 

@@ -26,6 +26,10 @@ public class ConversationEntity {
     @Column(name = "last_message_at")
     private Instant lastMessageAt;
 
+    // Le médecin peut désactiver les réponses du patient sur cette conversation.
+    @Column(name = "patient_can_reply", nullable = false)
+    private boolean patientCanReply = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

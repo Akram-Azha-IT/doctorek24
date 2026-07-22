@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
-import { sendAudioMessage, fetchAudioObjectUrl } from './api'
+import { sendAudioMessage, fetchAudioObjectUrl, sendAttachment, setPatientReply } from './api'
 import { __setCachedSession } from '@/lib/session'
 
 describe('messaging audio api', () => {
@@ -35,6 +35,29 @@ describe('messaging audio api', () => {
     }))
     const blob = new Blob([new Uint8Array(1)], { type: 'audio/webm' })
     await expect(sendAudioMessage('c1', blob, 200, 'cid')).rejects.toThrow('Durée invalide')
+  })
+
+  test('sendAttachment POSTs the file as multipart', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 201,
+      json: async () => ({ success: true, data: { id: 'd1', messageType: 'DOCUMENT' } }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const file = new File([new Uint8Array(20)], 'ordo.pdf', { type: 'application/pdf' })
+    const msg = await sendAttachment('c1', file, 'cid-2')
+    expect(msg.id).toBe('d1')
+    const [url, opts] = fetchMock.mock.calls[0]
+    expect(url).toContain('/conversations/c1/attachment')
+    expect((opts.body as FormData).get('file')).toBeInstanceOf(File)
+  })
+
+  test('setPatientReply calls the PUT endpoint with the flag', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: async () => ({ success: true, data: null }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    await setPatientReply('c1', false)
+    expect(fetchMock.mock.calls[0][0]).toContain('/conversations/c1/patient-reply?allowed=false')
   })
 
   test('fetchAudioObjectUrl fetches with auth and returns object URL', async () => {

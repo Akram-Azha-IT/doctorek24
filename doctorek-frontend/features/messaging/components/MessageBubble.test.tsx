@@ -9,6 +9,11 @@ vi.mock('./AudioMessage', () => ({
     <div data-testid="audio-player">audio {durationSec}s</div>
   ),
 }))
+vi.mock('./DocumentMessage', () => ({
+  DocumentMessage: ({ filename }: { filename: string }) => (
+    <div data-testid="doc-card">{filename}</div>
+  ),
+}))
 
 const base = {
   id: 'm1',
@@ -38,9 +43,22 @@ describe('MessageBubble', () => {
     expect(screen.getByTestId('audio-player')).toHaveTextContent('audio 8s')
   })
 
-  test('affiche le double-check quand lu et mine', () => {
+  test('rend la carte document pour un message DOCUMENT', () => {
+    const msg: Message = {
+      ...base,
+      messageType: 'DOCUMENT',
+      content: null,
+      mediaUrl: '/api/v1/messaging/messages/m1/media',
+      mediaFilename: 'analyse.pdf',
+      mediaSize: 2048,
+    }
+    render(<MessageBubble message={msg} isMine={false} />)
+    expect(screen.getByTestId('doc-card')).toHaveTextContent('analyse.pdf')
+  })
+
+  test('affiche le reçu "Lu" quand lu et mine', () => {
     const msg: Message = { ...base, messageType: 'TEXT', content: 'x', readAt: '2026-07-21T10:01:00Z' }
     render(<MessageBubble message={msg} isMine />)
-    expect(screen.getByText('✓✓')).toBeInTheDocument()
+    expect(screen.getByLabelText('Lu')).toBeInTheDocument()
   })
 })

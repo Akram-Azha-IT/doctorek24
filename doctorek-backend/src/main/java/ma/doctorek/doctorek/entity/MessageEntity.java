@@ -42,6 +42,13 @@ public class MessageEntity {
     @Column(name = "media_mime")
     private String mediaMime;
 
+    // DOCUMENT : nom d'origine + taille (octets). null pour TEXT/AUDIO.
+    @Column(name = "media_filename")
+    private String mediaFilename;
+
+    @Column(name = "media_size")
+    private Long mediaSize;
+
     @Column(name = "sent_at", nullable = false, updatable = false)
     private Instant sentAt;
 
@@ -69,6 +76,17 @@ public class MessageEntity {
         m.mediaKey = mediaKey;
         m.mediaDurationSec = durationSec;
         m.mediaMime = mediaMime;
+        return m;
+    }
+
+    public static MessageEntity document(UUID conversationId, UUID senderId,
+                                         String mediaKey, String mediaMime,
+                                         String mediaFilename, long mediaSize) {
+        MessageEntity m = new MessageEntity(conversationId, senderId, MessageType.DOCUMENT);
+        m.mediaKey = mediaKey;
+        m.mediaMime = mediaMime;
+        m.mediaFilename = mediaFilename;
+        m.mediaSize = mediaSize;
         return m;
     }
 

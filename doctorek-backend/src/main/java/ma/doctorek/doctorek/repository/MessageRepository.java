@@ -24,4 +24,11 @@ public interface MessageRepository extends JpaRepository<MessageEntity, UUID> {
 
     @Query("SELECT COUNT(m) FROM MessageEntity m WHERE m.conversationId = :convId AND m.senderId <> :userId AND m.readAt IS NULL")
     long countUnread(@Param("convId") UUID convId, @Param("userId") UUID userId);
+
+    // Quota de pièces jointes par conversation (anti-remplissage disque).
+    @Query("SELECT COUNT(m) FROM MessageEntity m WHERE m.conversationId = :convId AND m.mediaKey IS NOT NULL")
+    long countMediaByConversation(@Param("convId") UUID convId);
+
+    @Query("SELECT COALESCE(SUM(m.mediaSize), 0) FROM MessageEntity m WHERE m.conversationId = :convId AND m.mediaSize IS NOT NULL")
+    long sumMediaSizeByConversation(@Param("convId") UUID convId);
 }
