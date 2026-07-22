@@ -33,17 +33,19 @@ function MessagesContent() {
   }
 
   return (
-    <div className="flex h-full bg-white rounded-none sm:rounded-2xl shadow-none sm:shadow-sm overflow-hidden">
+    <div className="flex h-full overflow-hidden bg-white ring-1 ring-[#E7ECF2] rounded-none sm:rounded-2xl shadow-none sm:shadow-[0_2px_16px_rgba(1,12,45,0.05)]">
 
-      {/* ── Conversation list panel ─────────────────────────────── */}
-      {/* Desktop: always visible. Mobile: only when no conv selected */}
+      {/* Panneau liste des conversations. Desktop: toujours visible. Mobile: si aucune sélection. */}
       <aside className={`
-        flex-col border-r border-gray-100
-        w-full sm:w-72 sm:flex-none sm:flex
+        flex-col border-r border-[#E7ECF2] bg-white
+        w-full sm:w-[19rem] sm:flex-none sm:flex
         ${selectedConv ? 'hidden sm:flex' : 'flex'}
       `}>
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold text-[#333333]">Messages</h2>
+        <div className="flex items-center justify-between gap-2 border-b border-[#E7ECF2] px-4 py-3.5">
+          <div>
+            <h2 className="text-[15px] font-bold text-[#010C2D]">Messagerie</h2>
+            <p className="text-[11px] text-[#9AA7B5]">Échanges sécurisés</p>
+          </div>
           <NewConversationButton onStarted={handleSelect} />
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -100,14 +102,15 @@ function MessagesContent() {
             <ChatWindow key={selectedConv.id} conversation={selectedConv} />
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-400">
-            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <div className="text-center">
-              <p className="text-sm font-medium text-[#333333]">Sélectionnez une conversation</p>
-              <p className="text-xs mt-1 text-gray-400">Choisissez dans la liste à gauche</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-[#F7F9FC] text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-[#007DFF] ring-1 ring-[#E7ECF2] shadow-sm">
+              <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5M21 12a9 9 0 11-3.6-7.2L21 3v9z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-[#243547]">Sélectionnez une conversation</p>
+              <p className="mt-1 text-[12.5px] text-[#9AA7B5]">Choisissez un échange dans la liste pour l&apos;ouvrir.</p>
             </div>
           </div>
         )}

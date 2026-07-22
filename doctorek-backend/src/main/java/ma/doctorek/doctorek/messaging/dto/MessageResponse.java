@@ -12,22 +12,23 @@ public record MessageResponse(
         UUID senderId,
         MessageType messageType,
         String content,
-        // AUDIO uniquement : URL protégée à récupérer avec le token (jamais publique)
-        // + durée en secondes. null pour TEXT.
+        // AUDIO/DOCUMENT : URL protégée à récupérer avec le token (jamais publique). null pour TEXT.
         String mediaUrl,
-        Integer mediaDurationSec,
+        Integer mediaDurationSec,   // AUDIO
+        String mediaFilename,       // DOCUMENT
+        Long mediaSize,             // DOCUMENT (octets)
         Instant sentAt,
         Instant readAt,
         String clientMsgId
 ) {
     public static MessageResponse from(MessageEntity m) {
-        String mediaUrl = m.getMessageType() == MessageType.AUDIO
-                ? "/api/v1/messaging/messages/" + m.getId() + "/audio"
-                : null;
+        boolean hasMedia = m.getMessageType() == MessageType.AUDIO
+                || m.getMessageType() == MessageType.DOCUMENT;
+        String mediaUrl = hasMedia ? "/api/v1/messaging/messages/" + m.getId() + "/media" : null;
         return new MessageResponse(
                 m.getId(), m.getConversationId(), m.getSenderId(),
                 m.getMessageType(), m.getContent(),
-                mediaUrl, m.getMediaDurationSec(),
+                mediaUrl, m.getMediaDurationSec(), m.getMediaFilename(), m.getMediaSize(),
                 m.getSentAt(), m.getReadAt(), m.getClientMsgId());
     }
 }

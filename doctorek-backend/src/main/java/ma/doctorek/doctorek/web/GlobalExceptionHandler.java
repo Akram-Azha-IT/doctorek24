@@ -79,6 +79,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Accès refusé"));
     }
 
+    // Dépassement de quota de fréquence (anti-flood) → 429.
+    @ExceptionHandler(ma.doctorek.doctorek.exception.RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRateLimit(
+            ma.doctorek.doctorek.exception.RateLimitExceededException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)

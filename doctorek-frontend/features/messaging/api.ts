@@ -29,8 +29,39 @@ export async function sendAudioMessage(
   return body.data as Message
 }
 
+/** Envoi d'une pièce jointe (PDF/JPEG/PNG). Multipart, frontière posée par le navigateur. */
+export async function sendAttachment(
+  convId: string,
+  file: File,
+  clientMsgId: string,
+): Promise<Message> {
+  const session = getSession()
+  const form = new FormData()
+  form.append('file', file, file.name)
+  form.append('clientMsgId', clientMsgId)
+
+  const res = await fetch(`${BASE}/api/v1/messaging/conversations/${convId}/attachment`, {
+    method: 'POST',
+    headers: session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+    body: form,
+  })
+  const body: ApiResponse<Message> = await res.json()
+  if (!res.ok || !body.success) {
+    throw new ApiError(body.message ?? `HTTP ${res.status}`, res.status)
+  }
+  return body.data as Message
+}
+
+/** Le médecin active/désactive le droit de réponse du patient. */
+export async function setPatientReply(convId: string, allowed: boolean): Promise<void> {
+  await apiFetch<unknown>(
+    `/api/v1/messaging/conversations/${convId}/patient-reply?allowed=${allowed}`,
+    { method: 'PUT' },
+  )
+}
+
 /**
- * Récupère l'audio protégé et renvoie un blob URL lisible par <audio>. La navigation directe
+ * Récupère un média protégé (audio ou document) et renvoie un blob URL. La navigation directe
  * n'enverrait pas le token (stocké hors cookie) → on fetch avec l'en-tête Authorization.
  */
 export async function fetchAudioObjectUrl(mediaUrl: string): Promise<string> {

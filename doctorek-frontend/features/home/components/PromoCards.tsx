@@ -7,7 +7,8 @@ export function PromoCards() {
     <div className="relative z-20 mt-4 md:-mt-30 px-4 md:px-8">
       <div className="mx-auto max-w-[1400px] grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        <a href="/login" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
+        {/* Carte Patients : masquée sur mobile (remplacée par la carte du hero), visible sur desktop */}
+        <a href="/login" className="group relative hidden md:flex md:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
           <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
             <div className="absolute rounded-full bg-[#D0E8FF] w-[200px] h-[200px] sm:w-[210px] sm:h-[210px] left-1/2 -translate-x-1/2 bottom-2 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
             <div className="absolute rounded-full bg-[#B6DAF7] w-[148px] h-[148px] sm:w-[155px] sm:h-[155px] left-1/2 -translate-x-1/2 bottom-6 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
@@ -16,10 +17,10 @@ export function PromoCards() {
             <div>
               <p className="text-[11px] font-semibold text-[#465058] uppercase tracking-widest mb-3">Patients</p>
               <h3 className="text-[18px] font-bold text-[#00263C] leading-snug mb-2">
-                Votre carte médicale digitale,<br />toujours sur vous
+                Votre santé,<br />sécurisée dans votre poche
               </h3>
               <p className="text-[#465058] text-[13px] leading-relaxed">
-                Groupe sanguin, allergies, contacts d&apos;urgence : accessibles même sans connexion.
+                Ajoutez votre carte médicale à Google&nbsp;Wallet ou Apple&nbsp;Wallet. Vos infos vitales accessibles partout, même hors ligne.
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-[#007DFF] font-semibold text-[14px] mt-5 group-hover:gap-2 transition-all">
@@ -27,7 +28,7 @@ export function PromoCards() {
             </span>
           </div>
           <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
-            {/* L'inclinaison est intégrée au mockup — pas de rotation CSS ici */}
+            {/* L'inclinaison est intégrée au mockup (pas de rotation CSS ici) */}
             <div className="absolute bottom-2 top-2 inset-x-[20%] sm:inset-x-auto sm:bottom-auto sm:right-9 sm:top-1/2 sm:-translate-y-1/2 sm:h-[215px] sm:w-[150px]">
               <div className="relative h-full w-full">
                 <Image
@@ -62,7 +63,7 @@ export function PromoCards() {
             </span>
           </div>
           <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
-            {/* L'inclinaison est intégrée au mockup — pas de rotation CSS ici */}
+            {/* L'inclinaison est intégrée au mockup (pas de rotation CSS ici) */}
             <div className="absolute bottom-2 top-2 inset-x-[20%] sm:inset-x-auto sm:bottom-auto sm:right-9 sm:top-1/2 sm:-translate-y-1/2 sm:h-[215px] sm:w-[150px]">
               <div className="relative h-full w-full">
                 <Image

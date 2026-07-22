@@ -13,12 +13,13 @@ public record ConversationResponse(
         Instant lastMessageAt,
         Instant createdAt,
         long unreadCount,
+        boolean patientCanReply,
         MessageResponse lastMessage
 ) {
     public static ConversationResponse from(ConversationEntity c, String medecinName, String patientName,
                                              long unreadCount, MessageResponse lastMessage) {
         return new ConversationResponse(c.getId(), c.getMedecinId(), c.getPatientId(),
                 medecinName, patientName, c.getLastMessageAt(), c.getCreatedAt(),
-                unreadCount, lastMessage);
+                unreadCount, c.isPatientCanReply(), lastMessage);
     }
 }

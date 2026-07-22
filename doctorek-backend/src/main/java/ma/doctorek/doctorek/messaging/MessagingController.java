@@ -92,17 +92,45 @@ public class MessagingController {
     }
 
     @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")
-    @GetMapping("/messages/{messageId}/audio")
-    public ResponseEntity<Resource> getAudio(
+    @PostMapping(value = "/conversations/{convId}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<MessageResponse>> sendAttachment(
+            @PathVariable UUID convId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "clientMsgId", required = false) String clientMsgId,
+            Principal principal) {
+        User caller = resolveUser(principal.getName());
+        MessageResponse msg = messagingService.sendDocumentMessage(caller.getId(), convId, file, clientMsgId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(msg));
+    }
+
+    // Sert audio (inline) et documents (téléchargement) — accès réservé aux participants.
+    @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")
+    @GetMapping("/messages/{messageId}/media")
+    public ResponseEntity<Resource> getMedia(
             @PathVariable UUID messageId,
             Principal principal) throws java.io.IOException {
         User caller = resolveUser(principal.getName());
-        MessagingService.AudioStream audio = messagingService.getAudio(messageId, caller.getId());
+        MessagingService.MediaStream media = messagingService.getMedia(messageId, caller.getId());
+        String disposition = media.inline()
+                ? "inline"
+                : "attachment; filename=\"" + (media.filename() != null ? media.filename() : "document") + "\"";
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(audio.mime()))
+                .contentType(MediaType.parseMediaType(media.mime()))
                 .header("X-Content-Type-Options", "nosniff")
-                .header("Content-Disposition", "inline")
-                .body(audio.resource());
+                .header("Content-Disposition", disposition)
+                .body(media.resource());
+    }
+
+    // Le médecin active/désactive le droit de réponse du patient sur la conversation.
+    @PreAuthorize("hasRole('MEDECIN')")
+    @PutMapping("/conversations/{convId}/patient-reply")
+    public ResponseEntity<ApiResponse<ConversationResponse>> setPatientReply(
+            @PathVariable UUID convId,
+            @RequestParam("allowed") boolean allowed,
+            Principal principal) {
+        User caller = resolveUser(principal.getName());
+        return ResponseEntity.ok(ApiResponse.ok(
+                messagingService.setPatientCanReply(convId, caller.getId(), allowed)));
     }
 
     @PreAuthorize("hasAnyRole('MEDECIN', 'PATIENT')")
