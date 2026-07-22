@@ -11,7 +11,7 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-function ReadReceipt({ read }: { read: boolean }) {
+function ReadReceipt({ read }: { readonly read: boolean }) {
   return (
     <svg width="15" height="11" viewBox="0 0 18 12" fill="none" role="img"
          aria-label={read ? 'Lu' : 'Envoyé'}

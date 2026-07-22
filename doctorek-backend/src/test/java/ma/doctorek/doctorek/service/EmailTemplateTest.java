@@ -22,11 +22,12 @@ class EmailTemplateTest {
     @DisplayName("shell produit un document de marque avec titre et pré-en-tête")
     void shell_containsBrandAndTitle() {
         String html = EmailTemplate.shell("aperçu", "Mon titre", EmailTemplate.p("corps"));
-        assertThat(html).contains("<!DOCTYPE html>");
-        assertThat(html).contains("Doctorek");
-        assertThat(html).contains("Mon titre");
-        assertThat(html).contains("aperçu");
-        assertThat(html).contains("L'équipe Doctorek");
+        assertThat(html)
+                .contains("<!DOCTYPE html>")
+                .contains("Doctorek")
+                .contains("Mon titre")
+                .contains("aperçu")
+                .contains("L'équipe Doctorek");
     }
 
     @Test
@@ -43,7 +44,8 @@ class EmailTemplateTest {
     @DisplayName("details échappe les valeurs utilisateur")
     void details_escapesValues() {
         String html = EmailTemplate.details(List.of(new Row("Motif", "<b>x</b>")));
-        assertThat(html).contains("&lt;b&gt;x&lt;/b&gt;");
-        assertThat(html).doesNotContain("<b>x</b>");
+        assertThat(html)
+                .contains("&lt;b&gt;x&lt;/b&gt;")
+                .doesNotContain("<b>x</b>");
     }
 }

@@ -360,7 +360,10 @@ public class MessagingService {
     /** Retire tout composant de chemin — on ne garde qu'un nom de fichier plat et borné. */
     private String sanitizeFilename(String name) {
         if (name == null || name.isBlank()) return "document";
-        String base = name.replaceAll(".*[/\\\\]", "").replaceAll("[\\r\\n\\t]", "").trim();
+        // Retire tout composant de chemin sans regex à retour arrière (perf).
+        int sep = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+        String base = (sep >= 0 ? name.substring(sep + 1) : name)
+                .replace("\r", "").replace("\n", "").replace("\t", "").trim();
         if (base.isBlank()) return "document";
         return base.length() > 200 ? base.substring(0, 200) : base;
     }

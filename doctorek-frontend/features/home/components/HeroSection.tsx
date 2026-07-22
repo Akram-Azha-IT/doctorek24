@@ -62,7 +62,7 @@ export function HeroSection() {
       <button
         type="button"
         onClick={() => setLangOpen((o) => !o)}
-        aria-haspopup="listbox"
+        aria-haspopup="menu"
         aria-expanded={langOpen}
         aria-label="Changer de langue"
         className="inline-flex items-center gap-1.5 rounded-full border border-[#007DFF]/30 bg-white/70 px-2.5 py-1.5 text-xs font-semibold text-[#007DFF] backdrop-blur-sm hover:bg-white transition-colors"
@@ -71,13 +71,13 @@ export function HeroSection() {
         {lang}
       </button>
       {langOpen && (
-        <ul role="listbox" className="absolute left-0 top-full z-50 mt-1.5 w-36 overflow-hidden rounded-xl bg-white p-1 shadow-[0_12px_30px_rgba(1,12,45,0.18)] ring-1 ring-black/5">
+        <ul role="menu" className="absolute left-0 top-full z-50 mt-1.5 w-36 overflow-hidden rounded-xl bg-white p-1 shadow-[0_12px_30px_rgba(1,12,45,0.18)] ring-1 ring-black/5">
           {LANGS.map((o) => (
             <li key={o.code}>
               <button
                 type="button"
-                role="option"
-                aria-selected={lang === o.code}
+                role="menuitemradio"
+                aria-checked={lang === o.code}
                 onClick={() => chooseLang(o.code)}
                 className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[13.5px] text-[#243547] hover:bg-[#F0F4F8]"
               >

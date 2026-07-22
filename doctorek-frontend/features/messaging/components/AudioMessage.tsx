@@ -10,7 +10,9 @@ interface AudioMessageProps {
 }
 
 // Barres de forme d'onde déterministes (aspect vocal, stable entre rendus).
+// Clé stable par barre (id figé) pour éviter l'usage de l'index en key.
 const BARS = [6, 11, 8, 14, 10, 16, 9, 13, 7, 15, 11, 8, 12, 6, 14, 9, 12, 7, 10, 13, 8, 15, 9, 6]
+  .map((h, i) => ({ id: `bar-${i}`, h }))
 
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60)
@@ -81,11 +83,11 @@ export function AudioMessage({ mediaUrl, durationSec, mine }: AudioMessageProps)
 
       <div className="flex-1">
         <div className="flex h-7 items-center gap-[3px]">
-          {BARS.map((h, i) => (
+          {BARS.map((bar, i) => (
             <span
-              key={i}
+              key={bar.id}
               className={`w-[3px] rounded-full transition-colors ${i < playedBars ? barOn : barOff}`}
-              style={{ height: `${h}px` }}
+              style={{ height: `${bar.h}px` }}
             />
           ))}
         </div>

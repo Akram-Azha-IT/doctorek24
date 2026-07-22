@@ -34,7 +34,7 @@
 		  de sécurité (CVE détectées par le scan d'image Trivy). À réviser/retirer
 		  quand un patch Spring Boot 3.5.x embarquera nativement ces versions.
 		-->
-		<postgresql.version>42.7.11</postgresql.version>        <!-- CVE-2026-42198 DoS SCRAM -->
+		<postgresql.version>42.7.12</postgresql.version>        <!-- CVE-2026-42198 DoS SCRAM, CVE-2026-54291 MITM -->
 		<tomcat.version>10.1.55</tomcat.version>                 <!-- CVE-2026-41293/43512/43515 (CRITICAL auth bypass, HTTP/2) -->
 		<netty.version>4.1.135.Final</netty.version>             <!-- CVE-2026-44249/45416/50010/42583 (hostname bypass, DoS) -->
 		<jackson-bom.version>2.21.4</jackson-bom.version>        <!-- CVE-2026-54512/54513 (RCE via PolymorphicTypeValidator) -->

@@ -42,6 +42,8 @@ export function DocumentMessage({ mediaUrl, filename, size, mine }: DocumentMess
   const chip = pdf ? 'bg-[#E01E5A] text-white' : 'bg-[#2EB67D] text-white'
   const surface = mine ? 'bg-white/12 hover:bg-white/20' : 'bg-[#F6F8FB] hover:bg-[#EDF2F8]'
   const sub = mine ? 'text-blue-50/80' : 'text-[#6B7A8D]'
+  const typeLabel = pdf ? 'PDF' : 'IMG'
+  const typeName = pdf ? 'Document PDF' : 'Image'
 
   return (
     <button
@@ -54,13 +56,13 @@ export function DocumentMessage({ mediaUrl, filename, size, mine }: DocumentMess
         {loading ? (
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
         ) : (
-          pdf ? 'PDF' : 'IMG'
+          typeLabel
         )}
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-semibold leading-tight">{filename}</span>
         <span className={`mt-0.5 block text-[11px] ${sub}`}>
-          {error ? "Erreur d'ouverture" : `${pdf ? 'Document PDF' : 'Image'} · ${fmtSize(size)}`}
+          {error ? "Erreur d'ouverture" : `${typeName} · ${fmtSize(size)}`}
         </span>
       </span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"

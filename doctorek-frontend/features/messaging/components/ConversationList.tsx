@@ -31,11 +31,11 @@ function initials(name: string) {
 // Couleur d'avatar stable dérivée du nom (teinte douce, lisible).
 function avatarHue(name: string) {
   let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  for (let i = 0; i < name.length; i++) hash = (name.codePointAt(i) ?? 0) + ((hash << 5) - hash)
   return ((hash % 360) + 360) % 360
 }
 
-function Preview({ last }: { last: Message | null }) {
+function Preview({ last }: { readonly last: Message | null }) {
   if (!last) return <span className="italic text-[#9AA7B5]">Nouvelle conversation</span>
   if (last.messageType === 'AUDIO') {
     return (

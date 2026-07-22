@@ -24,6 +24,14 @@ public class EmailService {
     private static final DateTimeFormatter DATE_FR = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH);
     private static final DateTimeFormatter HOUR_FR = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRENCH);
 
+    private static final String GREETING = "Bonjour,";
+    private static final String LBL_DATE = "Date";
+    private static final String LBL_HEURE = "Heure";
+    private static final String LBL_DUREE = "Durée";
+    private static final String LBL_MOTIF = "Motif";
+    private static final String LBL_REF = "Référence";
+    private static final String MINUTES = " minutes";
+
     private final JavaMailSender mailSender;
     private final String from;
     private final boolean enabled;
@@ -101,14 +109,14 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 "Votre rendez-vous du " + DATE_FR.format(rdv.getDateRdv()) + " est enregistré",
                 "Votre rendez-vous est enregistré",
-                EmailTemplate.p("Bonjour,")
+                EmailTemplate.p(GREETING)
               + EmailTemplate.p("Nous confirmons l'enregistrement de votre rendez-vous.")
               + EmailTemplate.details(List.of(
-                    new Row("Date", DATE_FR.format(rdv.getDateRdv())),
-                    new Row("Heure", HOUR_FR.format(rdv.getHeureRdv())),
-                    new Row("Durée", rdv.getDuree() + " minutes"),
-                    new Row("Motif", motif),
-                    new Row("Référence", rdv.getId().toString())))
+                    new Row(LBL_DATE, DATE_FR.format(rdv.getDateRdv())),
+                    new Row(LBL_HEURE, HOUR_FR.format(rdv.getHeureRdv())),
+                    new Row(LBL_DUREE, rdv.getDuree() + MINUTES),
+                    new Row(LBL_MOTIF, motif),
+                    new Row(LBL_REF, rdv.getId().toString())))
               + EmailTemplate.note("Vous pouvez gérer ou annuler ce rendez-vous depuis votre espace patient."));
 
         String text = """
@@ -138,13 +146,13 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 medecinNom + " a confirmé votre rendez-vous",
                 "Rendez-vous confirmé",
-                EmailTemplate.p("Bonjour,")
+                EmailTemplate.p(GREETING)
               + EmailTemplate.p("<strong>" + EmailTemplate.esc(medecinNom) + "</strong> a confirmé votre rendez-vous.")
               + EmailTemplate.details(List.of(
-                    new Row("Date", DATE_FR.format(rdv.getDateRdv())),
-                    new Row("Heure", HOUR_FR.format(rdv.getHeureRdv())),
-                    new Row("Durée", rdv.getDuree() + " minutes"),
-                    new Row("Référence", rdv.getId().toString())))
+                    new Row(LBL_DATE, DATE_FR.format(rdv.getDateRdv())),
+                    new Row(LBL_HEURE, HOUR_FR.format(rdv.getHeureRdv())),
+                    new Row(LBL_DUREE, rdv.getDuree() + MINUTES),
+                    new Row(LBL_REF, rdv.getId().toString())))
               + EmailTemplate.note("À très bientôt sur Doctorek."));
 
         String text = """
@@ -172,12 +180,12 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 medecinNom + " a créé un rendez-vous pour vous",
                 "Un rendez-vous vous attend",
-                EmailTemplate.p("Bonjour,")
+                EmailTemplate.p(GREETING)
               + EmailTemplate.p("<strong>" + EmailTemplate.esc(medecinNom) + "</strong> a créé un rendez-vous pour vous ou l'un de vos proches.")
               + EmailTemplate.details(List.of(
-                    new Row("Date", DATE_FR.format(rdv.getDateRdv())),
-                    new Row("Heure", HOUR_FR.format(rdv.getHeureRdv())),
-                    new Row("Motif", motif)))
+                    new Row(LBL_DATE, DATE_FR.format(rdv.getDateRdv())),
+                    new Row(LBL_HEURE, HOUR_FR.format(rdv.getHeureRdv())),
+                    new Row(LBL_MOTIF, motif)))
               + EmailTemplate.p("Rattachez ce rendez-vous à votre compte pour le gérer en famille :")
               + EmailTemplate.button("Rattacher ce rendez-vous", lienRattachement)
               + EmailTemplate.note("Ce lien est valable <strong>30 jours</strong> et ne peut être utilisé qu'une seule fois.")
@@ -212,12 +220,12 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 "Votre consultation avec " + medecinNom + " commence bientôt",
                 "Votre rendez-vous approche",
-                EmailTemplate.p("Bonjour,")
+                EmailTemplate.p(GREETING)
               + EmailTemplate.p("Votre consultation avec <strong>" + EmailTemplate.esc(medecinNom)
                     + "</strong> commence dans <strong>30 minutes</strong>.")
               + EmailTemplate.details(List.of(
-                    new Row("Heure", HOUR_FR.format(rdv.getHeureRdv())),
-                    new Row("Durée", rdv.getDuree() + " minutes")))
+                    new Row(LBL_HEURE, HOUR_FR.format(rdv.getHeureRdv())),
+                    new Row(LBL_DUREE, rdv.getDuree() + MINUTES)))
               + EmailTemplate.note("Pensez à apporter les documents demandés par votre médecin."));
 
         String text = """
@@ -247,14 +255,14 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 "Rappel de votre rendez-vous " + quand,
                 "Rappel de rendez-vous",
-                EmailTemplate.p("Bonjour,")
+                EmailTemplate.p(GREETING)
               + EmailTemplate.p("Ceci est un rappel de votre rendez-vous <strong>" + quand + "</strong>.")
               + EmailTemplate.details(List.of(
-                    new Row("Date", DATE_FR.format(rdv.getDateRdv())),
-                    new Row("Heure", HOUR_FR.format(rdv.getHeureRdv())),
-                    new Row("Durée", rdv.getDuree() + " minutes"),
-                    new Row("Motif", motif),
-                    new Row("Référence", rdv.getId().toString())))
+                    new Row(LBL_DATE, DATE_FR.format(rdv.getDateRdv())),
+                    new Row(LBL_HEURE, HOUR_FR.format(rdv.getHeureRdv())),
+                    new Row(LBL_DUREE, rdv.getDuree() + MINUTES),
+                    new Row(LBL_MOTIF, motif),
+                    new Row(LBL_REF, rdv.getId().toString())))
               + EmailTemplate.note("Si vous ne pouvez pas vous présenter, merci d'annuler depuis votre espace patient."));
 
         String text = """

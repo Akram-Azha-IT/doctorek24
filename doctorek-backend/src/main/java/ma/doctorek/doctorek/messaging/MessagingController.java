@@ -111,9 +111,13 @@ public class MessagingController {
             Principal principal) throws java.io.IOException {
         User caller = resolveUser(principal.getName());
         MessagingService.MediaStream media = messagingService.getMedia(messageId, caller.getId());
-        String disposition = media.inline()
-                ? "inline"
-                : "attachment; filename=\"" + (media.filename() != null ? media.filename() : "document") + "\"";
+        String disposition;
+        if (media.inline()) {
+            disposition = "inline";
+        } else {
+            String name = media.filename() != null ? media.filename() : "document";
+            disposition = "attachment; filename=\"" + name + "\"";
+        }
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(media.mime()))
                 .header("X-Content-Type-Options", "nosniff")

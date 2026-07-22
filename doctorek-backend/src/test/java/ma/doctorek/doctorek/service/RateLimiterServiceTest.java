@@ -56,7 +56,8 @@ class RateLimiterServiceTest {
     void overLimit_throws() {
         when(redis.opsForValue()).thenReturn(ops);
         when(ops.increment(anyString())).thenReturn(21L);
-        assertThatThrownBy(() -> limiter.checkAndIncrement("msg", user, 20, Duration.ofMinutes(1)))
+        Duration window = Duration.ofMinutes(1);
+        assertThatThrownBy(() -> limiter.checkAndIncrement("msg", user, 20, window))
                 .isInstanceOf(RateLimitExceededException.class);
     }
 
