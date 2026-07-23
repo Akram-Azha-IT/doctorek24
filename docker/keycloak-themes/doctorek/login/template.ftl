@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow">
     <title>Connexion – Doctorek</title>
-    <link rel="icon" href="${url.resourcesPath}/img/logo0.png" />
+    <link rel="icon" href="${url.resourcesPath}/img/icone-doctorek.png" />
     <#if properties.styles?has_content>
         <#list properties.styles?split(' ') as style>
             <link href="${url.resourcesPath}/${style}" rel="stylesheet" />

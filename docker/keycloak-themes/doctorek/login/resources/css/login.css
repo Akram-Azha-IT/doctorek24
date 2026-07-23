@@ -247,13 +247,8 @@ html, body {
   .dk-mobile-logo { display: none; }
 }
 
-.dk-right-heading { margin-bottom: 12px; }
-
-/* Sans le panneau sombre de gauche (mobile / fenêtre étroite), on centre
-   le logo, le titre et la note CNDP dans le conteneur blanc. */
-@media (max-width: 1023px) {
-  .dk-right-heading { text-align: center; }
-}
+/* Titre et sous-titre centrés dans le conteneur blanc (mobile et desktop). */
+.dk-right-heading { margin-bottom: 12px; text-align: center; }
 
 .dk-right-heading h2 {
   font-size: 22px;
