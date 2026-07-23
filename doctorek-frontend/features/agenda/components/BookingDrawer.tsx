@@ -143,17 +143,8 @@ export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
         {/* Content */}
         <div className="flex flex-col">
 
-          {/* Récap compact mobile : la grande carte médecin cacherait les boutons
-              quand le clavier est ouvert, on la remplace par une ligne. */}
-          <div className="md:hidden px-6 pt-1 pb-3 border-b border-zinc-100">
-            <p className="text-[14px] font-bold text-[#010C2D] truncate">{doctorName}</p>
-            <p className="mt-0.5 text-[12.5px] text-[#465058] capitalize">
-              {formatDate(slot.date)} · {slot.debut} – {slot.fin}
-            </p>
-          </div>
-
-          {/* Doctor header — blue gradient (desktop uniquement) */}
-          <div className="hidden md:block bg-gradient-to-br from-[#007DFF] to-[#064178] px-6 pt-4 pb-6 md:pt-8">
+          {/* Doctor header — blue gradient */}
+          <div className="bg-gradient-to-br from-[#007DFF] to-[#064178] px-6 pt-4 pb-6 md:pt-8">
             <div className="flex items-center gap-4">
               <div className="shrink-0 ring-2 ring-white/30 rounded-full">
                 <MedecinAvatar

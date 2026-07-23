@@ -277,7 +277,7 @@ export default function RecherchePage() {
         type="button"
         onClick={() => setMobileView(v => v === 'list' ? 'map' : 'list')}
         className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 lg:hidden flex items-center gap-2 rounded-full bg-[#007DFF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-400/40 ring-1 ring-white/20 active:scale-95 hover:bg-[#00263C] transition-all duration-300 ${
-          nearBottom ? 'opacity-0 pointer-events-none scale-90' : 'opacity-100 scale-100'
+          nearBottom || bookingSlot ? 'opacity-0 pointer-events-none scale-90' : 'opacity-100 scale-100'
         }`}
       >
         {mobileView === 'list' ? <><MapIcon /> Vue Carte</> : <><ListIcon /> Vue Liste</>}

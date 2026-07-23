@@ -240,7 +240,7 @@ html, body {
   overflow-y: auto;
 }
 
-.dk-mobile-logo { margin-bottom: 20px; }
+.dk-mobile-logo { margin-bottom: 20px; display: flex; justify-content: center; }
 .dk-mobile-logo img { height: 32px; width: auto; }
 
 @media (min-width: 1024px) {
@@ -495,6 +495,7 @@ button[data-password-toggle]:hover {
   margin: 12px 0 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 10px;
   color: rgba(70, 80, 88, 0.5);
