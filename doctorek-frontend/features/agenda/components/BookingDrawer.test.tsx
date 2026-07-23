@@ -39,7 +39,8 @@ describe('BookingDrawer', () => {
   test('renders the drawer with doctor name for a slot', () => {
     render(<BookingDrawer slot={slot} onClose={() => {}} />)
     expect(screen.getByTestId('confirm-form')).toBeInTheDocument()
-    expect(screen.getByText(/Sara\s+Bennani/)).toBeInTheDocument()
+    // Le nom apparaît deux fois : récap compact mobile + carte médecin desktop.
+    expect(screen.getAllByText(/Sara\s+Bennani/).length).toBeGreaterThanOrEqual(1)
   })
 
   test('ESC closes after the exit transition', () => {

@@ -98,7 +98,7 @@ export function ConfirmRdvForm({
         patientId: values.patientId,
         dateRdv,
         heureRdv,
-        motif: values.questionnaire.message,
+        motif: values.questionnaire.message?.trim() || undefined,
         questionnaire: values.questionnaire,
       },
       {
@@ -212,7 +212,7 @@ export function ConfirmRdvForm({
 
           {/* Message */}
           <Field
-            label="Message pour le médecin *"
+            label="Message pour le médecin (optionnel)"
             id="questionnaire.message"
             error={errors.questionnaire?.message?.message}
           >
