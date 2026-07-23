@@ -6,6 +6,7 @@ import type { Conversation, Message } from '@/lib/types'
 import { getSession } from '@/lib/session'
 import { useMessages, useMarkRead } from '../hooks'
 import { useChat } from '../useChat'
+import { useStompContext } from '@/lib/stomp-context'
 import { useAudioRecorder, MAX_AUDIO_SEC } from '../useAudioRecorder'
 import { toast } from 'sonner'
 import { MessageBubble } from './MessageBubble'
@@ -171,6 +172,7 @@ function useComposer(conversation: Conversation, myId: string) {
 /** Gère le droit de réponse du patient côté médecin (optimiste + rollback). */
 function useReplyControl(conversation: Conversation) {
   const qc = useQueryClient()
+  const { subscribe } = useStompContext()
   const [canReply, setCanReply] = useState(conversation.patientCanReply)
   // Resynchronise si la prop change de valeur (pendant le rendu).
   const [prevConvReply, setPrevConvReply] = useState(conversation.patientCanReply)
@@ -179,6 +181,22 @@ function useReplyControl(conversation: Conversation) {
     setCanReply(conversation.patientCanReply)
   }
   const [togglingReply, setTogglingReply] = useState(false)
+
+  // Le médecin (dés)active les réponses : le backend pousse la conversation mise à jour,
+  // le composer du patient suit immédiatement, sans refresh.
+  useEffect(() => {
+    return subscribe('/user/queue/conversations', (body) => {
+      try {
+        const updated: Conversation = JSON.parse(body)
+        if (updated.id === conversation.id) {
+          setCanReply(updated.patientCanReply)
+        }
+        qc.invalidateQueries({ queryKey: ['conversations'] })
+      } catch {
+        // trame malformée — ignore
+      }
+    })
+  }, [conversation.id, subscribe, qc])
 
   async function handleToggleReply() {
     if (togglingReply) return

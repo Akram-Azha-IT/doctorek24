@@ -232,6 +232,16 @@ public class MessagingService {
         }
         conv.setPatientCanReply(allowed);
         conversationRepo.save(conv);
+
+        // Push STOMP au patient : son composer se (dés)active immédiatement, sans refresh.
+        try {
+            User patient = resolveById(conv.getPatientId());
+            stompTemplate.convertAndSendToUser(patient.getEmail(), "/queue/conversations",
+                    toResponse(conv, conv.getPatientId()));
+        } catch (Exception e) {
+            log.warn("Push conversation update failed for {}: {}", convId, e.getMessage());
+        }
+
         return toResponse(conv, medecinId);
     }
 
