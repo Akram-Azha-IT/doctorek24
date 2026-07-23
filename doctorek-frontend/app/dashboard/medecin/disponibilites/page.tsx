@@ -31,6 +31,8 @@ export default function DisponibilitesPage() {
   const [leftWidth, setLeftWidth] = useState(DEFAULT_LEFT)
   const [isDragging, setIsDragging] = useState(false)
   const [panelOpen, setPanelOpen] = useState(true)
+  // Mobile : un seul panneau à la fois (les deux côte à côte ne tiennent pas)
+  const [mobileTab, setMobileTab] = useState<'dispos' | 'agenda'>('dispos')
 
   const containerRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef(false)
@@ -161,7 +163,7 @@ export default function DisponibilitesPage() {
             type="button"
             onClick={() => setPanelOpen((o) => !o)}
             aria-label={panelOpen ? 'Fermer le panel' : 'Ouvrir le panel'}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[#EBF4FF]"
+            className="hidden md:flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[#EBF4FF]"
             style={{ border: '1px solid #E5E9F0' }}
           >
             <svg
@@ -188,17 +190,38 @@ export default function DisponibilitesPage() {
             <span className="sm:hidden">RDV</span>
           </button>
         </div>
+
+        {/* Bascule mobile : un panneau plein écran à la fois */}
+        <div className="mt-3 flex rounded-xl bg-[#E8EFF6] p-1 md:hidden">
+          {([['dispos', 'Disponibilités'], ['agenda', 'Agenda']] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setMobileTab(key)}
+              className={`flex-1 rounded-lg py-1.5 text-[13px] font-semibold transition-colors ${
+                mobileTab === key ? 'bg-white text-[#007DFF] shadow-sm' : 'text-[#465058]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {creatingRdv && medecinId && (
         <CreerRdvModal medecinId={medecinId} onClose={() => setCreatingRdv(false)} />
       )}
 
-      <main ref={containerRef} className="flex overflow-hidden" style={{ height: 'calc(100vh - 128px)', background: '#F0F2F5' }}>
+      <main
+        ref={containerRef}
+        className="flex overflow-hidden h-[calc(100dvh-176px)] md:h-[calc(100vh-128px)]"
+        style={{ background: '#F0F2F5' }}
+      >
+        {/* Mobile : plein écran selon l'onglet ; desktop : panneau redimensionnable */}
         <div
-          className="shrink-0 border-r overflow-hidden bg-white"
+          className={`${mobileTab === 'dispos' ? 'w-full' : 'hidden'} md:block md:w-[var(--dispo-w)] shrink-0 md:border-r overflow-hidden bg-white`}
           style={{
-            width: panelOpen ? leftWidth : 0,
+            ['--dispo-w' as string]: `${panelOpen ? leftWidth : 0}px`,
             borderColor: '#E5E9F0',
             transition: isDragging ? 'none' : 'width 250ms ease',
           }}
@@ -217,9 +240,13 @@ export default function DisponibilitesPage() {
           />
         </div>
 
-        {panelOpen && <ResizableDivider isDragging={isDragging} onMouseDown={handleDividerMouseDown} />}
+        {panelOpen && (
+          <div className="hidden md:block">
+            <ResizableDivider isDragging={isDragging} onMouseDown={handleDividerMouseDown} />
+          </div>
+        )}
 
-        <div className="flex-1 overflow-hidden">
+        <div className={`${mobileTab === 'agenda' ? 'flex-1' : 'hidden'} md:block md:flex-1 overflow-hidden`}>
           <AvailabilityWeekGrid
             disponibilites={disponibilites ?? []}
             rendezVous={rendezVous ?? []}
