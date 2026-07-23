@@ -73,7 +73,7 @@ export function AuthShell({
         <div className="flex flex-col justify-center bg-white px-8 py-5 w-full lg:flex-1 overflow-y-auto">
 
           {/* Mobile-only logo */}
-          <div className="mb-5 self-start lg:hidden">
+          <div className="mb-5 self-center lg:hidden">
             <Logo width={120} height={40} className="h-8 w-auto" priority />
           </div>
 
@@ -97,7 +97,7 @@ export function AuthShell({
           </div>
 
           {/* Footer note */}
-          <p className="mt-3 flex items-center gap-1.5 text-[10px] text-[#465058]/50">
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-[#465058]/50">
             <ShieldIcon />
             {`Données médicales protégées · CNDP Maroc`}
           </p>

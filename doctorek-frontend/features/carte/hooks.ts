@@ -18,6 +18,10 @@ export function useCarteByPatient(patientId: string | null) {
     },
     enabled: !!patientId,
     retry: false,
+    // Au premier login, la carte est provisionnée par /me côté backend : la première
+    // requête peut tomber avant la création (404). On re-tente tant qu'il n'y a pas
+    // de carte, puis on arrête dès qu'elle existe.
+    refetchInterval: (query) => (query.state.data === null ? 4000 : false),
   })
 }
 
