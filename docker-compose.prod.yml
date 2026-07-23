@@ -65,6 +65,8 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
+      # URL de l'app Next : liens du thème de login (logo, créer un compte)
+      DOCTOREK_APP_URL: https://app.${DOMAIN}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     volumes:

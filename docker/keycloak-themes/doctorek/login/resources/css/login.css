@@ -249,6 +249,12 @@ html, body {
 
 .dk-right-heading { margin-bottom: 12px; }
 
+/* Sans le panneau sombre de gauche (mobile / fenêtre étroite), on centre
+   le logo, le titre et la note CNDP dans le conteneur blanc. */
+@media (max-width: 1023px) {
+  .dk-right-heading { text-align: center; }
+}
+
 .dk-right-heading h2 {
   font-size: 22px;
   font-weight: 800;
