@@ -53,6 +53,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/carte/ref/*/otp").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/carte/ref/*/otp/verify").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*/sensible").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*/dossier").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*/ordonnances/*/fichier").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*/documents/*/download").permitAll()
                 // public rattachement info (compte famille) — masked data only, claim requires auth
                 .requestMatchers(HttpMethod.GET, "/api/v1/patients/rattachement/*").permitAll()
                 // websocket handshake (JWT auth via STOMP CONNECT interceptor)

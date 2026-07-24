@@ -2,6 +2,7 @@ package ma.doctorek.doctorek.web;
 
 import jakarta.validation.Valid;
 import ma.doctorek.doctorek.dto.CarteAccessResponse;
+import ma.doctorek.doctorek.dto.CarteDossierResponse;
 import ma.doctorek.doctorek.dto.CartePublicResponse;
 import ma.doctorek.doctorek.dto.CarteSensibleResponse;
 import ma.doctorek.doctorek.dto.CarteVirtuelleRequest;
@@ -17,11 +18,16 @@ import ma.doctorek.doctorek.repository.UserRepository;
 import ma.doctorek.doctorek.service.CarteAccessService;
 import ma.doctorek.doctorek.service.CarteService;
 import ma.doctorek.doctorek.service.GoogleWalletService;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.UUID;
 
@@ -96,6 +102,43 @@ public class CarteController {
             @PathVariable String cardRef,
             @RequestHeader(name = "X-Carte-Access", required = false) String accessToken) {
         return ResponseEntity.ok(ApiResponse.ok(carteAccessService.getSensible(cardRef, accessToken)));
+    }
+
+    // Ordonnances + documents du patient, déverrouillés par l'OTP (même jeton).
+    @GetMapping("/ref/{cardRef}/dossier")
+    public ResponseEntity<ApiResponse<CarteDossierResponse>> getDossier(
+            @PathVariable String cardRef,
+            @RequestHeader(name = "X-Carte-Access", required = false) String accessToken) {
+        return ResponseEntity.ok(ApiResponse.ok(carteAccessService.getDossier(cardRef, accessToken)));
+    }
+
+    // Fichier d'ordonnance (OTP-gated) : le blob est récupéré côté client avec le header.
+    @GetMapping("/ref/{cardRef}/ordonnances/{ordonnanceId}/fichier")
+    public ResponseEntity<Resource> ordonnanceFichier(
+            @PathVariable String cardRef,
+            @PathVariable UUID ordonnanceId,
+            @RequestHeader(name = "X-Carte-Access", required = false) String accessToken) throws IOException {
+        var result = carteAccessService.downloadOrdonnanceFichier(cardRef, ordonnanceId, accessToken);
+        return fileResponse(result.resource(), result.nom());
+    }
+
+    // Fichier de document médical (OTP-gated).
+    @GetMapping("/ref/{cardRef}/documents/{documentId}/download")
+    public ResponseEntity<Resource> documentDownload(
+            @PathVariable String cardRef,
+            @PathVariable UUID documentId,
+            @RequestHeader(name = "X-Carte-Access", required = false) String accessToken) throws IOException {
+        var result = carteAccessService.downloadDocument(cardRef, documentId, accessToken);
+        return fileResponse(result.resource(), result.nom());
+    }
+
+    private ResponseEntity<Resource> fileResponse(Resource resource, String nom) {
+        MediaType contentType = MediaTypeFactory.getMediaType(nom).orElse(MediaType.APPLICATION_OCTET_STREAM);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + nom + "\"")
+                .header("X-Content-Type-Options", "nosniff")
+                .contentType(contentType)
+                .body(resource);
     }
 
     @PreAuthorize("hasRole('PATIENT')")

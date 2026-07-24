@@ -6,7 +6,7 @@ import type { CarteSensible } from '@/lib/types'
 
 interface SensibleUnlockProps {
   readonly cardRef: string
-  readonly onUnlocked: (sensible: CarteSensible) => void
+  readonly onUnlocked: (sensible: CarteSensible, accessToken: string) => void
 }
 
 const C_BLUE = '#007DFF'
@@ -45,7 +45,7 @@ export function SensibleUnlock({ cardRef, onUnlocked }: SensibleUnlockProps) {
     try {
       const grant = await verifyCarteOtp(cardRef, code)
       const sensible = await getCarteSensible(cardRef, grant.accessToken)
-      onUnlocked(sensible)
+      onUnlocked(sensible, grant.accessToken)
     } catch {
       setError('Code invalide ou expiré.')
     } finally {

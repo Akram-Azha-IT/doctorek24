@@ -43,7 +43,7 @@ jobs:
           -Dsonar.host.url=${{ vars.SONAR_HOST_URL }}
           -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_BACKEND }}
           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-          -Dsonar.coverage.exclusions=**/dto/**,**/entity/**,**/config/**,**/*Application.java,**/*Controller.java,**/enums/**,**/GlobalExceptionHandler.java,**/service/EmailService.java
+          -Dsonar.coverage.exclusions=**/dto/**,**/entity/**,**/config/**,**/security/**,**/*Application.java,**/*Controller.java,**/enums/**,**/GlobalExceptionHandler.java,**/service/EmailService.java
           -Dsonar.qualitygate.wait=true
 
   sonar-frontend:

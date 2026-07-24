@@ -7,6 +7,12 @@ import {
   CarteOtpChallenge,
   CarteAccessGrant,
 } from '@/lib/types'
+import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
+
+export interface CarteDossier {
+  ordonnances: OrdonnanceDto[]
+  documents: DocumentMedicalDto[]
+}
 
 export async function createCarte(data: CarteVirtuelleRequest): Promise<CarteVirtuelle> {
   return apiFetch<CarteVirtuelle>('/api/v1/carte', {
@@ -55,6 +61,23 @@ export async function getCarteSensible(cardRef: string, accessToken: string): Pr
   return apiFetch<CarteSensible>(`/api/v1/carte/ref/${cardRef}/sensible`, {
     headers: { 'X-Carte-Access': accessToken },
   })
+}
+
+// Ordonnances + documents du patient, déverrouillés par le même jeton OTP.
+export async function getCarteDossier(cardRef: string, accessToken: string): Promise<CarteDossier> {
+  return apiFetch<CarteDossier>(`/api/v1/carte/ref/${cardRef}/dossier`, {
+    headers: { 'X-Carte-Access': accessToken },
+  })
+}
+
+const BASE = process.env.NEXT_PUBLIC_API_URL
+
+export function carteOrdonnanceFichierUrl(cardRef: string, ordonnanceId: string): string {
+  return `${BASE}/api/v1/carte/ref/${cardRef}/ordonnances/${ordonnanceId}/fichier`
+}
+
+export function carteDocumentDownloadUrl(cardRef: string, documentId: string): string {
+  return `${BASE}/api/v1/carte/ref/${cardRef}/documents/${documentId}/download`
 }
 
 export async function getGoogleWalletSaveUrl(patientId: string): Promise<{ saveUrl: string }> {
