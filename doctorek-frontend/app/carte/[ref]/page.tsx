@@ -81,7 +81,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
 }
 
 // Champ de données style formulaire officiel (label micro + valeur tabulaire).
-function IdField({ label, value }: { label: string; value: string }) {
+function IdField({ label, value }: { readonly label: string; readonly value: string }) {
   return (
     <span className="inline-flex items-baseline gap-1.5">
       <span className="text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: `${C_BODY}70` }}>{label}</span>
@@ -238,8 +238,8 @@ export default function CarteScanPage() {
         {/* Ligne de sécurité guilloché (subtile, ton officiel) */}
         <div className="absolute inset-x-0 top-1 h-full pointer-events-none overflow-hidden opacity-[0.04]" aria-hidden="true">
           <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1200 200">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <path key={`g-${i}`} d={`M0 ${20 + i * 26} C 300 ${i * 26}, 900 ${40 + i * 26}, 1200 ${10 + i * 26}`} stroke={C_NAVY} strokeWidth="1" fill="none" />
+            {[20, 46, 72, 98, 124, 150, 176].map((y) => (
+              <path key={y} d={`M0 ${y} C 300 ${y - 20}, 900 ${y + 20}, 1200 ${y - 10}`} stroke={C_NAVY} strokeWidth="1" fill="none" />
             ))}
           </svg>
         </div>
