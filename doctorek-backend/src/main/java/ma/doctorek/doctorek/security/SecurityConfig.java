@@ -47,8 +47,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins/*").permitAll()
                 // public creneaux (booking flow)
                 .requestMatchers(HttpMethod.GET, "/api/v1/agenda/medecins/*/creneaux").permitAll()
-                // public emergency QR scan — exposes only the carte fields, never profile/rdv/dossier
+                // public emergency QR scan: exposes only the vital subset (never sensible fields)
                 .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*").permitAll()
+                // OTP flow for the sensible section (code sent to the patient, gated by grant token)
+                .requestMatchers(HttpMethod.POST, "/api/v1/carte/ref/*/otp").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/carte/ref/*/otp/verify").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*/sensible").permitAll()
                 // public rattachement info (compte famille) — masked data only, claim requires auth
                 .requestMatchers(HttpMethod.GET, "/api/v1/patients/rattachement/*").permitAll()
                 // websocket handshake (JWT auth via STOMP CONNECT interceptor)

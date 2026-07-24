@@ -166,6 +166,47 @@ export interface CarteVirtuelle {
   updatedAt: string
 }
 
+// Sous-ensemble d'urgence renvoyé au scan public du QR (sans données sensibles).
+export interface CartePublic {
+  id: string
+  patientId: string
+  cardRef: string
+  statut: 'VIRTUEL'
+  firstName: string | null
+  lastName: string | null
+  groupeSanguin: string | null
+  tailleCm: number | null
+  poidsKg: number | null
+  donneurOrganes: boolean
+  allergies: string[]
+  maladiesChroniques: string[]
+  contactsUrgence: ContactUrgence[]
+  createdAt: string
+  updatedAt: string
+}
+
+// Partie sensible, obtenue seulement après OTP validé par le patient.
+export interface CarteSensible {
+  medicamentsActuels: MedicamentActuel[]
+  antecedentsChirurgicaux: AntecedentChirurgical[]
+  vaccinations: string[]
+  antecedentsFamiliaux: string[]
+  medecinTraitant: string | null
+  assuranceNom: string | null
+  assuranceNumero: string | null
+  assuranceDetails: string | null
+}
+
+export interface CarteOtpChallenge {
+  maskedDestination: string
+  expiresInSec: number
+}
+
+export interface CarteAccessGrant {
+  accessToken: string
+  expiresInSec: number
+}
+
 export interface CarteVirtuelleRequest {
   groupeSanguin?: string | null
   tailleCm?: number | null

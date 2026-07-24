@@ -1,5 +1,12 @@
 import { apiFetch } from '@/lib/api-client'
-import { CarteVirtuelle, CarteVirtuelleRequest } from '@/lib/types'
+import {
+  CarteVirtuelle,
+  CarteVirtuelleRequest,
+  CartePublic,
+  CarteSensible,
+  CarteOtpChallenge,
+  CarteAccessGrant,
+} from '@/lib/types'
 
 export async function createCarte(data: CarteVirtuelleRequest): Promise<CarteVirtuelle> {
   return apiFetch<CarteVirtuelle>('/api/v1/carte', {
@@ -26,8 +33,28 @@ export async function updateCarte(
   })
 }
 
-export async function getCarteByRef(cardRef: string): Promise<CarteVirtuelle> {
-  return apiFetch<CarteVirtuelle>(`/api/v1/carte/ref/${cardRef}`)
+// Scan public : renvoie uniquement le sous-ensemble d'urgence (pas de données sensibles).
+export async function getCarteByRef(cardRef: string): Promise<CartePublic> {
+  return apiFetch<CartePublic>(`/api/v1/carte/ref/${cardRef}`)
+}
+
+// Demande d'un OTP : le code part vers le patient (email), pas vers le scanneur.
+export async function requestCarteOtp(cardRef: string): Promise<CarteOtpChallenge> {
+  return apiFetch<CarteOtpChallenge>(`/api/v1/carte/ref/${cardRef}/otp`, { method: 'POST' })
+}
+
+export async function verifyCarteOtp(cardRef: string, code: string): Promise<CarteAccessGrant> {
+  return apiFetch<CarteAccessGrant>(`/api/v1/carte/ref/${cardRef}/otp/verify`, {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+}
+
+// Lecture des données sensibles avec le jeton délivré après OTP.
+export async function getCarteSensible(cardRef: string, accessToken: string): Promise<CarteSensible> {
+  return apiFetch<CarteSensible>(`/api/v1/carte/ref/${cardRef}/sensible`, {
+    headers: { 'X-Carte-Access': accessToken },
+  })
 }
 
 export async function getGoogleWalletSaveUrl(patientId: string): Promise<{ saveUrl: string }> {

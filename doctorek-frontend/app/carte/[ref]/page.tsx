@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { getCarteByRef } from '@/features/carte/api'
+import { SensibleUnlock } from '@/features/carte/components/SensibleUnlock'
 import LogoLoader from '@/components/LogoLoader'
 import { getPatientProfile } from '@/features/patient/api'
 import { getRdvsPatient } from '@/features/agenda/api'
 import { getOrdonnances, getDocuments, getDocumentDownloadUrl, getOrdonnanceFichierUrl, openProtectedFile } from '@/features/dossier/api'
 import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
-import type { CarteVirtuelle, PatientProfile, RendezVous } from '@/lib/types'
+import type { CartePublic, CarteSensible, PatientProfile, RendezVous } from '@/lib/types'
 
 // ── Palette (matches home page) ──────────────────────────────────────────────
 // Horodatage au chargement du module — évite Date.now() pendant le rendu (règle purity).
@@ -96,7 +97,8 @@ export default function CarteScanPage() {
   const params = useParams()
   const ref = params?.ref as string
 
-  const [carte, setCarte] = useState<CarteVirtuelle | null>(null)
+  const [carte, setCarte] = useState<CartePublic | null>(null)
+  const [sensible, setSensible] = useState<CarteSensible | null>(null)
   const [profile, setProfile] = useState<PatientProfile | null>(null)
   const [rdvs, setRdvs] = useState<RendezVous[]>([])
   const [ordonnances, setOrdonnances] = useState<OrdonnanceDto[]>([])
@@ -174,6 +176,12 @@ export default function CarteScanPage() {
   const sortedRdvs = [...rdvs].sort(
     (a, b) => new Date(b.dateRdv).getTime() - new Date(a.dateRdv).getTime(),
   )
+
+  // Champs sensibles : vides tant que l'OTP n'est pas validé
+  const meds = sensible?.medicamentsActuels ?? []
+  const antChir = sensible?.antecedentsChirurgicaux ?? []
+  const vaccins = sensible?.vaccinations ?? []
+  const antFam = sensible?.antecedentsFamiliaux ?? []
 
   const tabs: Tab[] = [
     { id: 'alertes',     label: 'Alertes',      dot: carte.allergies.length > 0 ? '#DC2626' : undefined },
@@ -496,58 +504,61 @@ export default function CarteScanPage() {
         {/* ── MÉDICAL ── */}
         {activeTab === 'medical' && (
           <div className="space-y-4">
-            {(carte.maladiesChroniques.length > 0 || carte.medicamentsActuels.length > 0) ? (
+            {/* Maladies chroniques : information publique (utile en urgence) */}
+            <div
+              className="bg-white rounded-2xl px-6 py-5"
+              style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
+            >
+              <SLabel>Maladies chroniques</SLabel>
+              {carte.maladiesChroniques.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {carte.maladiesChroniques.map((m) => <Tag key={m} color="#7C3AED">{m}</Tag>)}
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
+              )}
+            </div>
+
+            {/* Médicaments : sensible, derrière OTP */}
+            {sensible ? (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                  <div>
-                    <SLabel>Maladies chroniques</SLabel>
-                    {carte.maladiesChroniques.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {carte.maladiesChroniques.map((m, i) => <Tag key={i} color="#7C3AED">{m}</Tag>)}
+                <SLabel>Médicaments actuels</SLabel>
+                {meds.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {meds.map((m, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-1.5 px-3 rounded-lg"
+                        style={{ background: C_BG }}
+                      >
+                        <span className="text-xs font-semibold truncate" style={{ color: C_TEXT }}>{m.nom}</span>
+                        <span
+                          className="text-xs font-bold px-2 py-0.5 rounded-full ml-2 flex-shrink-0"
+                          style={{ background: `${C_BLUE}12`, color: C_BLUE }}
+                        >
+                          {m.dosage}
+                        </span>
                       </div>
-                    ) : (
-                      <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
-                    )}
+                    ))}
                   </div>
-                  <div>
-                    <SLabel>Médicaments actuels</SLabel>
-                    {carte.medicamentsActuels.length > 0 ? (
-                      <div className="space-y-1.5">
-                        {carte.medicamentsActuels.map((m, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center justify-between py-1.5 px-3 rounded-lg"
-                            style={{ background: C_BG }}
-                          >
-                            <span className="text-xs font-semibold truncate" style={{ color: C_TEXT }}>{m.nom}</span>
-                            <span
-                              className="text-xs font-bold px-2 py-0.5 rounded-full ml-2 flex-shrink-0"
-                              style={{ background: `${C_BLUE}12`, color: C_BLUE }}
-                            >
-                              {m.dosage}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
-                    )}
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
+                )}
               </div>
             ) : (
-              <EmptyState message="Aucun profil médical renseigné" />
+              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />
             )}
           </div>
         )}
 
-        {/* ── ANTÉCÉDENTS ── */}
+        {/* ── ANTÉCÉDENTS ── (sensible, derrière OTP) */}
         {activeTab === 'antecedents' && (
           <div className="space-y-4">
-            {(carte.antecedentsChirurgicaux.length > 0 || carte.vaccinations.length > 0 || carte.antecedentsFamiliaux.length > 0) ? (
+            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />}
+            {sensible && (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) && (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
@@ -555,9 +566,9 @@ export default function CarteScanPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div>
                     <SLabel>Antécédents chirurgicaux</SLabel>
-                    {carte.antecedentsChirurgicaux.length > 0 ? (
+                    {antChir.length > 0 ? (
                       <div className="space-y-2.5">
-                        {carte.antecedentsChirurgicaux.map((a, i) => (
+                        {antChir.map((a, i) => (
                           <div key={i}>
                             <p className="text-sm font-medium leading-snug" style={{ color: C_TEXT }}>{a.description}</p>
                             {a.date && <p className="text-xs font-mono mt-0.5" style={{ color: `${C_BODY}80` }}>{a.date}</p>}
@@ -571,9 +582,9 @@ export default function CarteScanPage() {
                   <div className="space-y-5">
                     <div>
                       <SLabel>Vaccinations</SLabel>
-                      {carte.vaccinations.length > 0 ? (
+                      {vaccins.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {carte.vaccinations.map((v, i) => <Tag key={i} color="#059669">{v}</Tag>)}
+                          {vaccins.map((v) => <Tag key={v} color="#059669">{v}</Tag>)}
                         </div>
                       ) : (
                         <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
@@ -581,9 +592,9 @@ export default function CarteScanPage() {
                     </div>
                     <div>
                       <SLabel>Antécédents familiaux</SLabel>
-                      {carte.antecedentsFamiliaux.length > 0 ? (
+                      {antFam.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {carte.antecedentsFamiliaux.map((a, i) => <Tag key={i} color="#D97706">{a}</Tag>)}
+                          {antFam.map((a) => <Tag key={a} color="#D97706">{a}</Tag>)}
                         </div>
                       ) : (
                         <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
@@ -592,7 +603,8 @@ export default function CarteScanPage() {
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+            {sensible && antChir.length === 0 && vaccins.length === 0 && antFam.length === 0 && (
               <EmptyState message="Aucun antécédent renseigné" />
             )}
           </div>
@@ -617,22 +629,27 @@ export default function CarteScanPage() {
               </div>
             </div>
 
-            {(carte.assuranceNom || carte.assuranceNumero) && (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
-              >
-                <SLabel>Assurance</SLabel>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                  <Field label="Organisme"  value={carte.assuranceNom} />
-                  <Field label="N° adhérent" value={carte.assuranceNumero} />
-                  {carte.assuranceDetails && (
-                    <div className="col-span-2">
-                      <Field label="Détails" value={carte.assuranceDetails} />
-                    </div>
-                  )}
+            {/* Assurance : sensible, derrière OTP */}
+            {sensible ? (
+              (sensible.assuranceNom || sensible.assuranceNumero) && (
+                <div
+                  className="bg-white rounded-2xl px-6 py-5"
+                  style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
+                >
+                  <SLabel>Assurance</SLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    <Field label="Organisme"  value={sensible.assuranceNom} />
+                    <Field label="N° adhérent" value={sensible.assuranceNumero} />
+                    {sensible.assuranceDetails && (
+                      <div className="col-span-2">
+                        <Field label="Détails" value={sensible.assuranceDetails} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )
+            ) : (
+              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />
             )}
 
             {carte.contactsUrgence.length > 0 && (
