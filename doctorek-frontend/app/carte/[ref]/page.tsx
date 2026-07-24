@@ -31,7 +31,6 @@ const C_BG      = '#F0F2F5'
 const C_RED     = '#C1272D'
 const C_GREEN   = '#006233'
 const C_HAIRLINE = '#E2E8F0'   // filet institutionnel discret
-const C_MUTED    = '#F1F5F9'   // surface neutre (photo, champs)
 
 const STATUT_LABEL: Record<string, string> = {
   EN_ATTENTE: 'En attente',
@@ -80,19 +79,21 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   )
 }
 
-// Champ de données style formulaire officiel (label micro + valeur tabulaire).
-function IdField({ label, value }: { readonly label: string; readonly value: string }) {
+// Métrique premium (valeur tabulaire + unité discrète + libellé).
+function Metric({ label, value, unit }: { readonly label: string; readonly value: string; readonly unit: string }) {
   return (
-    <span className="inline-flex items-baseline gap-1.5">
-      <span className="text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: `${C_BODY}70` }}>{label}</span>
-      <span className="text-[13px] font-bold tabular-nums" style={{ color: C_NAVY }}>{value}</span>
-    </span>
+    <div className="text-center px-2">
+      <p className="font-extrabold text-base md:text-lg leading-none tabular-nums" style={{ color: C_NAVY }}>
+        {value}<span className="text-[11px] font-semibold ml-0.5" style={{ color: C_BODY }}>{unit}</span>
+      </p>
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] mt-1.5" style={{ color: `${C_BODY}90` }}>{label}</p>
+    </div>
   )
 }
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="bg-white rounded-lg px-5 py-12 text-center" style={{ border: `1px solid ${C_HAIRLINE}` }}>
+    <div className="bg-white rounded-2xl px-5 py-12 text-center" style={{ border: `1px solid ${C_HAIRLINE}` }}>
       <div className="w-9 h-9 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ background: `${C_BLUE}10` }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C_BLUE} strokeWidth="2">
           <circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" strokeLinecap="round" />
@@ -168,7 +169,7 @@ export default function CarteScanPage() {
   if (error || !carte) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: C_BG }}>
-        <div className="bg-white rounded-lg p-10 max-w-xs mx-4 text-center" style={{ boxShadow: '0 4px 28px rgba(0,0,0,0.08)' }}>
+        <div className="bg-white rounded-2xl p-10 max-w-xs mx-4 text-center" style={{ boxShadow: '0 4px 28px rgba(0,0,0,0.08)' }}>
           <div className="w-11 h-11 rounded-xl mx-auto mb-4 flex items-center justify-center bg-red-50">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="#DC2626" strokeWidth="2" />
@@ -230,111 +231,105 @@ export default function CarteScanPage() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C_BG }}>
 
-      {/* ── En-tête officiel ── */}
-      <header className="relative bg-white" style={{ borderBottom: `1px solid ${C_HAIRLINE}` }}>
-        {/* Filet tricolore (rappel national, décoratif) */}
-        <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${C_RED} 0 33.3%, #FFFFFF 33.3% 66.6%, ${C_GREEN} 66.6% 100%)` }} />
+      {/* ── En-tête premium : bande dégradée + carte Medical-ID flottante ── */}
+      <header className="relative">
+        {/* Bande dégradée de marque */}
+        <div className="relative overflow-hidden pb-16 md:pb-20" style={{ background: `linear-gradient(135deg, ${C_BLUE} 0%, #0A63C8 55%, ${C_DARK} 100%)` }}>
+          {/* Halo lumineux */}
+          <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22) 0%, transparent 70%)' }} aria-hidden="true" />
+          {/* Trame de points subtile */}
+          <div className="absolute inset-0 opacity-[0.10] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #FFFFFF 1px, transparent 1px)', backgroundSize: '22px 22px' }} aria-hidden="true" />
+          {/* Filet tricolore fin (rappel national, discret) */}
+          <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${C_RED} 0 33.3%, #FFFFFF 33.3% 66.6%, ${C_GREEN} 66.6% 100%)`, opacity: 0.9 }} />
 
-        {/* Ligne de sécurité guilloché (subtile, ton officiel) */}
-        <div className="absolute inset-x-0 top-1 h-full pointer-events-none overflow-hidden opacity-[0.04]" aria-hidden="true">
-          <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 1200 200">
-            {[20, 46, 72, 98, 124, 150, 176].map((y) => (
-              <path key={y} d={`M0 ${y} C 300 ${y - 20}, 900 ${y + 20}, 1200 ${y - 10}`} stroke={C_NAVY} strokeWidth="1" fill="none" />
-            ))}
-          </svg>
+          {/* Barre de marque */}
+          <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8 pt-5 md:pt-6 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo0.png" alt="Doctorek" className="h-5 md:h-6 w-auto brightness-0 invert" />
+              <div className="h-4 w-px bg-white/25" />
+              <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-white/85">Carte Médicale</span>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-white/15 backdrop-blur-sm text-[10px] font-semibold text-white/90 ring-1 ring-white/20">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              Vérifiée
+            </span>
+          </div>
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8 pt-3 md:pt-4 pb-4 md:pb-5">
-          {/* Masthead : émetteur + numéro de document */}
-          <div className="flex items-center justify-between gap-3 pb-3 mb-4" style={{ borderBottom: `1px solid ${C_HAIRLINE}` }}>
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo0.png" alt="Doctorek" className="h-5 md:h-6 w-auto" />
-              <div className="h-6 w-px" style={{ background: C_HAIRLINE }} />
-              <div className="min-w-0">
-                <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.18em] leading-none" style={{ color: C_NAVY }}>
-                  Carte Médicale Nationale
-                </p>
-                <p className="text-[9px] md:text-[10px] uppercase tracking-[0.14em] mt-1" style={{ color: `${C_BODY}90` }}>
-                  Dossier de santé | Doctorek
+        {/* Carte Medical-ID flottante */}
+        <div className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 -mt-12 md:-mt-14">
+          <div className="rounded-3xl bg-white p-4 md:p-6" style={{ boxShadow: '0 12px 40px -8px rgba(1,12,45,0.22), 0 2px 8px rgba(1,12,45,0.06)' }}>
+            <div className="flex items-center gap-4 md:gap-5">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden flex items-center justify-center ring-1 ring-black/5" style={{ background: `${C_BLUE}10` }}>
+                  {profile?.photoUrl ? (
+                    <Image src={profile.photoUrl} alt={fullName} width={80} height={80} className="object-cover w-full h-full" />
+                  ) : (
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="8" r="4" fill={C_BLUE} opacity="0.6" />
+                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill={C_BLUE} opacity="0.6" />
+                    </svg>
+                  )}
+                </div>
+                {carte.donneurOrganes && (
+                  <span className="absolute -bottom-1.5 -right-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full ring-2 ring-white" style={{ background: '#16A34A' }} title="Donneur d'organes" aria-label="Donneur d'organes">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  </span>
+                )}
+              </div>
+
+              {/* Identité */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] mb-0.5" style={{ color: `${C_BODY}90` }}>Titulaire</p>
+                <h1 className="font-extrabold text-lg md:text-2xl leading-tight tracking-tight truncate" style={{ color: C_NAVY }}>{fullName}</h1>
+                <p className="text-[13px] mt-1 tabular-nums" style={{ color: C_BODY }}>
+                  {[age ? `${age} ans` : null, profile?.numIdentite ? `CIN ${profile.numIdentite}` : null].filter(Boolean).join('  ·  ') || 'Identité protégée'}
                 </p>
               </div>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <p className="text-[8px] font-semibold uppercase tracking-[0.16em]" style={{ color: `${C_BODY}80` }}>N° du document</p>
-              <p className="font-mono text-[11px] md:text-xs font-bold tabular-nums tracking-tight" style={{ color: C_NAVY }}>{carte.cardRef}</p>
-            </div>
-          </div>
 
-          {/* Panneau identité : type carte officielle */}
-          <div className="flex items-stretch gap-3 md:gap-5">
-            {/* Photo */}
-            <div
-              className="w-[68px] h-[84px] md:w-[84px] md:h-[104px] overflow-hidden flex-shrink-0 flex items-center justify-center rounded-md"
-              style={{ background: C_MUTED, border: `1px solid ${C_HAIRLINE}` }}
-            >
-              {profile?.photoUrl ? (
-                <Image src={profile.photoUrl} alt={fullName} width={84} height={104} className="object-cover w-full h-full" />
-              ) : (
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="4" fill={C_BLUE} opacity="0.5" />
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill={C_BLUE} opacity="0.5" />
-                </svg>
+              {/* Médaillon groupe sanguin */}
+              {carte.groupeSanguin && (
+                <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl text-white" style={{ background: 'linear-gradient(150deg, #E5484D 0%, #B01722 100%)', boxShadow: '0 6px 16px -4px rgba(176,23,34,0.5)' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" opacity="0.92"><path d="M12 2C6 10 4 14 4 17a8 8 0 0016 0c0-3-2-7-8-15z" /></svg>
+                  <p className="font-extrabold text-xl md:text-2xl leading-none mt-0.5 tabular-nums">{carte.groupeSanguin}</p>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] opacity-90">Groupe</p>
+                </div>
               )}
             </div>
 
-            {/* Identité */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <p className="text-[9px] font-bold uppercase tracking-[0.16em] mb-1" style={{ color: `${C_BODY}80` }}>Titulaire</p>
-              <h1 className="font-extrabold text-lg md:text-2xl leading-tight tracking-tight" style={{ color: C_NAVY }}>
-                {fullName}
-              </h1>
-              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 max-w-md">
-                {profile?.dateNaissance && (
-                  <div>
-                    <p className="text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: `${C_BODY}70` }}>Naissance</p>
-                    <p className="text-xs font-semibold tabular-nums" style={{ color: C_NAVY }}>
-                      {profile.dateNaissance}{age ? ` (${age} ans)` : ''}
-                    </p>
-                  </div>
-                )}
-                {profile?.numIdentite && (
-                  <div>
-                    <p className="text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: `${C_BODY}70` }}>CIN</p>
-                    <p className="text-xs font-mono font-semibold tabular-nums tracking-wide" style={{ color: C_NAVY }}>{profile.numIdentite}</p>
-                  </div>
-                )}
+            {/* Mensurations : ligne de métriques premium */}
+            {(carte.tailleCm || carte.poidsKg || bmi) && (
+              <div className="mt-4 pt-4 grid grid-cols-3 divide-x" style={{ borderTop: `1px solid ${C_HAIRLINE}`, borderColor: C_HAIRLINE }}>
+                <Metric label="Taille" value={carte.tailleCm ? `${carte.tailleCm}` : '-'} unit="cm" />
+                <Metric label="Poids" value={carte.poidsKg ? `${carte.poidsKg}` : '-'} unit="kg" />
+                <Metric label="IMC" value={bmi ?? '-'} unit="" />
+              </div>
+            )}
+          </div>
+
+          {/* Bannière allergies critiques (surfacée d'emblée, comme Medical ID) */}
+          {carte.allergies.length > 0 && (
+            <div className="mt-3 rounded-2xl px-4 py-3 flex items-start gap-3" style={{ background: '#FEF2F2', border: '1px solid #FBD5D5' }}>
+              <span className="flex-shrink-0 mt-0.5">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="#FEE2E2" stroke="#DC2626" strokeWidth="2" />
+                  <path d="M12 9v4m0 4h.01" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#B91C1C' }}>Allergies connues</p>
+                <p className="text-[13px] font-semibold mt-0.5" style={{ color: '#991B1B' }}>{carte.allergies.join(' · ')}</p>
               </div>
             </div>
-
-            {/* Groupe sanguin : donnée vitale mise en avant (bloc officiel) */}
-            {carte.groupeSanguin && (
-              <div className="flex-shrink-0 self-stretch flex flex-col items-center justify-center px-3 md:px-4 rounded-md" style={{ background: '#FEF2F2', border: '1px solid #FBD5D5' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#C81E1E"><path d="M12 2C6 10 4 14 4 17a8 8 0 0016 0c0-3-2-7-8-15z" /></svg>
-                <p className="font-extrabold text-lg md:text-2xl leading-none mt-1 tabular-nums" style={{ color: '#C81E1E' }}>{carte.groupeSanguin}</p>
-                <p className="text-[8px] font-bold uppercase tracking-[0.12em] mt-1" style={{ color: '#C81E1E' }}>Groupe</p>
-              </div>
-            )}
-          </div>
-
-          {/* Bandeau de données : donneur + mensurations (grille officielle) */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 pt-3" style={{ borderTop: `1px solid ${C_HAIRLINE}` }}>
-            {carte.donneurOrganes && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide" style={{ color: '#0E7A47' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                Donneur d&apos;organes
-              </span>
-            )}
-            {carte.tailleCm && <IdField label="Taille" value={`${carte.tailleCm} cm`} />}
-            {carte.poidsKg && <IdField label="Poids" value={`${carte.poidsKg} kg`} />}
-            {bmi && <IdField label="IMC" value={bmi} />}
-          </div>
+          )}
         </div>
       </header>
 
       {/* ── Sticky Tab bar ── */}
       <div
-        className="sticky top-0 z-50 bg-white"
+        className="sticky top-0 z-50 bg-white mt-5 md:mt-6"
         style={{ borderBottom: '1px solid #E5E7EB', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}
       >
         <div className="max-w-5xl mx-auto px-4 md:px-8">
@@ -419,7 +414,7 @@ export default function CarteScanPage() {
         {activeTab === 'alertes' && (
           <div className="space-y-4">
             {carte.allergies.length > 0 ? (
-              <div className="bg-white rounded-lg overflow-hidden" style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}>
+              <div className="bg-white rounded-lg overflow-hidden" style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}>
                 <div
                   className="px-5 py-3 flex items-center gap-2.5"
                   style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA' }}
@@ -457,8 +452,8 @@ export default function CarteScanPage() {
           <div className="space-y-4">
             {/* Maladies chroniques : information publique (utile en urgence) */}
             <div
-              className="bg-white rounded-lg px-6 py-5"
-              style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+              className="bg-white rounded-2xl px-6 py-5"
+              style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
             >
               <SLabel>Maladies chroniques</SLabel>
               {carte.maladiesChroniques.length > 0 ? (
@@ -473,8 +468,8 @@ export default function CarteScanPage() {
             {/* Médicaments : sensible, derrière OTP */}
             {sensible ? (
               <div
-                className="bg-white rounded-lg px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                className="bg-white rounded-2xl px-6 py-5"
+                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
               >
                 <SLabel>Médicaments actuels</SLabel>
                 {meds.length > 0 ? (
@@ -511,8 +506,8 @@ export default function CarteScanPage() {
             {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) && (
               <div
-                className="bg-white rounded-lg px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                className="bg-white rounded-2xl px-6 py-5"
+                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div>
@@ -565,8 +560,8 @@ export default function CarteScanPage() {
         {activeTab === 'infos' && (
           <div className="space-y-3">
             <div
-              className="bg-white rounded-lg px-6 py-5"
-              style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+              className="bg-white rounded-2xl px-6 py-5"
+              style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
             >
               <SLabel>Informations personnelles</SLabel>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
@@ -584,8 +579,8 @@ export default function CarteScanPage() {
             {sensible ? (
               (sensible.assuranceNom || sensible.assuranceNumero) && (
                 <div
-                  className="bg-white rounded-lg px-6 py-5"
-                  style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                  className="bg-white rounded-2xl px-6 py-5"
+                  style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
                 >
                   <SLabel>Assurance</SLabel>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
@@ -605,8 +600,8 @@ export default function CarteScanPage() {
 
             {carte.contactsUrgence.length > 0 && (
               <div
-                className="bg-white rounded-lg px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                className="bg-white rounded-2xl px-6 py-5"
+                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
               >
                 <SLabel>Contacts d&apos;urgence</SLabel>
                 <div className="space-y-2">
@@ -636,8 +631,8 @@ export default function CarteScanPage() {
           <div>
             {sortedRdvs.length > 0 ? (
               <div
-                className="bg-white rounded-lg px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                className="bg-white rounded-2xl px-6 py-5"
+                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
               >
                 <div className="flex items-center justify-between mb-4">
                   <SLabel>Rendez-vous</SLabel>
@@ -689,8 +684,8 @@ export default function CarteScanPage() {
             {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && ordonnances.length > 0 && (
               <div
-                className="bg-white rounded-lg px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                className="bg-white rounded-2xl px-6 py-5"
+                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
               >
                 <div className="flex items-center justify-between mb-4">
                   <SLabel>Ordonnances</SLabel>
@@ -779,8 +774,8 @@ export default function CarteScanPage() {
             {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && documents.length > 0 && (
               <div
-                className="bg-white rounded-lg px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(16,24,40,0.04)' }}
+                className="bg-white rounded-2xl px-6 py-5"
+                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
               >
                 <div className="flex items-center justify-between mb-4">
                   <SLabel>Documents médicaux</SLabel>
