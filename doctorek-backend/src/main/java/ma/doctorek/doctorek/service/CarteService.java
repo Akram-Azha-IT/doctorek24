@@ -3,6 +3,8 @@ package ma.doctorek.doctorek.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ma.doctorek.doctorek.dto.AntecedentChirurgicalDto;
+import ma.doctorek.doctorek.dto.CartePublicResponse;
+import ma.doctorek.doctorek.dto.CarteSensibleResponse;
 import ma.doctorek.doctorek.dto.CarteVirtuelleRequest;
 import ma.doctorek.doctorek.dto.CarteVirtuelleResponse;
 import ma.doctorek.doctorek.dto.ContactUrgenceDto;
@@ -77,9 +79,56 @@ public class CarteService {
 
     @Transactional(readOnly = true)
     public CarteVirtuelleResponse getByCardRef(String cardRef) {
-        CarteVirtuelleEntity carte = carteRepository.findByCardRef(cardRef)
+        return toResponse(findByRef(cardRef));
+    }
+
+    /** Sous-ensemble d'urgence, exposé au scan public du QR (jamais de données sensibles). */
+    @Transactional(readOnly = true)
+    public CartePublicResponse getPublicByCardRef(String cardRef) {
+        CarteVirtuelleEntity e = findByRef(cardRef);
+        String[] names = patientNames(e.getPatientId());
+        return new CartePublicResponse(
+            e.getId(), e.getPatientId(), e.getCardRef(), e.getStatut(),
+            names[0], names[1], e.getGroupeSanguin(), e.getTailleCm(), e.getPoidsKg(),
+            e.getDonneurOrganes(),
+            fromJsonList(e.getAllergies(), new TypeReference<List<String>>() {}),
+            fromJsonList(e.getMaladiesChroniques(), new TypeReference<List<String>>() {}),
+            fromJsonList(e.getContactsUrgence(), new TypeReference<List<ContactUrgenceDto>>() {}),
+            e.getCreatedAt(), e.getUpdatedAt());
+    }
+
+    /** Partie sensible, servie seulement après OTP validé (appelée par CarteAccessService). */
+    @Transactional(readOnly = true)
+    public CarteSensibleResponse getSensibleByCardRef(String cardRef) {
+        CarteVirtuelleEntity e = findByRef(cardRef);
+        return new CarteSensibleResponse(
+            fromJsonList(e.getMedicamentsActuels(), new TypeReference<List<MedicamentActuelDto>>() {}),
+            fromJsonList(e.getAntecedentsChirurgicaux(), new TypeReference<List<AntecedentChirurgicalDto>>() {}),
+            fromJsonList(e.getVaccinations(), new TypeReference<List<String>>() {}),
+            fromJsonList(e.getAntecedentsFamiliaux(), new TypeReference<List<String>>() {}),
+            e.getMedecinTraitant(), e.getAssuranceNom(), e.getAssuranceNumero(), e.getAssuranceDetails());
+    }
+
+    /** Destinataire de l'OTP : le patient propriétaire de la carte, jamais le scanneur. */
+    @Transactional(readOnly = true)
+    public OtpTarget getOtpTargetByCardRef(String cardRef) {
+        CarteVirtuelleEntity e = findByRef(cardRef);
+        return userRepository.findById(e.getPatientId())
+            .map(u -> new OtpTarget(e.getPatientId(), u.getEmail(), u.getFirstName()))
+            .orElseThrow(() -> new CarteNotFoundException("Patient introuvable pour carte: " + cardRef));
+    }
+
+    public record OtpTarget(UUID patientId, String email, String firstName) {}
+
+    private CarteVirtuelleEntity findByRef(String cardRef) {
+        return carteRepository.findByCardRef(cardRef)
             .orElseThrow(() -> new CarteNotFoundException("Carte non trouvée: " + cardRef));
-        return toResponse(carte);
+    }
+
+    private String[] patientNames(UUID patientId) {
+        return userRepository.findById(patientId)
+            .map(u -> new String[]{u.getFirstName(), u.getLastName()})
+            .orElse(new String[]{null, null});
     }
 
     @Transactional
@@ -119,9 +168,7 @@ public class CarteService {
     }
 
     private CarteVirtuelleResponse toResponse(CarteVirtuelleEntity e) {
-        String[] names = userRepository.findById(e.getPatientId())
-            .map(u -> new String[]{u.getFirstName(), u.getLastName()})
-            .orElse(new String[]{null, null});
+        String[] names = patientNames(e.getPatientId());
 
         return new CarteVirtuelleResponse(
             e.getId(),

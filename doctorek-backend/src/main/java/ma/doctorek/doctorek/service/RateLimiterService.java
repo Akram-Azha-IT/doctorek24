@@ -29,7 +29,15 @@ public class RateLimiterService {
      * ne doit pas tomber si le cache tombe) — le rate limiting est une protection, pas un point de panne.
      */
     public void checkAndIncrement(String action, UUID userId, int limit, Duration window) {
-        String key = "rl:" + action + ":" + userId;
+        checkAndIncrementKey(action, userId.toString(), limit, window);
+    }
+
+    /**
+     * Variante à clé libre (ex. cardRef d'une carte pour l'OTP d'accès, pas d'utilisateur
+     * authentifié). Même sémantique : fenêtre fixe, fail-open.
+     */
+    public void checkAndIncrementKey(String action, String subject, int limit, Duration window) {
+        String key = "rl:" + action + ":" + subject;
         try {
             Long count = redis.opsForValue().increment(key);
             if (count != null && count == 1L) {

@@ -35,8 +35,16 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$"),
         // GET /api/v1/carte/ref/{cardRef} (emergency QR scan)
         Pattern.compile("^/api/v1/carte/ref/[^/]+/?$"),
+        // GET /api/v1/carte/ref/{cardRef}/sensible (OTP-gated, own grant token)
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/sensible/?$"),
         // GET /api/v1/patients/rattachement/{token} (info masquée compte famille)
         Pattern.compile("^/api/v1/patients/rattachement/[^/]+/?$")
+    );
+
+    // Public POST paths (OTP flow): strip stale bearer tokens so permitAll() applies.
+    private static final List<Pattern> PUBLIC_POST_PATTERNS = List.of(
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/otp/?$"),
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/otp/verify/?$")
     );
 
     private final DefaultBearerTokenResolver delegate = new DefaultBearerTokenResolver();
@@ -50,6 +58,12 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         // PUBLIC_PATTERNS are read-only (GET) — do not strip tokens for mutating methods
         if ("GET".equalsIgnoreCase(request.getMethod())) {
             for (Pattern pattern : PUBLIC_PATTERNS) {
+                if (pattern.matcher(path).matches()) return null;
+            }
+        }
+        // Public POST paths (OTP request/verify): same treatment, scoped to these routes only
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+            for (Pattern pattern : PUBLIC_POST_PATTERNS) {
                 if (pattern.matcher(path).matches()) return null;
             }
         }

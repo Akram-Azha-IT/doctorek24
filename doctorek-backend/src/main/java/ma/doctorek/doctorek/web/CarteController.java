@@ -1,13 +1,20 @@
 package ma.doctorek.doctorek.web;
 
+import jakarta.validation.Valid;
+import ma.doctorek.doctorek.dto.CarteAccessResponse;
+import ma.doctorek.doctorek.dto.CartePublicResponse;
+import ma.doctorek.doctorek.dto.CarteSensibleResponse;
 import ma.doctorek.doctorek.dto.CarteVirtuelleRequest;
 import ma.doctorek.doctorek.dto.CarteVirtuelleResponse;
 import ma.doctorek.doctorek.dto.GoogleWalletSaveResponse;
+import ma.doctorek.doctorek.dto.OtpChallengeResponse;
+import ma.doctorek.doctorek.dto.OtpVerifyRequest;
 import ma.doctorek.doctorek.entity.PatientDetailEntity;
 import ma.doctorek.doctorek.exception.GoogleWalletDisabledException;
 import ma.doctorek.doctorek.exception.UserNotFoundException;
 import ma.doctorek.doctorek.repository.PatientDetailRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
+import ma.doctorek.doctorek.service.CarteAccessService;
 import ma.doctorek.doctorek.service.CarteService;
 import ma.doctorek.doctorek.service.GoogleWalletService;
 import org.springframework.http.HttpStatus;
@@ -23,15 +30,18 @@ import java.util.UUID;
 public class CarteController {
 
     private final CarteService carteService;
+    private final CarteAccessService carteAccessService;
     private final UserRepository userRepository;
     private final PatientDetailRepository patientDetailRepository;
     private final GoogleWalletService googleWalletService;
 
     public CarteController(CarteService carteService,
+                            CarteAccessService carteAccessService,
                             UserRepository userRepository,
                             PatientDetailRepository patientDetailRepository,
                             GoogleWalletService googleWalletService) {
         this.carteService = carteService;
+        this.carteAccessService = carteAccessService;
         this.userRepository = userRepository;
         this.patientDetailRepository = patientDetailRepository;
         this.googleWalletService = googleWalletService;
@@ -59,10 +69,33 @@ public class CarteController {
         return ResponseEntity.ok(ApiResponse.ok(carteService.existsByPatientId(patientId)));
     }
 
-    // Public emergency QR scan — no auth required, see SecurityConfig permitAll()
+    // Scan public du QR (urgence), no auth. Renvoie SEULEMENT le sous-ensemble vital,
+    // jamais medicaments/antecedents/assurance (ceux-ci passent par l'OTP ci-dessous).
     @GetMapping("/ref/{cardRef}")
-    public ResponseEntity<ApiResponse<CarteVirtuelleResponse>> getByRef(@PathVariable String cardRef) {
-        return ResponseEntity.ok(ApiResponse.ok(carteService.getByCardRef(cardRef)));
+    public ResponseEntity<ApiResponse<CartePublicResponse>> getByRef(@PathVariable String cardRef) {
+        return ResponseEntity.ok(ApiResponse.ok(carteService.getPublicByCardRef(cardRef)));
+    }
+
+    // Demande d'un OTP : code envoyé au PATIENT (consentement), pas au scanneur. No auth, rate-limité.
+    @PostMapping("/ref/{cardRef}/otp")
+    public ResponseEntity<ApiResponse<OtpChallengeResponse>> requestOtp(@PathVariable String cardRef) {
+        return ResponseEntity.ok(ApiResponse.ok(carteAccessService.requestOtp(cardRef)));
+    }
+
+    // Validation de l'OTP : renvoie un jeton d'accès court en cas de succès.
+    @PostMapping("/ref/{cardRef}/otp/verify")
+    public ResponseEntity<ApiResponse<CarteAccessResponse>> verifyOtp(
+            @PathVariable String cardRef,
+            @Valid @RequestBody OtpVerifyRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok(carteAccessService.verifyOtp(cardRef, req.code())));
+    }
+
+    // Lecture des données sensibles : exige le jeton délivré après OTP (header X-Carte-Access).
+    @GetMapping("/ref/{cardRef}/sensible")
+    public ResponseEntity<ApiResponse<CarteSensibleResponse>> getSensible(
+            @PathVariable String cardRef,
+            @RequestHeader(name = "X-Carte-Access", required = false) String accessToken) {
+        return ResponseEntity.ok(ApiResponse.ok(carteAccessService.getSensible(cardRef, accessToken)));
     }
 
     @PreAuthorize("hasRole('PATIENT')")

@@ -284,6 +284,43 @@ public class EmailService {
         send(toEmail, subject, text, html, "rappel-j-" + joursAvant, rdv.getId().toString());
     }
 
+    @Async
+    public void sendCarteAccessOtp(String toEmail, String prenom, String code) {
+        if (!shouldSend(toEmail)) return;
+
+        String bonjour = (prenom != null && !prenom.isBlank())
+                ? "Bonjour " + EmailTemplate.esc(prenom) + ","
+                : GREETING;
+        String subject = "Code d'accès à votre carte médicale | Doctorek";
+        String html = EmailTemplate.shell(
+                "Votre code d'accès aux informations sensibles est " + code,
+                "Accès à vos informations sensibles",
+                EmailTemplate.p(bonjour)
+              + EmailTemplate.p("Un professionnel de santé demande l'accès aux informations "
+                    + "sensibles de votre carte médicale (traitements, antécédents, assurance).")
+              + EmailTemplate.p("Communiquez-lui ce code uniquement si vous êtes d'accord :")
+              + EmailTemplate.codeBox(code)
+              + EmailTemplate.p("Ce code à usage unique n'est valable que <strong>5 minutes</strong>.")
+              + EmailTemplate.divider()
+              + EmailTemplate.subheading("Vous n'êtes pas à l'origine de cette demande ?")
+              + EmailTemplate.p("Ne communiquez ce code à personne et ignorez cet email. "
+                    + "Vos informations restent protégées."));
+
+        String text = """
+                %s
+
+                Un professionnel de santé demande l'accès aux informations sensibles de votre carte medicale.
+                Communiquez-lui ce code uniquement si vous etes d'accord : %s
+                Ce code est valable 5 minutes.
+
+                Si vous n'etes pas a l'origine de cette demande, ne communiquez ce code a personne.
+
+                L'equipe Doctorek
+                """.formatted(bonjour.replace("<strong>", "").replace("</strong>", ""), code);
+
+        send(toEmail, subject, text, html, "carte-access-otp", toEmail);
+    }
+
     private static String motifOf(RendezVousEntity rdv) {
         return rdv.getMotif() == null || rdv.getMotif().isBlank() ? "Non précisé" : rdv.getMotif();
     }
