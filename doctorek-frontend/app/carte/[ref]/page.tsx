@@ -754,9 +754,8 @@ export default function CarteScanPage() {
         {/* ── ORDONNANCES ── (dossier, derrière OTP) */}
         {activeTab === 'ordonnances' && (
           <div>
-            {!sensible ? (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
-            ) : ordonnances.length > 0 ? (
+            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
+            {sensible && ordonnances.length > 0 && (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
@@ -835,7 +834,8 @@ export default function CarteScanPage() {
                   ))}
                 </div>
               </div>
-            ) : (
+            )}
+            {sensible && ordonnances.length === 0 && (
               <EmptyState message="Aucune ordonnance enregistrée" />
             )}
           </div>
@@ -844,9 +844,8 @@ export default function CarteScanPage() {
         {/* ── DOCUMENTS ── (dossier, derrière OTP) */}
         {activeTab === 'documents' && (
           <div>
-            {!sensible ? (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
-            ) : documents.length > 0 ? (
+            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
+            {sensible && documents.length > 0 && (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
@@ -888,7 +887,8 @@ export default function CarteScanPage() {
                   ))}
                 </div>
               </div>
-            ) : (
+            )}
+            {sensible && documents.length === 0 && (
               <EmptyState message="Aucun document enregistré" />
             )}
           </div>

@@ -5,7 +5,6 @@ import ma.doctorek.doctorek.dto.CarteDossierResponse;
 import ma.doctorek.doctorek.dto.CarteSensibleResponse;
 import ma.doctorek.doctorek.dto.OtpChallengeResponse;
 import ma.doctorek.doctorek.entity.DocumentMedicalEntity;
-import ma.doctorek.doctorek.entity.OrdonnanceEntity;
 import ma.doctorek.doctorek.repository.DocumentMedicalRepository;
 import ma.doctorek.doctorek.repository.OrdonnanceRepository;
 import ma.doctorek.doctorek.service.CarteService.OtpTarget;
@@ -182,7 +181,8 @@ class CarteAccessServiceTest {
     @Test
     @DisplayName("downloadOrdonnanceFichier : jeton absent -> SecurityException")
     void downloadOrdonnance_noToken_throws() {
-        assertThatThrownBy(() -> service.downloadOrdonnanceFichier(cardRef, UUID.randomUUID(), null))
+        UUID ordId = UUID.randomUUID();
+        assertThatThrownBy(() -> service.downloadOrdonnanceFichier(cardRef, ordId, null))
                 .isInstanceOf(SecurityException.class);
     }
 
