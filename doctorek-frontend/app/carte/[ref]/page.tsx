@@ -114,6 +114,24 @@ function EmptyState({ message }: { message: string }) {
   )
 }
 
+// Icône compacte par onglet (cohérence stroke 2, style outline).
+function TabIcon({ id }: { readonly id: TabId }) {
+  const p: Record<TabId, string> = {
+    alertes: 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01',
+    medical: 'M12 8v8m-4-4h8M4 7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2z',
+    antecedents: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+    infos: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+    rdv: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+    ordonnances: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    documents: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
+  }
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={p[id]} />
+    </svg>
+  )
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 type TabId = 'alertes' | 'medical' | 'antecedents' | 'infos' | 'rdv' | 'ordonnances' | 'documents'
 
@@ -240,6 +258,20 @@ export default function CarteScanPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C_BG }}>
+      <style>{`
+        @keyframes dkRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        @keyframes dkSheen { 0% { transform: translateX(-140%) skewX(-18deg); } 55%, 100% { transform: translateX(260%) skewX(-18deg); } }
+        .dk-rise { animation: dkRise .6s cubic-bezier(.16,1,.3,1) both; }
+        .dk-medallion-sheen::after { content: ''; position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
+        .dk-medallion-sheen > .dk-sheen { position: absolute; top: 0; bottom: 0; width: 45%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: dkSheen 3.6s ease-in-out 1.2s infinite; }
+        .dk-row { transition: background-color .18s ease, transform .18s ease; }
+        .dk-press { transition: transform .12s ease, box-shadow .18s ease; }
+        .dk-press:active { transform: scale(.98); }
+        @media (prefers-reduced-motion: reduce) {
+          .dk-rise { animation: none; }
+          .dk-sheen { display: none; }
+        }
+      `}</style>
 
       {/* ── En-tête premium : bande dégradée + carte Medical-ID flottante ── */}
       <header className="relative">
@@ -247,8 +279,13 @@ export default function CarteScanPage() {
         <div className="relative overflow-hidden pb-16 md:pb-20" style={{ background: `linear-gradient(135deg, ${C_BLUE} 0%, #0A63C8 55%, ${C_DARK} 100%)` }}>
           {/* Halo lumineux */}
           <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22) 0%, transparent 70%)' }} aria-hidden="true" />
+          {/* Motif zellige marocain (étoile à 8 branches), très discret : touche nationale */}
+          <div className="absolute inset-0 opacity-[0.06] pointer-events-none" aria-hidden="true" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1.2'%3E%3Cpath d='M30 6 L36 18 L48 12 L42 24 L54 30 L42 36 L48 48 L36 42 L30 54 L24 42 L12 48 L18 36 L6 30 L18 24 L12 12 L24 18 Z'/%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '54px 54px',
+          }} />
           {/* Trame de points subtile */}
-          <div className="absolute inset-0 opacity-[0.10] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #FFFFFF 1px, transparent 1px)', backgroundSize: '22px 22px' }} aria-hidden="true" />
+          <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #FFFFFF 1px, transparent 1px)', backgroundSize: '22px 22px' }} aria-hidden="true" />
           {/* Filet tricolore fin (rappel national, discret) */}
           <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${C_RED} 0 33.3%, #FFFFFF 33.3% 66.6%, ${C_GREEN} 66.6% 100%)`, opacity: 0.9 }} />
 
@@ -269,7 +306,7 @@ export default function CarteScanPage() {
 
         {/* Carte Medical-ID flottante */}
         <div className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 -mt-12 md:-mt-14">
-          <div className="rounded-3xl bg-white p-4 md:p-6" style={{ boxShadow: '0 12px 40px -8px rgba(1,12,45,0.22), 0 2px 8px rgba(1,12,45,0.06)' }}>
+          <div className="dk-rise rounded-3xl bg-white p-4 md:p-6" style={{ boxShadow: '0 12px 40px -8px rgba(1,12,45,0.22), 0 2px 8px rgba(1,12,45,0.06)' }}>
             <div className="flex items-center gap-4 md:gap-5">
               {/* Avatar */}
               <div className="relative flex-shrink-0">
@@ -300,12 +337,13 @@ export default function CarteScanPage() {
                 </p>
               </div>
 
-              {/* Médaillon groupe sanguin */}
+              {/* Médaillon groupe sanguin (avec brillance animée) */}
               {carte.groupeSanguin && (
-                <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl text-white" style={{ background: 'linear-gradient(150deg, #E5484D 0%, #B01722 100%)', boxShadow: '0 6px 16px -4px rgba(176,23,34,0.5)' }}>
+                <div className="dk-medallion-sheen relative overflow-hidden flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl text-white" style={{ background: 'linear-gradient(150deg, #E5484D 0%, #B01722 100%)', boxShadow: '0 6px 16px -4px rgba(176,23,34,0.5)' }}>
+                  <span className="dk-sheen" aria-hidden="true" />
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" opacity="0.92"><path d="M12 2C6 10 4 14 4 17a8 8 0 0016 0c0-3-2-7-8-15z" /></svg>
-                  <p className="font-extrabold text-xl md:text-2xl leading-none mt-0.5 tabular-nums">{carte.groupeSanguin}</p>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] opacity-90">Groupe</p>
+                  <p className="font-extrabold text-xl md:text-2xl leading-none mt-0.5 tabular-nums relative">{carte.groupeSanguin}</p>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] opacity-90 relative">Groupe</p>
                 </div>
               )}
             </div>
@@ -322,7 +360,7 @@ export default function CarteScanPage() {
 
           {/* Bannière allergies critiques (surfacée d'emblée, comme Medical ID) */}
           {carte.allergies.length > 0 && (
-            <div className="mt-3 rounded-2xl px-4 py-3 flex items-start gap-3" style={{ background: '#FEF2F2', border: '1px solid #FBD5D5' }}>
+            <div className="dk-rise mt-3 rounded-2xl px-4 py-3 flex items-start gap-3" style={{ background: '#FEF2F2', border: '1px solid #FBD5D5', animationDelay: '.08s' }}>
               <span className="flex-shrink-0 mt-0.5">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="#FEE2E2" stroke="#DC2626" strokeWidth="2" />
@@ -338,79 +376,30 @@ export default function CarteScanPage() {
         </div>
       </header>
 
-      {/* ── Sticky Tab bar ── */}
-      <div
-        className="sticky top-0 z-50 bg-white mt-5 md:mt-6"
-        style={{ borderBottom: '1px solid #E5E7EB', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}
-      >
-        <div className="max-w-5xl mx-auto px-4 md:px-8">
-          {/* Mobile: 2-row grid, same underline style as desktop */}
-          <div className="md:hidden">
-            <div className="grid grid-cols-4 border-b" style={{ borderColor: '#E5E7EB' }}>
-              {tabs.slice(0, 4).map((tab) => {
-                const active = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className="flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-semibold transition-colors border-b-2 -mb-px"
-                    style={{
-                      color: active ? C_BLUE : C_BODY,
-                      borderBottomColor: active ? C_BLUE : 'transparent',
-                    }}
-                  >
-                    {tab.dot && (
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: tab.dot }} />
-                    )}
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="grid grid-cols-3 border-b" style={{ borderColor: '#E5E7EB' }}>
-              {tabs.slice(4).map((tab) => {
-                const active = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className="flex flex-col items-center justify-center gap-0.5 py-2.5 text-[11px] font-semibold transition-colors border-b-2 -mb-px"
-                    style={{
-                      color: active ? C_BLUE : C_BODY,
-                      borderBottomColor: active ? C_BLUE : 'transparent',
-                    }}
-                  >
-                    {tab.dot && (
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: tab.dot }} />
-                    )}
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Desktop: classic underline tab bar */}
-          <div className="hidden md:flex overflow-x-auto scrollbar-none">
+      {/* ── Barre d'onglets moderne (pilules scrollables, une seule rangée) ── */}
+      <div className="sticky top-0 z-50 bg-white/85 backdrop-blur-md mt-5 md:mt-6" style={{ borderBottom: `1px solid ${C_HAIRLINE}` }}>
+        <div className="max-w-5xl mx-auto px-3 md:px-8">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-none py-2.5" role="tablist" aria-label="Sections de la carte">
             {tabs.map((tab) => {
               const active = activeTab === tab.id
               return (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className="flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 border-b-2"
+                  className="dk-press relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap flex-shrink-0 transition-colors"
                   style={{
-                    color: active ? C_BLUE : C_BODY,
-                    borderBottomColor: active ? C_BLUE : 'transparent',
+                    background: active ? C_BLUE : C_BG,
+                    color: active ? '#FFFFFF' : C_BODY,
+                    boxShadow: active ? '0 4px 12px -2px rgba(0,125,255,0.45)' : 'none',
                   }}
                 >
-                  {tab.dot && (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: active ? tab.dot : `${tab.dot}80` }}
-                    />
-                  )}
+                  <TabIcon id={tab.id} />
                   {tab.label}
+                  {tab.dot && !active && (
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: tab.dot }} />
+                  )}
                 </button>
               )
             })}
@@ -418,8 +407,8 @@ export default function CarteScanPage() {
         </div>
       </div>
 
-      {/* ── Tab content ── */}
-      <div className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 py-4 md:py-6">
+      {/* ── Contenu de l'onglet (ré-animé à chaque changement) ── */}
+      <div key={activeTab} className="dk-rise flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 py-4 md:py-6">
 
         {/* ── ALERTES ── */}
         {activeTab === 'alertes' && (
@@ -756,7 +745,7 @@ export default function CarteScanPage() {
                           <button
                             type="button"
                             onClick={() => openProtectedFile(carteOrdonnanceFichierUrl(carte.cardRef, ord.id), grantHeaders).catch(() => {})}
-                            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+                            className="dk-press inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors hover:brightness-95"
                             style={{ background: `${C_BLUE}10`, color: C_BLUE }}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -809,7 +798,7 @@ export default function CarteScanPage() {
                       key={doc.id}
                       type="button"
                       onClick={() => openProtectedFile(carteDocumentDownloadUrl(carte.cardRef, doc.id), grantHeaders).catch(() => {})}
-                      className="flex items-start gap-2.5 py-2.5 px-3 rounded-xl transition-colors hover:bg-gray-50 text-left"
+                      className="dk-press flex items-start gap-2.5 py-2.5 px-3 rounded-xl transition-colors hover:bg-gray-50 text-left"
                       style={{ border: `1px solid ${C_HAIRLINE}` }}
                     >
                       <div
