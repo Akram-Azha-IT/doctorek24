@@ -485,9 +485,9 @@ export default function CarteScanPage() {
                 <SLabel>Médicaments actuels</SLabel>
                 {meds.length > 0 ? (
                   <div className="space-y-1.5">
-                    {meds.map((m, i) => (
+                    {meds.map((m) => (
                       <div
-                        key={i}
+                        key={`${m.nom}-${m.dosage}`}
                         className="flex items-center justify-between py-1.5 px-3 rounded-lg"
                         style={{ background: C_BG }}
                       >
@@ -528,8 +528,8 @@ export default function CarteScanPage() {
                     <SLabel>Antécédents chirurgicaux</SLabel>
                     {antChir.length > 0 ? (
                       <div className="space-y-2.5">
-                        {antChir.map((a, i) => (
-                          <div key={i} className="flex items-start gap-2">
+                        {antChir.map((a) => (
+                          <div key={a.description} className="flex items-start gap-2">
                             <HandArrow className="w-4 h-3 mt-1" color="#7C3AED" />
                             <div className="min-w-0">
                               <p className="text-sm font-medium leading-snug" style={{ color: C_TEXT }}>{a.description}</p>
