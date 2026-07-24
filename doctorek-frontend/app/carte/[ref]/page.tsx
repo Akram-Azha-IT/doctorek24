@@ -10,6 +10,7 @@ import { getPatientProfile } from '@/features/patient/api'
 import { getRdvsPatient } from '@/features/agenda/api'
 import { getOrdonnances, getDocuments, getDocumentDownloadUrl, getOrdonnanceFichierUrl, openProtectedFile } from '@/features/dossier/api'
 import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
+import { getSession } from '@/lib/session'
 import type { CartePublic, CarteSensible, PatientProfile, RendezVous } from '@/lib/types'
 
 // ── Palette (matches home page) ──────────────────────────────────────────────
@@ -119,7 +120,9 @@ export default function CarteScanPage() {
     getCarteByRef(ref)
       .then(async (data) => {
         setCarte(data)
-        if (data?.patientId) {
+        // Le scan public ne charge que le vital + l'OTP. Profil, RDV et dossier
+        // sont réservés aux utilisateurs connectés (sinon 401 -> redirection login).
+        if (data?.patientId && getSession()) {
           const [prof, appointments, ords, docs] = await Promise.allSettled([
             getPatientProfile(data.patientId),
             getRdvsPatient(data.patientId),
