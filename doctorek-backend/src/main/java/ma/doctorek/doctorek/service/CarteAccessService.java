@@ -68,8 +68,9 @@ public class CarteAccessService {
         redis.opsForValue().set(otpKey(cardRef), hash(cardRef, code), OTP_TTL);
         redis.delete(attemptsKey(cardRef));
 
+        String channel = otpSender.channel();
         otpSender.send(target.email(), code, target.firstName());
-        log.info("OTP carte envoyé (canal={}) pour cardRef={}", otpSender.channel(), cardRef);
+        log.info("OTP carte envoyé (canal={}) pour cardRef={}", channel, cardRef);
 
         return new OtpChallengeResponse(maskEmail(target.email()), OTP_TTL.toSeconds());
     }

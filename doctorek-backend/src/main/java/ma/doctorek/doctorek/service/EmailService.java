@@ -25,6 +25,7 @@ public class EmailService {
     private static final DateTimeFormatter HOUR_FR = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRENCH);
 
     private static final String GREETING = "Bonjour,";
+    private static final String HELLO = "Bonjour ";
     private static final String LBL_DATE = "Date";
     private static final String LBL_HEURE = "Heure";
     private static final String LBL_DUREE = "Durée";
@@ -52,7 +53,7 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 "Votre code de vérification est " + code,
                 "Vérifiez votre adresse email",
-                EmailTemplate.p("Bonjour " + EmailTemplate.esc(prenom) + ",")
+                EmailTemplate.p(HELLO + EmailTemplate.esc(prenom) + ",")
               + EmailTemplate.p("Voici votre code de vérification pour activer votre compte Doctorek :")
               + EmailTemplate.codeBox(code)
               + EmailTemplate.p("Ce code à usage unique n'est valable que <strong>15 minutes</strong>.")
@@ -83,7 +84,7 @@ public class EmailService {
         String html = EmailTemplate.shell(
                 "Votre compte Doctorek est prêt",
                 "Bienvenue sur Doctorek",
-                EmailTemplate.p("Bonjour " + EmailTemplate.esc(prenom) + ",")
+                EmailTemplate.p(HELLO + EmailTemplate.esc(prenom) + ",")
               + EmailTemplate.p("Votre compte <strong>" + roleLabel + "</strong> a bien été créé. "
                     + "Vous pouvez dès maintenant vous connecter et profiter de la plateforme.")
               + EmailTemplate.note("Besoin d'aide ? Retrouvez le centre d'aide depuis votre espace."));
@@ -288,14 +289,14 @@ public class EmailService {
     public void sendCarteAccessOtp(String toEmail, String prenom, String code) {
         if (!shouldSend(toEmail)) return;
 
-        String bonjour = (prenom != null && !prenom.isBlank())
-                ? "Bonjour " + EmailTemplate.esc(prenom) + ","
-                : GREETING;
+        boolean hasPrenom = prenom != null && !prenom.isBlank();
+        String bonjourHtml = hasPrenom ? HELLO + EmailTemplate.esc(prenom) + "," : GREETING;
+        String bonjourText = hasPrenom ? HELLO + prenom + "," : GREETING;
         String subject = "Code d'accès à votre carte médicale | Doctorek";
         String html = EmailTemplate.shell(
                 "Votre code d'accès aux informations sensibles est " + code,
                 "Accès à vos informations sensibles",
-                EmailTemplate.p(bonjour)
+                EmailTemplate.p(bonjourHtml)
               + EmailTemplate.p("Un professionnel de santé demande l'accès aux informations "
                     + "sensibles de votre carte médicale (traitements, antécédents, assurance).")
               + EmailTemplate.p("Communiquez-lui ce code uniquement si vous êtes d'accord :")
@@ -316,7 +317,7 @@ public class EmailService {
                 Si vous n'etes pas a l'origine de cette demande, ne communiquez ce code a personne.
 
                 L'equipe Doctorek
-                """.formatted(bonjour.replace("<strong>", "").replace("</strong>", ""), code);
+                """.formatted(bonjourText, code);
 
         send(toEmail, subject, text, html, "carte-access-otp", toEmail);
     }

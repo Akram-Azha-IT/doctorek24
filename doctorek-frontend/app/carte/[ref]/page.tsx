@@ -512,7 +512,7 @@ export default function CarteScanPage() {
               <SLabel>Maladies chroniques</SLabel>
               {carte.maladiesChroniques.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
-                  {carte.maladiesChroniques.map((m, i) => <Tag key={i} color="#7C3AED">{m}</Tag>)}
+                  {carte.maladiesChroniques.map((m) => <Tag key={m} color="#7C3AED">{m}</Tag>)}
                 </div>
               ) : (
                 <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
@@ -557,9 +557,8 @@ export default function CarteScanPage() {
         {/* ── ANTÉCÉDENTS ── (sensible, derrière OTP) */}
         {activeTab === 'antecedents' && (
           <div className="space-y-4">
-            {!sensible ? (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />
-            ) : (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) ? (
+            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />}
+            {sensible && (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) && (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
@@ -585,7 +584,7 @@ export default function CarteScanPage() {
                       <SLabel>Vaccinations</SLabel>
                       {vaccins.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {vaccins.map((v, i) => <Tag key={i} color="#059669">{v}</Tag>)}
+                          {vaccins.map((v) => <Tag key={v} color="#059669">{v}</Tag>)}
                         </div>
                       ) : (
                         <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
@@ -595,7 +594,7 @@ export default function CarteScanPage() {
                       <SLabel>Antécédents familiaux</SLabel>
                       {antFam.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {antFam.map((a, i) => <Tag key={i} color="#D97706">{a}</Tag>)}
+                          {antFam.map((a) => <Tag key={a} color="#D97706">{a}</Tag>)}
                         </div>
                       ) : (
                         <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
@@ -604,7 +603,8 @@ export default function CarteScanPage() {
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+            {sensible && antChir.length === 0 && vaccins.length === 0 && antFam.length === 0 && (
               <EmptyState message="Aucun antécédent renseigné" />
             )}
           </div>
