@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Image from 'next/image'
 import {
   getCarteByRef,
   getCarteDossier,
@@ -47,10 +46,21 @@ const STATUT_COLOR: Record<string, { bg: string; text: string }> = {
 }
 
 // ── Helper components ─────────────────────────────────────────────────────────
+// Flèche dessinée à la main (trait irrégulier façon marqueur) : marqueur de liste
+// et de section, plus chaleureux qu'une puce.
+function HandArrow({ className = 'w-5 h-3.5', color = C_BLUE }: { readonly className?: string; readonly color?: string }) {
+  return (
+    <svg className={`flex-shrink-0 ${className}`} viewBox="0 0 32 20" fill="none" aria-hidden="true">
+      <path d="M2 11 C 9 9.5, 17 9, 27 10.2" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M21.5 5.5 C 24.5 7.5, 26.5 9, 28 10.4 C 26 11.6, 23.8 13.6, 22 16.5" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function SLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-3">
-      <span className="w-1 h-3.5 rounded-full" style={{ background: C_BLUE }} />
+      <HandArrow className="w-5 h-3.5" color={C_BLUE} />
       <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: C_NAVY }}>
         {children}
       </p>
@@ -265,7 +275,8 @@ export default function CarteScanPage() {
               <div className="relative flex-shrink-0">
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden flex items-center justify-center ring-1 ring-black/5" style={{ background: `${C_BLUE}10` }}>
                   {profile?.photoUrl ? (
-                    <Image src={profile.photoUrl} alt={fullName} width={80} height={80} className="object-cover w-full h-full" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profile.photoUrl} alt={fullName} width={80} height={80} className="object-cover w-full h-full" />
                   ) : (
                     <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="8" r="4" fill={C_BLUE} opacity="0.6" />
@@ -480,7 +491,10 @@ export default function CarteScanPage() {
                         className="flex items-center justify-between py-1.5 px-3 rounded-lg"
                         style={{ background: C_BG }}
                       >
-                        <span className="text-xs font-semibold truncate" style={{ color: C_TEXT }}>{m.nom}</span>
+                        <span className="flex items-center gap-2 min-w-0">
+                          <HandArrow className="w-4 h-3" color={C_BLUE} />
+                          <span className="text-xs font-semibold truncate" style={{ color: C_TEXT }}>{m.nom}</span>
+                        </span>
                         <span
                           className="text-xs font-bold px-2 py-0.5 rounded-full ml-2 flex-shrink-0"
                           style={{ background: `${C_BLUE}12`, color: C_BLUE }}
@@ -515,9 +529,12 @@ export default function CarteScanPage() {
                     {antChir.length > 0 ? (
                       <div className="space-y-2.5">
                         {antChir.map((a, i) => (
-                          <div key={i}>
-                            <p className="text-sm font-medium leading-snug" style={{ color: C_TEXT }}>{a.description}</p>
-                            {a.date && <p className="text-xs font-mono mt-0.5" style={{ color: `${C_BODY}80` }}>{a.date}</p>}
+                          <div key={i} className="flex items-start gap-2">
+                            <HandArrow className="w-4 h-3 mt-1" color="#7C3AED" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium leading-snug" style={{ color: C_TEXT }}>{a.description}</p>
+                              {a.date && <p className="text-xs font-mono mt-0.5" style={{ color: `${C_BODY}80` }}>{a.date}</p>}
+                            </div>
                           </div>
                         ))}
                       </div>
