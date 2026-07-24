@@ -3,13 +3,18 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
-import { getCarteByRef } from '@/features/carte/api'
+import {
+  getCarteByRef,
+  getCarteDossier,
+  carteOrdonnanceFichierUrl,
+  carteDocumentDownloadUrl,
+} from '@/features/carte/api'
+import type { CarteDossier } from '@/features/carte/api'
 import { SensibleUnlock } from '@/features/carte/components/SensibleUnlock'
 import LogoLoader from '@/components/LogoLoader'
 import { getPatientProfile } from '@/features/patient/api'
 import { getRdvsPatient } from '@/features/agenda/api'
-import { getOrdonnances, getDocuments, getDocumentDownloadUrl, getOrdonnanceFichierUrl, openProtectedFile } from '@/features/dossier/api'
-import type { OrdonnanceDto, DocumentMedicalDto } from '@/features/dossier/api'
+import { openProtectedFile } from '@/features/dossier/api'
 import { getSession } from '@/lib/session'
 import type { CartePublic, CarteSensible, PatientProfile, RendezVous } from '@/lib/types'
 
@@ -100,10 +105,10 @@ export default function CarteScanPage() {
 
   const [carte, setCarte] = useState<CartePublic | null>(null)
   const [sensible, setSensible] = useState<CarteSensible | null>(null)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [dossier, setDossier] = useState<CarteDossier | null>(null)
   const [profile, setProfile] = useState<PatientProfile | null>(null)
   const [rdvs, setRdvs] = useState<RendezVous[]>([])
-  const [ordonnances, setOrdonnances] = useState<OrdonnanceDto[]>([])
-  const [documents, setDocuments] = useState<DocumentMedicalDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('alertes')
@@ -120,19 +125,15 @@ export default function CarteScanPage() {
     getCarteByRef(ref)
       .then(async (data) => {
         setCarte(data)
-        // Le scan public ne charge que le vital + l'OTP. Profil, RDV et dossier
-        // sont réservés aux utilisateurs connectés (sinon 401 -> redirection login).
+        // Scan public : vital tout de suite. Profil + RDV seulement si connecté
+        // (sinon 401 -> redirection login). Ordonnances/documents passent par l'OTP.
         if (data?.patientId && getSession()) {
-          const [prof, appointments, ords, docs] = await Promise.allSettled([
+          const [prof, appointments] = await Promise.allSettled([
             getPatientProfile(data.patientId),
             getRdvsPatient(data.patientId),
-            getOrdonnances(data.patientId),
-            getDocuments(data.patientId),
           ])
           setProfile(prof.status === 'fulfilled' ? prof.value : null)
           setRdvs(appointments.status === 'fulfilled' ? (appointments.value ?? []) : [])
-          setOrdonnances(ords.status === 'fulfilled' ? (ords.value ?? []) : [])
-          setDocuments(docs.status === 'fulfilled' ? (docs.value ?? []) : [])
         }
         if (data?.allergies?.length === 0) setActiveTab('medical')
       })
@@ -185,6 +186,21 @@ export default function CarteScanPage() {
   const antChir = sensible?.antecedentsChirurgicaux ?? []
   const vaccins = sensible?.vaccinations ?? []
   const antFam = sensible?.antecedentsFamiliaux ?? []
+  const ordonnances = dossier?.ordonnances ?? []
+  const documents = dossier?.documents ?? []
+
+  // Déblocage OTP : révèle le sensible et charge le dossier (ordonnances + documents).
+  async function handleUnlocked(s: CarteSensible, token: string) {
+    setSensible(s)
+    setAccessToken(token)
+    try {
+      setDossier(await getCarteDossier(ref, token))
+    } catch {
+      // le dossier peut être vide ou indisponible : on garde le sensible affiché
+    }
+  }
+
+  const grantHeaders = accessToken ? { 'X-Carte-Access': accessToken } : undefined
 
   const tabs: Tab[] = [
     { id: 'alertes',     label: 'Alertes',      dot: carte.allergies.length > 0 ? '#DC2626' : undefined },
@@ -552,7 +568,7 @@ export default function CarteScanPage() {
                 )}
               </div>
             ) : (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />
+              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
             )}
           </div>
         )}
@@ -560,7 +576,7 @@ export default function CarteScanPage() {
         {/* ── ANTÉCÉDENTS ── (sensible, derrière OTP) */}
         {activeTab === 'antecedents' && (
           <div className="space-y-4">
-            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />}
+            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) && (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
@@ -652,7 +668,7 @@ export default function CarteScanPage() {
                 </div>
               )
             ) : (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={setSensible} />
+              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
             )}
 
             {carte.contactsUrgence.length > 0 && (
@@ -735,10 +751,12 @@ export default function CarteScanPage() {
           </div>
         )}
 
-        {/* ── ORDONNANCES ── */}
+        {/* ── ORDONNANCES ── (dossier, derrière OTP) */}
         {activeTab === 'ordonnances' && (
           <div>
-            {ordonnances.length > 0 ? (
+            {!sensible ? (
+              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
+            ) : ordonnances.length > 0 ? (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
@@ -794,7 +812,7 @@ export default function CarteScanPage() {
                         <div className="px-4 py-3">
                           <button
                             type="button"
-                            onClick={() => openProtectedFile(getOrdonnanceFichierUrl(ord.id)).catch(() => {})}
+                            onClick={() => openProtectedFile(carteOrdonnanceFichierUrl(carte.cardRef, ord.id), grantHeaders).catch(() => {})}
                             className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
                             style={{ background: `${C_BLUE}10`, color: C_BLUE }}
                           >
@@ -823,10 +841,12 @@ export default function CarteScanPage() {
           </div>
         )}
 
-        {/* ── DOCUMENTS ── */}
+        {/* ── DOCUMENTS ── (dossier, derrière OTP) */}
         {activeTab === 'documents' && (
           <div>
-            {documents.length > 0 ? (
+            {!sensible ? (
+              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
+            ) : documents.length > 0 ? (
               <div
                 className="bg-white rounded-2xl px-6 py-5"
                 style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
@@ -845,7 +865,7 @@ export default function CarteScanPage() {
                     <button
                       key={doc.id}
                       type="button"
-                      onClick={() => openProtectedFile(getDocumentDownloadUrl(doc.patientId, doc.id)).catch(() => {})}
+                      onClick={() => openProtectedFile(carteDocumentDownloadUrl(carte.cardRef, doc.id), grantHeaders).catch(() => {})}
                       className="flex items-start gap-2.5 py-2.5 px-3 rounded-xl transition-colors hover:bg-gray-50 text-left"
                       style={{ border: '1px solid #E5E7EB' }}
                     >
@@ -876,10 +896,10 @@ export default function CarteScanPage() {
 
       </div>
 
-      {/* ── Footer ── */}
-      <div className="max-w-5xl mx-auto w-full px-4 md:px-8 pb-5 md:pb-6">
+      {/* ── Footer fixe (toujours visible) ── */}
+      <div className="sticky bottom-0 z-40 mt-auto px-4 md:px-8 pb-3 pt-2" style={{ background: C_BG }}>
         <div
-          className="rounded-2xl px-5 py-4 flex items-center justify-between"
+          className="max-w-5xl mx-auto rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-lg"
           style={{ background: C_DARK }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

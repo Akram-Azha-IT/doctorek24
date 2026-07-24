@@ -1,8 +1,13 @@
 package ma.doctorek.doctorek.service;
 
 import ma.doctorek.doctorek.dto.CarteAccessResponse;
+import ma.doctorek.doctorek.dto.CarteDossierResponse;
 import ma.doctorek.doctorek.dto.CarteSensibleResponse;
 import ma.doctorek.doctorek.dto.OtpChallengeResponse;
+import ma.doctorek.doctorek.entity.DocumentMedicalEntity;
+import ma.doctorek.doctorek.entity.OrdonnanceEntity;
+import ma.doctorek.doctorek.repository.DocumentMedicalRepository;
+import ma.doctorek.doctorek.repository.OrdonnanceRepository;
 import ma.doctorek.doctorek.service.CarteService.OtpTarget;
 import ma.doctorek.doctorek.service.otp.OtpSender;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,13 +36,17 @@ class CarteAccessServiceTest {
     @Mock RateLimiterService rateLimiter;
     @Mock StringRedisTemplate redis;
     @Mock ValueOperations<String, String> ops;
+    @Mock DossierService dossierService;
+    @Mock OrdonnanceRepository ordonnanceRepo;
+    @Mock DocumentMedicalRepository documentRepo;
 
     CarteAccessService service;
     final String cardRef = "VMC-2026-ABCD1234";
 
     @BeforeEach
     void setUp() {
-        service = new CarteAccessService(carteService, otpSender, rateLimiter, redis);
+        service = new CarteAccessService(carteService, otpSender, rateLimiter, redis,
+                dossierService, ordonnanceRepo, documentRepo);
     }
 
     @Test
@@ -135,6 +144,46 @@ class CarteAccessServiceTest {
         when(carteService.getSensibleByCardRef(cardRef)).thenReturn(sensible);
 
         assertThat(service.getSensible(cardRef, "tok")).isSameAs(sensible);
+    }
+
+    @Test
+    @DisplayName("getDossier : jeton valide -> ordonnances + documents du patient")
+    void getDossier_validToken_returnsOrdonnancesAndDocuments() {
+        UUID patientId = UUID.randomUUID();
+        when(redis.opsForValue()).thenReturn(ops);
+        when(ops.get("carte:grant:tok")).thenReturn(cardRef);
+        when(carteService.getPatientIdByCardRef(cardRef)).thenReturn(patientId);
+        when(dossierService.getOrdonnances(patientId)).thenReturn(List.of());
+        when(dossierService.getDocuments(patientId)).thenReturn(List.of());
+
+        CarteDossierResponse res = service.getDossier(cardRef, "tok");
+
+        assertThat(res.ordonnances()).isEmpty();
+        assertThat(res.documents()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("downloadDocument : refuse un document d'un autre patient")
+    void downloadDocument_wrongPatient_throws() throws Exception {
+        UUID patientId = UUID.randomUUID();
+        UUID docId = UUID.randomUUID();
+        when(redis.opsForValue()).thenReturn(ops);
+        when(ops.get("carte:grant:tok")).thenReturn(cardRef);
+        when(carteService.getPatientIdByCardRef(cardRef)).thenReturn(patientId);
+        DocumentMedicalEntity doc = new DocumentMedicalEntity();
+        doc.setPatientId(UUID.randomUUID()); // autre patient
+        when(documentRepo.findById(docId)).thenReturn(java.util.Optional.of(doc));
+
+        assertThatThrownBy(() -> service.downloadDocument(cardRef, docId, "tok"))
+                .isInstanceOf(SecurityException.class);
+        verify(dossierService, never()).downloadDocument(any());
+    }
+
+    @Test
+    @DisplayName("downloadOrdonnanceFichier : jeton absent -> SecurityException")
+    void downloadOrdonnance_noToken_throws() {
+        assertThatThrownBy(() -> service.downloadOrdonnanceFichier(cardRef, UUID.randomUUID(), null))
+                .isInstanceOf(SecurityException.class);
     }
 
     @Test

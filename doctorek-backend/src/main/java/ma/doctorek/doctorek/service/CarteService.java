@@ -120,6 +120,12 @@ public class CarteService {
 
     public record OtpTarget(UUID patientId, String email, String firstName) {}
 
+    /** Résout le patient propriétaire d'une carte (pour l'accès dossier OTP). */
+    @Transactional(readOnly = true)
+    public UUID getPatientIdByCardRef(String cardRef) {
+        return findByRef(cardRef).getPatientId();
+    }
+
     private CarteVirtuelleEntity findByRef(String cardRef) {
         return carteRepository.findByCardRef(cardRef)
             .orElseThrow(() -> new CarteNotFoundException("Carte non trouvée: " + cardRef));

@@ -52,7 +52,7 @@ describe('SensibleUnlock', () => {
     fireEvent.change(screen.getByPlaceholderText('______'), { target: { value: '123456' } })
     fireEvent.click(screen.getByRole('button', { name: /débloquer/i }))
 
-    await waitFor(() => expect(onUnlocked).toHaveBeenCalledWith(sensible))
+    await waitFor(() => expect(onUnlocked).toHaveBeenCalledWith(sensible, 'tok'))
     expect(api.verifyCarteOtp).toHaveBeenCalledWith('VMC-1', '123456')
     expect(api.getCarteSensible).toHaveBeenCalledWith('VMC-1', 'tok')
   })

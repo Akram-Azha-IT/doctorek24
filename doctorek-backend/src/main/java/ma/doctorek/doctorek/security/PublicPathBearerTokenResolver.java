@@ -35,8 +35,11 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$"),
         // GET /api/v1/carte/ref/{cardRef} (emergency QR scan)
         Pattern.compile("^/api/v1/carte/ref/[^/]+/?$"),
-        // GET /api/v1/carte/ref/{cardRef}/sensible (OTP-gated, own grant token)
+        // GET carte OTP-gated reads (own grant token via X-Carte-Access, not a bearer)
         Pattern.compile("^/api/v1/carte/ref/[^/]+/sensible/?$"),
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/dossier/?$"),
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/ordonnances/[^/]+/fichier/?$"),
+        Pattern.compile("^/api/v1/carte/ref/[^/]+/documents/[^/]+/download/?$"),
         // GET /api/v1/patients/rattachement/{token} (info masquée compte famille)
         Pattern.compile("^/api/v1/patients/rattachement/[^/]+/?$")
     );

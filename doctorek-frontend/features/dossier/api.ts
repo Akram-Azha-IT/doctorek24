@@ -171,14 +171,14 @@ export function getDocumentDownloadUrl(patientId: string, documentId: string): s
 // Browser navigation to a protected URL sends no Authorization header (token lives in
 // localStorage, not a cookie), so plain <a href> links to these endpoints 401. Fetch with
 // the auth header instead and open the resulting blob.
-export async function openProtectedFile(url: string): Promise<void> {
+export async function openProtectedFile(url: string, extraHeaders?: Record<string, string>): Promise<void> {
   // Open the tab synchronously (still inside the click handler) so popup blockers
   // treat it as user-initiated — opening it after the await below gets silently blocked.
   const tab = window.open('', '_blank')
   try {
     const { getSession } = await import('@/lib/session')
     const session = getSession()
-    const headers: Record<string, string> = {}
+    const headers: Record<string, string> = { ...extraHeaders }
     if (session?.accessToken) headers['Authorization'] = `Bearer ${session.accessToken}`
     const res = await fetch(url, { headers })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)

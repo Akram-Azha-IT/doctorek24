@@ -1,14 +1,21 @@
 package ma.doctorek.doctorek.service;
 
 import ma.doctorek.doctorek.dto.CarteAccessResponse;
+import ma.doctorek.doctorek.dto.CarteDossierResponse;
 import ma.doctorek.doctorek.dto.CarteSensibleResponse;
 import ma.doctorek.doctorek.dto.OtpChallengeResponse;
+import ma.doctorek.doctorek.repository.DocumentMedicalRepository;
+import ma.doctorek.doctorek.repository.OrdonnanceRepository;
 import ma.doctorek.doctorek.service.CarteService.OtpTarget;
 import ma.doctorek.doctorek.service.otp.OtpSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -43,15 +50,24 @@ public class CarteAccessService {
     private final OtpSender otpSender;
     private final RateLimiterService rateLimiter;
     private final StringRedisTemplate redis;
+    private final DossierService dossierService;
+    private final OrdonnanceRepository ordonnanceRepo;
+    private final DocumentMedicalRepository documentRepo;
 
     public CarteAccessService(CarteService carteService,
                               OtpSender otpSender,
                               RateLimiterService rateLimiter,
-                              StringRedisTemplate redis) {
+                              StringRedisTemplate redis,
+                              DossierService dossierService,
+                              OrdonnanceRepository ordonnanceRepo,
+                              DocumentMedicalRepository documentRepo) {
         this.carteService = carteService;
         this.otpSender = otpSender;
         this.rateLimiter = rateLimiter;
         this.redis = redis;
+        this.dossierService = dossierService;
+        this.ordonnanceRepo = ordonnanceRepo;
+        this.documentRepo = documentRepo;
     }
 
     /** Génère un OTP et l'envoie au patient. Retourne la destination masquée. */
@@ -95,6 +111,44 @@ public class CarteAccessService {
 
     /** Lit la partie sensible si le jeton correspond bien à cette carte. */
     public CarteSensibleResponse getSensible(String cardRef, String accessToken) {
+        requireGrant(cardRef, accessToken);
+        return carteService.getSensibleByCardRef(cardRef);
+    }
+
+    /** Ordonnances + documents du patient, après OTP validé (médecin sans RDV inclus). */
+    public CarteDossierResponse getDossier(String cardRef, String accessToken) {
+        requireGrant(cardRef, accessToken);
+        UUID patientId = carteService.getPatientIdByCardRef(cardRef);
+        return new CarteDossierResponse(
+                dossierService.getOrdonnances(patientId),
+                dossierService.getDocuments(patientId));
+    }
+
+    /** Fichier d'une ordonnance, si le jeton déverrouille bien la carte du patient concerné. */
+    public DossierService.OrdonnanceFichierResult downloadOrdonnanceFichier(
+            String cardRef, UUID ordonnanceId, String accessToken) throws IOException {
+        UUID patientId = requireGrantAndPatient(cardRef, accessToken);
+        var ord = ordonnanceRepo.findById(ordonnanceId)
+                .orElseThrow(() -> new NoSuchElementException("Ordonnance introuvable"));
+        if (!ord.getPatientId().equals(patientId)) {
+            throw new SecurityException("Ordonnance hors de cette carte");
+        }
+        return dossierService.downloadOrdonnanceFichier(ordonnanceId);
+    }
+
+    /** Fichier d'un document, même contrôle d'appartenance à la carte. */
+    public DossierService.DownloadResult downloadDocument(
+            String cardRef, UUID documentId, String accessToken) throws IOException {
+        UUID patientId = requireGrantAndPatient(cardRef, accessToken);
+        var doc = documentRepo.findById(documentId)
+                .orElseThrow(() -> new NoSuchElementException("Document introuvable"));
+        if (!doc.getPatientId().equals(patientId)) {
+            throw new SecurityException("Document hors de cette carte");
+        }
+        return dossierService.downloadDocument(documentId);
+    }
+
+    private void requireGrant(String cardRef, String accessToken) {
         if (accessToken == null || accessToken.isBlank()) {
             throw new SecurityException("Jeton d'accès manquant");
         }
@@ -102,7 +156,11 @@ public class CarteAccessService {
         if (boundRef == null || !boundRef.equals(cardRef)) {
             throw new SecurityException("Jeton d'accès invalide ou expiré");
         }
-        return carteService.getSensibleByCardRef(cardRef);
+    }
+
+    private UUID requireGrantAndPatient(String cardRef, String accessToken) {
+        requireGrant(cardRef, accessToken);
+        return carteService.getPatientIdByCardRef(cardRef);
     }
 
     private static String otpKey(String cardRef) { return "carte:otp:" + cardRef; }
