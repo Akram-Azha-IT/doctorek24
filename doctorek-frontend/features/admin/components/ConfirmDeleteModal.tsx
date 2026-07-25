@@ -29,7 +29,12 @@ export function ConfirmDeleteModal({ open, userName, email, isPending, onConfirm
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={handleCancel} />
+      <button
+        type="button"
+        aria-label="Fermer"
+        onClick={handleCancel}
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+      />
 
       <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-200 animate-in fade-in zoom-in-95 duration-150">
         <button
@@ -53,10 +58,11 @@ export function ConfirmDeleteModal({ open, userName, email, isPending, onConfirm
             et son email libéré. Les données médicales sont conservées (obligation légale).
           </p>
 
-          <label className="mt-5 block text-xs font-semibold text-zinc-500">
+          <label htmlFor="confirm-delete-email" className="mt-5 block text-xs font-semibold text-zinc-500">
             Retapez l&apos;email pour confirmer
           </label>
           <input
+            id="confirm-delete-email"
             type="email"
             autoComplete="off"
             value={typed}

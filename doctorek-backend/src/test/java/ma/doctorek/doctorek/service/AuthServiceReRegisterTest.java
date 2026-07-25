@@ -48,7 +48,7 @@ class AuthServiceReRegisterTest {
     }
 
     private User existing(boolean verified, String keycloakId) {
-        User u = User.builder()
+        return User.builder()
             .id(UUID.randomUUID())
             .email(EMAIL)
             .password("hash")
@@ -58,7 +58,6 @@ class AuthServiceReRegisterTest {
             .keycloakId(keycloakId)
             .emailVerified(verified)
             .build();
-        return u;
     }
 
     private void stubHappyCreate() {
@@ -99,8 +98,9 @@ class AuthServiceReRegisterTest {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(real));
         when(userRepository.findByPhone(anyString())).thenReturn(Optional.empty());
         when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+        RegisterPatientRequest req = request();
 
-        assertThatThrownBy(() -> authService.registerPatient(request()))
+        assertThatThrownBy(() -> authService.registerPatient(req))
             .isInstanceOf(EmailAlreadyExistsException.class);
 
         verify(userRepository, never()).delete(any());

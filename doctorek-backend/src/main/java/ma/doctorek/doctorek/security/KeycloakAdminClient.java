@@ -18,6 +18,8 @@ public class KeycloakAdminClient {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakAdminClient.class);
 
+    private static final String USERS_PATH = "/users/";
+
     private final RestClient restClient;
 
     @Value("${keycloak.admin.url}")
@@ -129,7 +131,7 @@ public class KeycloakAdminClient {
         }
 
         restClient.post()
-            .uri(keycloakUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm")
+            .uri(keycloakUrl + "/admin/realms/" + realm + USERS_PATH + userId + "/role-mappings/realm")
             .header("Authorization", "Bearer " + adminToken)
             .contentType(MediaType.APPLICATION_JSON)
             .body(List.of(roleRep))
@@ -145,7 +147,7 @@ public class KeycloakAdminClient {
         String adminToken = getAdminToken();
         try {
             restClient.delete()
-                .uri(keycloakUrl + "/admin/realms/" + realm + "/users/" + keycloakUserId)
+                .uri(keycloakUrl + "/admin/realms/" + realm + USERS_PATH + keycloakUserId)
                 .header("Authorization", "Bearer " + adminToken)
                 .retrieve()
                 .toBodilessEntity();
@@ -166,7 +168,7 @@ public class KeycloakAdminClient {
             "requiredActions", List.of()
         );
         restClient.put()
-            .uri(keycloakUrl + "/admin/realms/" + realm + "/users/" + keycloakUserId)
+            .uri(keycloakUrl + "/admin/realms/" + realm + USERS_PATH + keycloakUserId)
             .header("Authorization", "Bearer " + adminToken)
             .contentType(MediaType.APPLICATION_JSON)
             .body(update)
