@@ -2,10 +2,11 @@
 
 import { Suspense, useRef, useState, Fragment } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Search, CreditCard, ChevronUp, ChevronDown } from 'lucide-react'
-import { useAdminUsers, useToggleUserActive } from '@/features/admin/hooks'
+import { Search, CreditCard, ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
+import { useAdminUsers, useToggleUserActive, useDeleteUser } from '@/features/admin/hooks'
 import type { UserSummary } from '@/features/admin/types'
 import { ConfirmToggleModal } from '@/features/admin/components/ConfirmToggleModal'
+import { ConfirmDeleteModal } from '@/features/admin/components/ConfirmDeleteModal'
 import { StatusBadge, RoleBadge } from '@/features/admin/components/AdminBadges'
 import { ToggleActiveButton } from '@/features/admin/components/ToggleActiveButton'
 import { AdminPagination } from '@/features/admin/components/AdminPagination'
@@ -33,10 +34,12 @@ function UtilisateursContent() {
   const [page, setPage] = useState(0)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [pendingToggle, setPendingToggle] = useState<UserSummary | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<UserSummary | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { data, isLoading, error } = useAdminUsers(roleFilter, debouncedSearch, page, PAGE_SIZE)
   const toggle = useToggleUserActive()
+  const del = useDeleteUser()
 
   // Deep link support: /utilisateurs?role=PATIENT preselects the tab.
   // setState pendant le rendu (pattern React "derive state from props") — pas d'effet.
@@ -71,6 +74,14 @@ function UtilisateursContent() {
     toggle.mutate(pendingToggle.id, { onSettled: () => setPendingToggle(null) })
   }
 
+  function handleConfirmDelete() {
+    if (!pendingDelete) return
+    del.mutate(pendingDelete.id, {
+      onSuccess: () => setExpandedId(null),
+      onSettled: () => setPendingDelete(null),
+    })
+  }
+
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0
   const noun = roleFilter === 'PATIENT' ? 'patient' : roleFilter === 'MEDECIN' ? 'médecin' : 'utilisateur'
 
@@ -83,6 +94,15 @@ function UtilisateursContent() {
         isPending={toggle.isPending}
         onConfirm={handleConfirmToggle}
         onCancel={() => setPendingToggle(null)}
+      />
+
+      <ConfirmDeleteModal
+        open={pendingDelete !== null}
+        userName={`${pendingDelete?.firstName ?? ''} ${pendingDelete?.lastName ?? ''}`.trim()}
+        email={pendingDelete?.email ?? ''}
+        isPending={del.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
 
       <div className="mx-auto max-w-6xl space-y-6">
@@ -212,6 +232,18 @@ function UtilisateursContent() {
                                     setPendingToggle(user)
                                   }}
                                 />
+                                <button
+                                  type="button"
+                                  title="Supprimer le compte"
+                                  disabled={del.isPending}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setPendingDelete(user)
+                                  }}
+                                  className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
                               </div>
                             </td>
                           </tr>

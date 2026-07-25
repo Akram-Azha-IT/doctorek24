@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -42,6 +43,12 @@ public class AdminController {
     @PutMapping("/users/{id}/toggle-active")
     public ResponseEntity<ApiResponse<Void>> toggleActive(@PathVariable UUID id) {
         adminService.toggleUserActive(id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID id, Principal principal) {
+        adminService.deleteUser(principal.getName(), id);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

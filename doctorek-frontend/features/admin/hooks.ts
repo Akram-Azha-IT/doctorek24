@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getAdminStats, getAdminUsers, toggleUserActive, getAdminCartes, getPatientCarte } from './api'
+import { getAdminStats, getAdminUsers, toggleUserActive, deleteUser, getAdminCartes, getPatientCarte } from './api'
 
 export function useAdminStats() {
   return useQuery({
@@ -20,6 +20,17 @@ export function useToggleUserActive() {
   return useMutation({
     mutationFn: toggleUserActive,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  })
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'users'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
   })
 }
 

@@ -18,6 +18,11 @@ public class KeycloakAdminClient {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakAdminClient.class);
 
+    // Segment de chemin de l'API Admin Keycloak (contrat fixe) — pas une URI configurable :
+    // la base est déjà externalisée via keycloak.admin.url.
+    @SuppressWarnings("java:S1075")
+    private static final String USERS_PATH = "/users/";
+
     private final RestClient restClient;
 
     @Value("${keycloak.admin.url}")
@@ -129,12 +134,29 @@ public class KeycloakAdminClient {
         }
 
         restClient.post()
-            .uri(keycloakUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm")
+            .uri(keycloakUrl + "/admin/realms/" + realm + USERS_PATH + userId + "/role-mappings/realm")
             .header("Authorization", "Bearer " + adminToken)
             .contentType(MediaType.APPLICATION_JSON)
             .body(List.of(roleRep))
             .retrieve()
             .toBodilessEntity();
+    }
+
+    /**
+     * Deletes a Keycloak user by its id. Frees the username/email in Keycloak so it
+     * can be reused. Tolerates a missing user (already deleted) as a no-op.
+     */
+    public void deleteUser(String keycloakUserId) {
+        String adminToken = getAdminToken();
+        try {
+            restClient.delete()
+                .uri(keycloakUrl + "/admin/realms/" + realm + USERS_PATH + keycloakUserId)
+                .header("Authorization", "Bearer " + adminToken)
+                .retrieve()
+                .toBodilessEntity();
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            log.warn("Keycloak user {} already absent — delete is a no-op", keycloakUserId);
+        }
     }
 
     /**
@@ -149,7 +171,7 @@ public class KeycloakAdminClient {
             "requiredActions", List.of()
         );
         restClient.put()
-            .uri(keycloakUrl + "/admin/realms/" + realm + "/users/" + keycloakUserId)
+            .uri(keycloakUrl + "/admin/realms/" + realm + USERS_PATH + keycloakUserId)
             .header("Authorization", "Bearer " + adminToken)
             .contentType(MediaType.APPLICATION_JSON)
             .body(update)

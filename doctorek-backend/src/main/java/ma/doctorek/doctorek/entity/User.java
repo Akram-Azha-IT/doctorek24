@@ -3,6 +3,7 @@ package ma.doctorek.doctorek.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import ma.doctorek.doctorek.enums.Role;
+import ma.doctorek.doctorek.enums.UserStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -46,6 +47,14 @@ public class User {
     @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     @Builder.Default
     @Column(name = "email_verified", nullable = false)
@@ -92,5 +101,25 @@ public class User {
         this.emailVerified = true;
         this.verificationCode = null;
         this.verificationCodeExpiresAt = null;
+    }
+
+    /**
+     * Anonymise l'identité du compte lors d'une suppression. Libère l'email et le
+     * téléphone (contraintes UNIQUE) pour une ré-inscription future, coupe tout
+     * lien Keycloak et bloque la connexion. Les données médicales liées (dossier,
+     * ordonnances, RDV) restent rattachées à cette coquille anonyme.
+     */
+    public void anonymize() {
+        this.email = "deleted-" + this.id + "@supprime.doctorek";
+        this.phone = null;
+        this.firstName = "Compte";
+        this.lastName = "supprimé";
+        this.keycloakId = null;
+        this.avatarUrl = null;
+        this.verificationCode = null;
+        this.verificationCodeExpiresAt = null;
+        this.active = false;
+        this.status = UserStatus.DELETED;
+        this.deletedAt = Instant.now();
     }
 }
