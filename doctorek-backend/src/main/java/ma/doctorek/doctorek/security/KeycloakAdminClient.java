@@ -138,6 +138,23 @@ public class KeycloakAdminClient {
     }
 
     /**
+     * Deletes a Keycloak user by its id. Frees the username/email in Keycloak so it
+     * can be reused. Tolerates a missing user (already deleted) as a no-op.
+     */
+    public void deleteUser(String keycloakUserId) {
+        String adminToken = getAdminToken();
+        try {
+            restClient.delete()
+                .uri(keycloakUrl + "/admin/realms/" + realm + "/users/" + keycloakUserId)
+                .header("Authorization", "Bearer " + adminToken)
+                .retrieve()
+                .toBodilessEntity();
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            log.warn("Keycloak user {} already absent — delete is a no-op", keycloakUserId);
+        }
+    }
+
+    /**
      * Sets emailVerified=true and clears required actions for a Keycloak user.
      * Call this after local email verification to unblock ROPC login.
      */

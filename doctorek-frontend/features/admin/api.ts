@@ -21,6 +21,10 @@ export function toggleUserActive(id: string): Promise<void> {
   return apiFetch<void>(`/api/v1/admin/users/${id}/toggle-active`, { method: 'PUT' })
 }
 
+export function deleteUser(id: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/admin/users/${id}`, { method: 'DELETE' })
+}
+
 export function getAdminCartes(page: number, size: number): Promise<CartesPage> {
   const params = new URLSearchParams({ page: String(page), size: String(size) })
   return apiFetch<CartesPage>(`/api/v1/admin/cartes?${params}`)

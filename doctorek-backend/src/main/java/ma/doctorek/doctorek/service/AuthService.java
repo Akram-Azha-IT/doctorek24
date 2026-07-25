@@ -85,17 +85,21 @@ public class AuthService {
 
     @Transactional
     public PatientRegisteredResponse registerPatient(RegisterPatientRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new EmailAlreadyExistsException(request.email());
-        }
-
+        String email = request.email().toLowerCase().strip();
         String normalizedPhone = normalizePhone(request.phone());
+
+        // Un compte non vérifié occupant cet email/téléphone est abandonné → on le purge.
+        purgeUnverifiedConflicts(email, normalizedPhone);
+
+        if (userRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException(email);
+        }
         if (userRepository.existsByPhone(normalizedPhone)) {
             throw new PhoneAlreadyExistsException(normalizedPhone);
         }
 
         User user = User.builder()
-            .email(request.email().toLowerCase().strip())
+            .email(email)
             .phone(normalizedPhone)
             .password(passwordEncoder.encode(request.password()))
             .firstName(request.firstName().strip())
@@ -126,11 +130,16 @@ public class AuthService {
 
     @Transactional
     public MedecinRegisteredResponse registerMedecin(RegisterMedecinRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new EmailAlreadyExistsException(request.email());
-        }
-
+        String email = request.email().toLowerCase().strip();
         String normalizedPhone = normalizePhone(request.phone());
+
+        // Purge un compte non vérifié occupant email/téléphone (son INPE est libéré par la
+        // cascade sur medecin_details), pour permettre une nouvelle inscription.
+        purgeUnverifiedConflicts(email, normalizedPhone);
+
+        if (userRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException(email);
+        }
         if (userRepository.existsByPhone(normalizedPhone)) {
             throw new PhoneAlreadyExistsException(normalizedPhone);
         }
@@ -140,7 +149,7 @@ public class AuthService {
         }
 
         User user = User.builder()
-            .email(request.email().toLowerCase().strip())
+            .email(email)
             .phone(normalizedPhone)
             .password(passwordEncoder.encode(request.password()))
             .firstName(request.firstName().strip())
@@ -195,6 +204,11 @@ public class AuthService {
 
         user.markEmailVerified();
         userRepository.save(user);
+
+        // Carte médicale provisionnée à la vérification (pas au register) : ainsi un compte
+        // jamais vérifié reste sans données liées (purgeable), et la carte existe avant le
+        // premier login → visible dès le premier accès au dashboard.
+        ensureCarteForPatient(user);
 
         if (user.getKeycloakId() != null) {
             try {
@@ -306,6 +320,38 @@ public class AuthService {
         } catch (Exception e) {
             log.warn("Auto carte creation failed for patient {}: {}", user.getId(), e.getMessage());
         }
+    }
+
+    /**
+     * Un compte jamais vérifié (email non confirmé) occupant l'email ou le téléphone demandé
+     * est considéré abandonné : on le purge pour libérer les contraintes UNIQUE et permettre
+     * une ré-inscription propre. Un compte vérifié n'est jamais touché ici — l'appelant lève
+     * alors le conflit habituel.
+     */
+    private void purgeUnverifiedConflicts(String email, String phone) {
+        userRepository.findByEmail(email)
+            .filter(u -> !u.isEmailVerified())
+            .ifPresent(this::purgeUnverified);
+        if (phone != null && !phone.isBlank()) {
+            userRepository.findByPhone(phone)
+                .filter(u -> !u.isEmailVerified())
+                .ifPresent(this::purgeUnverified);
+        }
+    }
+
+    private void purgeUnverified(User user) {
+        if (user.getKeycloakId() != null) {
+            try {
+                keycloakAdminClient.deleteUser(user.getKeycloakId());
+            } catch (Exception e) {
+                log.warn("Keycloak purge failed for unverified account {}: {}", user.getId(), e.getMessage());
+            }
+        }
+        userRepository.delete(user);
+        // Libère les slots UNIQUE (email/téléphone/INPE via cascade) dans la transaction courante
+        // avant la ré-insertion.
+        userRepository.flush();
+        log.info("Purged unverified account {} to allow re-registration", user.getId());
     }
 
     /** Creates a local PATIENT account from the brokered identity provider's claims. */

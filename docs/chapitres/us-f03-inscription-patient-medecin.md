@@ -133,7 +133,7 @@ const baseFields = {
   firstName:       z.string().min(2, 'Prénom requis (min 2 caractères)'),
   lastName:        z.string().min(2, 'Nom requis (min 2 caractères)'),
   email:           z.string().email('Email invalide'),
-  phone:           z.string().regex(/^(\+213|0)[5-7]\d{8}$/, 'Numéro algérien invalide (ex: 0612345678)'),
+  phone:           z.string().regex(/^(\+212|0)[5-7]\d{8}$/, 'Numéro marocain invalide (ex: 0612345678)'),
   password:        z.string().min(8, 'Mot de passe minimum 8 caractères'),
   confirmPassword: z.string(),
 }
@@ -241,7 +241,7 @@ Même structure + champs supplémentaires :
 | `firstName` | min 2 caractères | Prénom requis (min 2 caractères) |
 | `lastName` | min 2 caractères | Nom requis (min 2 caractères) |
 | `email` | format email valide | Email invalide |
-| `phone` | regex `^(\+213\|0)[5-7]\d{8}$` | Numéro algérien invalide (ex: 0612345678) |
+| `phone` | regex `^(\+212\|0)[5-7]\d{8}$` | Numéro marocain invalide (ex: 0612345678) |
 | `password` | min 8 caractères | Mot de passe minimum 8 caractères |
 | `confirmPassword` | === `password` | Les mots de passe ne correspondent pas |
 | `inpe` *(médecin)* | regex `^\d{10}$` | INPE doit contenir exactement 10 chiffres |
