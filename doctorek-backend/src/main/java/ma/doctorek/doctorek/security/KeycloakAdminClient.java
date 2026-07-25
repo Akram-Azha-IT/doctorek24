@@ -18,6 +18,9 @@ public class KeycloakAdminClient {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakAdminClient.class);
 
+    // Segment de chemin de l'API Admin Keycloak (contrat fixe) — pas une URI configurable :
+    // la base est déjà externalisée via keycloak.admin.url.
+    @SuppressWarnings("java:S1075")
     private static final String USERS_PATH = "/users/";
 
     private final RestClient restClient;
