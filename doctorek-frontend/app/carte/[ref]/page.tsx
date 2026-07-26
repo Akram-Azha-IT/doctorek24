@@ -57,9 +57,9 @@ function HandArrow({ className = 'w-5 h-3.5', color = C_BLUE }: { readonly class
   )
 }
 
-function SLabel({ children }: { children: React.ReactNode }) {
+function SLabel({ children, className = 'mb-3' }: { readonly children: React.ReactNode; readonly className?: string }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
+    <div className={`flex items-center gap-2 ${className}`}>
       <HandArrow className="w-5 h-3.5" color={C_BLUE} />
       <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: C_NAVY }}>
         {children}
@@ -97,6 +97,33 @@ function Metric({ label, value, unit }: { readonly label: string; readonly value
         {value}<span className="text-[11px] font-semibold ml-0.5" style={{ color: C_BODY }}>{unit}</span>
       </p>
       <p className="text-[9px] font-bold uppercase tracking-[0.14em] mt-1.5" style={{ color: `${C_BODY}90` }}>{label}</p>
+    </div>
+  )
+}
+
+// Surface unique de la page : une seule recette de carte (bord fin + ombre très douce)
+// pour un rythme calme — la hiérarchie vient du contenu, pas de l'empilement d'effets.
+function Card({ children, className = '' }: { readonly children: React.ReactNode; readonly className?: string }) {
+  return (
+    <section
+      className={`bg-white rounded-2xl px-5 py-5 md:px-6 ${className}`}
+      style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(1,12,45,0.04)' }}
+    >
+      {children}
+    </section>
+  )
+}
+
+// En-tête de carte : libellé + compteur aligné, évite de répéter la même ligne flex.
+function CardHead({ label, count }: { readonly label: string; readonly count?: number }) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <SLabel className="">{label}</SLabel>
+      {count !== undefined && (
+        <span className="text-xs font-bold px-2 py-0.5 rounded-full tabular-nums" style={{ background: `${C_BLUE}10`, color: C_BLUE }}>
+          {count}
+        </span>
+      )}
     </div>
   )
 }
@@ -257,7 +284,10 @@ export default function CarteScanPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: C_BG }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: C_BG, fontFamily: 'var(--font-figtree), ui-sans-serif, system-ui, sans-serif' }}
+    >
       <style>{`
         @keyframes dkRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
         @keyframes dkSheen { 0% { transform: translateX(-140%) skewX(-18deg); } 55%, 100% { transform: translateX(260%) skewX(-18deg); } }
@@ -267,6 +297,8 @@ export default function CarteScanPage() {
         .dk-row { transition: background-color .18s ease, transform .18s ease; }
         .dk-press { transition: transform .12s ease, box-shadow .18s ease; }
         .dk-press:active { transform: scale(.98); }
+        /* Anneau de focus lisible sur fond clair comme sur pilule bleue (navigation clavier). */
+        .dk-press:focus-visible { outline: 3px solid ${C_NAVY}; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) {
           .dk-rise { animation: none; }
           .dk-sheen { display: none; }
@@ -284,8 +316,6 @@ export default function CarteScanPage() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1.2'%3E%3Cpath d='M30 6 L36 18 L48 12 L42 24 L54 30 L42 36 L48 48 L36 42 L30 54 L24 42 L12 48 L18 36 L6 30 L18 24 L12 12 L24 18 Z'/%3E%3C/g%3E%3C/svg%3E")`,
             backgroundSize: '54px 54px',
           }} />
-          {/* Trame de points subtile */}
-          <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #FFFFFF 1px, transparent 1px)', backgroundSize: '22px 22px' }} aria-hidden="true" />
           {/* Filet tricolore fin (rappel national, discret) */}
           <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${C_RED} 0 33.3%, #FFFFFF 33.3% 66.6%, ${C_GREEN} 66.6% 100%)`, opacity: 0.9 }} />
 
@@ -388,7 +418,7 @@ export default function CarteScanPage() {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className="dk-press relative flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap flex-shrink-0 transition-colors"
+                  className="dk-press relative flex items-center gap-1.5 px-4 min-h-[44px] rounded-full text-[13px] font-semibold whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer"
                   style={{
                     background: active ? C_BLUE : C_BG,
                     color: active ? '#FFFFFF' : C_BODY,
@@ -414,7 +444,7 @@ export default function CarteScanPage() {
         {activeTab === 'alertes' && (
           <div className="space-y-4">
             {carte.allergies.length > 0 ? (
-              <div className="bg-white rounded-lg overflow-hidden" style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}>
+              <div className="bg-white rounded-2xl overflow-hidden" style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 1px 2px rgba(1,12,45,0.04)' }}>
                 <div
                   className="px-5 py-3 flex items-center gap-2.5"
                   style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA' }}
@@ -451,10 +481,7 @@ export default function CarteScanPage() {
         {activeTab === 'medical' && (
           <div className="space-y-4">
             {/* Maladies chroniques : information publique (utile en urgence) */}
-            <div
-              className="bg-white rounded-2xl px-6 py-5"
-              style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-            >
+            <Card>
               <SLabel>Maladies chroniques</SLabel>
               {carte.maladiesChroniques.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
@@ -463,14 +490,11 @@ export default function CarteScanPage() {
               ) : (
                 <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
               )}
-            </div>
+            </Card>
 
             {/* Médicaments : sensible, derrière OTP */}
             {sensible ? (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-              >
+              <Card>
                 <SLabel>Médicaments actuels</SLabel>
                 {meds.length > 0 ? (
                   <div className="space-y-1.5">
@@ -496,7 +520,7 @@ export default function CarteScanPage() {
                 ) : (
                   <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
                 )}
-              </div>
+              </Card>
             ) : (
               <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
             )}
@@ -508,10 +532,7 @@ export default function CarteScanPage() {
           <div className="space-y-4">
             {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) && (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-              >
+              <Card>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div>
                     <SLabel>Antécédents chirurgicaux</SLabel>
@@ -554,7 +575,7 @@ export default function CarteScanPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             )}
             {sensible && antChir.length === 0 && vaccins.length === 0 && antFam.length === 0 && (
               <EmptyState message="Aucun antécédent renseigné" />
@@ -565,10 +586,7 @@ export default function CarteScanPage() {
         {/* ── INFOS ── */}
         {activeTab === 'infos' && (
           <div className="space-y-3">
-            <div
-              className="bg-white rounded-2xl px-6 py-5"
-              style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-            >
+            <Card>
               <SLabel>Informations personnelles</SLabel>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <Field label="Genre"      value={profile?.genre} />
@@ -579,15 +597,12 @@ export default function CarteScanPage() {
                   value={[profile?.adresseRue, profile?.adresseVille, profile?.adressePays].filter(Boolean).join(', ') || null}
                 />
               </div>
-            </div>
+            </Card>
 
             {/* Assurance : sensible, derrière OTP */}
             {sensible ? (
               (sensible.assuranceNom || sensible.assuranceNumero) && (
-                <div
-                  className="bg-white rounded-2xl px-6 py-5"
-                  style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-                >
+                <Card>
                   <SLabel>Assurance</SLabel>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                     <Field label="Organisme"  value={sensible.assuranceNom} />
@@ -598,17 +613,14 @@ export default function CarteScanPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               )
             ) : (
               <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
             )}
 
             {carte.contactsUrgence.length > 0 && (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-              >
+              <Card>
                 <SLabel>Contacts d&apos;urgence</SLabel>
                 <div className="space-y-2">
                   {carte.contactsUrgence.map((c, i) => (
@@ -627,7 +639,7 @@ export default function CarteScanPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         )}
@@ -636,19 +648,8 @@ export default function CarteScanPage() {
         {activeTab === 'rdv' && (
           <div>
             {sortedRdvs.length > 0 ? (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <SLabel>Rendez-vous</SLabel>
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${C_BLUE}10`, color: C_BLUE }}
-                  >
-                    {sortedRdvs.length}
-                  </span>
-                </div>
+              <Card>
+                <CardHead label="Rendez-vous" count={sortedRdvs.length} />
                 <div className="space-y-0">
                   {sortedRdvs.map((rdv) => {
                     const colors = STATUT_COLOR[rdv.statut] ?? { bg: '#F3F4F6', text: '#374151' }
@@ -677,7 +678,7 @@ export default function CarteScanPage() {
                     )
                   })}
                 </div>
-              </div>
+              </Card>
             ) : (
               <EmptyState message="Aucun rendez-vous enregistré" />
             )}
@@ -689,19 +690,8 @@ export default function CarteScanPage() {
           <div>
             {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && ordonnances.length > 0 && (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <SLabel>Ordonnances</SLabel>
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${C_BLUE}10`, color: C_BLUE }}
-                  >
-                    {ordonnances.length}
-                  </span>
-                </div>
+              <Card>
+                <CardHead label="Ordonnances" count={ordonnances.length} />
                 <div className="space-y-3">
                   {ordonnances.map((ord) => (
                     <div
@@ -745,7 +735,7 @@ export default function CarteScanPage() {
                           <button
                             type="button"
                             onClick={() => openProtectedFile(carteOrdonnanceFichierUrl(carte.cardRef, ord.id), grantHeaders).catch(() => {})}
-                            className="dk-press inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors hover:brightness-95"
+                            className="dk-press inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors hover:brightness-95 cursor-pointer"
                             style={{ background: `${C_BLUE}10`, color: C_BLUE }}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -766,7 +756,7 @@ export default function CarteScanPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
             {sensible && ordonnances.length === 0 && (
               <EmptyState message="Aucune ordonnance enregistrée" />
@@ -779,26 +769,15 @@ export default function CarteScanPage() {
           <div>
             {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
             {sensible && documents.length > 0 && (
-              <div
-                className="bg-white rounded-2xl px-6 py-5"
-                style={{ border: `1px solid ${C_HAIRLINE}`, boxShadow: '0 2px 14px rgba(1,12,45,0.05)' }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <SLabel>Documents médicaux</SLabel>
-                  <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${C_BLUE}10`, color: C_BLUE }}
-                  >
-                    {documents.length}
-                  </span>
-                </div>
+              <Card>
+                <CardHead label="Documents médicaux" count={documents.length} />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {documents.map((doc) => (
                     <button
                       key={doc.id}
                       type="button"
                       onClick={() => openProtectedFile(carteDocumentDownloadUrl(carte.cardRef, doc.id), grantHeaders).catch(() => {})}
-                      className="dk-press flex items-start gap-2.5 py-2.5 px-3 rounded-xl transition-colors hover:bg-gray-50 text-left"
+                      className="dk-press flex items-start gap-2.5 py-3 px-3 rounded-xl transition-colors hover:bg-gray-50 text-left cursor-pointer"
                       style={{ border: `1px solid ${C_HAIRLINE}` }}
                     >
                       <div
@@ -819,7 +798,7 @@ export default function CarteScanPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
             {sensible && documents.length === 0 && (
               <EmptyState message="Aucun document enregistré" />

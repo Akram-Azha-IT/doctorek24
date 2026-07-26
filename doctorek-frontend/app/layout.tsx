@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
+import { Geist, Plus_Jakarta_Sans, Figtree } from 'next/font/google'
 import './globals.css'
 import { QueryProvider } from '@/lib/query-provider'
 import { StompProvider } from '@/lib/stomp-context'
@@ -21,6 +21,15 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 })
 
+// Figtree : typo santé (lisibilité clinique, chiffres tabulaires nets). Réservée à la
+// carte médicale, la surface la plus institutionnelle du produit.
+const figtree = Figtree({
+  variable: '--font-figtree',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+})
+
 // CSP à base de nonce (proxy.ts) impose le rendu dynamique : le nonce est généré
 // par requête et ne peut pas être injecté dans une page pré-rendue au build.
 export const dynamic = 'force-dynamic'
@@ -36,7 +45,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${geist.variable} ${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="fr" className={`${geist.variable} ${jakarta.variable} ${figtree.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-zinc-50 font-sans">
         <a
           href="#main-content"
