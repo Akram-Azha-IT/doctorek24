@@ -46,14 +46,19 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
         SELECT r.patient_id AS "patientId",
                p.prenom AS "firstName",
                p.nom    AS "lastName",
+               COALESCE(NULLIF(pd.photo_url, ''), u.avatar_url) AS "photoUrl",
                MAX(r.date_rdv) AS "dernierRdvDate",
                (ARRAY_AGG(r.statut ORDER BY r.date_rdv DESC, r.heure_rdv DESC))[1] AS "dernierRdvStatut",
                BOOL_OR(r.date_rdv >= CURRENT_DATE) AS "hasFutureRdv"
         FROM agenda.rendez_vous r
         JOIN patient.patient p ON p.id = r.patient_id
+        -- Photo du patient : celle qu'il a téléversée, sinon l'avatar du compte (Google).
+        -- Jointures externes : un proche sans compte n'a ni l'une ni l'autre.
+        LEFT JOIN patient.patient_details pd ON pd.user_id = p.compte_id
+        LEFT JOIN auth.users u ON u.id = p.compte_id
         WHERE r.medecin_id = :medecinId
           AND (:search = '' OR LOWER(p.prenom || ' ' || p.nom) LIKE LOWER(CONCAT('%', :search, '%')))
-        GROUP BY r.patient_id, p.prenom, p.nom
+        GROUP BY r.patient_id, p.prenom, p.nom, pd.photo_url, u.avatar_url
         HAVING (:filtre = 'TOUS'
              OR (:filtre = 'ACTIFS' AND BOOL_OR(r.date_rdv >= CURRENT_DATE))
              OR (:filtre = 'ANCIENS' AND NOT BOOL_OR(r.date_rdv >= CURRENT_DATE)))

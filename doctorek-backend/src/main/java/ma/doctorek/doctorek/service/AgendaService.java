@@ -434,6 +434,7 @@ public class AgendaService {
                 UUID.fromString(p.getPatientId()),
                 p.getFirstName(),
                 p.getLastName(),
+                p.getPhotoUrl(),
                 p.getDernierRdvDate(),
                 p.getDernierRdvStatut() != null ? StatutRdv.valueOf(p.getDernierRdvStatut()) : null,
                 p.isHasFutureRdv()))

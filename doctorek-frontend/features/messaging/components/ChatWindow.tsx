@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Conversation, Message } from '@/lib/types'
 import { getSession } from '@/lib/session'
+import { Avatar } from '@/components/Avatar'
 import { useMessages, useMarkRead } from '../hooks'
 import { useChat } from '../useChat'
 import { useStompContext } from '@/lib/stomp-context'
@@ -393,7 +394,9 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
     : 'Entrée pour envoyer, micro pour un vocal (max 2 min)'
 
   const otherName = getOtherName(conversation, myId)
-  const otherInitials = otherName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+  const otherPhotoUrl = myId === conversation.patientId
+    ? conversation.medecinPhotoUrl
+    : conversation.patientPhotoUrl
 
   // Corps du composer sans ternaire imbriquée
   let composerBody: React.ReactNode
@@ -410,9 +413,7 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
       {/* En-tête */}
       <div className="flex items-center gap-3 border-b border-[#E7ECF2] bg-white px-5 py-3">
         <div className="relative flex-none">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#007DFF] text-sm font-semibold text-white shadow-sm">
-            {otherInitials}
-          </div>
+          <Avatar name={otherName} photoUrl={otherPhotoUrl} size={40} className="shadow-sm" />
           <span
             className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
               connected ? 'bg-[#2EB67D]' : 'bg-[#C7D0DA]'

@@ -46,15 +46,23 @@ export default function PatientsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-7 md:py-10 space-y-5">
-      <div>
-        <h1 className="text-[22px] md:text-[26px] font-extrabold leading-tight tracking-tight text-[#010C2D]">
-          Mes patients
-        </h1>
-        <p className="mt-1 text-sm text-[#465058]">
-          {total > 0
-            ? `${total} patient${total > 1 ? 's' : ''} ayant pris rendez-vous avec vous.`
-            : 'Liste des patients ayant pris rendez-vous avec vous.'}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] md:text-[26px] font-extrabold leading-tight tracking-tight text-[#010C2D]">
+            Mes patients
+          </h1>
+          <p className="mt-1 text-sm text-[#465058]">
+            Patients ayant pris rendez-vous avec vous.
+          </p>
+        </div>
+        {total > 0 && (
+          <span className="inline-flex items-baseline gap-1.5 rounded-xl bg-[#EBF4FF] px-3.5 py-2">
+            <span className="text-lg font-extrabold tabular-nums leading-none text-[#007DFF]">{total}</span>
+            <span className="text-xs font-semibold text-[#1863A9]">
+              patient{total > 1 ? 's' : ''}
+            </span>
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -158,8 +166,8 @@ export default function PatientsPage() {
               >
                 Précédent
               </button>
-              <span className="text-xs tabular-nums text-[#A0AEC0]">
-                Page {page + 1} / {totalPages}
+              <span className="text-xs tabular-nums text-[#6B7A99]">
+                {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} sur {total}
               </span>
               <button
                 type="button"

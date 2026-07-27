@@ -2,6 +2,7 @@
 
 import type { Conversation, Message } from '@/lib/types'
 import { getSession } from '@/lib/session'
+import { Avatar } from '@/components/Avatar'
 
 interface ConversationListProps {
   conversations: Conversation[]
@@ -20,19 +21,11 @@ function formatRelative(iso: string | null) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-function getOtherName(conv: Conversation, myId: string) {
-  return myId === conv.patientId ? conv.medecinName : conv.patientName
-}
-
-function initials(name: string) {
-  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
-}
-
-// Couleur d'avatar stable dérivée du nom (teinte douce, lisible).
-function avatarHue(name: string) {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = (name.codePointAt(i) ?? 0) + ((hash << 5) - hash)
-  return ((hash % 360) + 360) % 360
+/** Le correspondant : le médecin si je suis le patient, et inversement. */
+function getOther(conv: Conversation, myId: string) {
+  return myId === conv.patientId
+    ? { name: conv.medecinName, photoUrl: conv.medecinPhotoUrl }
+    : { name: conv.patientName, photoUrl: conv.patientPhotoUrl }
 }
 
 function Preview({ last }: { readonly last: Message | null }) {
@@ -77,10 +70,10 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
   return (
     <ul className="py-1">
       {conversations.map((conv) => {
-        const name = getOtherName(conv, myId)
+        const other = getOther(conv, myId)
+        const name = other.name
         const isSelected = conv.id === selectedId
         const unread = conv.unreadCount > 0
-        const hue = avatarHue(name)
         return (
           <li key={conv.id} className="px-2">
             <button
@@ -90,12 +83,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
               }`}
             >
               {isSelected && <span className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-full bg-[#007DFF]" />}
-              <span
-                className="flex-none flex h-11 w-11 items-center justify-center rounded-full text-[13px] font-semibold text-white ring-2 ring-white shadow-sm"
-                style={{ backgroundColor: `hsl(${hue} 58% 52%)` }}
-              >
-                {initials(name)}
-              </span>
+              <Avatar name={name} photoUrl={other.photoUrl} size={44} ring className="shadow-sm" />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2">
                   <span className={`truncate text-[14px] ${unread ? 'font-bold text-[#010C2D]' : 'font-semibold text-[#243547]'}`}>{name}</span>

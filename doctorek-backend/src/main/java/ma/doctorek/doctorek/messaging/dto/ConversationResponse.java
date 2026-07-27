@@ -10,6 +10,8 @@ public record ConversationResponse(
         UUID patientId,
         String medecinName,
         String patientName,
+        String medecinPhotoUrl,
+        String patientPhotoUrl,
         Instant lastMessageAt,
         Instant createdAt,
         long unreadCount,
@@ -17,9 +19,11 @@ public record ConversationResponse(
         MessageResponse lastMessage
 ) {
     public static ConversationResponse from(ConversationEntity c, String medecinName, String patientName,
+                                             String medecinPhotoUrl, String patientPhotoUrl,
                                              long unreadCount, MessageResponse lastMessage) {
         return new ConversationResponse(c.getId(), c.getMedecinId(), c.getPatientId(),
-                medecinName, patientName, c.getLastMessageAt(), c.getCreatedAt(),
+                medecinName, patientName, medecinPhotoUrl, patientPhotoUrl,
+                c.getLastMessageAt(), c.getCreatedAt(),
                 unreadCount, c.isPatientCanReply(), lastMessage);
     }
 }

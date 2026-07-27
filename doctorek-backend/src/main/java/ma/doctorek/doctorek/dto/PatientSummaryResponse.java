@@ -9,6 +9,7 @@ public record PatientSummaryResponse(
         UUID patientId,
         String firstName,
         String lastName,
+        String photoUrl,
         LocalDate dernierRdvDate,
         StatutRdv dernierRdvStatut,
         boolean hasFutureRdv) {}

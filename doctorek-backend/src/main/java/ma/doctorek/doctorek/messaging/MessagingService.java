@@ -14,6 +14,7 @@ import ma.doctorek.doctorek.messaging.dto.SendMessageRequest;
 import ma.doctorek.doctorek.notification.NotificationService;
 import ma.doctorek.doctorek.repository.ConversationRepository;
 import ma.doctorek.doctorek.repository.MessageRepository;
+import ma.doctorek.doctorek.repository.ProfilePhotoProjection;
 import ma.doctorek.doctorek.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,10 +30,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class MessagingService {
@@ -99,10 +104,21 @@ public class MessagingService {
 
     @Transactional(readOnly = true)
     public List<ConversationResponse> listConversations(UUID userId) {
-        return conversationRepo.findByParticipant(userId)
-                .stream()
-                .map(c -> toResponse(c, userId))
-                .toList();
+        List<ConversationEntity> convs = conversationRepo.findByParticipant(userId);
+        // Photos résolues en une seule requête pour toute la liste (sinon N+1).
+        Set<UUID> participants = convs.stream()
+                .flatMap(c -> Stream.of(c.getMedecinId(), c.getPatientId()))
+                .collect(Collectors.toSet());
+        Map<UUID, String> photos = photoMap(participants);
+        return convs.stream().map(c -> toResponse(c, userId, photos)).toList();
+    }
+
+    /** Associe chaque identifiant à sa photo de profil ; absente si l'utilisateur n'en a pas. */
+    private Map<UUID, String> photoMap(Collection<UUID> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+        return userRepo.findPhotoUrls(userIds).stream()
+                .filter(p -> p.getPhotoUrl() != null && !p.getPhotoUrl().isBlank())
+                .collect(Collectors.toMap(p -> UUID.fromString(p.getUserId()), ProfilePhotoProjection::getPhotoUrl));
     }
 
     @Transactional(readOnly = true)
@@ -317,6 +333,10 @@ public class MessagingService {
     // ---- helpers ----
 
     private ConversationResponse toResponse(ConversationEntity c, UUID callerId) {
+        return toResponse(c, callerId, photoMap(List.of(c.getMedecinId(), c.getPatientId())));
+    }
+
+    private ConversationResponse toResponse(ConversationEntity c, UUID callerId, Map<UUID, String> photos) {
         User medecin = resolveById(c.getMedecinId());
         User patient = resolveById(c.getPatientId());
         long unread  = messageRepo.countUnread(c.getId(), callerId);
@@ -329,6 +349,8 @@ public class MessagingService {
         return ConversationResponse.from(c,
                 medecin.getFirstName() + " " + medecin.getLastName(),
                 patient.getFirstName() + " " + patient.getLastName(),
+                photos.get(c.getMedecinId()),
+                photos.get(c.getPatientId()),
                 unread, lastMsg);
     }
 
