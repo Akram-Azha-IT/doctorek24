@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Proche, RoleGestion } from '@/lib/types'
 import { ProcheSchema, ROLE_GESTION_LABELS, type ProcheFormValues } from '../schemas'
@@ -30,7 +30,7 @@ export function ProcheForm({ proche, isPending, onSubmit, onCancel }: ProcheForm
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<ProcheFormValues>({
     resolver: zodResolver(ProcheSchema),
@@ -49,7 +49,7 @@ export function ProcheForm({ proche, isPending, onSubmit, onCancel }: ProcheForm
       : { role: 'PARENT' },
   })
 
-  const dateNaissance = watch('dateNaissance')
+  const dateNaissance = useWatch({ control, name: 'dateNaissance' })
   const age = dateNaissance ? computeAge(dateNaissance) : null
   const isMineur = age !== null && age >= 0 && age < 18
 

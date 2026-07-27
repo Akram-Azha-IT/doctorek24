@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { PrendreRdvSchema, type PrendreRdvFormValues } from '../schemas'
 import { usePrendreRdv } from '../hooks'
-import { getSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import type { RendezVous, TypeConsultation } from '@/lib/types'
 import { useAddProche, useProches } from '@/features/famille/hooks'
 import type { ProcheFormValues } from '@/features/famille/schemas'
@@ -41,7 +41,8 @@ export function ConfirmRdvForm({
   embedded = false,
 }: ConfirmRdvFormProps) {
   const { mutate, isPending } = usePrendreRdv(medecinId, dateRdv)
-  const [sessionPatientId, setSessionPatientId] = useState<string | null>(null)
+  const session = useSession()
+  const sessionPatientId = session?.role === 'PATIENT' ? (session.id ?? null) : null
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
   const [addProcheOpen, setAddProcheOpen] = useState(false)
 
@@ -52,7 +53,7 @@ export function ConfirmRdvForm({
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<PrendreRdvFormValues>({
     resolver: zodResolver(PrendreRdvSchema),
@@ -63,15 +64,18 @@ export function ConfirmRdvForm({
     },
   })
 
+  // Par défaut, le rendez-vous est pour le titulaire : on aligne la sélection dès que
+  // la session est connue. Mise à jour pendant le rendu (motif « dériver un état »)
+  // plutôt que dans un effet, qui provoquerait un second rendu inutile.
+  const [prevSessionPatientId, setPrevSessionPatientId] = useState(sessionPatientId)
+  if (prevSessionPatientId !== sessionPatientId) {
+    setPrevSessionPatientId(sessionPatientId)
+    setSelectedPatientId(sessionPatientId)
+  }
+
   useEffect(() => {
-    const session = getSession()
-    if (session?.role === 'PATIENT' && session.id) {
-      setSessionPatientId(session.id)
-      // Par défaut, le RDV est pour le titulaire lui-même
-      setSelectedPatientId(session.id)
-      setValue('patientId', session.id)
-    }
-  }, [setValue])
+    if (sessionPatientId) setValue('patientId', sessionPatientId)
+  }, [sessionPatientId, setValue])
 
   function selectProfil(patientId: string) {
     setSelectedPatientId(patientId)
@@ -89,7 +93,7 @@ export function ConfirmRdvForm({
     })
   }
 
-  const typeConsultation = watch('questionnaire.typeConsultation')
+  const typeConsultation = useWatch({ control, name: 'questionnaire.typeConsultation' })
 
   function onSubmit(values: PrendreRdvFormValues) {
     mutate(
