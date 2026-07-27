@@ -6,6 +6,7 @@ public interface PatientSummaryProjection {
     String getPatientId();
     String getFirstName();
     String getLastName();
+    String getPhotoUrl();
     LocalDate getDernierRdvDate();
     String getDernierRdvStatut();
     boolean isHasFutureRdv();

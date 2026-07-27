@@ -280,6 +280,8 @@ export interface Conversation {
   patientId: string
   medecinName: string
   patientName: string
+  medecinPhotoUrl: string | null
+  patientPhotoUrl: string | null
   lastMessageAt: string | null
   createdAt: string
   unreadCount: number
@@ -302,6 +304,7 @@ export interface PatientSummary {
   patientId: string
   firstName: string
   lastName: string
+  photoUrl: string | null
   dernierRdvDate: string   // "YYYY-MM-DD"
   dernierRdvStatut: StatutRdv
   hasFutureRdv: boolean

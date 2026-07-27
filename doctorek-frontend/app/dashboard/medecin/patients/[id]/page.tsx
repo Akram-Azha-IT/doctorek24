@@ -6,7 +6,7 @@ import { useRdvsMedecin } from '@/features/agenda/hooks'
 import { getSession } from '@/lib/session'
 import { useMounted } from '@/lib/useMounted'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import type { RendezVous, StatutRdv, CarteVirtuelleRequest, AntecedentChirurgical, MedicamentActuel } from '@/lib/types'
+import type { RendezVous, StatutRdv, CarteVirtuelleRequest, AntecedentChirurgical } from '@/lib/types'
 import { useCarteByPatient, useUpdateCarte, useCreateCarte } from '@/features/carte/hooks'
 import {
   useInfosMedicales,
@@ -20,6 +20,8 @@ import {
 } from '@/features/dossier/hooks'
 import { getDocumentDownloadUrl, openProtectedFile } from '@/features/dossier/api'
 import { DocumentsRequisSection } from '@/features/agenda/components/DocumentsRequisSection'
+import { usePatientProfile } from '@/features/patient/hooks'
+import { Avatar } from '@/components/Avatar'
 import type { MedicamentDto } from '@/features/dossier/api'
 import {
   ArrowLeft,
@@ -55,14 +57,6 @@ interface DrugForm {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-function hslFromName(first: string, last: string) {
-  const str = `${first}${last}`
-  let hash = 0
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  const h = ((hash % 360) + 360) % 360
-  return `hsl(${h}, 55%, 48%)`
-}
 
 function formatDateShortFR(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -1047,8 +1041,6 @@ export default function DossierPatientPage() {
   const prenom = searchParams.get('prenom') ?? ''
   const nom = searchParams.get('nom') ?? ''
   const fullName = [prenom, nom].filter(Boolean).join(' ') || 'Patient'
-  const initials = `${prenom[0] ?? ''}${nom[0] ?? ''}`.toUpperCase() || 'P'
-  const avatarColor = hslFromName(prenom, nom)
 
   const session = getSession()
   const medecinId = session?.role === 'MEDECIN' ? (session.id ?? '') : ''
@@ -1059,6 +1051,8 @@ export default function DossierPatientPage() {
   const { data: allRdvs, isLoading: rdvsLoading } = useRdvsMedecin(medecinId)
   const { data: ordonnances = [] } = useOrdonnances(patientId)
   const { data: documents = [] } = useDocuments(patientId)
+  // Le nom vient de l'URL, mais la photo doit être lue côté serveur.
+  const { data: patientProfile } = usePatientProfile(patientId)
 
   const rdvs: RendezVous[] = (allRdvs ?? [])
     .filter((r) => r.patientId === patientId)
@@ -1119,25 +1113,28 @@ export default function DossierPatientPage() {
         Retour aux patients
       </button>
 
-      {/* Patient header — bandeau clinique */}
+      {/* Identité du patient — bandeau de marque, la photo ancre le dossier */}
       <header className="overflow-hidden rounded-2xl border border-[#E7ECF3] bg-white shadow-sm">
-        <div className="border-l-4 border-[#007DFF] px-5 py-5 sm:px-7 sm:py-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white shadow-sm ring-4 ring-white"
-              style={{ backgroundColor: avatarColor }}
-            >
-              {initials}
-            </div>
+        <div
+          className="px-5 pb-5 pt-6 sm:px-7"
+          style={{ background: 'linear-gradient(180deg, #F4F9FF 0%, #FFFFFF 100%)' }}
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <Avatar
+              name={fullName}
+              photoUrl={patientProfile?.photoUrl}
+              size={72}
+              ring
+              className="shadow-md"
+            />
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-2xl font-extrabold tracking-tight text-[#010C2D]">{fullName}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-[26px] font-extrabold leading-tight tracking-tight text-[#010C2D]">
+                {fullName}
+              </h1>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F6EE] px-2.5 py-1 text-[11px] font-semibold text-[#0B7A4B]">
                   <Stethoscope className="h-3 w-3" />
                   Relation de soin active
-                </span>
-                <span className="rounded-full bg-[#F1F4F7] px-2.5 py-1 text-[11px] font-semibold text-[#6B7A99]">
-                  ID {patientId.slice(0, 8)}
                 </span>
                 {nextRdv && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DFEFFE] px-2.5 py-1 text-[11px] font-semibold text-[#1863A9]">
@@ -1145,32 +1142,36 @@ export default function DossierPatientPage() {
                     Prochain RDV : {formatDateShortFR(nextRdv.dateRdv)} · {nextRdv.heureRdv}
                   </span>
                 )}
+                <span className="rounded-full bg-[#F1F4F7] px-2.5 py-1 font-mono text-[11px] font-semibold text-[#6B7A99]">
+                  {patientId.slice(0, 8)}
+                </span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* KPIs cliniques */}
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: 'RDV au total', value: rdvs.length, icon: <Calendar className="h-4 w-4" /> },
-              { label: 'Consultations', value: rdvsTermines, icon: <Stethoscope className="h-4 w-4" /> },
-              { label: 'Ordonnances', value: ordonnances.length, icon: <Pill className="h-4 w-4" /> },
-              { label: 'Documents', value: documents.length, icon: <Paperclip className="h-4 w-4" /> },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="flex items-center gap-3 rounded-xl border border-[#EEF1F6] bg-[#FAFBFC] px-3.5 py-3"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#EBF4FF] text-[#007DFF]">
-                  {s.icon}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xl font-extrabold tabular-nums leading-none text-[#010C2D]">{s.value}</p>
-                  <p className="mt-1 truncate text-[11px] text-[#6B7A99]">{s.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Repères du dossier : une seule rangée, séparée par des filets plutôt que
+            quatre cartes qui se disputent l'attention. */}
+        <div className="grid grid-cols-2 divide-x divide-[#EEF1F6] border-t border-[#EEF1F6] sm:grid-cols-4">
+          {[
+            { label: 'RDV au total', value: rdvs.length, icon: <Calendar className="h-3.5 w-3.5" /> },
+            { label: 'Consultations', value: rdvsTermines, icon: <Stethoscope className="h-3.5 w-3.5" /> },
+            { label: 'Ordonnances', value: ordonnances.length, icon: <Pill className="h-3.5 w-3.5" /> },
+            { label: 'Documents', value: documents.length, icon: <Paperclip className="h-3.5 w-3.5" /> },
+          ].map((s, i) => (
+            <div
+              key={s.label}
+              className={`px-5 py-3.5 ${i > 1 ? 'border-t border-[#EEF1F6] sm:border-t-0' : ''}`}
+            >
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A97A6]">
+                <span className="text-[#007DFF]">{s.icon}</span>
+                {s.label}
+              </p>
+              <p className="mt-1 text-2xl font-extrabold tabular-nums leading-none text-[#010C2D]">
+                {s.value}
+              </p>
+            </div>
+          ))}
         </div>
       </header>
 

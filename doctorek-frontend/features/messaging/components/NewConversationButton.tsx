@@ -7,6 +7,7 @@ import { useSession } from '@/lib/useSession'
 import { useRdvsPatient } from '@/features/agenda/hooks'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useStartConversation } from '../hooks'
+import { Avatar } from '@/components/Avatar'
 
 interface NewConversationButtonProps {
   onStarted: (conv: Conversation) => void
@@ -150,7 +151,6 @@ function DoctorRow({
 }) {
   const { data: medecin } = useMedecin(medecinId)
   const name = medecin ? `Dr. ${medecin.firstName} ${medecin.lastName}` : 'Médecin…'
-  const initials = medecin ? `${medecin.firstName?.[0] ?? ''}${medecin.lastName?.[0] ?? ''}`.toUpperCase() : '·'
 
   return (
     <li>
@@ -160,13 +160,7 @@ function DoctorRow({
         disabled={disabled || starting}
         className="w-full flex items-center gap-3 px-5 py-3 hover:bg-[#F0F7FF] transition-colors disabled:opacity-50 text-left"
       >
-        <div className="w-10 h-10 rounded-full bg-[#EBF4FF] flex items-center justify-center shrink-0 overflow-hidden">
-          {medecin?.photoUrl ? (
-            <img src={medecin.photoUrl} alt={name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
-          )}
-        </div>
+        <Avatar name={name} photoUrl={medecin?.photoUrl} size={40} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[#333333] truncate">{name}</p>
           {medecin?.specialite && (
