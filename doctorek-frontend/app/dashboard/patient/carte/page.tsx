@@ -193,14 +193,14 @@ export default function CarteEditPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-full bg-[#F0F2F5]">
+      <div className="flex items-center justify-center min-h-full">
         <LogoLoader label="Chargement de votre carte..." />
       </div>
     )
   }
 
   return (
-    <div className="min-h-full bg-[#F0F2F5] p-6">
+    <div className="min-h-full p-6">
       <div className="max-w-5xl mx-auto">
 
         {/* Carte preview — shown only when carte already exists */}

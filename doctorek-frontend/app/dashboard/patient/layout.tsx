@@ -364,7 +364,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page content — with bottom padding on mobile for bottom nav */}
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <main className="dk-canvas flex-1 overflow-y-auto pb-20 lg:pb-0">
           {children}
         </main>
       </div>

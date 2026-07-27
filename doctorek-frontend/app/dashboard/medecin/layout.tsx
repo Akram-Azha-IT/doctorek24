@@ -140,7 +140,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#F0F2F5' }}>
+    <div className="dk-canvas flex h-screen overflow-hidden">
       {/* ── Sidebar — hidden on mobile ── */}
       <aside
         className="hidden xl:flex shrink-0 flex-col bg-white overflow-hidden"

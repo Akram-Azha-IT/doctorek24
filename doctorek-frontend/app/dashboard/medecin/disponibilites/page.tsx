@@ -215,7 +215,6 @@ export default function DisponibilitesPage() {
       <main
         ref={containerRef}
         className="flex overflow-hidden h-[calc(100dvh-176px)] md:h-[calc(100vh-128px)]"
-        style={{ background: '#F0F2F5' }}
       >
         {/* Mobile : plein écran selon l'onglet ; desktop : panneau redimensionnable */}
         <div

@@ -214,3 +214,23 @@
     opacity: 1;
   }
 }
+/* ─────────────────────────────────────────────────────────────────────────────
+   Fond des espaces de travail (dashboards)
+
+   Le gris neutre #F0F2F5 donnait aux dashboards un rendu bureautique et détaché
+   de la marque. Ce fond garde la même clarté mais teinté de bleu, avec une trame
+   de points très discrète qui évite l'aplat mort sur les grandes surfaces.
+
+   Réservé aux canevas de page : les puces, skeletons et survols gardent leurs
+   gris propres, sinon la hiérarchie surface/contenu s'effondre.
+   ────────────────────────────────────────────────────────────────────────────── */
+:root {
+  --dk-canvas: #F1F6FD;
+  --dk-canvas-dot: #DCE9FA;
+}
+
+.dk-canvas {
+  background-color: var(--dk-canvas);
+  background-image: radial-gradient(var(--dk-canvas-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
