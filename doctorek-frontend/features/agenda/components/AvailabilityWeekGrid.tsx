@@ -377,9 +377,10 @@ export function AvailabilityWeekGrid({
                     : null
 
                   return (
-                    <div
+                    <button
                       key={rdv.id}
-                      className={`absolute left-1 right-1 rounded z-20 px-1 py-0.5 overflow-hidden border cursor-pointer ${
+                      type="button"
+                      className={`absolute left-1 right-1 rounded z-20 px-1 py-0.5 overflow-hidden border cursor-pointer text-left ${
                         isTermine
                           ? 'bg-gray-100 border-gray-300'
                           : 'bg-indigo-500 border-indigo-600'
@@ -394,15 +395,7 @@ export function AvailabilityWeekGrid({
                         e.stopPropagation()
                         openPatient(rdv)
                       }}
-                      role="button"
-                      tabIndex={0}
                       aria-label={`Ouvrir la fiche de ${patientLabel ?? 'ce patient'}`}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' && e.key !== ' ') return
-                        e.preventDefault()
-                        e.stopPropagation()
-                        openPatient(rdv)
-                      }}
                     >
                       <p className={`text-[9px] font-bold leading-tight truncate ${isTermine ? 'text-gray-500' : 'text-white'}`}>
                         {rdv.heureRdv}
@@ -412,7 +405,7 @@ export function AvailabilityWeekGrid({
                           {patientLabel}
                         </p>
                       )}
-                    </div>
+                    </button>
                   )
                 })}
               </div>

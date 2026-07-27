@@ -33,7 +33,7 @@ interface RenderOptions {
 }
 
 /** Un champ vide ne doit pas ressembler à un champ cassé : mention explicite et grisée. */
-const isBlankValue = (v: string) => !v || !v.trim() || v.trim() === '-'
+const isBlankValue = (v: string) => !v?.trim() || v.trim() === '-'
 
 /**
  * Champ de la carte : libellé (arabe en ligne, pas rejeté à droite) puis valeur.
@@ -70,8 +70,10 @@ function triangleMesh(size: number, opacity: number): string {
   const paths: string[] = []
   for (let y = 0; y <= CARD_H + rowH; y += rowH) paths.push(`M0 ${y.toFixed(1)}H${CARD_W}`)
   for (let x = -run; x <= CARD_W + run; x += size) {
-    paths.push(`M${x.toFixed(1)} 0L${(x + run).toFixed(1)} ${CARD_H}`)
-    paths.push(`M${x.toFixed(1)} 0L${(x - run).toFixed(1)} ${CARD_H}`)
+    paths.push(
+      `M${x.toFixed(1)} 0L${(x + run).toFixed(1)} ${CARD_H}`,
+      `M${x.toFixed(1)} 0L${(x - run).toFixed(1)} ${CARD_H}`,
+    )
   }
   return `<g fill="none" stroke="${C_BLUE}" stroke-width="0.6" opacity="${opacity}">${paths
     .map((d) => `<path d="${d}"/>`)
@@ -86,6 +88,16 @@ function cornerArc(suffix: string): string {
   return `
         <circle cx="980" cy="640" r="380" fill="url(#arc-grad-${suffix})"/>
         <circle cx="980" cy="640" r="406" fill="none" stroke="#CBE0F8" stroke-width="1.4" opacity="0.8"/>`
+}
+
+/**
+ * Le nom reste l'élément dominant, mais sans écraser le reste : il descend en corps
+ * plutôt que d'être rogné quand il s'allonge.
+ */
+export function nameFontSize(fullName: string): number {
+  if (fullName.length > 26) return 24
+  if (fullName.length > 20) return 28
+  return 32
 }
 
 export function buildRectoSvg(
@@ -112,9 +124,7 @@ export function buildRectoSvg(
         <text class="dk-s" x="746" y="361" text-anchor="middle" font-size="10" font-weight="700" fill="${C_LABEL}">QR</text>
       </g>`
 
-  // Le nom reste l'élément dominant, mais sans écraser le reste : il descend en corps
-  // plutôt que d'être rogné quand il s'allonge.
-  const nameSize = fullName.length > 26 ? 24 : fullName.length > 20 ? 28 : 32
+  const nameSize = nameFontSize(fullName)
 
   return `
     <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">
