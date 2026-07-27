@@ -42,6 +42,18 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
 
     List<RendezVousEntity> findByDateRdvAndStatutNot(LocalDate dateRdv, String statut);
 
+    /**
+     * Patients ayant consulté ce médecin, avec leur photo de profil.
+     *
+     * <p>La photo téléversée dans le profil prime, sinon on retombe sur l'avatar du compte
+     * (connexion Google). Les jointures sont externes car un proche sans compte rattaché
+     * ne possède aucune des deux.
+     *
+     * <p>Ne pas mettre de commentaire SQL dans la requête : Spring Data analyse la chaîne
+     * pour y trouver les paramètres nommés sans interpréter les commentaires, et une simple
+     * apostrophe française y ouvrirait un littéral jamais refermé — le repository ne serait
+     * alors pas créé et le contexte Spring échouerait au démarrage.
+     */
     @Query(value = """
         SELECT r.patient_id AS "patientId",
                p.prenom AS "firstName",
@@ -52,8 +64,6 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
                BOOL_OR(r.date_rdv >= CURRENT_DATE) AS "hasFutureRdv"
         FROM agenda.rendez_vous r
         JOIN patient.patient p ON p.id = r.patient_id
-        -- Photo du patient : celle qu'il a téléversée, sinon l'avatar du compte (Google).
-        -- Jointures externes : un proche sans compte n'a ni l'une ni l'autre.
         LEFT JOIN patient.patient_details pd ON pd.user_id = p.compte_id
         LEFT JOIN auth.users u ON u.id = p.compte_id
         WHERE r.medecin_id = :medecinId
