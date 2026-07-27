@@ -6,13 +6,6 @@ import { getGoogleWalletSaveUrl } from '@/features/carte/api'
 import QRCode from 'qrcode'
 import { buildRectoSvg, buildVersoSvg } from './CarteVirtuelleExport'
 
-const C_BLUE  = '#007DFF'
-const C_DARK  = '#003B95'
-const C_TEXT  = '#111827'
-const C_LABEL = '#6B7280'
-const C_RED   = '#C1272D'
-const C_GREEN = '#006233'
-
 interface CarteVirtuelleCardProps {
   carte: CarteVirtuelle
   profile?: PatientProfile | null

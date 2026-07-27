@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Disponibilite, RendezVous } from '@/lib/types'
 import { toLocalISODate } from '@/lib/date'
 
@@ -143,8 +144,19 @@ export function AvailabilityWeekGrid({
   selectedDay,
   onSelectDay,
 }: AvailabilityWeekGridProps) {
+  const router = useRouter()
   const [weekOffset, setWeekOffset] = useState(0)
   const [hovered, setHovered] = useState<HoveredRdv | null>(null)
+
+  /** Ouvre la fiche du patient depuis un RDV de l'agenda (même cible que la liste patients). */
+  function openPatient(rdv: RendezVous) {
+    if (!rdv.patientId) return
+    const params = new URLSearchParams({
+      prenom: rdv.patientPrenom ?? '',
+      nom: rdv.patientNom ?? '',
+    })
+    router.push(`/dashboard/medecin/patients/${rdv.patientId}?${params}`)
+  }
 
   const monday = getMondayOfWeek(weekOffset)
   const weekDates = getWeekDates(monday)
@@ -378,7 +390,19 @@ export function AvailabilityWeekGrid({
                         setHovered({ rdv, rdvEnd, date: weekDates[i], x: e.clientX, y: e.clientY })
                       }}
                       onMouseLeave={() => setHovered(null)}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openPatient(rdv)
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ouvrir la fiche de ${patientLabel ?? 'ce patient'}`}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter' && e.key !== ' ') return
+                        e.preventDefault()
+                        e.stopPropagation()
+                        openPatient(rdv)
+                      }}
                     >
                       <p className={`text-[9px] font-bold leading-tight truncate ${isTermine ? 'text-gray-500' : 'text-white'}`}>
                         {rdv.heureRdv}
@@ -401,7 +425,8 @@ export function AvailabilityWeekGrid({
       {hovered && (() => {
         // Clamp dans le viewport : flip à gauche près du bord droit, borne haut/bas.
         const W = 224 // w-56
-        const H = 170 // hauteur estimée max
+        // Hauteur estimée : le bloc motif (3 lignes max) et la mention de clic s'ajoutent.
+        const H = hovered.rdv.motif?.trim() ? 250 : 190
         const M = 8   // marge écran
         const vw = typeof window !== 'undefined' ? window.innerWidth : 1280
         const vh = typeof window !== 'undefined' ? window.innerHeight : 800
@@ -455,6 +480,24 @@ export function AvailabilityWeekGrid({
               <span>Créé par : {hovered.rdv.patientPrenom}</span>
             </div>
           )}
+
+          {/* Motif saisi par le patient : c'est l'information que le médecin lit en priorité
+              avant la consultation, elle doit être visible sans ouvrir la fiche. */}
+          {hovered.rdv.motif?.trim() && (
+            <div className="mt-2 pt-2 border-t border-gray-100">
+              <div className="flex items-start gap-1.5 text-[11px] leading-snug text-gray-600">
+                <svg className="h-3.5 w-3.5 shrink-0 mt-0.5 text-[#007DFF]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10.5h8M8 14h5m-4.5 6L3 21V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9.5Z" />
+                </svg>
+                <span className="line-clamp-3">
+                  <span className="font-semibold text-gray-700">Motif : </span>
+                  {hovered.rdv.motif}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <p className="mt-2 text-[10px] font-medium text-[#007DFF]">Cliquer pour ouvrir la fiche</p>
         </div>
         )
       })()}
