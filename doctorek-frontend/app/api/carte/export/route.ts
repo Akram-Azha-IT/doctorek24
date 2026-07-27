@@ -54,12 +54,18 @@ export async function POST(req: Request) {
       <html>
         <head>
           <meta charset="utf-8">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;700;800&display=swap" rel="stylesheet">
           <style>
+            /* La carte lit --font-outfit (fourni par next/font dans l'app) : on le
+               définit ici pour que le PNG exporté ait la même typographie que l'écran. */
+            :root { --font-outfit: 'Outfit'; }
             body {
               margin: 0;
               padding: 40px;
               background: #FFFFFF;
-              font-family: system-ui, -apple-system, sans-serif;
+              font-family: 'Outfit', system-ui, -apple-system, sans-serif;
               display: flex;
               flex-direction: column;
               gap: 40px;
@@ -96,9 +102,11 @@ export async function POST(req: Request) {
     // Set a high deviceScaleFactor for retina-quality rendering
     await page.setViewport({ width: 936, height: 1180, deviceScaleFactor: 2 })
 
-    // Set HTML content and wait for network/fonts
-    // Tout est inliné (logo/QR en data URI, polices système) — aucun réseau à attendre.
+    // Logo/QR/photo sont inlinés en data URI ; seules les polices viennent du réseau.
     await page.setContent(fullHtml, { waitUntil: 'domcontentloaded', timeout: 30000 })
+    // On attend le chargement effectif des polices, sinon le PNG sort en repli système.
+    // Sans réseau, document.fonts.ready se résout quand même : le rendu dégrade sans bloquer.
+    await page.evaluate(() => document.fonts.ready).catch(() => {})
     await new Promise((r) => setTimeout(r, 300))
 
     // Capture the screenshot
