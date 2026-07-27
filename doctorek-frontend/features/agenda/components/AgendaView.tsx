@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { clsx } from 'clsx'
 import type { Disponibilite } from '@/lib/types'
-import { AgendaWeekView, getWeekDates, JS_DAY_TO_KEY } from './AgendaWeekView'
+import { AgendaWeekView, getWeekDates } from './AgendaWeekView'
 import { AgendaMonthView } from './AgendaMonthView'
 import { AgendaYearView } from './AgendaYearView'
 
@@ -69,7 +69,6 @@ export function AgendaView({ disponibilites, selectedDay, onSelectDay }: AgendaV
 
   const isCurrentPeriod = (() => {
     if (view === 'week') {
-      const todayTime = today.getTime()
       return weekDates.some((d) => {
         const copy = new Date(d); copy.setHours(0,0,0,0)
         const t = new Date(today); t.setHours(0,0,0,0)

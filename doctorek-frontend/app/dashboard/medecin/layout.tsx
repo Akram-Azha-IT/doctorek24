@@ -13,6 +13,7 @@ import { useRoleGuard } from '@/lib/useRoleGuard'
 import { logout } from '@/lib/auth'
 import { apiFetch } from '@/lib/api-client'
 import Logo from '@/components/Logo'
+import { Avatar } from '@/components/Avatar'
 import { useUnreadCount } from '@/features/messaging/useUnreadCount'
 
 const NAV_ITEMS = [
@@ -22,10 +23,6 @@ const NAV_ITEMS = [
   { href: '/dashboard/medecin/messages', label: 'Messages', icon: MessageCircle },
   { href: '/dashboard/medecin/profil', label: 'Profil', icon: UserCircle },
 ]
-
-function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-}
 
 export default function MedecinLayout({ children }: { children: React.ReactNode }) {
   useRoleGuard('MEDECIN')
@@ -127,7 +124,6 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
   }
 
   const unreadMessages = useUnreadCount()
-  const initials = firstName || lastName ? getInitials(firstName, lastName) : 'DR'
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Médecin'
   const specialite = 'Médecin généraliste'
 
@@ -236,14 +232,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#F5F7FA' }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '' }}
           >
-            {photoUrl ? (
-              <img src={photoUrl} alt={fullName}
-                className="h-8 w-8 shrink-0 rounded-full object-cover border-2 border-white shadow-sm" />
-            ) : (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: '#007DFF' }}>
-                {initials}
-              </div>
-            )}
+            <Avatar name={fullName} photoUrl={photoUrl} size={32} ring className="shadow-sm" />
             {sidebarOpen && (
               <>
                 <div className="min-w-0 flex-1 text-left">
@@ -359,16 +348,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
               aria-label="Ouvrir mon profil"
               aria-haspopup="dialog"
             >
-              {photoUrl ? (
-                <img src={photoUrl} alt={`Photo de ${fullName}`}
-                  className="h-8 w-8 rounded-full object-cover border-2 border-white"
-                  style={{ boxShadow: '0 0 0 2px #007DFF22' }}
-                />
-              ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white" style={{ background: '#007DFF' }}>
-                  {initials}
-                </div>
-              )}
+              <Avatar name={fullName} photoUrl={photoUrl} size={32} ring />
               <div className="hidden xl:block text-left">
                 <p className="text-sm font-semibold leading-none" style={{ color: '#010C2D' }}>
                   Dr. {firstName || 'Médecin'}
@@ -404,13 +384,7 @@ export default function MedecinLayout({ children }: { children: React.ReactNode 
             </div>
 
             <div className="flex items-center gap-3 px-6 pt-4 pb-4 border-b border-zinc-100">
-              {photoUrl ? (
-                <img src={photoUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover border-2 border-[#007DFF]/20" />
-              ) : (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white bg-[#007DFF]">
-                  {initials}
-                </div>
-              )}
+              <Avatar name={fullName} photoUrl={photoUrl} size={48} />
               <div className="min-w-0">
                 <p className="truncate text-base font-bold text-[#010C2D]">Dr. {fullName}</p>
                 <p className="text-xs text-[#A0AEC0] font-medium">Espace médecin</p>

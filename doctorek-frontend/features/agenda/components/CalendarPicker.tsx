@@ -11,7 +11,8 @@ const FR_MONTHS = [
 
 // Custom day button — fully Tailwind-styled, no default CSS needed
 function CalDayButton(props: DayButtonProps) {
-  const { modifiers, children, day: _day, ...buttonProps } = props
+  const { modifiers, children, day, ...buttonProps } = props
+  void day // retiré des attributs transmis au <button> du DOM
   return (
     <button
       {...buttonProps}

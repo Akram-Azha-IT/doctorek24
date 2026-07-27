@@ -79,6 +79,11 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
+    // Capturés à l'exécution de l'effet : au moment du nettoyage, React a pu détacher
+    // le conteneur, et lire ref.current à cet instant viserait une autre valeur.
+    const container = containerRef.current
+    const markers = markersRef.current
+
     let cancelled = false
 
     async function init() {
@@ -117,12 +122,11 @@ export function DoctorMap({ doctors, hoveredId, center }: DoctorMapProps) {
       mapRef.current?.remove()
       mapRef.current = null
       lRef.current = null
-      markersRef.current.clear()
+      markers.clear()
       setMapReady(false)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (containerRef.current) (containerRef.current as any)._leaflet_id = undefined
+      ;(container as any)._leaflet_id = undefined
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Sync markers

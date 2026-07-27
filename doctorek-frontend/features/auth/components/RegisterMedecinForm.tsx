@@ -21,7 +21,8 @@ export function RegisterMedecinForm() {
   })
 
   function onSubmit(values: RegisterMedecinFormValues) {
-    const { confirmPassword: _, ...payload } = values
+    const { confirmPassword, ...payload } = values
+    void confirmPassword // validé côté client, jamais envoyé au serveur
     mutate(payload, {
       onSuccess: (data) => {
         toast.success('Inscription réussie ! Vérifiez votre email.')

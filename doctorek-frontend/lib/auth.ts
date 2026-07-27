@@ -1,7 +1,7 @@
 'use client'
 
-import { getSession as getAuthSession, signOut as nextAuthSignOut } from 'next-auth/react'
-import { __setCachedSession, clearSession, type Session } from './session'
+import { getSession as getAuthSession } from 'next-auth/react'
+import { __setCachedSession, type Session } from './session'
 
 function mapToSession(authSession: Awaited<ReturnType<typeof getAuthSession>>): Session | null {
   if (!authSession?.user) return null

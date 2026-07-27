@@ -63,7 +63,6 @@ interface RescheduleFormProps {
 
 function RescheduleForm({
   medecinId,
-  currentRdvId: _,
   currentHeure,
   isPending,
   onSubmit,

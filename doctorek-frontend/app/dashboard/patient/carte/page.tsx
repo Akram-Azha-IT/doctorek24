@@ -109,7 +109,7 @@ export default function CarteEditPage() {
   const familiaux = useFieldArray({ control: form.control, name: 'antecedentsFamiliaux' as never })
   const urgences = useFieldArray({ control: form.control, name: 'contactsUrgence' })
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = form
+  const { register, handleSubmit, watch, setValue } = form
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,7 +189,6 @@ export default function CarteEditPage() {
 
   const inputCls = 'w-full bg-white border border-[#E2E8F0] rounded-lg px-4 py-2.5 text-[#333333] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#007DFF]/20 focus:border-[#007DFF] text-sm transition-all'
   const labelCls = 'block text-sm font-medium text-[#4A5568] mb-1.5'
-  const errorCls = 'text-xs text-[#E01E5A] mt-1'
 
   if (isLoading) {
     return (
@@ -386,6 +385,7 @@ export default function CarteEditPage() {
                             className="relative w-24 h-32 rounded-xl border-2 border-dashed border-[#CBD5E0] bg-[#F8FAFC] overflow-hidden cursor-pointer hover:border-[#007DFF] hover:bg-[#007DFF]/5 transition-all flex items-center justify-center group"
                           >
                             {watch('photoUrl') ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- data URI issu de FileReader, non optimisable par next/image
                               <img src={watch('photoUrl')!} alt="Photo" className="w-full h-full object-cover" />
                             ) : (
                               <div className="flex flex-col items-center gap-1.5 text-[#94A3B8] group-hover:text-[#007DFF] transition-colors">

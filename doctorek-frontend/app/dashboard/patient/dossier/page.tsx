@@ -46,7 +46,6 @@ export default function DossierPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [docMode, setDocMode] = useState<'none' | 'photo' | 'fichier'>('none')
-  const [dragging, setDragging] = useState(false)
   const docPhotoRef = useRef<HTMLInputElement>(null)
   const docFichierRef = useRef<HTMLInputElement>(null)
 
@@ -93,13 +92,6 @@ export default function DossierPage() {
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : "Erreur lors de l'envoi.")
     }
-  }
-
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) setUploadFile(file)
   }
 
   const tabs = [

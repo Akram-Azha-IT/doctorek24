@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { AuthShell } from '@/features/auth/components/AuthShell'
 import { SegmentedTabs } from '@/features/auth/components/AuthField'
 import { RegisterForm } from '@/features/auth/components/RegisterForm'

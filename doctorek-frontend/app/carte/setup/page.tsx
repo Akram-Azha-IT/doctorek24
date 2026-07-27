@@ -46,12 +46,10 @@ export default function CarteSetupPage() {
   const allergies = useFieldArray({ control: form.control, name: 'allergies' as never })
   const maladies = useFieldArray({ control: form.control, name: 'maladiesChroniques' as never })
   const medicaments = useFieldArray({ control: form.control, name: 'medicamentsActuels' })
-  const antecedents = useFieldArray({ control: form.control, name: 'antecedentsChirurgicaux' })
   const vaccinations = useFieldArray({ control: form.control, name: 'vaccinations' as never })
-  const familiaux = useFieldArray({ control: form.control, name: 'antecedentsFamiliaux' as never })
   const urgences = useFieldArray({ control: form.control, name: 'contactsUrgence' })
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = form
+  const { register, handleSubmit, watch, setValue } = form
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,6 +139,7 @@ export default function CarteSetupPage() {
                     className="relative w-24 h-32 rounded-xl border-2 border-dashed border-[#356897] bg-[#0C4A83]/20 overflow-hidden cursor-pointer hover:border-[#3DA8FF] transition-colors flex items-center justify-center"
                   >
                     {watch('photoUrl') ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- data URI issu de FileReader, non optimisable par next/image
                       <img src={watch('photoUrl')!} alt="Photo" className="w-full h-full object-cover" />
                     ) : (
                       <div className="flex flex-col items-center gap-1 text-[#B6DAF7]/50">

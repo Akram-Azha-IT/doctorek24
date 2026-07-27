@@ -5,17 +5,6 @@ import type { RendezVous, Disponibilite } from '@/lib/types'
 import { useConfirmerRdv, useAnnulerRdvMedecin, useTerminerRdv, useCreneaux } from '../hooks'
 import { AgendaCalendarGrid, getWeekDates, toISO } from './AgendaCalendarGrid'
 
-const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-
-function getMonday(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
 function addDays(date: Date, n: number): Date {
   const d = new Date(date)
   d.setDate(d.getDate() + n)
@@ -200,7 +189,7 @@ const STATUT_BLOCK_BG: Record<string, string> = {
   TERMINE: 'bg-blue-50 border-l-4 border-blue-300',
 }
 
-function DayView({ date, rdvs, disponibilites, medecinId, onConfirm, onCancel, onTerminate }: DayViewProps) {
+function DayView({ date, rdvs, medecinId, onCancel, onTerminate }: DayViewProps) {
   const iso = toISO(date)
   const { data: creneaux, isLoading } = useCreneaux(medecinId, iso)
   const isToday = iso === toISO(new Date())

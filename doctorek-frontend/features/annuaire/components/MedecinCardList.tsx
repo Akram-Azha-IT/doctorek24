@@ -55,14 +55,6 @@ function GlobeIcon() {
   )
 }
 
-function CheckIcon() {
-  return (
-    <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  )
-}
-
 function VideoIcon() {
   return (
     <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -115,7 +107,7 @@ interface MedecinCardListProps {
   onBookSlot?: (slot: BookingSlot) => void
 }
 
-export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
+export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
   const allFutureDates = useMemo(() => nextNDaysISO(365), [])
   const [windowStart, setWindowStart] = useState(0)
   const visibleDates = useMemo(
@@ -158,7 +150,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
 
   const selectedDateIdx = visibleDates.indexOf(selectedDate)
   const selectedResult = allDaysResults[selectedDateIdx]
-  const slots = selectedResult?.data ?? []
+  const slots = useMemo(() => selectedResult?.data ?? [], [selectedResult?.data])
   const isLoading = selectedResult?.isLoading ?? true
 
   const todayISO = allFutureDates[0]

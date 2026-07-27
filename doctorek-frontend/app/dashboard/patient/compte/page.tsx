@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { getSession } from '@/lib/session'
 import { usePatientProfile } from '@/features/patient/hooks'
+import { Avatar } from '@/components/Avatar'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { logout } from '@/lib/auth'
 
@@ -61,19 +62,12 @@ export default function ComptePage() {
   const { data: profile } = usePatientProfile(patientId || null)
   const resolvedPhoto = profile?.photoUrl ?? photoUrl
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Patient'
-  const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase() || 'P'
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:py-8">
       {/* Identité */}
       <div className="mb-6 flex items-center gap-4 rounded-2xl border border-[#EDF1F5] bg-white p-5 shadow-sm">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#007DFF]/10 ring-2 ring-[#007DFF]/20">
-          {resolvedPhoto ? (
-            <img src={resolvedPhoto} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-lg font-bold text-[#007DFF]">{initials}</span>
-          )}
-        </div>
+        <Avatar name={fullName} photoUrl={resolvedPhoto} size={64} />
         <div className="min-w-0">
           <p className="truncate text-lg font-bold text-[#010C2D]">{fullName}</p>
           <p className="text-sm text-[#465058]">Espace patient</p>

@@ -1,5 +1,7 @@
 'use client'
 
+import { Avatar } from '@/components/Avatar'
+
 interface PhotoSectionProps {
   photoUrl: string | null
   photoStatus: 'idle' | 'success'
@@ -26,18 +28,12 @@ export function PhotoSection({
       <h2 className="mb-5 text-base font-semibold text-zinc-800">Photo de profil</h2>
       <div className="flex items-center gap-6">
         <div className="relative shrink-0">
-          {photoUrl ? (
-            <img
-              src={photoUrl}
-              alt="Photo de profil"
-              className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-zinc-200"
-            />
-          ) : (
-            <div className="h-24 w-24 rounded-full border-4 border-white shadow-md ring-2 ring-zinc-200 bg-[#1863A9] flex items-center justify-center text-white text-2xl font-bold select-none">
-              {(firstName[0] ?? 'D').toUpperCase()}
-              {(lastName[0] ?? 'r').toUpperCase()}
-            </div>
-          )}
+          <Avatar
+            name={[firstName, lastName].filter(Boolean).join(' ') || 'Dr'}
+            photoUrl={photoUrl}
+            size={96}
+            className="border-4 border-white shadow-md ring-2 ring-zinc-200"
+          />
           <button
             type="button"
             onClick={onUploadClick}
