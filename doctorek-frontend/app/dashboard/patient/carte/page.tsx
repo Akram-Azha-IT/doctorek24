@@ -388,7 +388,7 @@ export default function CarteEditPage() {
                           >
                             {values.photoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element -- data URI issu de FileReader, non optimisable par next/image
-                              <img src={values.photoUrl!} alt="Photo" className="w-full h-full object-cover" />
+                              <img src={values.photoUrl!} alt="Aperçu du portrait sélectionné" className="w-full h-full object-cover" />
                             ) : (
                               <div className="flex flex-col items-center gap-1.5 text-[#94A3B8] group-hover:text-[#007DFF] transition-colors">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">

@@ -49,6 +49,10 @@
 }
 
 :root {
+  /* Canevas des espaces de travail (voir la classe .dk-canvas plus bas). */
+  --dk-canvas: #F1F6FD;
+  --dk-canvas-dot: #DCE9FA;
+
   /* ── Doctorek brand tokens ──────────────────────────────────
      Primary:  #007DFF  (hero bg, buttons, links)
      Navy:     #00263C  (headings, dark surfaces, footer)
@@ -224,11 +228,6 @@
    Réservé aux canevas de page : les puces, skeletons et survols gardent leurs
    gris propres, sinon la hiérarchie surface/contenu s'effondre.
    ────────────────────────────────────────────────────────────────────────────── */
-:root {
-  --dk-canvas: #F1F6FD;
-  --dk-canvas-dot: #DCE9FA;
-}
-
 .dk-canvas {
   background-color: var(--dk-canvas);
   background-image: radial-gradient(var(--dk-canvas-dot) 1px, transparent 1px);

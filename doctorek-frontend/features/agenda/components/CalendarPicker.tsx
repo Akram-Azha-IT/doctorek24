@@ -3,6 +3,7 @@
 import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { clsx } from 'clsx'
+import { omit } from '@/lib/object'
 
 const FR_MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -11,8 +12,10 @@ const FR_MONTHS = [
 
 // Custom day button — fully Tailwind-styled, no default CSS needed
 function CalDayButton(props: DayButtonProps) {
-  const { modifiers, children, day, ...buttonProps } = props
-  void day // retiré des attributs transmis au <button> du DOM
+  // « day » et « modifiers » ne sont pas des attributs DOM valides : on ne transmet
+  // au <button> que le reste des propriétés.
+  const { modifiers, children } = props
+  const buttonProps = omit(props, 'modifiers', 'children', 'day')
   return (
     <button
       {...buttonProps}

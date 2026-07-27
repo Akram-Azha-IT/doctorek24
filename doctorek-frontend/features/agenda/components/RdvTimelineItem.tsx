@@ -53,12 +53,11 @@ function todayISO(): string {
 }
 
 interface RescheduleFormProps {
-  medecinId: string
-  currentRdvId: string
-  currentHeure: string
-  isPending: boolean
-  onSubmit: (date: string, heure: string) => void
-  onCancel: () => void
+  readonly medecinId: string
+  readonly currentHeure: string
+  readonly isPending: boolean
+  readonly onSubmit: (date: string, heure: string) => void
+  readonly onCancel: () => void
 }
 
 function RescheduleForm({
@@ -321,7 +320,6 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
         {showReschedule && canReschedule && (
           <RescheduleForm
             medecinId={rdv.medecinId}
-            currentRdvId={rdv.id}
             currentHeure={rdv.heureRdv}
             isPending={isReprogramming}
             onSubmit={(date, heure) => {

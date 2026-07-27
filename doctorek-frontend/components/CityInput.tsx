@@ -30,7 +30,7 @@ async function fetchVillesMaroc(): Promise<string[]> {
       const list: string[] = Array.isArray(data?.data) ? data.data : []
       // Comparer les villes entre elles selon la locale française ; le second argument
       // de localeCompare est la chaîne à comparer, pas la locale (3e argument).
-      _cities = list.length > 0 ? list.sort((a, b) => a.localeCompare(b, 'fr')) : FALLBACK_VILLES
+      _cities = list.length > 0 ? [...list].sort((a, b) => a.localeCompare(b, 'fr')) : FALLBACK_VILLES
       return _cities
     })
     .catch(() => {

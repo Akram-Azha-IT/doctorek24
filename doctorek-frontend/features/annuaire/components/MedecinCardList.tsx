@@ -1,24 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useQueries } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
-import { getCreneaux } from '@/features/agenda/api'
-import type { MedecinProfile, BookingSlot, Creneau } from '@/lib/types'
-import { nextNDaysISO } from '@/lib/disponibilite'
-
-function hasFutureSlots(date: string, todayISO: string, data: Creneau[] | undefined): boolean {
-  if (!data) return false
-  const available = data.filter(s => s.disponible)
-  if (date !== todayISO) return available.length > 0
-  const now = new Date()
-  return available.some(s => {
-    const [h, m] = s.debut.split(':').map(Number)
-    const t = new Date(); t.setHours(h, m, 0, 0)
-    return t > now
-  })
-}
+import type { MedecinProfile, BookingSlot } from '@/lib/types'
+import { useCreneauxNavigation } from '../useCreneauxNavigation'
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -99,102 +84,34 @@ function CalendarNextIcon() {
 }
 
 interface MedecinCardListProps {
-  medecin: MedecinProfile
-  availableToday: boolean
-  distanceKm?: number
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onBookSlot?: (slot: BookingSlot) => void
+  readonly medecin: MedecinProfile
+  readonly distanceKm?: number
+  readonly onMouseEnter?: () => void
+  readonly onMouseLeave?: () => void
+  readonly onBookSlot?: (slot: BookingSlot) => void
 }
 
 export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
-  const allFutureDates = useMemo(() => nextNDaysISO(365), [])
-  const [windowStart, setWindowStart] = useState(0)
-  const visibleDates = useMemo(
-    () => allFutureDates.slice(windowStart, windowStart + 5),
-    [allFutureDates, windowStart]
-  )
-  const extendedDates = useMemo(
-    () => allFutureDates.slice(windowStart + 5, windowStart + 30),
-    [allFutureDates, windowStart]
-  )
-
-  const [selectedDate, setSelectedDate] = useState(allFutureDates[0])
-  const [showAll, setShowAll] = useState(false)
   const accepte = medecin.acceptNouveauxPatients !== false
   const MAX_CHIPS = 6
 
-  // Replier les créneaux quand on change de jour — pendant le rendu, pas en effet.
-  const [prevSelectedDate, setPrevSelectedDate] = useState(selectedDate)
-  if (prevSelectedDate !== selectedDate) {
-    setPrevSelectedDate(selectedDate)
-    setShowAll(false)
-  }
-
-  // Keep selectedDate inside visible window when window shifts
-  const [prevWindowStart, setPrevWindowStart] = useState(windowStart)
-  if (prevWindowStart !== windowStart) {
-    setPrevWindowStart(windowStart)
-    if (!visibleDates.includes(selectedDate)) {
-      setSelectedDate(visibleDates[0])
-    }
-  }
-
-  const allDaysResults = useQueries({
-    queries: visibleDates.map(date => ({
-      queryKey: ['creneaux', medecin.id, date],
-      queryFn: () => getCreneaux(medecin.id, date),
-      staleTime: 30_000,
-    })),
-  })
-
-  const selectedDateIdx = visibleDates.indexOf(selectedDate)
-  const selectedResult = allDaysResults[selectedDateIdx]
-  const slots = useMemo(() => selectedResult?.data ?? [], [selectedResult?.data])
-  const isLoading = selectedResult?.isLoading ?? true
-
-  const todayISO = allFutureDates[0]
-  const allLoaded = allDaysResults.every(r => !r.isLoading)
-  const allUnavailable = allLoaded && allDaysResults.every((r, i) =>
-    !hasFutureSlots(visibleDates[i], todayISO, r.data)
-  )
-
-  // Search next 25 days beyond visible window only when all 5 visible are unavailable
-  const extendedResults = useQueries({
-    queries: extendedDates.map(date => ({
-      queryKey: ['creneaux', medecin.id, date],
-      queryFn: () => getCreneaux(medecin.id, date),
-      staleTime: 30_000,
-      enabled: allUnavailable,
-    })),
-  })
-
-  // Calcul direct (le compilateur React mémoïse) — le useMemo manuel empêchait la compilation.
-  const nextAvailableInfo = (() => {
-    if (!allUnavailable) return null
-    for (let i = 0; i < extendedDates.length; i++) {
-      const slot = extendedResults[i]?.data?.find(s => s.disponible)
-      if (slot) return { date: extendedDates[i], heure: slot.debut }
-    }
-    return null
-  })()
-
-  const extendedLoading = allUnavailable && extendedResults.some(r => r.isLoading)
-
-  const availableSlots = useMemo(() => {
-    const isToday = selectedDate === allFutureDates[0]
-    const now = new Date()
-    return slots.filter(s => {
-      if (!s.disponible) return false
-      if (!isToday) return true
-      const [h, m] = s.debut.split(':').map(Number)
-      const slotTime = new Date()
-      slotTime.setHours(h, m, 0, 0)
-      return slotTime > now
-    })
-  }, [slots, selectedDate, allFutureDates])
-
-  const isUnavailable = !isLoading && availableSlots.length === 0
+  const {
+    visibleDates,
+    selectedDate,
+    setSelectedDate,
+    windowStart,
+    setWindowStart,
+    showAll,
+    setShowAll,
+    daysWithSlots,
+    goToDate,
+    allUnavailable,
+    isLoading,
+    availableSlots,
+    isUnavailable,
+    nextAvailableInfo,
+    extendedLoading,
+  } = useCreneauxNavigation(medecin.id)
 
   return (
     <div
@@ -311,11 +228,7 @@ export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeav
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
-                    const idx = allFutureDates.indexOf(nextAvailableInfo.date)
-                    if (idx !== -1) {
-                      setWindowStart(idx)
-                      setSelectedDate(nextAvailableInfo.date)
-                    }
+                    goToDate(nextAvailableInfo.date)
                   }}
                   className="inline-flex items-center gap-2 rounded-full bg-[#007DFF] px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#00263C] hover:scale-[1.02] active:scale-95"
                 >
@@ -354,8 +267,7 @@ export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeav
                     const { day, date: d } = formatDayLabel(date)
                     const isSelected = date === selectedDate
                     const isToday = windowStart === 0 && i === 0
-                    const dayResult = allDaysResults[i]
-                    const dayHasSlots = !dayResult?.isLoading && hasFutureSlots(date, todayISO, dayResult?.data)
+                    const dayHasSlots = daysWithSlots[i]
                     return (
                       <button
                         key={date}

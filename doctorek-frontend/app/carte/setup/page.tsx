@@ -143,7 +143,7 @@ export default function CarteSetupPage() {
                   >
                     {values.photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element -- data URI issu de FileReader, non optimisable par next/image
-                      <img src={values.photoUrl!} alt="Photo" className="w-full h-full object-cover" />
+                      <img src={values.photoUrl!} alt="Aperçu du portrait sélectionné" className="w-full h-full object-cover" />
                     ) : (
                       <div className="flex flex-col items-center gap-1 text-[#B6DAF7]/50">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">

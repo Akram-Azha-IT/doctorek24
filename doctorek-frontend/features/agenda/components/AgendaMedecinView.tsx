@@ -159,9 +159,7 @@ export function AgendaMedecinView({ medecinId, rdvs, disponibilites }: AgendaMed
         <DayView
           date={refDate}
           rdvs={rdvs}
-          disponibilites={disponibilites}
           medecinId={medecinId}
-          onConfirm={(id) => confirmMutation.mutate(id)}
           onCancel={(id) => cancelMutation.mutate(id)}
           onTerminate={(id) => terminateMutation.mutate(id)}
         />
@@ -173,13 +171,11 @@ export function AgendaMedecinView({ medecinId, rdvs, disponibilites }: AgendaMed
 // ── Day View ─────────────────────────────────────────────────────────────────
 
 interface DayViewProps {
-  date: Date
-  rdvs: RendezVous[]
-  disponibilites: Disponibilite[]
-  medecinId: string
-  onConfirm: (id: string) => void
-  onCancel: (id: string) => void
-  onTerminate: (id: string) => void
+  readonly date: Date
+  readonly rdvs: RendezVous[]
+  readonly medecinId: string
+  readonly onCancel: (id: string) => void
+  readonly onTerminate: (id: string) => void
 }
 
 const STATUT_BLOCK_BG: Record<string, string> = {

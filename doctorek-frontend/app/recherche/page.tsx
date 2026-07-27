@@ -36,7 +36,7 @@ export default function RecherchePage() {
   const urlCoords = useMemo(() => {
     const lat = Number(latParam)
     const lng = Number(lngParam)
-    return latParam && lngParam && isFinite(lat) && isFinite(lng) ? { lat, lng } : null
+    return latParam && lngParam && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
   }, [latParam, lngParam])
 
   const [filter, setFilter] = useState<DisponibiliteFilter>('all')
@@ -133,11 +133,6 @@ export default function RecherchePage() {
   // dépendent se recalculeraient toujours, la mémoïsation ne servirait à rien.
   const nearbyMedecins = useMemo(() => nearbyResult.data ?? [], [nearbyResult.data])
   const searchContent = useMemo(() => searchResult.data?.content ?? [], [searchResult.data?.content])
-  const availableTodayIds = useMemo(
-    () => (filter === 'today' ? new Set(searchContent.map((m) => m.id)) : new Set<string>()),
-    [filter, searchContent],
-  )
-
   const totalResults = nearbyMode ? nearbyMedecins.length : (searchResult.data?.totalElements ?? 0)
   const totalPages = nearbyMode
     ? Math.ceil(totalResults / PAGE_SIZE)
@@ -250,7 +245,6 @@ export default function RecherchePage() {
             nearbyMedecins={nearbyMedecins}
             pagedNearby={sortedPagedNearby}
             searchContent={sortedSearchContent}
-            availableTodayIds={availableTodayIds}
             hasSearchData={!!searchResult.data}
             page={page}
             totalPages={totalPages}

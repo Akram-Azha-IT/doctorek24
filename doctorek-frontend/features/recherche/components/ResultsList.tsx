@@ -25,7 +25,6 @@ interface ResultsListProps {
   nearbyMedecins: MedecinNearbyResult[]
   pagedNearby: MedecinNearbyResult[]
   searchContent: MedecinProfile[]
-  availableTodayIds: Set<string>
   hasSearchData: boolean
   page: number
   totalPages: number
@@ -52,7 +51,6 @@ export function ResultsList({
   nearbyMedecins,
   pagedNearby,
   searchContent,
-  availableTodayIds,
   hasSearchData,
   page,
   totalPages,
@@ -118,7 +116,6 @@ export function ResultsList({
               <MedecinCardList
                 key={r.medecin.id}
                 medecin={r.medecin}
-                availableToday={false}
                 distanceKm={r.distanceKm}
                 onMouseEnter={() => onHover(r.medecin.id)}
                 onMouseLeave={() => onHover(null)}
@@ -183,7 +180,6 @@ export function ResultsList({
               <MedecinCardList
                 key={medecin.id}
                 medecin={medecin}
-                availableToday={availableTodayIds.has(medecin.id)}
                 onMouseEnter={() => onHover(medecin.id)}
                 onMouseLeave={() => onHover(null)}
                 onBookSlot={onBookSlot}
