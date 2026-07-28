@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { AuthField, Icons, PrimaryButton } from './AuthField'
 import { RegisterMedecinSchema, type RegisterMedecinFormValues } from '../schemas'
 import { useRegisterMedecin } from '../hooks'
+import { omit } from '@/lib/object'
 
 export function RegisterMedecinForm() {
   const router = useRouter()
@@ -21,7 +22,8 @@ export function RegisterMedecinForm() {
   })
 
   function onSubmit(values: RegisterMedecinFormValues) {
-    const { confirmPassword: _, ...payload } = values
+    // confirmPassword est validé côté client, jamais transmis au serveur.
+    const payload = omit(values, 'confirmPassword')
     mutate(payload, {
       onSuccess: (data) => {
         toast.success('Inscription réussie ! Vérifiez votre email.')

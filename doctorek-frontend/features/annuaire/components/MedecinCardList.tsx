@@ -1,24 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { useQueries } from '@tanstack/react-query'
 import { MedecinAvatar } from './MedecinAvatar'
-import { getCreneaux } from '@/features/agenda/api'
-import type { MedecinProfile, BookingSlot, Creneau } from '@/lib/types'
-import { nextNDaysISO } from '@/lib/disponibilite'
-
-function hasFutureSlots(date: string, todayISO: string, data: Creneau[] | undefined): boolean {
-  if (!data) return false
-  const available = data.filter(s => s.disponible)
-  if (date !== todayISO) return available.length > 0
-  const now = new Date()
-  return available.some(s => {
-    const [h, m] = s.debut.split(':').map(Number)
-    const t = new Date(); t.setHours(h, m, 0, 0)
-    return t > now
-  })
-}
+import type { MedecinProfile, BookingSlot } from '@/lib/types'
+import { useCreneauxNavigation } from '../useCreneauxNavigation'
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -51,14 +36,6 @@ function GlobeIcon() {
     <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
       <circle cx="12" cy="12" r="10" />
       <path strokeLinecap="round" d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
-    </svg>
-  )
-}
-
-function CheckIcon() {
-  return (
-    <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   )
 }
@@ -106,103 +83,206 @@ function CalendarNextIcon() {
   )
 }
 
-interface MedecinCardListProps {
-  medecin: MedecinProfile
-  availableToday: boolean
-  distanceKm?: number
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-  onBookSlot?: (slot: BookingSlot) => void
+interface SlotPanelProps {
+  readonly medecin: MedecinProfile
+  readonly onBookSlot?: (slot: BookingSlot) => void
+  readonly nav: ReturnType<typeof useCreneauxNavigation>
 }
 
-export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
-  const allFutureDates = useMemo(() => nextNDaysISO(365), [])
-  const [windowStart, setWindowStart] = useState(0)
-  const visibleDates = useMemo(
-    () => allFutureDates.slice(windowStart, windowStart + 5),
-    [allFutureDates, windowStart]
-  )
-  const extendedDates = useMemo(
-    () => allFutureDates.slice(windowStart + 5, windowStart + 30),
-    [allFutureDates, windowStart]
-  )
+/** Habillage d'une pastille de jour, sorti du JSX pour éviter un ternaire imbriqué. */
+function dayChipClass(isSelected: boolean, isToday: boolean): string {
+  if (isSelected) return 'bg-[#007DFF] text-white shadow-sm'
+  if (isToday) return 'bg-[#EBF4FF] text-[#1863A9] hover:bg-[#D6EAFF]'
+  return 'bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+}
 
-  const [selectedDate, setSelectedDate] = useState(allFutureDates[0])
-  const [showAll, setShowAll] = useState(false)
-  const accepte = medecin.acceptNouveauxPatients !== false
+/** Agenda saturé sur la fenêtre visible : on oriente vers la prochaine ouverture. */
+function NoAvailability({ medecin, nav }: Readonly<{ medecin: MedecinProfile; nav: SlotPanelProps['nav'] }>) {
+  const { goToDate, nextAvailableInfo, extendedLoading } = nav
+
+  let action: React.ReactNode
+  if (extendedLoading) {
+    action = <div className="h-8 w-40 animate-pulse rounded-full bg-zinc-200" />
+  } else if (nextAvailableInfo) {
+    action = (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); goToDate(nextAvailableInfo.date) }}
+        className="inline-flex items-center gap-2 rounded-full bg-[#007DFF] px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#00263C] hover:scale-[1.02] active:scale-95"
+      >
+        <CalendarNextIcon />
+        Prochaine dispo : {formatNextAvailable(nextAvailableInfo.date)}
+      </button>
+    )
+  } else {
+    action = (
+      <Link
+        href={`/medecins/${medecin.id}`}
+        className="inline-flex items-center gap-1 rounded-full bg-[#EBF4FF] px-3 py-1.5 text-[11px] font-semibold text-[#1863A9] transition-colors hover:bg-[#D6EAFF]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        Voir le profil
+        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+        </svg>
+      </Link>
+    )
+  }
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl bg-zinc-50 px-4 py-5 ring-1 ring-inset ring-zinc-100">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
+        <CalendarOffIcon />
+      </div>
+      <div className="text-center">
+        <p className="text-[12px] font-semibold text-zinc-500">Aucune dispo cette semaine</p>
+      </div>
+      {action}
+    </div>
+  )
+}
+
+/** Bande des cinq jours visibles, avec les flèches de navigation. */
+function DayStrip({ nav }: Readonly<{ nav: SlotPanelProps['nav'] }>) {
+  const { visibleDates, selectedDate, setSelectedDate, windowStart, setWindowStart, daysWithSlots } = nav
+
+  return (
+    <div className="mb-2.5 flex items-center gap-1">
+      <button
+        type="button"
+        aria-label="Jours précédents"
+        onClick={(e) => { e.preventDefault(); setWindowStart((w) => Math.max(0, w - 1)) }}
+        disabled={windowStart === 0}
+        className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <ChevronLeftIcon />
+      </button>
+
+      <div className="flex flex-1 gap-1">
+        {visibleDates.map((date, i) => {
+          const { day, date: d } = formatDayLabel(date)
+          const isSelected = date === selectedDate
+          const isToday = windowStart === 0 && i === 0
+          return (
+            <button
+              key={date}
+              type="button"
+              onClick={(e) => { e.preventDefault(); setSelectedDate(date) }}
+              className={`relative flex flex-1 flex-col items-center rounded-lg px-1 py-1 text-center transition-all duration-150 ${dayChipClass(isSelected, isToday)}`}
+            >
+              <span className="text-[9px] font-bold uppercase leading-tight">{day}</span>
+              <span className="text-[13px] font-bold leading-tight">{d}</span>
+              {daysWithSlots[i] && !isSelected && (
+                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-emerald-400" />
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <button
+        type="button"
+        aria-label="Jours suivants"
+        onClick={(e) => { e.preventDefault(); setWindowStart((w) => Math.min(360, w + 1)) }}
+        disabled={windowStart >= 360}
+        className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <ChevronRightIcon />
+      </button>
+    </div>
+  )
+}
+
+/** Créneaux réservables du jour choisi : squelette, message vide, ou pastilles horaires. */
+function SlotChips({ medecin, onBookSlot, nav }: SlotPanelProps) {
+  const { selectedDate, showAll, setShowAll, isLoading, availableSlots, isUnavailable } = nav
   const MAX_CHIPS = 6
 
-  // Replier les créneaux quand on change de jour — pendant le rendu, pas en effet.
-  const [prevSelectedDate, setPrevSelectedDate] = useState(selectedDate)
-  if (prevSelectedDate !== selectedDate) {
-    setPrevSelectedDate(selectedDate)
-    setShowAll(false)
+  if (isLoading) {
+    return (
+      <div className="grid w-full grid-cols-3 gap-1.5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-8 animate-pulse rounded-lg bg-zinc-100" />
+        ))}
+      </div>
+    )
   }
 
-  // Keep selectedDate inside visible window when window shifts
-  const [prevWindowStart, setPrevWindowStart] = useState(windowStart)
-  if (prevWindowStart !== windowStart) {
-    setPrevWindowStart(windowStart)
-    if (!visibleDates.includes(selectedDate)) {
-      setSelectedDate(visibleDates[0])
-    }
+  if (isUnavailable) {
+    return (
+      <div className="flex w-full items-center justify-center rounded-lg bg-zinc-50 px-3 py-3 ring-1 ring-inset ring-zinc-100">
+        <span className="text-[11px] font-medium text-zinc-400">Aucune dispo ce jour</span>
+      </div>
+    )
   }
 
-  const allDaysResults = useQueries({
-    queries: visibleDates.map(date => ({
-      queryKey: ['creneaux', medecin.id, date],
-      queryFn: () => getCreneaux(medecin.id, date),
-      staleTime: 30_000,
-    })),
-  })
-
-  const selectedDateIdx = visibleDates.indexOf(selectedDate)
-  const selectedResult = allDaysResults[selectedDateIdx]
-  const slots = selectedResult?.data ?? []
-  const isLoading = selectedResult?.isLoading ?? true
-
-  const todayISO = allFutureDates[0]
-  const allLoaded = allDaysResults.every(r => !r.isLoading)
-  const allUnavailable = allLoaded && allDaysResults.every((r, i) =>
-    !hasFutureSlots(visibleDates[i], todayISO, r.data)
+  return (
+    <div className="w-full">
+      <div className="flex flex-wrap gap-1.5">
+        {(showAll ? availableSlots : availableSlots.slice(0, MAX_CHIPS)).map((s) => (
+          <button
+            key={s.debut}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onBookSlot?.({ medecin, date: selectedDate, debut: s.debut, fin: s.fin })
+            }}
+            className="min-w-[52px] flex-1 rounded-lg bg-[#EBF4FF] py-1.5 text-[13px] font-bold text-[#007DFF] transition-colors hover:bg-[#007DFF] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 cursor-pointer"
+          >
+            {s.debut}
+          </button>
+        ))}
+      </div>
+      {availableSlots.length > MAX_CHIPS && (
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAll((v) => !v) }}
+          className="mt-2 w-full text-center text-[12px] font-semibold text-[#007DFF] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 rounded cursor-pointer"
+        >
+          {showAll ? 'Voir moins' : `Voir plus (${availableSlots.length - MAX_CHIPS} créneaux)`}
+        </button>
+      )}
+    </div>
   )
+}
 
-  // Search next 25 days beyond visible window only when all 5 visible are unavailable
-  const extendedResults = useQueries({
-    queries: extendedDates.map(date => ({
-      queryKey: ['creneaux', medecin.id, date],
-      queryFn: () => getCreneaux(medecin.id, date),
-      staleTime: 30_000,
-      enabled: allUnavailable,
-    })),
-  })
+/**
+ * Panneau de réservation d'une carte de résultat.
+ *
+ * <p>Les deux états — agenda saturé ou créneaux à choisir — n'ont ni la même structure
+ * ni les mêmes données. Les tenir dans une seule fonction la rendait trop touffue pour
+ * être relue ; chacun vit désormais dans son composant.
+ */
+function SlotPanel({ medecin, onBookSlot, nav }: SlotPanelProps) {
+  return (
+    <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-3.5 sm:w-[280px] sm:border-t-0 sm:border-l">
+      {nav.allUnavailable ? (
+        <NoAvailability medecin={medecin} nav={nav} />
+      ) : (
+        <>
+          <DayStrip nav={nav} />
+          <div className="flex flex-1 items-start">
+            <SlotChips medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
-  // Calcul direct (le compilateur React mémoïse) — le useMemo manuel empêchait la compilation.
-  const nextAvailableInfo = (() => {
-    if (!allUnavailable) return null
-    for (let i = 0; i < extendedDates.length; i++) {
-      const slot = extendedResults[i]?.data?.find(s => s.disponible)
-      if (slot) return { date: extendedDates[i], heure: slot.debut }
-    }
-    return null
-  })()
+interface MedecinCardListProps {
+  readonly medecin: MedecinProfile
+  readonly distanceKm?: number
+  readonly onMouseEnter?: () => void
+  readonly onMouseLeave?: () => void
+  readonly onBookSlot?: (slot: BookingSlot) => void
+}
 
-  const extendedLoading = allUnavailable && extendedResults.some(r => r.isLoading)
-
-  const availableSlots = useMemo(() => {
-    const isToday = selectedDate === allFutureDates[0]
-    const now = new Date()
-    return slots.filter(s => {
-      if (!s.disponible) return false
-      if (!isToday) return true
-      const [h, m] = s.debut.split(':').map(Number)
-      const slotTime = new Date()
-      slotTime.setHours(h, m, 0, 0)
-      return slotTime > now
-    })
-  }, [slots, selectedDate, allFutureDates])
-
-  const isUnavailable = !isLoading && availableSlots.length === 0
+export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
+  const accepte = medecin.acceptNouveauxPatients !== false
+  // L'état des créneaux est passé tel quel au panneau, seul consommateur.
+  const nav = useCreneauxNavigation(medecin.id)
 
   return (
     <div
@@ -299,151 +379,7 @@ export function MedecinCardList({ medecin, availableToday, distanceKm, onMouseEn
           </div>
         </Link>
 
-        {/* ── Slot section ─────────────────────────────── */}
-        <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-3.5 sm:w-[280px] sm:border-t-0 sm:border-l">
-
-          {allUnavailable ? (
-            /* Fully booked — show next available date or "no availability" */
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl bg-zinc-50 px-4 py-5 ring-1 ring-inset ring-zinc-100">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
-                <CalendarOffIcon />
-              </div>
-              <div className="text-center">
-                <p className="text-[12px] font-semibold text-zinc-500">Aucune dispo cette semaine</p>
-              </div>
-
-              {extendedLoading ? (
-                <div className="h-8 w-40 animate-pulse rounded-full bg-zinc-200" />
-              ) : nextAvailableInfo ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    const idx = allFutureDates.indexOf(nextAvailableInfo.date)
-                    if (idx !== -1) {
-                      setWindowStart(idx)
-                      setSelectedDate(nextAvailableInfo.date)
-                    }
-                  }}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#007DFF] px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#00263C] hover:scale-[1.02] active:scale-95"
-                >
-                  <CalendarNextIcon />
-                  Prochaine dispo : {formatNextAvailable(nextAvailableInfo.date)}
-                </button>
-              ) : (
-                <Link
-                  href={`/medecins/${medecin.id}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-[#EBF4FF] px-3 py-1.5 text-[11px] font-semibold text-[#1863A9] transition-colors hover:bg-[#D6EAFF]"
-                  onClick={e => e.stopPropagation()}
-                >
-                  Voir le profil
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6"/>
-                  </svg>
-                </Link>
-              )}
-            </div>
-          ) : (
-            <>
-              {/* Bande de jours compacte + flèches */}
-              <div className="mb-2.5 flex items-center gap-1">
-                <button
-                  type="button"
-                  aria-label="Jours précédents"
-                  onClick={(e) => { e.preventDefault(); setWindowStart(w => Math.max(0, w - 1)) }}
-                  disabled={windowStart === 0}
-                  className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeftIcon />
-                </button>
-
-                <div className="flex flex-1 gap-1">
-                  {visibleDates.map((date, i) => {
-                    const { day, date: d } = formatDayLabel(date)
-                    const isSelected = date === selectedDate
-                    const isToday = windowStart === 0 && i === 0
-                    const dayResult = allDaysResults[i]
-                    const dayHasSlots = !dayResult?.isLoading && hasFutureSlots(date, todayISO, dayResult?.data)
-                    return (
-                      <button
-                        key={date}
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); setSelectedDate(date) }}
-                        className={`relative flex flex-1 flex-col items-center rounded-lg px-1 py-1 text-center transition-all duration-150 ${
-                          isSelected
-                            ? 'bg-[#007DFF] text-white shadow-sm'
-                            : isToday
-                              ? 'bg-[#EBF4FF] text-[#1863A9] hover:bg-[#D6EAFF]'
-                              : 'bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
-                        }`}
-                      >
-                        <span className="text-[9px] font-bold uppercase leading-tight">{day}</span>
-                        <span className="text-[13px] font-bold leading-tight">{d}</span>
-                        {dayHasSlots && !isSelected && (
-                          <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-emerald-400" />
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  aria-label="Jours suivants"
-                  onClick={(e) => { e.preventDefault(); setWindowStart(w => Math.min(360, w + 1)) }}
-                  disabled={windowStart >= 360}
-                  className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronRightIcon />
-                </button>
-              </div>
-
-              {/* Créneaux : rangée de chips horaires (simple à choisir) */}
-              <div className="flex flex-1 items-start">
-                {isLoading ? (
-                  <div className="grid w-full grid-cols-3 gap-1.5">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="h-8 animate-pulse rounded-lg bg-zinc-100" />
-                    ))}
-                  </div>
-                ) : isUnavailable ? (
-                  <div className="flex w-full items-center justify-center rounded-lg bg-zinc-50 px-3 py-3 ring-1 ring-inset ring-zinc-100">
-                    <span className="text-[11px] font-medium text-zinc-400">Aucune dispo ce jour</span>
-                  </div>
-                ) : (
-                  <div className="w-full">
-                    <div className="flex flex-wrap gap-1.5">
-                      {(showAll ? availableSlots : availableSlots.slice(0, MAX_CHIPS)).map((s) => (
-                        <button
-                          key={s.debut}
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            onBookSlot?.({ medecin, date: selectedDate, debut: s.debut, fin: s.fin })
-                          }}
-                          className="min-w-[52px] flex-1 rounded-lg bg-[#EBF4FF] py-1.5 text-[13px] font-bold text-[#007DFF] transition-colors hover:bg-[#007DFF] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 cursor-pointer"
-                        >
-                          {s.debut}
-                        </button>
-                      ))}
-                    </div>
-                    {availableSlots.length > MAX_CHIPS && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowAll(v => !v) }}
-                        className="mt-2 w-full text-center text-[12px] font-semibold text-[#007DFF] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 rounded cursor-pointer"
-                      >
-                        {showAll ? 'Voir moins' : `Voir plus (${availableSlots.length - MAX_CHIPS} créneaux)`}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-            </>
-          )}
-        </div>
+        <SlotPanel medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
       </div>
     </div>
   )

@@ -43,8 +43,11 @@ export function Avatar({ name, photoUrl, size = 40, className = '', ring = false
 
   if (showPhoto) {
     return (
-      // next/image n'autorise qu'un domaine : les photos viennent de MinIO, de Google
-      // ou d'un data URI, d'où la balise native.
+      // Balise native assumée, et unique point du code où elle l'est pour une photo :
+      // les photos téléversées sont stockées en data URI (voir le téléversement du
+      // dashboard patient), format que next/image ne sait pas optimiser, tandis que les
+      // avatars de connexion sociale viennent d'hôtes distants. Aucune liste de domaines
+      // ne couvrirait les deux. Passer par ce composant évite d'éparpiller la dérogation.
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={photoUrl}

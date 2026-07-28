@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -21,7 +21,6 @@ const VerifyEmailSchema = z.object({
 type VerifyEmailFormValues = z.infer<typeof VerifyEmailSchema>
 
 function VerificationForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const userId = searchParams.get('userId') ?? ''
   const email = searchParams.get('email') ?? ''

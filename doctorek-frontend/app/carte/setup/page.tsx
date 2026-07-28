@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { carteFullSchema, CarteFormData } from '@/features/carte/schemas'
 import { useCreateCarte } from '@/features/carte/hooks'
@@ -46,12 +46,13 @@ export default function CarteSetupPage() {
   const allergies = useFieldArray({ control: form.control, name: 'allergies' as never })
   const maladies = useFieldArray({ control: form.control, name: 'maladiesChroniques' as never })
   const medicaments = useFieldArray({ control: form.control, name: 'medicamentsActuels' })
-  const antecedents = useFieldArray({ control: form.control, name: 'antecedentsChirurgicaux' })
   const vaccinations = useFieldArray({ control: form.control, name: 'vaccinations' as never })
-  const familiaux = useFieldArray({ control: form.control, name: 'antecedentsFamiliaux' as never })
   const urgences = useFieldArray({ control: form.control, name: 'contactsUrgence' })
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = form
+  const { register, handleSubmit, setValue } = form
+  // useWatch plutôt que watch() : ce dernier ne peut pas être mémoïsé, ce qui
+  // empêche le compilateur React d'optimiser toute la page.
+  const values = useWatch({ control: form.control })
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,8 +141,9 @@ export default function CarteSetupPage() {
                     onClick={() => photoInputRef.current?.click()}
                     className="relative w-24 h-32 rounded-xl border-2 border-dashed border-[#356897] bg-[#0C4A83]/20 overflow-hidden cursor-pointer hover:border-[#3DA8FF] transition-colors flex items-center justify-center"
                   >
-                    {watch('photoUrl') ? (
-                      <img src={watch('photoUrl')!} alt="Photo" className="w-full h-full object-cover" />
+                    {values.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- data URI issu de FileReader, non optimisable par next/image
+                      <img src={values.photoUrl!} alt="Aperçu du portrait sélectionné" className="w-full h-full object-cover" />
                     ) : (
                       <div className="flex flex-col items-center gap-1 text-[#B6DAF7]/50">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
@@ -152,7 +154,7 @@ export default function CarteSetupPage() {
                       </div>
                     )}
                   </div>
-                  {watch('photoUrl') && (
+                  {values.photoUrl && (
                     <button
                       type="button"
                       onClick={() => { setValue('photoUrl', null); if (photoInputRef.current) photoInputRef.current.value = '' }}
@@ -253,7 +255,7 @@ export default function CarteSetupPage() {
               <div className="space-y-5">
                 <ListField
                   label="Allergies"
-                  items={(watch('allergies') ?? []) as string[]}
+                  items={(values.allergies ?? []) as string[]}
                   onAdd={() => allergies.append('' as never)}
                   onRemove={(i) => allergies.remove(i)}
                   renderItem={(_, i) => (
@@ -262,7 +264,7 @@ export default function CarteSetupPage() {
                 />
                 <ListField
                   label="Maladies chroniques"
-                  items={(watch('maladiesChroniques') ?? []) as string[]}
+                  items={(values.maladiesChroniques ?? []) as string[]}
                   onAdd={() => maladies.append('' as never)}
                   onRemove={(i) => maladies.remove(i)}
                   renderItem={(_, i) => (
@@ -271,7 +273,7 @@ export default function CarteSetupPage() {
                 />
                 <ListField
                   label="Médicaments actuels"
-                  items={watch('medicamentsActuels') ?? []}
+                  items={values.medicamentsActuels ?? []}
                   onAdd={() => medicaments.append({ nom: '', dosage: '' })}
                   onRemove={(i) => medicaments.remove(i)}
                   renderItem={(_, i) => (
@@ -283,7 +285,7 @@ export default function CarteSetupPage() {
                 />
                 <ListField
                   label="Vaccinations"
-                  items={(watch('vaccinations') ?? []) as string[]}
+                  items={(values.vaccinations ?? []) as string[]}
                   onAdd={() => vaccinations.append('' as never)}
                   onRemove={(i) => vaccinations.remove(i)}
                   renderItem={(_, i) => (
@@ -298,7 +300,7 @@ export default function CarteSetupPage() {
               <div className="space-y-5">
                 <ListField
                   label="Contacts d'urgence"
-                  items={watch('contactsUrgence') ?? []}
+                  items={values.contactsUrgence ?? []}
                   onAdd={() => urgences.append({ nom: '', lien: '', telephone: '' })}
                   onRemove={(i) => urgences.remove(i)}
                   renderItem={(_, i) => (

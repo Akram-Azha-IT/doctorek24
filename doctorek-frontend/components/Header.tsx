@@ -5,6 +5,7 @@ import { HelpCircle, UserRound } from 'lucide-react'
 import { useSession } from '@/lib/useSession'
 import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
+import { Avatar } from '@/components/Avatar'
 
 export function Header({ sticky = true }: { sticky?: boolean }) {
   const session = useSession()
@@ -66,10 +67,11 @@ export function Header({ sticky = true }: { sticky?: boolean }) {
                 className="inline-flex items-center text-[#007DFF] hover:text-[#00263C] transition-colors"
               >
                 {session.photoUrl ? (
-                  <img
-                    src={session.photoUrl}
-                    alt="Avatar"
-                    className="mr-2 h-8 w-8 rounded-full object-cover border-2 border-[#007DFF]/30 flex-shrink-0"
+                  <Avatar
+                    name={session.firstName ?? 'Mon espace'}
+                    photoUrl={session.photoUrl}
+                    size={32}
+                    className="mr-2 border-2 border-[#007DFF]/30"
                   />
                 ) : (
                   <UserRound className="mr-2 h-5 w-5" />

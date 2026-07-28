@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,15 +13,16 @@ interface SearchFormProps {
 }
 
 export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
-  const { register, watch, reset } = useForm<SearchFormValues>({
+  const { register, control, reset } = useForm<SearchFormValues>({
     defaultValues: { specialite: '', ville: '' },
   })
 
-  // Live filtering — update parent on every keystroke
-  const values = watch()
+  // Filtrage au fil de la frappe. useWatch plutôt que watch() : ce dernier ne peut pas
+  // être mémoïsé, et il rerend tout le formulaire là où useWatch cible les champs suivis.
+  const [specialite, ville] = useWatch({ control, name: ['specialite', 'ville'] })
   useEffect(() => {
-    onSearch(values)
-  }, [values.specialite, values.ville]) // eslint-disable-line react-hooks/exhaustive-deps
+    onSearch({ specialite, ville })
+  }, [specialite, ville, onSearch])
 
   function handleReset() {
     reset({ specialite: '', ville: '' })

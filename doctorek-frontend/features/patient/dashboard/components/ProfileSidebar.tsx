@@ -4,7 +4,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRef } from 'react'
 import type { CarteVirtuelle, PatientProfile } from '@/lib/types'
-import { calcAge, calcAgeDetailed } from '../utils'
+import { calcAgeDetailed } from '../utils'
+import { Avatar } from '@/components/Avatar'
 
 interface ProfileSidebarProps {
   firstName: string | null
@@ -23,16 +24,12 @@ export function ProfileSidebar({ firstName, lastName, profile, carte, hasCarte, 
       {/* Profile card */}
       <div className="bg-white rounded-2xl p-6 shadow-sm text-center">
         <div className="relative inline-block group mb-3">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-[#007DFF]/10 border-4 border-[#007DFF]/20 flex items-center justify-center mx-auto">
-            {profile?.photoUrl ? (
-              <img src={profile.photoUrl} alt="Photo de profil" className="w-full h-full object-cover" />
-            ) : (
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" fill="#007DFF" opacity="0.5"/>
-                <path d="M4 20 C4 15.6 7.6 12 12 12 C16.4 12 20 15.6 20 20" fill="#007DFF" opacity="0.5"/>
-              </svg>
-            )}
-          </div>
+          <Avatar
+            name={[firstName, lastName].filter(Boolean).join(' ') || 'Patient'}
+            photoUrl={profile?.photoUrl}
+            size={80}
+            className="mx-auto"
+          />
           {carte && (
             <>
               <button

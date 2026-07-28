@@ -368,7 +368,7 @@ export function AgendaCalendarGrid({
           </div>
 
           {/* Day columns */}
-          {weekDates.map((date, colIdx) => {
+          {weekDates.map((date) => {
             const iso = toISO(date)
             const isToday = iso === todayISO
             const dayKey = JS_DAY_TO_KEY[date.getDay()]

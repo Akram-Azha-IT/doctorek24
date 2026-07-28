@@ -67,7 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pageTitle = PAGE_TITLES[pathname] ?? 'Administration'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F4F6F9]">
+    <div className="dk-canvas flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside className="flex w-[260px] shrink-0 flex-col border-r border-zinc-200 bg-white">
         <div className="flex h-[72px] items-center gap-2.5 border-b border-zinc-100 px-6">

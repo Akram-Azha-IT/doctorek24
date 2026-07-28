@@ -15,7 +15,8 @@ Agents must strictly adhere to this color palette when building or modifying the
 | **Primary brand / hero backgrounds** | Vivid Blue | `#007DFF` |
 | **Dark CTA buttons (on vivid blue bg)** | Deep Teal Navy | `#00263C` |
 | **Small accents, dark badges, footer bg** | Deep Navy | `#010C2D` |
-| **Page background** | Light Grey | `#F0F2F5` |
+| **Page background (site public)** | Light Grey | `#F0F2F5` |
+| **Espaces de travail (dashboards)** | Canvas bleuté | `#F1F6FD` — via la classe `.dk-canvas` |
 | **Body text** | Dark Grey | `#333333` |
 
 **Rule:** `#010C2D` is reserved for small UI elements only (badges, tags, footer strip, icon backgrounds). Do NOT use it as a full section/page background — use `#007DFF` for brand sections and `#F0F2F5` for content sections.
@@ -42,7 +43,11 @@ Agents must strictly adhere to this color palette when building or modifying the
 
 ## Neutral Colors
 - **White (`#FFFFFF`)**: Text on dark backgrounds, card backgrounds
-- **Light Grey (`#F0F2F5`)**: Default page background (replaces deep navy for body)
+- **Light Grey (`#F0F2F5`)**: Fond des pages du site public
+- **Canvas bleuté (`#F1F6FD`)**: Fond des dashboards — appliquer la classe `.dk-canvas`
+  (elle ajoute une trame de points discrète). Réservée aux canevas de page : les puces,
+  skeletons et états de survol gardent leurs gris, sinon la hiérarchie surface/contenu
+  disparaît.
 - **Grey (`#465058`)**: Body text, secondary text
 - **Dark Grey (`#333333`)**: General text on light backgrounds
 

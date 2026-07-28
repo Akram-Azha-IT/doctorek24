@@ -31,7 +31,13 @@ export default function RecherchePage() {
   const latParam = searchParams.get('lat')
   const lngParam = searchParams.get('lng')
   const nearbyParam = searchParams.get('nearby')
-  const _lat = Number(latParam); const _lng = Number(lngParam); const urlCoords = latParam && lngParam && isFinite(_lat) && isFinite(_lng) ? { lat: _lat, lng: _lng } : null
+  // Objet recréé à chaque rendu sans mémoïsation : l'effet qui en dépend se relancerait
+  // en boucle.
+  const urlCoords = useMemo(() => {
+    const lat = Number(latParam)
+    const lng = Number(lngParam)
+    return latParam && lngParam && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
+  }, [latParam, lngParam])
 
   const [filter, setFilter] = useState<DisponibiliteFilter>('all')
   const [sort, setSort] = useState<SortKey>('pertinence')
@@ -82,7 +88,7 @@ export default function RecherchePage() {
   useEffect(() => {
     setQuery({ specialite: values.specialite, ville: values.ville })
     setPage(1)
-  }, [values.specialite, values.ville]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [values.specialite, values.ville])  
 
   const { state: geoState, request: requestGeo } = useGeolocation()
   const geoCoords =
@@ -123,13 +129,10 @@ export default function RecherchePage() {
     else searchResult.refetch()
   }, [nearbyMode, nearbyResult, searchResult])
 
-  const nearbyMedecins = nearbyResult.data ?? []
-  const searchContent = searchResult.data?.content ?? []
-  const availableTodayIds = useMemo(
-    () => (filter === 'today' ? new Set(searchContent.map((m) => m.id)) : new Set<string>()),
-    [filter, searchContent],
-  )
-
+  // Sans useMemo, `?? []` fabrique un tableau neuf à chaque rendu : les useMemo qui en
+  // dépendent se recalculeraient toujours, la mémoïsation ne servirait à rien.
+  const nearbyMedecins = useMemo(() => nearbyResult.data ?? [], [nearbyResult.data])
+  const searchContent = useMemo(() => searchResult.data?.content ?? [], [searchResult.data?.content])
   const totalResults = nearbyMode ? nearbyMedecins.length : (searchResult.data?.totalElements ?? 0)
   const totalPages = nearbyMode
     ? Math.ceil(totalResults / PAGE_SIZE)
@@ -242,7 +245,6 @@ export default function RecherchePage() {
             nearbyMedecins={nearbyMedecins}
             pagedNearby={sortedPagedNearby}
             searchContent={sortedSearchContent}
-            availableTodayIds={availableTodayIds}
             hasSearchData={!!searchResult.data}
             page={page}
             totalPages={totalPages}

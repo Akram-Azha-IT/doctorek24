@@ -100,7 +100,7 @@ export default function DashboardPatientPage() {
   }
 
   return (
-    <div className="bg-[#F0F2F5]">
+    <div>
       <div className="max-w-6xl mx-auto px-6 py-8">
 
         {/* Welcome — inline, no wrapper component */}

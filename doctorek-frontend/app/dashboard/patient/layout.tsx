@@ -10,6 +10,7 @@ import { NotificationPanel } from '@/features/notifications/components/Notificat
 import { NotificationToasts } from '@/features/notifications/components/NotificationToasts'
 import { getSession, saveSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
+import { Avatar } from '@/components/Avatar'
 import { logout } from '@/lib/auth'
 import Logo from '@/components/Logo'
 import { useCarteByPatient } from '@/features/carte/hooks'
@@ -30,10 +31,6 @@ const HEALTH_ITEMS = [
 ]
 
 const COLLAPSED_WIDTH = 64
-
-function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-}
 
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
   useRoleGuard('PATIENT')
@@ -136,7 +133,6 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
     return pathname.startsWith(item.href)
   }
 
-  const initials = firstName || lastName ? getInitials(firstName, lastName) : 'P'
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Patient'
   const currentWidth = sidebarOpen ? sidebarWidth : COLLAPSED_WIDTH
 
@@ -165,13 +161,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
         {/* Patient identity mini-card */}
         {sidebarOpen ? (
           <div className="mx-4 mt-5 mb-2 flex items-center gap-3 rounded-2xl bg-[#F1F4F7] px-4 py-3">
-            <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center">
-              {resolvedPhoto ? (
-                <img src={resolvedPhoto} alt="profil" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
-              )}
-            </div>
+            <Avatar name={fullName} photoUrl={resolvedPhoto} size={36} />
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-[#333333]">{fullName}</p>
               <div className="flex items-center gap-1 mt-0.5">
@@ -182,13 +172,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
           </div>
         ) : (
           <div className="flex justify-center mt-5 mb-2">
-            <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center">
-              {resolvedPhoto ? (
-                <img src={resolvedPhoto} alt="profil" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
-              )}
-            </div>
+            <Avatar name={fullName} photoUrl={resolvedPhoto} size={36} />
           </div>
         )}
 
@@ -353,18 +337,14 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 aria-label="Mon compte"
                 className="h-11 w-11 lg:h-9 lg:w-9 shrink-0 rounded-full overflow-hidden bg-[#007DFF]/10 border-2 border-[#007DFF]/20 flex items-center justify-center cursor-pointer hover:opacity-80 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/50"
               >
-                {resolvedPhoto ? (
-                  <img src={resolvedPhoto} alt={`Photo de profil de ${fullName}`} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xs font-bold text-[#007DFF]">{initials}</span>
-                )}
+                <Avatar name={fullName} photoUrl={resolvedPhoto} size={36} />
               </button>
             </div>
           </div>
         </header>
 
         {/* Page content — with bottom padding on mobile for bottom nav */}
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <main className="dk-canvas flex-1 overflow-y-auto pb-20 lg:pb-0">
           {children}
         </main>
       </div>

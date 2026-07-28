@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { carteFullSchema, CarteFormData } from '@/features/carte/schemas'
 import { useCreateCarte, useUpdateCarte, useCarteByPatient } from '@/features/carte/hooks'
 import { usePatientProfile, useUpsertPatientProfile } from '@/features/patient/hooks'
 import { getInfosMedicales, upsertInfosMedicales } from '@/features/dossier/api'
-import { getSession, saveSession } from '@/lib/session'
+import { saveSession } from '@/lib/session'
+import { useSession } from '@/lib/useSession'
 import { CarteVirtuelle, PatientProfile } from '@/lib/types'
 import CarteVirtuelleCard from '@/features/carte/components/CarteVirtuelleCard'
 import LogoLoader from '@/components/LogoLoader'
@@ -58,11 +59,9 @@ function mapToForm(carte: CarteVirtuelle | null, profile: PatientProfile | null)
 export default function CarteEditPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
-  const [session, setSession] = useState<ReturnType<typeof getSession>>(null)
-
-  useEffect(() => {
-    setSession(getSession())
-  }, [])
+  // useSession s'abonne au cache via useSyncExternalStore : pas de setState dans un
+  // effet, et la page suit les mises à jour de session (connexion, backfill du profil).
+  const session = useSession()
 
   const { data: existingCarte, isLoading } = useCarteByPatient(session?.id ?? null)
   const { data: existingProfile } = usePatientProfile(session?.id ?? null)
@@ -109,7 +108,10 @@ export default function CarteEditPage() {
   const familiaux = useFieldArray({ control: form.control, name: 'antecedentsFamiliaux' as never })
   const urgences = useFieldArray({ control: form.control, name: 'contactsUrgence' })
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = form
+  const { register, handleSubmit, setValue } = form
+  // useWatch plutôt que watch() : ce dernier ne peut pas être mémoïsé, ce qui
+  // empêche le compilateur React d'optimiser toute la page.
+  const values = useWatch({ control: form.control })
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,18 +191,17 @@ export default function CarteEditPage() {
 
   const inputCls = 'w-full bg-white border border-[#E2E8F0] rounded-lg px-4 py-2.5 text-[#333333] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#007DFF]/20 focus:border-[#007DFF] text-sm transition-all'
   const labelCls = 'block text-sm font-medium text-[#4A5568] mb-1.5'
-  const errorCls = 'text-xs text-[#E01E5A] mt-1'
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-full bg-[#F0F2F5]">
+      <div className="flex items-center justify-center min-h-full">
         <LogoLoader label="Chargement de votre carte..." />
       </div>
     )
   }
 
   return (
-    <div className="min-h-full bg-[#F0F2F5] p-6">
+    <div className="min-h-full p-6">
       <div className="max-w-5xl mx-auto">
 
         {/* Carte preview — shown only when carte already exists */}
@@ -385,8 +386,9 @@ export default function CarteEditPage() {
                             onClick={() => photoInputRef.current?.click()}
                             className="relative w-24 h-32 rounded-xl border-2 border-dashed border-[#CBD5E0] bg-[#F8FAFC] overflow-hidden cursor-pointer hover:border-[#007DFF] hover:bg-[#007DFF]/5 transition-all flex items-center justify-center group"
                           >
-                            {watch('photoUrl') ? (
-                              <img src={watch('photoUrl')!} alt="Photo" className="w-full h-full object-cover" />
+                            {values.photoUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- data URI issu de FileReader, non optimisable par next/image
+                              <img src={values.photoUrl!} alt="Aperçu du portrait sélectionné" className="w-full h-full object-cover" />
                             ) : (
                               <div className="flex flex-col items-center gap-1.5 text-[#94A3B8] group-hover:text-[#007DFF] transition-colors">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -397,7 +399,7 @@ export default function CarteEditPage() {
                               </div>
                             )}
                           </div>
-                          {watch('photoUrl') && (
+                          {values.photoUrl && (
                             <button
                               type="button"
                               onClick={() => { setValue('photoUrl', null); if (photoInputRef.current) photoInputRef.current.value = '' }}
@@ -518,7 +520,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Allergies"
                         hint="Médicaments, aliments, substances"
-                        items={(watch('allergies') ?? []) as string[]}
+                        items={(values.allergies ?? []) as string[]}
                         onAdd={() => allergies.append('' as never)}
                         onRemove={(i) => allergies.remove(i)}
                         renderItem={(_, i) => (
@@ -528,7 +530,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Maladies chroniques"
                         hint="Pathologies diagnostiquées"
-                        items={(watch('maladiesChroniques') ?? []) as string[]}
+                        items={(values.maladiesChroniques ?? []) as string[]}
                         onAdd={() => maladies.append('' as never)}
                         onRemove={(i) => maladies.remove(i)}
                         renderItem={(_, i) => (
@@ -538,7 +540,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Médicaments actuels"
                         hint="Traitements en cours"
-                        items={watch('medicamentsActuels') ?? []}
+                        items={values.medicamentsActuels ?? []}
                         onAdd={() => medicaments.append({ nom: '', dosage: '' })}
                         onRemove={(i) => medicaments.remove(i)}
                         renderItem={(_, i) => (
@@ -551,7 +553,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Antécédents chirurgicaux"
                         hint="Opérations & interventions"
-                        items={watch('antecedentsChirurgicaux') ?? []}
+                        items={values.antecedentsChirurgicaux ?? []}
                         onAdd={() => antecedents.append({ description: '', date: '' })}
                         onRemove={(i) => antecedents.remove(i)}
                         renderItem={(_, i) => (
@@ -564,7 +566,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Vaccinations"
                         hint="Vaccins reçus"
-                        items={(watch('vaccinations') ?? []) as string[]}
+                        items={(values.vaccinations ?? []) as string[]}
                         onAdd={() => vaccinations.append('' as never)}
                         onRemove={(i) => vaccinations.remove(i)}
                         renderItem={(_, i) => (
@@ -574,7 +576,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Antécédents familiaux"
                         hint="Maladies héréditaires"
-                        items={(watch('antecedentsFamiliaux') ?? []) as string[]}
+                        items={(values.antecedentsFamiliaux ?? []) as string[]}
                         onAdd={() => familiaux.append('' as never)}
                         onRemove={(i) => familiaux.remove(i)}
                         renderItem={(_, i) => (
@@ -590,7 +592,7 @@ export default function CarteEditPage() {
                       <FormListField
                         label="Contacts d'urgence"
                         hint="Personnes à contacter en cas d'urgence"
-                        items={watch('contactsUrgence') ?? []}
+                        items={values.contactsUrgence ?? []}
                         onAdd={() => urgences.append({ nom: '', lien: '', telephone: '' })}
                         onRemove={(i) => urgences.remove(i)}
                         renderItem={(_, i) => (

@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { AuthField, Icons, PrimaryButton } from './AuthField'
 import { RegisterSchema, type RegisterFormValues } from '../schemas'
 import { useRegisterPatient } from '../hooks'
+import { omit } from '@/lib/object'
 
 export function RegisterForm() {
   const router = useRouter()
@@ -21,7 +22,8 @@ export function RegisterForm() {
   })
 
   function onSubmit(values: RegisterFormValues) {
-    const { confirmPassword: _, ...payload } = values
+    // confirmPassword est validé côté client, jamais transmis au serveur.
+    const payload = omit(values, 'confirmPassword')
     mutate(payload, {
       onSuccess: (data) => {
         localStorage.setItem(

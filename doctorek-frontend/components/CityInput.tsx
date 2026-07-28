@@ -28,7 +28,9 @@ async function fetchVillesMaroc(): Promise<string[]> {
     .then(r => r.json())
     .then(data => {
       const list: string[] = Array.isArray(data?.data) ? data.data : []
-      _cities = list.length > 0 ? list.sort((a, b) => a.localeCompare('fr')) : FALLBACK_VILLES
+      // Comparer les villes entre elles selon la locale française ; le second argument
+      // de localeCompare est la chaîne à comparer, pas la locale (3e argument).
+      _cities = list.length > 0 ? [...list].sort((a, b) => a.localeCompare(b, 'fr')) : FALLBACK_VILLES
       return _cities
     })
     .catch(() => {
@@ -48,6 +50,9 @@ interface CityInputProps {
   disabled?: boolean
   'aria-label'?: string
 }
+
+/** Identifiant reliant l'input a sa liste (aria-controls / aria-activedescendant). */
+const LISTBOX_ID = 'city-input-listbox'
 
 export function CityInput({
   value,
@@ -160,10 +165,12 @@ export function CityInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
+        role="combobox"
         aria-label={ariaLabel}
         aria-autocomplete="list"
         aria-expanded={open}
-        aria-haspopup="listbox"
+        aria-controls={LISTBOX_ID}
+        aria-activedescendant={focused >= 0 ? `${LISTBOX_ID}-opt-${focused}` : undefined}
         autoComplete="off"
         className={`w-full bg-transparent ${inputClassName}`}
       />
@@ -171,6 +178,7 @@ export function CityInput({
       {open && options.length > 0 && dropdownRect && typeof document !== 'undefined' && createPortal(
         <ul
           ref={listRef}
+          id={LISTBOX_ID}
           role="listbox"
           aria-label="Villes disponibles"
           style={{
@@ -188,6 +196,7 @@ export function CityInput({
           {options.map((opt, i) => (
             <li
               key={opt.label}
+              id={`${LISTBOX_ID}-opt-${i}`}
               role="option"
               aria-selected={i === focused}
               onMouseDown={(e) => { e.preventDefault(); selectOption(opt) }}
