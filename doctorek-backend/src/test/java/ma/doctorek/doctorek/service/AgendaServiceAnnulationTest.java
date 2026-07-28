@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.LocalTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -73,7 +74,7 @@ class AgendaServiceAnnulationTest {
         r.setId(RDV_ID);
         r.setMedecinId(MEDECIN);
         r.setPatientId(PATIENT);
-        r.setDateRdv(LocalDate.of(2026, 8, 12));
+        r.setDateRdv(LocalDate.of(2026, Month.AUGUST, 12));
         r.setHeureRdv(LocalTime.of(10, 0));
         r.setDuree(30);
         r.setStatut(statut.name());
@@ -150,6 +151,18 @@ class AgendaServiceAnnulationTest {
         agendaService.annulerRdv(RDV_ID, MEDECIN);
 
         verify(notificationService, never()).push(any(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("un échec de notification n'empêche pas l'annulation")
+    void annuler_notificationEnErreur_annuleQuandMeme() {
+        givenRdv(StatutRdv.CONFIRME);
+        doThrow(new IllegalStateException("indisponible"))
+            .when(notificationService).push(any(), anyString(), anyString(), anyString());
+
+        var res = agendaService.annulerRdv(RDV_ID, PATIENT);
+
+        assertThat(res.statut()).isEqualTo(StatutRdv.ANNULE.name());
     }
 
     @Test
