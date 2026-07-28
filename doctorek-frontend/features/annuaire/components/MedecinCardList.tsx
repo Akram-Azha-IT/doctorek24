@@ -83,132 +83,29 @@ function CalendarNextIcon() {
   )
 }
 
-interface MedecinCardListProps {
+
+interface SlotPanelProps {
   readonly medecin: MedecinProfile
-  readonly distanceKm?: number
-  readonly onMouseEnter?: () => void
-  readonly onMouseLeave?: () => void
   readonly onBookSlot?: (slot: BookingSlot) => void
+  readonly nav: ReturnType<typeof useCreneauxNavigation>
 }
 
-export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
-  const accepte = medecin.acceptNouveauxPatients !== false
+/**
+ * Panneau de réservation d'une carte de résultat : navigation entre les jours,
+ * créneaux du jour choisi, ou report vers la prochaine disponibilité.
+ *
+ * <p>Séparé de la carte pour que celle-ci reste lisible : à elles deux, la fiche du
+ * médecin et ce panneau dépassaient le seuil de complexité admis.
+ */
+function SlotPanel({ medecin, onBookSlot, nav }: SlotPanelProps) {
+  const {
+    visibleDates, selectedDate, setSelectedDate, windowStart, setWindowStart,
+    showAll, setShowAll, daysWithSlots, goToDate, allUnavailable,
+    isLoading, availableSlots, isUnavailable, nextAvailableInfo, extendedLoading,
+  } = nav
   const MAX_CHIPS = 6
 
-  const {
-    visibleDates,
-    selectedDate,
-    setSelectedDate,
-    windowStart,
-    setWindowStart,
-    showAll,
-    setShowAll,
-    daysWithSlots,
-    goToDate,
-    allUnavailable,
-    isLoading,
-    availableSlots,
-    isUnavailable,
-    nextAvailableInfo,
-    extendedLoading,
-  } = useCreneauxNavigation(medecin.id)
-
   return (
-    <div
-      className="group relative mb-3 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-200 hover:shadow-[0_6px_28px_rgba(0,125,255,0.11)] overflow-hidden border border-transparent hover:border-[#007DFF]/10"
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      {/* Left accent bar */}
-      <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b from-[#007DFF] to-[#3DA8FF] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-
-      <div className="flex flex-col sm:flex-row sm:items-stretch">
-
-        {/* ── Doctor info ─────────────────────────────── */}
-        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 px-5 py-4 overflow-hidden">
-          {/* Gradient background blob */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: 'radial-gradient(ellipse 120px 100px at top right, rgba(0,125,255,0.06) 0%, transparent 70%)',
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{
-              background: 'radial-gradient(ellipse 160px 130px at top right, rgba(0,125,255,0.09) 0%, transparent 70%)',
-            }}
-          />
-
-          {/* Avatar */}
-          <div className="relative shrink-0 self-start mt-0.5">
-            <div className="rounded-full ring-2 ring-offset-2 ring-[#B6DAF7]">
-              <MedecinAvatar
-                firstName={medecin.firstName}
-                lastName={medecin.lastName}
-                photoUrl={medecin.photoUrl ?? null}
-                size="lg"
-              />
-            </div>
-          </div>
-
-          {/* Info */}
-          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-
-            <div className="flex flex-col gap-1.5">
-              {/* Name + sector */}
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-bold text-[#010C2D] transition-colors group-hover:text-[#007DFF]">
-                  Dr. {medecin.firstName} {medecin.lastName}
-                </h3>
-                {medecin.secteurTarifaire && (
-                  <span className="rounded-full bg-[#EBF4FF] px-2 py-0.5 text-[10px] font-bold text-[#1863A9]">
-                    Secteur {medecin.secteurTarifaire}
-                  </span>
-                )}
-              </div>
-
-              {/* Specialty */}
-              <p className="text-[13px] font-semibold text-[#007DFF]">{medecin.specialite}</p>
-
-              {/* Address */}
-              <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
-                <PinIcon />
-                {[medecin.adresse, medecin.ville].filter(Boolean).join(', ') || medecin.ville || '-'}
-                {distanceKm !== undefined && (
-                  <span className="ml-1 font-medium text-[#007DFF]">
-                    · {distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`}
-                  </span>
-                )}
-              </p>
-            </div>
-
-            {/* Tags — anchored to bottom */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {!accepte && (
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-400">
-                  Complet
-                </span>
-              )}
-              {medecin.consultationVideo && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-600 ring-1 ring-inset ring-violet-200">
-                  <VideoIcon />
-                  Consultation vidéo
-                </span>
-              )}
-              {medecin.langues && medecin.langues.length > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
-                  <GlobeIcon />
-                  {medecin.langues.slice(0, 2).join(', ')}
-                </span>
-              )}
-            </div>
-          </div>
-        </Link>
-
-        {/* ── Slot section ─────────────────────────────── */}
         <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-3.5 sm:w-[280px] sm:border-t-0 sm:border-l">
 
           {allUnavailable ? (
@@ -348,6 +245,118 @@ export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeav
             </>
           )}
         </div>
+  )
+}
+
+interface MedecinCardListProps {
+  readonly medecin: MedecinProfile
+  readonly distanceKm?: number
+  readonly onMouseEnter?: () => void
+  readonly onMouseLeave?: () => void
+  readonly onBookSlot?: (slot: BookingSlot) => void
+}
+
+export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
+  const accepte = medecin.acceptNouveauxPatients !== false
+  // L'état des créneaux est passé tel quel au panneau, seul consommateur.
+  const nav = useCreneauxNavigation(medecin.id)
+
+  return (
+    <div
+      className="group relative mb-3 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-200 hover:shadow-[0_6px_28px_rgba(0,125,255,0.11)] overflow-hidden border border-transparent hover:border-[#007DFF]/10"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {/* Left accent bar */}
+      <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b from-[#007DFF] to-[#3DA8FF] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+
+      <div className="flex flex-col sm:flex-row sm:items-stretch">
+
+        {/* ── Doctor info ─────────────────────────────── */}
+        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 px-5 py-4 overflow-hidden">
+          {/* Gradient background blob */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: 'radial-gradient(ellipse 120px 100px at top right, rgba(0,125,255,0.06) 0%, transparent 70%)',
+            }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            style={{
+              background: 'radial-gradient(ellipse 160px 130px at top right, rgba(0,125,255,0.09) 0%, transparent 70%)',
+            }}
+          />
+
+          {/* Avatar */}
+          <div className="relative shrink-0 self-start mt-0.5">
+            <div className="rounded-full ring-2 ring-offset-2 ring-[#B6DAF7]">
+              <MedecinAvatar
+                firstName={medecin.firstName}
+                lastName={medecin.lastName}
+                photoUrl={medecin.photoUrl ?? null}
+                size="lg"
+              />
+            </div>
+          </div>
+
+          {/* Info */}
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+
+            <div className="flex flex-col gap-1.5">
+              {/* Name + sector */}
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-bold text-[#010C2D] transition-colors group-hover:text-[#007DFF]">
+                  Dr. {medecin.firstName} {medecin.lastName}
+                </h3>
+                {medecin.secteurTarifaire && (
+                  <span className="rounded-full bg-[#EBF4FF] px-2 py-0.5 text-[10px] font-bold text-[#1863A9]">
+                    Secteur {medecin.secteurTarifaire}
+                  </span>
+                )}
+              </div>
+
+              {/* Specialty */}
+              <p className="text-[13px] font-semibold text-[#007DFF]">{medecin.specialite}</p>
+
+              {/* Address */}
+              <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
+                <PinIcon />
+                {[medecin.adresse, medecin.ville].filter(Boolean).join(', ') || medecin.ville || '-'}
+                {distanceKm !== undefined && (
+                  <span className="ml-1 font-medium text-[#007DFF]">
+                    · {distanceKm < 1 ? `${Math.round(distanceKm * 1000)} m` : `${distanceKm.toFixed(1)} km`}
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Tags — anchored to bottom */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              {!accepte && (
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-400">
+                  Complet
+                </span>
+              )}
+              {medecin.consultationVideo && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-600 ring-1 ring-inset ring-violet-200">
+                  <VideoIcon />
+                  Consultation vidéo
+                </span>
+              )}
+              {medecin.langues && medecin.langues.length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
+                  <GlobeIcon />
+                  {medecin.langues.slice(0, 2).join(', ')}
+                </span>
+              )}
+            </div>
+          </div>
+        </Link>
+
+        <SlotPanel medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
       </div>
     </div>
   )
