@@ -48,6 +48,10 @@ public class RendezVousEntity {
     @Column(name = "questionnaire_json", columnDefinition = "jsonb")
     private String questionnaireJson;
 
+    /** Compte ayant réservé : le patient, le titulaire qui gère le proche, ou le médecin. */
+    @Column(name = "cree_par")
+    private UUID creePar;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }

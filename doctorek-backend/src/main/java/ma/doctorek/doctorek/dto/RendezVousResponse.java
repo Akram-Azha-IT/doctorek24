@@ -18,26 +18,22 @@ public record RendezVousResponse(
         int duree,
         String statut,
         String motif,
+        /** Renseigné seulement quand un tiers a réservé (titulaire pour un proche, ou médecin). */
+        String creeParNom,
         QuestionnaireDto questionnaire) {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static RendezVousResponse from(RendezVousEntity rdv) {
-        return new RendezVousResponse(
-                rdv.getId(),
-                rdv.getMedecinId(),
-                rdv.getPatientId(),
-                null,
-                null,
-                rdv.getDateRdv(),
-                rdv.getHeureRdv(),
-                rdv.getDuree(),
-                rdv.getStatut(),
-                rdv.getMotif(),
-                parseQuestionnaire(rdv.getQuestionnaireJson()));
+        return from(rdv, null, null, null);
     }
 
     public static RendezVousResponse from(RendezVousEntity rdv, String patientPrenom, String patientNom) {
+        return from(rdv, patientPrenom, patientNom, null);
+    }
+
+    public static RendezVousResponse from(RendezVousEntity rdv, String patientPrenom, String patientNom,
+                                           String creeParNom) {
         return new RendezVousResponse(
                 rdv.getId(),
                 rdv.getMedecinId(),
@@ -49,6 +45,7 @@ public record RendezVousResponse(
                 rdv.getDuree(),
                 rdv.getStatut(),
                 rdv.getMotif(),
+                creeParNom,
                 parseQuestionnaire(rdv.getQuestionnaireJson()));
     }
 

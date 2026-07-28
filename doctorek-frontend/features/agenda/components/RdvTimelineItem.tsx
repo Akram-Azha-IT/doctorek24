@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CalendarClock, ChevronDown, ChevronUp } from 'lucide-react'
+import { CalendarClock, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { MedecinAvatar } from '@/features/annuaire/components/MedecinAvatar'
 import { useCreneaux, useDocumentsRequis } from '@/features/agenda/hooks'
@@ -179,15 +179,21 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 interface RdvTimelineItemProps {
-  rdv: RendezVous
-  isReprogramming: boolean
-  onReprogrammer: (id: string, date: string, heure: string) => void
+  readonly rdv: RendezVous
+  readonly isReprogramming: boolean
+  readonly onReprogrammer: (id: string, date: string, heure: string) => void
+  readonly isCancelling?: boolean
+  readonly onAnnuler?: (id: string) => void
 }
 
-export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTimelineItemProps) {
+export function RdvTimelineItem({
+  rdv, isReprogramming, onReprogrammer, isCancelling, onAnnuler,
+}: RdvTimelineItemProps) {
   const { data: medecin } = useMedecin(rdv.medecinId)
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [showReschedule, setShowReschedule] = useState(false)
+  // L'annulation libère le créneau et prévient le praticien : on la fait confirmer.
+  const [confirmCancel, setConfirmCancel] = useState(false)
 
   const q = rdv.questionnaire
   const config = STATUT_CONFIG[rdv.statut]
@@ -204,6 +210,7 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
   const medecinFirstName = medecin?.firstName ?? ''
   const medecinLastName = medecin?.lastName ?? ''
 
+  const canCancel = canReschedule && !!onAnnuler
   const hasFooter = (q || canReschedule) && !showReschedule
 
   return (
@@ -311,6 +318,36 @@ export function RdvTimelineItem({ rdv, isReprogramming, onReprogrammer }: RdvTim
                     Changer la date
                   </button>
                 )}
+                {canCancel && (confirmCancel ? (
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-[#465058]">Annuler ce rendez-vous ?</span>
+                    <button
+                      type="button"
+                      onClick={() => { onAnnuler?.(rdv.id); setConfirmCancel(false) }}
+                      disabled={isCancelling}
+                      className="rounded-lg bg-[#E01E5A] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#B4232A] disabled:opacity-40"
+                    >
+                      {isCancelling ? 'Annulation…' : 'Oui, annuler'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmCancel(false)}
+                      className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-[#465058] transition-colors hover:bg-zinc-100"
+                    >
+                      Non
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setConfirmCancel(true); setShowReschedule(false) }}
+                    disabled={isCancelling}
+                    className="flex items-center gap-1.5 rounded-lg border border-[#FFDEDE] bg-white px-3 py-2 text-xs font-semibold text-[#B4232A] transition-colors hover:bg-[#FFF5F5] disabled:opacity-40"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Annuler
+                  </button>
+                ))}
               </div>
             )}
           </div>

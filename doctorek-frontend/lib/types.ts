@@ -346,6 +346,8 @@ export interface RendezVous {
   duree: number
   statut: StatutRdv
   motif: string | null
+  /** Renseigné quand un tiers a réservé (titulaire pour un proche, ou le médecin). */
+  creeParNom?: string | null
   questionnaire?: QuestionnairePreConsult | null
   createdAt: string
 }
