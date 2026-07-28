@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePatientsMedecin } from '@/features/agenda/hooks'
 import { PatientListItem } from '@/features/agenda/components/PatientListItem'
+import { groupPatientsByFamille } from '@/features/agenda/patients-famille'
 import { useSession } from '@/lib/useSession'
 import { useResetOnChange } from '@/lib/useResetOnChange'
 import { useRoleGuard } from '@/lib/useRoleGuard'
+import type { PatientSummary } from '@/lib/types'
 
 const FILTRES = [
   { key: 'TOUS', label: 'Tous' },
@@ -40,9 +42,18 @@ export default function PatientsPage() {
 
   const { data, isLoading, isError } = usePatientsMedecin(medecinId, debouncedSearch, filtre, page)
 
-  const patients = data?.content ?? []
+  const patients = useMemo(() => data?.content ?? [], [data])
+  const familles = useMemo(() => groupPatientsByFamille(patients), [patients])
   const total = data?.total ?? 0
   const totalPages = Math.ceil(total / PAGE_SIZE)
+
+  const openPatient = useCallback(
+    (patient: PatientSummary) => {
+      const params = new URLSearchParams({ prenom: patient.firstName, nom: patient.lastName })
+      router.push(`/dashboard/medecin/patients/${patient.patientId}?${params}`)
+    },
+    [router],
+  )
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-7 md:py-10 space-y-5">
@@ -140,18 +151,28 @@ export default function PatientsPage() {
         <>
           <div className="overflow-hidden rounded-2xl border border-[#EEF1F6] bg-white">
             <ul className="divide-y divide-[#F0F2F5]">
-              {patients.map((patient) => (
-                <PatientListItem
-                  key={patient.patientId}
-                  patient={patient}
-                  onClick={() => {
-                    const params = new URLSearchParams({
-                      prenom: patient.firstName,
-                      nom: patient.lastName,
-                    })
-                    router.push(`/dashboard/medecin/patients/${patient.patientId}?${params}`)
-                  }}
-                />
+              {familles.map((famille) => (
+                <li key={famille.key}>
+                  <ul className="divide-y divide-[#F0F2F5]">
+                    {famille.titulaire && (
+                      <PatientListItem patient={famille.titulaire} onClick={() => openPatient(famille.titulaire!)} />
+                    )}
+                    {famille.proches.map((proche) => (
+                      <PatientListItem
+                        key={proche.patientId}
+                        patient={proche}
+                        nested={!!famille.titulaire}
+                        onClick={() => openPatient(proche)}
+                      />
+                    ))}
+                  </ul>
+                  {famille.titulaire && famille.proches.length > 0 && (
+                    <p className="bg-[#F7FAFF] px-5 py-1.5 text-[11px] text-[#6B7A99]">
+                      {famille.proches.length} proche{famille.proches.length > 1 ? 's' : ''} géré
+                      {famille.proches.length > 1 ? 's' : ''} par {famille.titulaireNom} — dossiers médicaux distincts
+                    </p>
+                  )}
+                </li>
               ))}
             </ul>
           </div>

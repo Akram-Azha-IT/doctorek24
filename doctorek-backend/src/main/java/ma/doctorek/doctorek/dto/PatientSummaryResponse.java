@@ -10,6 +10,9 @@ public record PatientSummaryResponse(
         String firstName,
         String lastName,
         String photoUrl,
+        /** Renseignés quand le patient est un proche rattaché à un compte titulaire. */
+        String gestionnaireId,
+        String gestionnaireNom,
         LocalDate dernierRdvDate,
         StatutRdv dernierRdvStatut,
         boolean hasFutureRdv) {}

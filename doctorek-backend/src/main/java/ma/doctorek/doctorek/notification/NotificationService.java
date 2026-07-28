@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +33,7 @@ public class NotificationService {
     private final UserRepository userRepo;
     private final EmailService emailService;
     private final NotificationRoutingService notificationRouting;
+    private final RappelRdvRegistre rappelRegistre;
 
     public NotificationService(NotificationRepository repo,
                                 SimpMessagingTemplate stomp,
@@ -40,7 +41,8 @@ public class NotificationService {
                                 PatientDetailRepository patientDetailRepo,
                                 UserRepository userRepo,
                                 EmailService emailService,
-                                NotificationRoutingService notificationRouting) {
+                                NotificationRoutingService notificationRouting,
+                                RappelRdvRegistre rappelRegistre) {
         this.repo              = repo;
         this.stomp             = stomp;
         this.rdvRepo           = rdvRepo;
@@ -48,6 +50,7 @@ public class NotificationService {
         this.userRepo          = userRepo;
         this.emailService      = emailService;
         this.notificationRouting = notificationRouting;
+        this.rappelRegistre    = rappelRegistre;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -98,22 +101,34 @@ public class NotificationService {
 
     // ── Scheduled: RDV reminder 30 min before ────────────────────────────────
 
+    /** Délai annoncé au patient dans le rappel. */
+    private static final int RAPPEL_AVANT_MINUTES = 30;
+
+    /**
+     * Marge de rattrapage en amont de l'échéance.
+     *
+     * <p>Un tick peut être manqué (redémarrage, pause GC) : la fenêtre reste plus large
+     * qu'une minute pour ne pas perdre le rappel. Le doublon est écarté par
+     * {@link RappelRdvRegistre}, pas en resserrant la fenêtre.
+     */
+    private static final int RAPPEL_RATTRAPAGE_MINUTES = 4;
+
     @Scheduled(cron = "0 * * * * *") // every minute
-    @Transactional
     public void sendRdvReminders() {
-        LocalDate today = LocalDate.now();
-        LocalTime now   = LocalTime.now();
-        LocalTime windowStart = now.plusMinutes(28);
-        LocalTime windowEnd   = now.plusMinutes(32);
+        LocalDateTime maintenant = LocalDateTime.now();
+        LocalDateTime cible = maintenant.plusMinutes(RAPPEL_AVANT_MINUTES);
+        LocalDateTime debut = cible.minusMinutes(RAPPEL_RATTRAPAGE_MINUTES);
 
-        if (windowStart.isAfter(windowEnd)) return; // midnight edge case
-
-        rdvRepo.findByDateRdvAndStatutNot(today, "ANNULE")
+        // La fenêtre franchit minuit pour les consultations de tout début de matinée.
+        rdvRepo.findRappelsEnAttente(debut.toLocalDate(), cible.toLocalDate(), "ANNULE")
                 .stream()
-                .filter(rdv -> rdv.getHeureRdv() != null
-                        && !rdv.getHeureRdv().isBefore(windowStart)
-                        && !rdv.getHeureRdv().isAfter(windowEnd))
-                .forEach(rdv -> pushRdvReminder(rdv));
+                .filter(rdv -> rdv.getHeureRdv() != null)
+                .filter(rdv -> {
+                    LocalDateTime debutRdv = LocalDateTime.of(rdv.getDateRdv(), rdv.getHeureRdv());
+                    return !debutRdv.isBefore(debut) && !debutRdv.isAfter(cible);
+                })
+                .filter(rdv -> rappelRegistre.reserver(rdv.getId()))
+                .forEach(this::pushRdvReminder);
     }
 
     // ── Scheduled: birthday notifications (daily at 08:00) ───────────────────

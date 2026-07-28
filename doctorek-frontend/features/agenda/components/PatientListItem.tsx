@@ -30,21 +30,36 @@ function formatDateShortFR(dateStr: string): string {
 interface PatientListItemProps {
   readonly patient: PatientSummary
   readonly onClick: () => void
+  /** Proche rattaché au titulaire affiché juste au-dessus : décalé et relié par un filet. */
+  readonly nested?: boolean
 }
 
-export function PatientListItem({ patient, onClick }: PatientListItemProps) {
+export function PatientListItem({ patient, onClick, nested = false }: PatientListItemProps) {
   const fullName = `${patient.firstName} ${patient.lastName}`.trim()
+  const avatarSize = nested ? 36 : 44
 
   return (
-    <li>
+    <li className={nested ? 'relative' : undefined}>
+      {nested && (
+        <span
+          className="pointer-events-none absolute bottom-0 left-[38px] top-0 w-px bg-[#DCE9FA] last:bottom-1/2"
+          aria-hidden
+        />
+      )}
       <button
         type="button"
         onClick={onClick}
         aria-label={`Ouvrir le dossier de ${fullName}`}
-        className="group flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-[#F7FAFF] focus-visible:bg-[#F7FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#007DFF]/40"
+        className={`group flex w-full items-center gap-4 py-4 pr-5 text-left transition-colors hover:bg-[#F7FAFF] focus-visible:bg-[#F7FAFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#007DFF]/40 ${nested ? 'pl-[58px]' : 'pl-5'}`}
       >
         <div className="relative shrink-0">
-          <Avatar name={fullName} photoUrl={patient.photoUrl} size={44} />
+          {nested && (
+            <span
+              className="pointer-events-none absolute -left-5 top-1/2 h-px w-4 bg-[#DCE9FA]"
+              aria-hidden
+            />
+          )}
+          <Avatar name={fullName} photoUrl={patient.photoUrl} size={avatarSize} />
           {/* Pastille de suivi : repérer d'un coup d'œil qui revient bientôt. */}
           {patient.hasFutureRdv && (
             <span
@@ -55,7 +70,16 @@ export function PatientListItem({ patient, onClick }: PatientListItemProps) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold text-[#010C2D]">{fullName}</p>
+          <p className={`truncate font-semibold text-[#010C2D] ${nested ? 'text-sm' : 'text-[15px]'}`}>
+            {fullName}
+          </p>
+          {/* Le titulaire n'est pas toujours patient de ce médecin : sans cette mention,
+              le lien familial serait invisible pour ces dossiers isolés. */}
+          {!nested && patient.gestionnaireNom && (
+            <p className="mt-0.5 truncate text-xs text-[#6B7A99]">
+              Dossier géré par <span className="font-semibold text-[#465058]">{patient.gestionnaireNom}</span>
+            </p>
+          )}
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-[#6B7A99]">
             <svg className="h-3 w-3 shrink-0 text-[#A0AEC0]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
