@@ -82,9 +82,16 @@ class RappelRdvUniciteTest {
             .firstName("Momo").lastName("Mimo").role(Role.PATIENT).build()));
     }
 
-    /** Rendez-vous placé dans la fenêtre de rappel, encore non rappelé. */
+    /**
+     * Rendez-vous franchement à l'intérieur de la fenêtre de rappel.
+     *
+     * <p>Surtout pas {@code now + 30} : la tâche calcule sa cible à {@code now + 30}
+     * un instant plus tard, le rendez-vous tomberait quelques nanosecondes au-delà.
+     * On vise le milieu de la fenêtre pour que le test ne dépende pas de la
+     * granularité d'horloge du système.
+     */
     private RendezVousEntity rdvDansLaFenetre() {
-        LocalDateTime debut = LocalDateTime.now().plusMinutes(30);
+        LocalDateTime debut = LocalDateTime.now().plusMinutes(28);
         RendezVousEntity rdv = new RendezVousEntity();
         rdv.setId(RDV);
         rdv.setMedecinId(MEDECIN);
@@ -100,8 +107,9 @@ class RappelRdvUniciteTest {
     @DisplayName("cinq passages consécutifs n'envoient qu'un seul rappel")
     void sendRdvReminders_ticksRepetes_unSeulEnvoi() {
         // Arrange — la tâche repasse chaque minute sur le même rendez-vous.
+        RendezVousEntity rdv = rdvDansLaFenetre();
         when(rdvRepo.findRappelsEnAttente(any(LocalDate.class), any(LocalDate.class), eq("ANNULE")))
-            .thenAnswer(i -> dejaEnvoyes.contains(RDV) ? List.of() : List.of(rdvDansLaFenetre()));
+            .thenAnswer(i -> dejaEnvoyes.contains(RDV) ? List.of() : List.of(rdv));
 
         // Act
         for (int tick = 0; tick < 5; tick++) {
