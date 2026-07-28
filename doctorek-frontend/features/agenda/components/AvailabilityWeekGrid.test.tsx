@@ -72,6 +72,21 @@ describe('AvailabilityWeekGrid', () => {
     )
   })
 
+  test('signale au médecin qu’un tiers a réservé pour ce patient', () => {
+    renderGrid([{ ...rdv, creeParNom: 'Fatima Ben' }])
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /ouvrir la fiche/i }))
+
+    expect(screen.getByText(/Fatima Ben/)).toBeInTheDocument()
+    expect(screen.getByText(/pour ce patient/i)).toBeInTheDocument()
+  })
+
+  test('indique une réservation faite par le patient lui-même', () => {
+    renderGrid()
+    fireEvent.mouseEnter(screen.getByRole('button', { name: /ouvrir la fiche/i }))
+
+    expect(screen.getByText(/réservé par le patient/i)).toBeInTheDocument()
+  })
+
   test('masque les rendez-vous annulés', () => {
     renderGrid([{ ...rdv, statut: 'ANNULE' }])
     expect(screen.queryByRole('button', { name: /ouvrir la fiche/i })).not.toBeInTheDocument()

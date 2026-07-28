@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRdvsPatient, useReprogrammerRdv } from '@/features/agenda/hooks'
+import { useRdvsPatient, useReprogrammerRdv, useAnnulerRdv } from '@/features/agenda/hooks'
 import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
 import { useProches } from '@/features/famille/hooks'
 import { useSession } from '@/lib/useSession'
@@ -95,6 +95,14 @@ function MemberRdvSection({
 }) {
   const { data: rdvs, isLoading, isError } = useRdvsPatient(patientId)
   const { mutate: reprogrammer, isPending: isReprogramming } = useReprogrammerRdv(patientId)
+  const { mutate: annuler, isPending: isCancelling } = useAnnulerRdv(patientId)
+
+  function handleAnnuler(id: string) {
+    annuler(id, {
+      onSuccess: () => toast.success('Rendez-vous annulé'),
+      onError: () => toast.error("Impossible d'annuler ce rendez-vous"),
+    })
+  }
 
   function handleReprogrammer(id: string, date: string, heure: string) {
     reprogrammer({ id, date, heure }, {
@@ -129,6 +137,8 @@ function MemberRdvSection({
           rdvs={rdvs}
           isReprogramming={isReprogramming}
           onReprogrammer={handleReprogrammer}
+          isCancelling={isCancelling}
+          onAnnuler={handleAnnuler}
         />
       )}
     </section>

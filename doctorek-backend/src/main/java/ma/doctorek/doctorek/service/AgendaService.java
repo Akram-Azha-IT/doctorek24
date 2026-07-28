@@ -12,6 +12,7 @@ import ma.doctorek.doctorek.dto.RendezVousResponse;
 import ma.doctorek.doctorek.entity.DisponibiliteEntity;
 import ma.doctorek.doctorek.entity.PatientEntity;
 import ma.doctorek.doctorek.entity.RendezVousEntity;
+import ma.doctorek.doctorek.entity.User;
 import ma.doctorek.doctorek.exception.PatientNotFoundException;
 import ma.doctorek.doctorek.notification.NotificationService;
 import ma.doctorek.doctorek.util.Noms;
@@ -45,6 +46,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -227,6 +229,7 @@ public class AgendaService {
         rdv.setStatut(StatutRdv.CONFIRME.name()); // auto-confirmed — doctor manages via cancel only
         rdv.setMotif(request.motif());
         rdv.setQuestionnaireJson(questionnaireJson);
+        rdv.setCreePar(requesterUserId);
         rdv.setCreatedAt(LocalDateTime.now());
 
         RendezVousEntity saved = rdvRepo.save(rdv);
@@ -236,6 +239,8 @@ public class AgendaService {
             email -> emailService.sendConfirmationRdv(email, saved),
             () -> log.warn("Aucun destinataire pour rdv {} — confirmation email non envoyée", saved.getId())
         );
+
+        notifierMedecinNouveauRdv(saved, requesterUserId);
 
         return RendezVousResponse.from(saved);
     }
@@ -280,6 +285,7 @@ public class AgendaService {
         rdv.setDuree(duree);
         rdv.setStatut(StatutRdv.CONFIRME.name());
         rdv.setMotif(request.motif());
+        rdv.setCreePar(medecinId);
         rdv.setCreatedAt(LocalDateTime.now());
         RendezVousEntity saved = rdvRepo.save(rdv);
 
@@ -349,26 +355,106 @@ public class AgendaService {
 
     @Transactional(readOnly = true)
     public List<RendezVousResponse> getRdvsMedecin(UUID medecinId) {
-        return rdvRepo.findByMedecinId(medecinId, PageRequest.of(0, 500))
-            .getContent().stream()
-            .map(rdv -> patientRepo.findById(rdv.getPatientId())
-                .map(p -> RendezVousResponse.from(rdv, p.getPrenom(), p.getNom()))
-                .orElseGet(() -> RendezVousResponse.from(rdv)))
+        List<RendezVousEntity> rdvs = rdvRepo.findByMedecinId(medecinId, PageRequest.of(0, 500)).getContent();
+
+        // Le médecin doit distinguer « le patient a réservé » de « un proche a réservé pour
+        // lui ». On ne résout donc que les auteurs tiers, en une requête pour toute la liste.
+        Set<UUID> auteursTiers = rdvs.stream()
+            .map(RendezVousEntity::getCreePar)
+            .filter(java.util.Objects::nonNull)
+            .collect(Collectors.toSet());
+        rdvs.forEach(r -> {
+            if (r.getCreePar() != null && r.getCreePar().equals(r.getPatientId())) {
+                auteursTiers.remove(r.getCreePar());
+            }
+        });
+        Map<UUID, String> nomsAuteurs = auteursTiers.isEmpty() ? Map.of()
+            : userRepo.findAllById(auteursTiers).stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getFirstName() + " " + u.getLastName()));
+
+        return rdvs.stream()
+            .map(rdv -> {
+                String auteur = rdv.getCreePar() == null || rdv.getCreePar().equals(rdv.getPatientId())
+                    ? null
+                    : nomsAuteurs.get(rdv.getCreePar());
+                return patientRepo.findById(rdv.getPatientId())
+                    .map(p -> RendezVousResponse.from(rdv, p.getPrenom(), p.getNom(), auteur))
+                    .orElseGet(() -> RendezVousResponse.from(rdv, null, null, auteur));
+            })
             .toList();
     }
 
     @Transactional
     @CacheEvict(value = "creneaux", allEntries = true)
-    public RendezVousResponse annulerRdv(UUID rdvId) {
+    /**
+     * Annule un rendez-vous après avoir vérifié que l'appelant en a le droit.
+     *
+     * <p>Le praticien concerné, le patient lui-même ou le titulaire qui gère ce
+     * patient peuvent annuler. Sans ce contrôle, connaître un identifiant suffisait
+     * à annuler le rendez-vous d'autrui.
+     */
+    public RendezVousResponse annulerRdv(UUID rdvId, UUID requesterUserId) {
         RendezVousEntity rdv = rdvRepo.findById(rdvId)
             .orElseThrow(() -> new RendezVousNotFoundException(rdvId));
+
+        if (!rdv.getMedecinId().equals(requesterUserId)) {
+            accesPatientService.verifierAcces(requesterUserId, rdv.getPatientId());
+        }
+
         StatutRdv statut = StatutRdv.valueOf(rdv.getStatut());
         if (statut == StatutRdv.ANNULE || statut == StatutRdv.TERMINE) {
             throw new RdvNonAnnulableException(rdvId, statut);
         }
         rdv.setStatut(StatutRdv.ANNULE.name());
-        return RendezVousResponse.from(rdvRepo.save(rdv));
+        RendezVousEntity saved = rdvRepo.save(rdv);
+
+        // Le médecin doit voir le créneau se libérer sans rafraîchir son agenda.
+        if (!rdv.getMedecinId().equals(requesterUserId)) {
+            try {
+                notificationService.push(saved.getMedecinId(), "RDV_ANNULE_PATIENT",
+                    "Rendez-vous annulé",
+                    "Le rendez-vous du " + saved.getDateRdv() + " à " + saved.getHeureRdv()
+                        + " a été annulé.");
+            } catch (Exception e) {
+                log.warn("Notification d'annulation non envoyée pour le rdv {} : {}", rdvId, e.getMessage());
+            }
+        }
+        return RendezVousResponse.from(saved);
     }
+
+    /**
+     * Prévient le praticien qu'un rendez-vous vient d'être pris dans son agenda.
+     *
+     * <p>Précise le cas échéant que la réservation a été faite par un tiers pour un
+     * proche : sans cette mention, le médecin lit le nom du patient et suppose que
+     * c'est lui qui a réservé.
+     */
+    private void notifierMedecinNouveauRdv(RendezVousEntity rdv, UUID auteurId) {
+        String patientNom = patientRepo.findById(rdv.getPatientId())
+            .map(p -> p.getPrenom() + " " + p.getNom())
+            .orElse("un patient");
+
+        boolean pourUnProche = auteurId != null && !auteurId.equals(rdv.getPatientId());
+        String corps = pourUnProche
+            ? nomDuCompte(auteurId) + " a réservé pour " + patientNom
+                + " le " + rdv.getDateRdv() + " à " + rdv.getHeureRdv() + "."
+            : patientNom + " a réservé le " + rdv.getDateRdv() + " à " + rdv.getHeureRdv() + ".";
+
+        try {
+            notificationService.push(rdv.getMedecinId(), "RDV_PRIS_PATIENT",
+                "Nouveau rendez-vous", corps);
+        } catch (Exception e) {
+            // La notification ne doit jamais faire échouer la réservation elle-même.
+            log.warn("Notification médecin non envoyée pour le rdv {} : {}", rdv.getId(), e.getMessage());
+        }
+    }
+
+    private String nomDuCompte(UUID userId) {
+        return userRepo.findById(userId)
+            .map(u -> u.getFirstName() + " " + u.getLastName())
+            .orElse("Un proche");
+    }
+
 
     @Transactional
     public RendezVousResponse confirmerRdv(UUID rdvId) {

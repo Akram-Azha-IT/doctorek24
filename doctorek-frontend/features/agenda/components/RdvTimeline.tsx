@@ -5,9 +5,11 @@ import { groupRdvsBySection } from '../rdv-timeline'
 import { RdvTimelineItem } from './RdvTimelineItem'
 
 interface RdvTimelineProps {
-  rdvs: readonly RendezVous[]
-  isReprogramming: boolean
-  onReprogrammer: (id: string, date: string, heure: string) => void
+  readonly rdvs: readonly RendezVous[]
+  readonly isReprogramming: boolean
+  readonly onReprogrammer: (id: string, date: string, heure: string) => void
+  readonly isCancelling?: boolean
+  readonly onAnnuler?: (id: string) => void
 }
 
 interface SectionHeaderProps {
@@ -42,14 +44,18 @@ function SectionHeader({ title, count, accent }: SectionHeaderProps) {
 }
 
 interface TimeSectionProps {
-  title: string
-  rdvs: readonly RendezVous[]
-  isReprogramming: boolean
-  onReprogrammer: (id: string, date: string, heure: string) => void
-  accent?: boolean
+  readonly title: string
+  readonly rdvs: readonly RendezVous[]
+  readonly isReprogramming: boolean
+  readonly onReprogrammer: (id: string, date: string, heure: string) => void
+  readonly isCancelling?: boolean
+  readonly onAnnuler?: (id: string) => void
+  readonly accent?: boolean
 }
 
-function TimeSection({ title, rdvs, isReprogramming, onReprogrammer, accent }: TimeSectionProps) {
+function TimeSection({
+  title, rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler, accent,
+}: TimeSectionProps) {
   if (rdvs.length === 0) return null
 
   return (
@@ -62,6 +68,8 @@ function TimeSection({ title, rdvs, isReprogramming, onReprogrammer, accent }: T
             rdv={rdv}
             isReprogramming={isReprogramming}
             onReprogrammer={onReprogrammer}
+            isCancelling={isCancelling}
+            onAnnuler={onAnnuler}
           />
         ))}
       </ol>
@@ -69,7 +77,9 @@ function TimeSection({ title, rdvs, isReprogramming, onReprogrammer, accent }: T
   )
 }
 
-export function RdvTimeline({ rdvs, isReprogramming, onReprogrammer }: RdvTimelineProps) {
+export function RdvTimeline({
+  rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler,
+}: RdvTimelineProps) {
   const { upcoming, today, past } = groupRdvsBySection(rdvs)
 
   if (upcoming.length === 0 && today.length === 0 && past.length === 0) {
@@ -98,7 +108,7 @@ export function RdvTimeline({ rdvs, isReprogramming, onReprogrammer }: RdvTimeli
     )
   }
 
-  const sectionProps = { isReprogramming, onReprogrammer }
+  const sectionProps = { isReprogramming, onReprogrammer, isCancelling, onAnnuler }
 
   return (
     <div>

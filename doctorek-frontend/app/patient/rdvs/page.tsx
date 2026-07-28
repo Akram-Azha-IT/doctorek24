@@ -1,7 +1,7 @@
 'use client'
 
 import { Header } from '@/components/Header'
-import { useRdvsPatient, useReprogrammerRdv } from '@/features/agenda/hooks'
+import { useRdvsPatient, useReprogrammerRdv, useAnnulerRdv } from '@/features/agenda/hooks'
 import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
 import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
@@ -14,6 +14,14 @@ export default function PatientRdvsPage() {
 
   const { data: rdvs, isLoading, isError } = useRdvsPatient(patientId)
   const { mutate: reprogrammer, isPending: isReprogramming } = useReprogrammerRdv(patientId)
+  const { mutate: annuler, isPending: isCancelling } = useAnnulerRdv(patientId)
+
+  function handleAnnuler(id: string) {
+    annuler(id, {
+      onSuccess: () => toast.success('Rendez-vous annulé'),
+      onError: () => toast.error("Impossible d'annuler ce rendez-vous"),
+    })
+  }
 
   function handleReprogrammer(id: string, date: string, heure: string) {
     reprogrammer({ id, date, heure }, {
@@ -99,6 +107,8 @@ export default function PatientRdvsPage() {
               rdvs={rdvs}
               isReprogramming={isReprogramming}
               onReprogrammer={handleReprogrammer}
+              isCancelling={isCancelling}
+              onAnnuler={handleAnnuler}
             />
           )}
         </main>

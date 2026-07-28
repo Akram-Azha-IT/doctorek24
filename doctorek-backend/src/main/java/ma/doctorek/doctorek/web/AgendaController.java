@@ -122,8 +122,9 @@ public class AgendaController {
 
     @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN')")
     @PutMapping("/rdv/{id}/annuler")
-    public ResponseEntity<ApiResponse<RendezVousResponse>> annulerRdv(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.ok(agendaService.annulerRdv(id)));
+    public ResponseEntity<ApiResponse<RendezVousResponse>> annulerRdv(
+            @PathVariable UUID id, Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(agendaService.annulerRdv(id, resolveUserId(principal))));
     }
 
     @PreAuthorize("hasRole('MEDECIN')")
