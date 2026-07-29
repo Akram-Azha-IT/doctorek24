@@ -300,6 +300,17 @@ export interface BookingSlot {
 
 // ── Patients ─────────────────────────────────────────────────────────────────
 
+/** Inscription d'un patient en liste d'attente chez un médecin. */
+export interface ListeAttente {
+  id: string
+  medecinId: string
+  patientId: string
+  dateDebut: string
+  dateFin: string
+  statut: 'ACTIVE' | 'SERVIE' | 'ANNULEE'
+  createdAt: string
+}
+
 /** Membre du foyer d'un patient, tel que renvoyé au médecin. */
 export interface FamilleMembre {
   patientId: string

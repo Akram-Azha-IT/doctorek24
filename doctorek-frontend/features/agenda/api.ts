@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api-client'
-import type { Creneau, Disponibilite, DocumentRequis, FamilleMembre, PatientSummaryPage, RendezVous } from '@/lib/types'
+import type { Creneau, Disponibilite, DocumentRequis, FamilleMembre, ListeAttente, PatientSummaryPage, RendezVous } from '@/lib/types'
 
 export function getCreneaux(medecinId: string, date: string): Promise<Creneau[]> {
   return apiFetch<Creneau[]>(
@@ -86,6 +86,26 @@ export function getDisponibilites(medecinId: string): Promise<Disponibilite[]> {
   return apiFetch<Disponibilite[]>(
     `/api/v1/agenda/medecins/${medecinId}/disponibilites`,
   )
+}
+
+export function rejoindreListeAttente(body: {
+  medecinId: string
+  patientId: string
+  dateDebut: string
+  dateFin: string
+}): Promise<ListeAttente> {
+  return apiFetch<ListeAttente>('/api/v1/agenda/liste-attente', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function getListeAttente(patientId: string): Promise<ListeAttente[]> {
+  return apiFetch<ListeAttente[]>(`/api/v1/agenda/patients/${patientId}/liste-attente`)
+}
+
+export function quitterListeAttente(id: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/agenda/liste-attente/${id}`, { method: 'DELETE' })
 }
 
 export function getFoyerPatient(medecinId: string, patientId: string): Promise<FamilleMembre[]> {
