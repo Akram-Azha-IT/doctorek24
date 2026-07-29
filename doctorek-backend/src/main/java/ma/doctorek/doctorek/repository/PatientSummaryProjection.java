@@ -7,6 +7,9 @@ public interface PatientSummaryProjection {
     String getFirstName();
     String getLastName();
     String getPhotoUrl();
+    /** Compte gestionnaire quand ce patient est un proche ; null s'il gère son propre dossier. */
+    String getGestionnaireId();
+    String getGestionnaireNom();
     LocalDate getDernierRdvDate();
     String getDernierRdvStatut();
     boolean isHasFutureRdv();

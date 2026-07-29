@@ -6,6 +6,7 @@ import ma.doctorek.doctorek.dto.CreneauResponse;
 import ma.doctorek.doctorek.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.dto.DisponibiliteResponse;
 import ma.doctorek.doctorek.dto.PatientSummaryResponse;
+import ma.doctorek.doctorek.dto.FamilleMembreResponse;
 import ma.doctorek.doctorek.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
@@ -521,6 +522,8 @@ public class AgendaService {
                 p.getFirstName(),
                 p.getLastName(),
                 p.getPhotoUrl(),
+                p.getGestionnaireId(),
+                p.getGestionnaireNom(),
                 p.getDernierRdvDate(),
                 p.getDernierRdvStatut() != null ? StatutRdv.valueOf(p.getDernierRdvStatut()) : null,
                 p.isHasFutureRdv()))
@@ -528,5 +531,23 @@ public class AgendaService {
 
         long total = rdvRepo.countPatientsByMedecinId(medecinId, s, f);
         return new PatientsPageResponse(patients, total, page, size);
+    }
+
+    /**
+     * Membres du foyer de ce patient suivis par ce médecin.
+     *
+     * <p>Sert uniquement à naviguer entre les dossiers : chaque membre garde son propre
+     * dossier médical, allergies et traitements compris. Aucune donnée n'est fusionnée.
+     */
+    public List<FamilleMembreResponse> getFoyerPatient(UUID medecinId, UUID patientId) {
+        return rdvRepo.findFoyerByMedecinAndPatient(medecinId, patientId).stream()
+            .map(m -> new FamilleMembreResponse(
+                UUID.fromString(m.getPatientId()),
+                m.getFirstName(),
+                m.getLastName(),
+                m.getPhotoUrl(),
+                m.getGestionnaireId(),
+                m.getGestionnaireNom()))
+            .toList();
     }
 }

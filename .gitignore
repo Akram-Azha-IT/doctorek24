@@ -73,3 +73,6 @@ doctorek-frontend/public/logo-datauri.txt
 
 # Keycloak realm export — contient des secrets, transférer par scp uniquement
 docker/doctorek-realm.json
+
+# Cache Maven local des builds conteneurisés de vérification
+.m2cache/

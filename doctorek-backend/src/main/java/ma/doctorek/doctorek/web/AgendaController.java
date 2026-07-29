@@ -8,6 +8,7 @@ import ma.doctorek.doctorek.dto.CreneauResponse;
 import ma.doctorek.doctorek.dto.DocumentRequisResponse;
 import ma.doctorek.doctorek.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.dto.DisponibiliteResponse;
+import ma.doctorek.doctorek.dto.FamilleMembreResponse;
 import ma.doctorek.doctorek.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
@@ -193,6 +194,14 @@ public class AgendaController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.ok(
             agendaService.getPatientsMedecin(medecinId, search, filtre, page, size)));
+    }
+
+    @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")
+    @GetMapping("/medecins/{medecinId}/patients/{patientId}/foyer")
+    public ResponseEntity<ApiResponse<List<FamilleMembreResponse>>> getFoyerPatient(
+            @PathVariable UUID medecinId,
+            @PathVariable UUID patientId) {
+        return ResponseEntity.ok(ApiResponse.ok(agendaService.getFoyerPatient(medecinId, patientId)));
     }
 
     private UUID resolveUserId(Principal principal) {

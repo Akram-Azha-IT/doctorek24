@@ -10,6 +10,7 @@ import {
   getCreneaux,
   getDisponibilites,
   getDocumentsRequis,
+  getFoyerPatient,
   getPatientsMedecin,
   getRdvsPatient,
   getRdvsMedecin,
@@ -150,6 +151,16 @@ export function useReprogrammerRdv(patientId: string) {
       qc.invalidateQueries({ queryKey: ['rdvs', patientId] })
       qc.invalidateQueries({ queryKey: ['creneaux'] })
     },
+  })
+}
+
+/** Membres du foyer suivis par ce médecin — sert à naviguer, pas à fusionner les dossiers. */
+export function useFoyerPatient(medecinId: string, patientId: string) {
+  return useQuery({
+    queryKey: ['foyer', medecinId, patientId],
+    queryFn: () => getFoyerPatient(medecinId, patientId),
+    enabled: !!medecinId && !!patientId,
+    staleTime: 60 * 1000,
   })
 }
 

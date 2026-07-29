@@ -21,6 +21,7 @@ import {
 import { getDocumentDownloadUrl, openProtectedFile } from '@/features/dossier/api'
 import { DocumentsRequisSection } from '@/features/agenda/components/DocumentsRequisSection'
 import { usePatientProfile } from '@/features/patient/hooks'
+import { FoyerBanner } from '@/features/agenda/components/FoyerBanner'
 import { Avatar } from '@/components/Avatar'
 import type { MedicamentDto } from '@/features/dossier/api'
 import {
@@ -1149,6 +1150,8 @@ export default function DossierPatientPage() {
             </div>
           </div>
         </div>
+
+        <FoyerBanner medecinId={medecinId} patientId={patientId} />
 
         {/* Repères du dossier : une seule rangée, séparée par des filets plutôt que
             quatre cartes qui se disputent l'attention. */}

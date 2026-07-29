@@ -300,11 +300,24 @@ export interface BookingSlot {
 
 // ── Patients ─────────────────────────────────────────────────────────────────
 
+/** Membre du foyer d'un patient, tel que renvoyé au médecin. */
+export interface FamilleMembre {
+  patientId: string
+  firstName: string
+  lastName: string
+  photoUrl: string | null
+  gestionnaireId: string | null
+  gestionnaireNom: string | null
+}
+
 export interface PatientSummary {
   patientId: string
   firstName: string
   lastName: string
   photoUrl: string | null
+  /** Renseignés quand le patient est un proche rattaché à un compte titulaire. */
+  gestionnaireId: string | null
+  gestionnaireNom: string | null
   dernierRdvDate: string   // "YYYY-MM-DD"
   dernierRdvStatut: StatutRdv
   hasFutureRdv: boolean
