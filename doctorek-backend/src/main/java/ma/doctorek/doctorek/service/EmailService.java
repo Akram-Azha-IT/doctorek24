@@ -214,6 +214,42 @@ public class EmailService {
     }
 
     @Async
+    public void sendPlaceLiberee(String toEmail, RendezVousEntity libere, String medecinNom) {
+        if (!shouldSend(toEmail)) return;
+
+        String subject = "Une place s'est libérée | Doctorek";
+        String html = EmailTemplate.shell(
+                "Une place vient de se libérer chez " + medecinNom,
+                "Une place s'est libérée",
+                EmailTemplate.p(GREETING)
+              + EmailTemplate.p("Une place vient de se libérer chez <strong>"
+                    + EmailTemplate.esc(medecinNom) + "</strong>, dans la période que vous suivez.")
+              + EmailTemplate.details(List.of(
+                    new Row(LBL_DATE, DATE_FR.format(libere.getDateRdv())),
+                    new Row(LBL_HEURE, HOUR_FR.format(libere.getHeureRdv())),
+                    new Row(LBL_DUREE, libere.getDuree() + MINUTES)))
+              + EmailTemplate.note("Ce créneau revient au premier qui le réserve. "
+                    + "Vous restez en liste d'attente si quelqu'un vous devance."));
+
+        String text = """
+                Bonjour,
+
+                Une place vient de se liberer chez %s, dans la periode que vous suivez.
+                Date : %s
+                Heure : %s
+                Duree : %d minutes
+
+                Ce creneau revient au premier qui le reserve. Vous restez en liste
+                d'attente si quelqu'un vous devance.
+
+                L'equipe Doctorek
+                """.formatted(medecinNom, DATE_FR.format(libere.getDateRdv()),
+                HOUR_FR.format(libere.getHeureRdv()), libere.getDuree());
+
+        send(toEmail, subject, text, html, "place-liberee", libere.getId().toString());
+    }
+
+    @Async
     public void sendRappelRdv30Min(String toEmail, RendezVousEntity rdv, String medecinNom) {
         if (!shouldSend(toEmail)) return;
 

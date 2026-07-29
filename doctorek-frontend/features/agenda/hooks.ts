@@ -11,6 +11,9 @@ import {
   getDisponibilites,
   getDocumentsRequis,
   getFoyerPatient,
+  getListeAttente,
+  quitterListeAttente,
+  rejoindreListeAttente,
   getPatientsMedecin,
   getRdvsPatient,
   getRdvsMedecin,
@@ -151,6 +154,32 @@ export function useReprogrammerRdv(patientId: string) {
       qc.invalidateQueries({ queryKey: ['rdvs', patientId] })
       qc.invalidateQueries({ queryKey: ['creneaux'] })
     },
+  })
+}
+
+/** Inscriptions actives du patient en liste d'attente. */
+export function useListeAttente(patientId: string) {
+  return useQuery({
+    queryKey: ['liste-attente', patientId],
+    queryFn: () => getListeAttente(patientId),
+    enabled: !!patientId,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useRejoindreListeAttente(patientId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: rejoindreListeAttente,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['liste-attente', patientId] }),
+  })
+}
+
+export function useQuitterListeAttente(patientId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: quitterListeAttente,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['liste-attente', patientId] }),
   })
 }
 

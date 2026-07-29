@@ -32,7 +32,14 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
     @Query("SELECT r FROM RendezVousEntity r WHERE r.dateRdv = :dateRdv AND r.statut <> :statut")
     Stream<RendezVousEntity> streamByDateRdvAndStatutNot(LocalDate dateRdv, String statut);
 
-    boolean existsByMedecinIdAndDateRdvAndHeureRdv(UUID medecinId, LocalDate dateRdv, LocalTime heureRdv);
+    /**
+     * Créneau déjà occupé par un rendez-vous actif.
+     *
+     * <p>Les annulations sont exclues, sinon un créneau libéré resterait bloqué :
+     * il s'affichait libre dans l'agenda mais toute réservation échouait.
+     */
+    boolean existsByMedecinIdAndDateRdvAndHeureRdvAndStatutNot(
+        UUID medecinId, LocalDate dateRdv, LocalTime heureRdv, String statut);
 
     boolean existsByMedecinIdAndPatientId(UUID medecinId, UUID patientId);
 

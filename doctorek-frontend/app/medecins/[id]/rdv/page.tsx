@@ -8,6 +8,8 @@ import { MedecinAvatar } from '@/features/annuaire/components/MedecinAvatar'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useCreneaux } from '@/features/agenda/hooks'
 import { CalendarPicker } from '@/features/agenda/components/CalendarPicker'
+import { ListeAttenteCard } from '@/features/agenda/components/ListeAttenteCard'
+import { useSession } from '@/lib/useSession'
 import { TimeSlotList } from '@/features/agenda/components/TimeSlotList'
 import { BookingDrawer } from '@/features/agenda/components/BookingDrawer'
 import type { BookingSlot, Creneau } from '@/lib/types'
@@ -47,6 +49,9 @@ export default function RdvPage() {
   const { id } = useParams<{ id: string }>()
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(today())
   const [bookingSlot, setBookingSlot] = useState<BookingSlot | null>(null)
+
+  const session = useSession()
+  const patientId = session?.role === 'PATIENT' ? (session.id ?? '') : ''
 
   const dateISO = selectedDate ? toISO(selectedDate) : ''
 
@@ -214,6 +219,18 @@ export default function RdvPage() {
             </div>
           </div>
         </div>
+
+        {/* Proposée après les créneaux : la liste d'attente est le recours quand
+            aucune date ne convient, pas une alternative à la réservation. */}
+        {patientId && (
+          <div className="mt-6">
+            <ListeAttenteCard
+              medecinId={id}
+              patientId={patientId}
+              medecinNom={medecin ? `Dr. ${medecin.firstName} ${medecin.lastName}` : undefined}
+            />
+          </div>
+        )}
 
       </main>
 

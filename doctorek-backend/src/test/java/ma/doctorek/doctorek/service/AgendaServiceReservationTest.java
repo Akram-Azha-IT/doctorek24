@@ -56,6 +56,7 @@ class AgendaServiceReservationTest {
     @Mock private RattachementService rattachementService;
     @Mock private PatientPivotService patientPivotService;
     @Mock private NotificationService notificationService;
+    @Mock private ListeAttenteService listeAttenteService;
 
     private AgendaService agendaService;
 
@@ -69,13 +70,14 @@ class AgendaServiceReservationTest {
     void setUp() {
         agendaService = new AgendaService(dispoRepo, rdvRepo, userRepo, patientRepo, emailService,
             questionnaireSerializer, accesPatientService, notificationRouting, rattachementService,
-            patientPivotService, notificationService, "https://app.test");
+            patientPivotService, notificationService, listeAttenteService, "https://app.test");
 
         DisponibiliteEntity dispo = new DisponibiliteEntity();
         dispo.setDureeConsultation(30);
         when(dispoRepo.findByMedecinIdAndJourSemaine(eq(MEDECIN), anyString())).thenReturn(Optional.of(dispo));
-        when(rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdv(any(), any(), any())).thenReturn(false);
-        when(rdvRepo.save(any(RendezVousEntity.class))).thenAnswer(i -> {
+        when(rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdvAndStatutNot(any(), any(), any(), anyString()))
+            .thenReturn(false);
+        when(rdvRepo.saveAndFlush(any(RendezVousEntity.class))).thenAnswer(i -> {
             RendezVousEntity r = i.getArgument(0);
             if (r.getId() == null) r.setId(UUID.randomUUID());
             return r;
@@ -101,7 +103,7 @@ class AgendaServiceReservationTest {
 
     private RendezVousEntity savedRdv() {
         ArgumentCaptor<RendezVousEntity> captor = ArgumentCaptor.forClass(RendezVousEntity.class);
-        verify(rdvRepo).save(captor.capture());
+        verify(rdvRepo).saveAndFlush(captor.capture());
         return captor.getValue();
     }
 

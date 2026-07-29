@@ -9,6 +9,8 @@ import ma.doctorek.doctorek.dto.DocumentRequisResponse;
 import ma.doctorek.doctorek.dto.DefineDisponibiliteRequest;
 import ma.doctorek.doctorek.dto.DisponibiliteResponse;
 import ma.doctorek.doctorek.dto.FamilleMembreResponse;
+import ma.doctorek.doctorek.dto.InscriptionListeAttenteRequest;
+import ma.doctorek.doctorek.dto.ListeAttenteResponse;
 import ma.doctorek.doctorek.dto.PatientsPageResponse;
 import ma.doctorek.doctorek.dto.PrendreRdvRequest;
 import ma.doctorek.doctorek.dto.RendezVousResponse;
@@ -17,6 +19,7 @@ import ma.doctorek.doctorek.entity.User;
 import ma.doctorek.doctorek.repository.UserRepository;
 import ma.doctorek.doctorek.service.AccesPatientService;
 import ma.doctorek.doctorek.service.AgendaService;
+import ma.doctorek.doctorek.service.ListeAttenteService;
 import ma.doctorek.doctorek.service.RdvPreparationService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -37,15 +40,18 @@ public class AgendaController {
     private final AgendaService agendaService;
     private final RdvPreparationService rdvPreparationService;
     private final AccesPatientService accesPatientService;
+    private final ListeAttenteService listeAttenteService;
     private final UserRepository userRepo;
 
     public AgendaController(AgendaService agendaService,
                              RdvPreparationService rdvPreparationService,
                              AccesPatientService accesPatientService,
+                             ListeAttenteService listeAttenteService,
                              UserRepository userRepo) {
         this.agendaService = agendaService;
         this.rdvPreparationService = rdvPreparationService;
         this.accesPatientService = accesPatientService;
+        this.listeAttenteService = listeAttenteService;
         this.userRepo = userRepo;
     }
 
@@ -202,6 +208,33 @@ public class AgendaController {
             @PathVariable UUID medecinId,
             @PathVariable UUID patientId) {
         return ResponseEntity.ok(ApiResponse.ok(agendaService.getFoyerPatient(medecinId, patientId)));
+    }
+
+    @PreAuthorize("hasRole('PATIENT')")
+    @PostMapping("/liste-attente")
+    public ResponseEntity<ApiResponse<ListeAttenteResponse>> rejoindreListeAttente(
+            @Valid @RequestBody InscriptionListeAttenteRequest request,
+            Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(listeAttenteService.inscrire(
+            request.medecinId(), request.patientId(), resolveUserId(principal),
+            request.dateDebut(), request.dateFin())));
+    }
+
+    @PreAuthorize("hasRole('PATIENT')")
+    @GetMapping("/patients/{patientId}/liste-attente")
+    public ResponseEntity<ApiResponse<List<ListeAttenteResponse>>> listerListeAttente(
+            @PathVariable UUID patientId,
+            Principal principal) {
+        return ResponseEntity.ok(ApiResponse.ok(
+            listeAttenteService.listerPourPatient(patientId, resolveUserId(principal))));
+    }
+
+    @PreAuthorize("hasRole('PATIENT')")
+    @DeleteMapping("/liste-attente/{id}")
+    public ResponseEntity<ApiResponse<Void>> quitterListeAttente(
+            @PathVariable UUID id, Principal principal) {
+        listeAttenteService.desinscrire(id, resolveUserId(principal));
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     private UUID resolveUserId(Principal principal) {

@@ -53,6 +53,7 @@ class AgendaServiceAnnulationTest {
     @Mock private RattachementService rattachementService;
     @Mock private PatientPivotService patientPivotService;
     @Mock private NotificationService notificationService;
+    @Mock private ListeAttenteService listeAttenteService;
 
     private AgendaService agendaService;
 
@@ -66,7 +67,7 @@ class AgendaServiceAnnulationTest {
     void setUp() {
         agendaService = new AgendaService(dispoRepo, rdvRepo, userRepo, patientRepo, emailService,
             questionnaireSerializer, accesPatientService, notificationRouting, rattachementService,
-            patientPivotService, notificationService, "https://app.test");
+            patientPivotService, notificationService, listeAttenteService, "https://app.test");
     }
 
     private RendezVousEntity rdv(StatutRdv statut) {

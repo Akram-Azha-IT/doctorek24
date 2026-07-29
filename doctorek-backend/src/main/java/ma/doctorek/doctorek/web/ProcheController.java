@@ -1,5 +1,6 @@
 package ma.doctorek.doctorek.web;
 
+import ma.doctorek.doctorek.entity.User;
 import jakarta.validation.Valid;
 import ma.doctorek.doctorek.dto.AddProcheRequest;
 import ma.doctorek.doctorek.dto.ProcheResponse;
@@ -64,7 +65,7 @@ public class ProcheController {
 
     private UUID resolveUserId(Principal principal) {
         return userRepo.findByEmail(principal.getName())
-            .map(u -> u.getId())
+            .map(User::getId)
             .orElseThrow();
     }
 }
