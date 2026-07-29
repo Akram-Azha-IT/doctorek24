@@ -23,6 +23,7 @@ import ma.doctorek.doctorek.enums.TypeFinRecurrence;
 import ma.doctorek.doctorek.exception.CreneauIndisponibleException;
 import ma.doctorek.doctorek.exception.DisponibiliteNotFoundException;
 import ma.doctorek.doctorek.exception.MedecinSansAgendaException;
+import ma.doctorek.doctorek.exception.PatientAmbiguException;
 import ma.doctorek.doctorek.exception.RdvNonAnnulableException;
 import ma.doctorek.doctorek.exception.RdvNonConfirmableException;
 import ma.doctorek.doctorek.exception.RdvNonTerminableException;
@@ -38,6 +39,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +72,7 @@ public class AgendaService {
     private final RattachementService     rattachementService;
     private final PatientPivotService     patientPivotService;
     private final NotificationService     notificationService;
+    private final ListeAttenteService     listeAttenteService;
     private final String frontendUrl;
 
     public AgendaService(DisponibiliteRepository dispoRepo,
@@ -83,6 +86,7 @@ public class AgendaService {
                           RattachementService rattachementService,
                           PatientPivotService patientPivotService,
                           NotificationService notificationService,
+                         ListeAttenteService listeAttenteService,
                           @Value("${app.frontend-url}") String frontendUrl) {
         this.dispoRepo = dispoRepo;
         this.rdvRepo = rdvRepo;
@@ -95,6 +99,7 @@ public class AgendaService {
         this.rattachementService = rattachementService;
         this.patientPivotService = patientPivotService;
         this.notificationService = notificationService;
+        this.listeAttenteService = listeAttenteService;
         this.frontendUrl = frontendUrl;
     }
 
@@ -213,8 +218,8 @@ public class AgendaService {
             .findByMedecinIdAndJourSemaine(request.medecinId(), request.dateRdv().getDayOfWeek().name())
             .orElseThrow(() -> new MedecinSansAgendaException(request.medecinId()));
 
-        if (rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdv(
-                request.medecinId(), request.dateRdv(), request.heureRdv())) {
+        if (rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdvAndStatutNot(
+                request.medecinId(), request.dateRdv(), request.heureRdv(), StatutRdv.ANNULE.name())) {
             throw new CreneauIndisponibleException(
                 "Créneau indisponible : " + request.dateRdv() + " à " + request.heureRdv());
         }
@@ -233,7 +238,8 @@ public class AgendaService {
         rdv.setCreePar(requesterUserId);
         rdv.setCreatedAt(LocalDateTime.now());
 
-        RendezVousEntity saved = rdvRepo.save(rdv);
+        RendezVousEntity saved = sauverRdvOuCreneauPris(rdv);
+        listeAttenteService.marquerServie(saved.getMedecinId(), saved.getPatientId());
 
         // Routage famille : majeur avec email → le patient ; mineur/sans email → le gestionnaire
         notificationRouting.resolveEmail(saved.getPatientId()).ifPresentOrElse(
@@ -264,10 +270,11 @@ public class AgendaService {
             patient = patientRepo.findById(request.patientId())
                 .orElseThrow(() -> new PatientNotFoundException(request.patientId()));
         } else {
-            patient = resoudreOuCreerPatient(request.nouveauPatient());
+            patient = resoudreOuCreerPatient(medecinId, request.nouveauPatient());
         }
 
-        if (rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdv(medecinId, request.dateRdv(), request.heureRdv())) {
+        if (rdvRepo.existsByMedecinIdAndDateRdvAndHeureRdvAndStatutNot(
+                medecinId, request.dateRdv(), request.heureRdv(), StatutRdv.ANNULE.name())) {
             throw new CreneauIndisponibleException(
                 "Créneau indisponible : " + request.dateRdv() + " à " + request.heureRdv());
         }
@@ -288,7 +295,8 @@ public class AgendaService {
         rdv.setMotif(request.motif());
         rdv.setCreePar(medecinId);
         rdv.setCreatedAt(LocalDateTime.now());
-        RendezVousEntity saved = rdvRepo.save(rdv);
+        RendezVousEntity saved = sauverRdvOuCreneauPris(rdv);
+        listeAttenteService.marquerServie(saved.getMedecinId(), saved.getPatientId());
 
         String medecinNom = userRepo.findById(medecinId)
             .map(m -> "Dr. " + m.getFirstName() + " " + m.getLastName())
@@ -325,7 +333,20 @@ public class AgendaService {
      * Si l'email appartient à quelqu'un d'autre (parent d'un mineur, aidant…),
      * on crée bien une fiche séparée — le lien de rattachement fera le pont.
      */
-    private PatientEntity resoudreOuCreerPatient(CreerRdvMedecinRequest.NouveauPatient nouveau) {
+    /**
+     * Retrouve le dossier du patient saisi au comptoir, ou en ouvre un nouveau.
+     *
+     * <p>Sans cette recherche, chaque saisie créait un dossier : le même patient revu
+     * six mois plus tard se retrouvait avec deux dossiers, ses allergies dans l'un et
+     * la prescription dans l'autre.
+     *
+     * <p>La réutilisation exige une date de naissance identique. Deux homonymes nés le
+     * même jour chez le même médecin restent possibles, quoique rares : dans ce cas on
+     * refuse de choisir et on demande au praticien de désigner le dossier, car fusionner
+     * deux dossiers médicaux distincts serait plus grave que le doublon.
+     */
+    private PatientEntity resoudreOuCreerPatient(UUID medecinId,
+            CreerRdvMedecinRequest.NouveauPatient nouveau) {
         String email = nouveau.email() == null || nouveau.email().isBlank() ? null : nouveau.email().trim();
 
         if (email != null) {
@@ -336,6 +357,20 @@ public class AgendaService {
             if (existant.isPresent()) {
                 log.info("RDV médecin lié directement au compte existant {}", existant.get().getId());
                 return existant.get();
+            }
+        }
+
+        if (nouveau.dateNaissance() != null) {
+            List<PatientEntity> homonymes = patientRepo.findHomonymesChezMedecin(
+                medecinId, nouveau.nom(), nouveau.prenom(), nouveau.dateNaissance());
+
+            if (homonymes.size() == 1) {
+                PatientEntity existant = homonymes.get(0);
+                log.info("RDV rattaché au dossier existant {} plutôt qu'à un doublon", existant.getId());
+                return existant;
+            }
+            if (homonymes.size() > 1) {
+                throw new PatientAmbiguException(nouveau.prenom() + " " + nouveau.nom());
             }
         }
 
@@ -409,6 +444,13 @@ public class AgendaService {
         rdv.setStatut(StatutRdv.ANNULE.name());
         RendezVousEntity saved = rdvRepo.save(rdv);
 
+        // Une place vient de se liberer : prevenir ceux qui l'attendent.
+        try {
+            listeAttenteService.notifierCreneauLibere(saved);
+        } catch (Exception e) {
+            log.warn("Liste d'attente non notifiee pour le rdv {} : {}", rdvId, e.getMessage());
+        }
+
         // Le médecin doit voir le créneau se libérer sans rafraîchir son agenda.
         if (!rdv.getMedecinId().equals(requesterUserId)) {
             try {
@@ -430,6 +472,23 @@ public class AgendaService {
      * proche : sans cette mention, le médecin lit le nom du patient et suppose que
      * c'est lui qui a réservé.
      */
+    /**
+     * Enregistre le rendez-vous en laissant la base arbitrer la course au créneau.
+     *
+     * <p>La vérification préalable lit puis insère : deux réservations simultanées la
+     * franchissent toutes les deux. L'index unique partiel est le seul point où le
+     * conflit se tranche réellement — d'autant qu'une place libérée prévient désormais
+     * plusieurs patients à la fois.
+     */
+    private RendezVousEntity sauverRdvOuCreneauPris(RendezVousEntity rdv) {
+        try {
+            return rdvRepo.saveAndFlush(rdv);
+        } catch (DataIntegrityViolationException e) {
+            throw new CreneauIndisponibleException(
+                "Créneau indisponible : " + rdv.getDateRdv() + " à " + rdv.getHeureRdv());
+        }
+    }
+
     private void notifierMedecinNouveauRdv(RendezVousEntity rdv, UUID auteurId) {
         String patientNom = patientRepo.findById(rdv.getPatientId())
             .map(p -> p.getPrenom() + " " + p.getNom())

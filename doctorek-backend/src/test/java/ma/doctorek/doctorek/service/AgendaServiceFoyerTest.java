@@ -40,6 +40,7 @@ class AgendaServiceFoyerTest {
     @Mock private RattachementService rattachementService;
     @Mock private PatientPivotService patientPivotService;
     @Mock private NotificationService notificationService;
+    @Mock private ListeAttenteService listeAttenteService;
 
     private AgendaService agendaService;
 
@@ -51,7 +52,7 @@ class AgendaServiceFoyerTest {
     void setUp() {
         agendaService = new AgendaService(dispoRepo, rdvRepo, userRepo, patientRepo, emailService,
             questionnaireSerializer, accesPatientService, notificationRouting, rattachementService,
-            patientPivotService, notificationService, "https://app.test");
+            patientPivotService, notificationService, listeAttenteService, "https://app.test");
     }
 
     private static FamilleMembreProjection membre(UUID id, String prenom, String nom,
