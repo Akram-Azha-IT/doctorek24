@@ -111,8 +111,8 @@ class RappelSchedulerTest {
         scheduler.envoyerRappelsQuotidiens();
 
         // Assert
-        verify(rdvRepo).streamByDateRdvAndStatutNot(eq(aujourdhui.plusDays(1)), eq("ANNULE"));
-        verify(rdvRepo).streamByDateRdvAndStatutNot(eq(aujourdhui.plusDays(2)), eq("ANNULE"));
+        verify(rdvRepo).streamByDateRdvAndStatutNot(aujourdhui.plusDays(1), "ANNULE");
+        verify(rdvRepo).streamByDateRdvAndStatutNot(aujourdhui.plusDays(2), "ANNULE");
         verify(rdvRepo, times(2)).streamByDateRdvAndStatutNot(any(LocalDate.class), anyString());
     }
 }

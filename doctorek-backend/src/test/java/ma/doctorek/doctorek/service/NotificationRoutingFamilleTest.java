@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,7 +55,7 @@ class NotificationRoutingFamilleTest {
     }
 
     private PatientEntity proche(String email, UUID compteId) {
-        PatientEntity p = new PatientEntity("Mimo", "Momo", LocalDate.of(2015, 4, 3));
+        PatientEntity p = new PatientEntity("Mimo", "Momo", LocalDate.of(2015, Month.APRIL, 3));
         p.setId(PROCHE);
         p.setEmail(email);
         p.setCompteId(compteId);
