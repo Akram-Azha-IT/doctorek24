@@ -34,6 +34,8 @@ public class ListeAttenteService {
     /** Au-delà, une inscription couvrirait l'agenda entier et perdrait son sens. */
     private static final int PLAGE_MAX_JOURS = 90;
 
+    private static final String STATUT_ACTIVE = "ACTIVE";
+
     private final ListeAttenteRepository repo;
     private final UserRepository userRepo;
     private final AccesPatientService accesPatientService;
@@ -67,7 +69,7 @@ public class ListeAttenteService {
         // Réinscription : on réutilise l'entrée existante plutôt que d'en créer une
         // seconde, que l'index unique partiel refuserait de toute façon.
         ListeAttenteEntity entity = repo
-            .findByMedecinIdAndPatientIdAndStatut(medecinId, patientId, "ACTIVE")
+            .findByMedecinIdAndPatientIdAndStatut(medecinId, patientId, STATUT_ACTIVE)
             .orElseGet(ListeAttenteEntity::new);
 
         entity.setMedecinId(medecinId);
@@ -75,7 +77,7 @@ public class ListeAttenteService {
         entity.setCreePar(requesterUserId);
         entity.setDateDebut(dateDebut);
         entity.setDateFin(dateFin);
-        entity.setStatut("ACTIVE");
+        entity.setStatut(STATUT_ACTIVE);
 
         return ListeAttenteResponse.from(repo.save(entity));
     }
@@ -100,7 +102,7 @@ public class ListeAttenteService {
     @Transactional(readOnly = true)
     public List<ListeAttenteResponse> listerPourPatient(UUID patientId, UUID requesterUserId) {
         accesPatientService.verifierAcces(requesterUserId, patientId);
-        return repo.findByPatientIdAndStatutOrderByCreatedAtDesc(patientId, "ACTIVE")
+        return repo.findByPatientIdAndStatutOrderByCreatedAtDesc(patientId, STATUT_ACTIVE)
             .stream().map(ListeAttenteResponse::from).toList();
     }
 
@@ -116,7 +118,7 @@ public class ListeAttenteService {
     /** Clôt l'attente du patient chez ce médecin dès qu'il décroche une place. */
     @Transactional
     public void marquerServie(UUID medecinId, UUID patientId) {
-        repo.findByMedecinIdAndPatientIdAndStatut(medecinId, patientId, "ACTIVE")
+        repo.findByMedecinIdAndPatientIdAndStatut(medecinId, patientId, STATUT_ACTIVE)
             .ifPresent(e -> {
                 e.setStatut("SERVIE");
                 repo.save(e);

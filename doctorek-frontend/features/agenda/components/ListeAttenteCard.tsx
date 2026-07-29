@@ -80,7 +80,7 @@ export function ListeAttenteCard({ medecinId, patientId, medecinNom }: ListeAtte
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#8A97A6]">
-          À partir du
+          <span>À partir du</span>
           <input
             type="date"
             value={dateDebut}
@@ -90,7 +90,7 @@ export function ListeAttenteCard({ medecinId, patientId, medecinNom }: ListeAtte
           />
         </label>
         <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#8A97A6]">
-          Jusqu&apos;au
+          <span>Jusqu&apos;au</span>
           <input
             type="date"
             value={dateFin}

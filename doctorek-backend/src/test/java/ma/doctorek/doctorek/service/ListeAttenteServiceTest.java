@@ -166,7 +166,9 @@ class ListeAttenteServiceTest {
     @Test
     @DisplayName("une plage inversée est refusée")
     void inscrire_plageInversee_refuse() {
-        assertThatThrownBy(() -> service.inscrire(MEDECIN, PATIENT, PATIENT, dans(10), dans(3)))
+        LocalDate debut = dans(10);
+        LocalDate fin = dans(3);
+        assertThatThrownBy(() -> service.inscrire(MEDECIN, PATIENT, PATIENT, debut, fin))
             .isInstanceOf(ListeAttenteInvalideException.class)
             .hasMessageContaining("précède");
     }
@@ -174,7 +176,9 @@ class ListeAttenteServiceTest {
     @Test
     @DisplayName("une plage entièrement passée est refusée")
     void inscrire_plagePassee_refuse() {
-        assertThatThrownBy(() -> service.inscrire(MEDECIN, PATIENT, PATIENT, dans(-30), dans(-2)))
+        LocalDate debut = dans(-30);
+        LocalDate fin = dans(-2);
+        assertThatThrownBy(() -> service.inscrire(MEDECIN, PATIENT, PATIENT, debut, fin))
             .isInstanceOf(ListeAttenteInvalideException.class)
             .hasMessageContaining("passée");
     }
@@ -182,7 +186,9 @@ class ListeAttenteServiceTest {
     @Test
     @DisplayName("une plage démesurée est refusée")
     void inscrire_plageTropLongue_refuse() {
-        assertThatThrownBy(() -> service.inscrire(MEDECIN, PATIENT, PATIENT, dans(1), dans(200)))
+        LocalDate debut = dans(1);
+        LocalDate fin = dans(200);
+        assertThatThrownBy(() -> service.inscrire(MEDECIN, PATIENT, PATIENT, debut, fin))
             .isInstanceOf(ListeAttenteInvalideException.class)
             .hasMessageContaining("90");
     }

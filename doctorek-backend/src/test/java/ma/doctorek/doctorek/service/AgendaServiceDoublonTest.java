@@ -143,7 +143,8 @@ class AgendaServiceDoublonTest {
             .thenReturn(List.of(dossier(UUID.randomUUID()), dossier(UUID.randomUUID())));
 
         // Act + Assert
-        assertThatThrownBy(() -> agendaService.creerRdvParMedecin(MEDECIN, requete(NAISSANCE)))
+        CreerRdvMedecinRequest requete = requete(NAISSANCE);
+        assertThatThrownBy(() -> agendaService.creerRdvParMedecin(MEDECIN, requete))
             .isInstanceOf(PatientAmbiguException.class)
             .hasMessageContaining("Sélectionnez");
     }
@@ -170,7 +171,8 @@ class AgendaServiceDoublonTest {
             .thenThrow(new DataIntegrityViolationException("uq_rdv_creneau_actif"));
 
         // Act + Assert
-        assertThatThrownBy(() -> agendaService.creerRdvParMedecin(MEDECIN, requete(NAISSANCE)))
+        CreerRdvMedecinRequest requete = requete(NAISSANCE);
+        assertThatThrownBy(() -> agendaService.creerRdvParMedecin(MEDECIN, requete))
             .isInstanceOf(CreneauIndisponibleException.class);
     }
 
@@ -186,6 +188,6 @@ class AgendaServiceDoublonTest {
 
         // Assert
         verify(rdvRepo).existsByMedecinIdAndDateRdvAndHeureRdvAndStatutNot(
-            eq(MEDECIN), eq(DATE), eq(LocalTime.of(10, 0)), eq("ANNULE"));
+            MEDECIN, DATE, LocalTime.of(10, 0), "ANNULE");
     }
 }

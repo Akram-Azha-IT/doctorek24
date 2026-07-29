@@ -332,13 +332,11 @@ public class AgendaService {
      * compte (visible dans son espace, notifié) au lieu de créer un doublon.
      * Si l'email appartient à quelqu'un d'autre (parent d'un mineur, aidant…),
      * on crée bien une fiche séparée — le lien de rattachement fera le pont.
-     */
-    /**
-     * Retrouve le dossier du patient saisi au comptoir, ou en ouvre un nouveau.
      *
-     * <p>Sans cette recherche, chaque saisie créait un dossier : le même patient revu
-     * six mois plus tard se retrouvait avec deux dossiers, ses allergies dans l'un et
-     * la prescription dans l'autre.
+     * <p>À défaut d'email, un dossier du même médecin portant les mêmes nom, prénom et
+     * date de naissance est réutilisé. Sans cette recherche, chaque saisie créait un
+     * dossier : le même patient revu six mois plus tard se retrouvait avec deux
+     * dossiers, ses allergies dans l'un et la prescription dans l'autre.
      *
      * <p>La réutilisation exige une date de naissance identique. Deux homonymes nés le
      * même jour chez le même médecin restent possibles, quoique rares : dans ce cas on
@@ -472,23 +470,6 @@ public class AgendaService {
      * proche : sans cette mention, le médecin lit le nom du patient et suppose que
      * c'est lui qui a réservé.
      */
-    /**
-     * Enregistre le rendez-vous en laissant la base arbitrer la course au créneau.
-     *
-     * <p>La vérification préalable lit puis insère : deux réservations simultanées la
-     * franchissent toutes les deux. L'index unique partiel est le seul point où le
-     * conflit se tranche réellement — d'autant qu'une place libérée prévient désormais
-     * plusieurs patients à la fois.
-     */
-    private RendezVousEntity sauverRdvOuCreneauPris(RendezVousEntity rdv) {
-        try {
-            return rdvRepo.saveAndFlush(rdv);
-        } catch (DataIntegrityViolationException e) {
-            throw new CreneauIndisponibleException(
-                "Créneau indisponible : " + rdv.getDateRdv() + " à " + rdv.getHeureRdv());
-        }
-    }
-
     private void notifierMedecinNouveauRdv(RendezVousEntity rdv, UUID auteurId) {
         String patientNom = patientRepo.findById(rdv.getPatientId())
             .map(p -> p.getPrenom() + " " + p.getNom())
@@ -506,6 +487,23 @@ public class AgendaService {
         } catch (Exception e) {
             // La notification ne doit jamais faire échouer la réservation elle-même.
             log.warn("Notification médecin non envoyée pour le rdv {} : {}", rdv.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Enregistre le rendez-vous en laissant la base arbitrer la course au créneau.
+     *
+     * <p>La vérification préalable lit puis insère : deux réservations simultanées la
+     * franchissent toutes les deux. L'index unique partiel est le seul point où le
+     * conflit se tranche réellement — d'autant qu'une place libérée prévient désormais
+     * plusieurs patients à la fois.
+     */
+    private RendezVousEntity sauverRdvOuCreneauPris(RendezVousEntity rdv) {
+        try {
+            return rdvRepo.saveAndFlush(rdv);
+        } catch (DataIntegrityViolationException e) {
+            throw new CreneauIndisponibleException(
+                "Créneau indisponible : " + rdv.getDateRdv() + " à " + rdv.getHeureRdv());
         }
     }
 
