@@ -156,16 +156,17 @@ public class NotificationService {
         userRepo.findById(rdv.getMedecinId()).ifPresent(medecin -> {
             String medecinNom = "Dr. " + medecin.getFirstName() + " " + medecin.getLastName();
 
-            // Compte famille : notif in-app vers le compte du patient s'il en a un,
-            // sinon vers son gestionnaire (proche sans compte)
-            notificationRouting.resolveCompteUserId(rdv.getPatientId()).ifPresent(userId ->
+            // Compte famille : le patient et ceux qui le gèrent sont tous prévenus.
+            // Le titulaire accompagne souvent le proche, il ne peut pas être écarté du
+            // rappel au motif que le proche a sa propre adresse.
+            notificationRouting.resolveTousComptes(rdv.getPatientId()).forEach(userId ->
                     push(userId,
                             "RDV_RAPPEL",
                             "Rappel : rendez-vous dans 30 minutes",
                             "Consultation avec " + medecinNom + " prévue à " + rdv.getHeureRdv() + "."));
 
             // Rappel aussi par email — le patient n'a pas forcément l'app ouverte
-            notificationRouting.resolveEmail(rdv.getPatientId()).ifPresent(email ->
+            notificationRouting.resolveTousEmails(rdv.getPatientId()).forEach(email ->
                     emailService.sendRappelRdv30Min(email, rdv, medecinNom));
         });
     }

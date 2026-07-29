@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,6 +54,60 @@ public class NotificationRoutingService {
             return Optional.of(patient.getEmail());
         }
         return resolveGestionnaireEmail(patientId);
+    }
+
+    /**
+     * Tous les destinataires d'un rappel : le patient et ceux qui le gèrent.
+     *
+     * <p>Le routage nominal est exclusif — le proche <em>ou</em> son gestionnaire. Pour
+     * un rappel, c'est insuffisant : le titulaire qui a pris le rendez-vous doit être
+     * prévenu même quand le proche a sa propre adresse, puisque c'est souvent lui qui
+     * accompagne. À l'inverse, un proche qui a donné son adresse veut être prévenu
+     * directement.
+     *
+     * <p>Les adresses sont normalisées avant dédoublonnage : titulaire et proche
+     * partagent parfois la même boîte, qui ne doit pas recevoir deux fois le rappel.
+     */
+    @Transactional(readOnly = true)
+    public Set<String> resolveTousEmails(UUID patientId) {
+        PatientEntity patient = patientRepository.findById(patientId).orElse(null);
+        if (patient == null) {
+            log.warn("Patient {} introuvable — rappel non routé", patientId);
+            return Set.of();
+        }
+
+        Set<String> emails = new LinkedHashSet<>();
+        ajouterEmail(emails, patient.getEmail());
+        gestionRepository.findByPatientIdAndActifTrue(patientId).stream()
+            .map(GestionEntity::getGestionnaireCompteId)
+            .map(userRepository::findById)
+            .flatMap(Optional::stream)
+            .forEach(u -> ajouterEmail(emails, u.getEmail()));
+
+        if (emails.isEmpty()) {
+            log.warn("Aucun destinataire pour le patient {} — rappel non routé", patientId);
+        }
+        return emails;
+    }
+
+    private void ajouterEmail(Set<String> cible, String email) {
+        if (email != null && !email.isBlank()) {
+            cible.add(email.trim().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    /** Comptes destinataires des notifications in-app : le patient et ses gestionnaires. */
+    @Transactional(readOnly = true)
+    public Set<UUID> resolveTousComptes(UUID patientId) {
+        PatientEntity patient = patientRepository.findById(patientId).orElse(null);
+        if (patient == null) return Set.of();
+
+        Set<UUID> comptes = new LinkedHashSet<>();
+        if (patient.getCompteId() != null) comptes.add(patient.getCompteId());
+        gestionRepository.findByPatientIdAndActifTrue(patientId).stream()
+            .map(GestionEntity::getGestionnaireCompteId)
+            .forEach(comptes::add);
+        return comptes;
     }
 
     /**

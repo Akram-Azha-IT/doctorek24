@@ -77,8 +77,8 @@ class RappelRdvUniciteTest {
         when(userRepo.findById(MEDECIN)).thenReturn(Optional.of(User.builder()
             .id(MEDECIN).email("doc@test.ma").password("x")
             .firstName("Ilyas").lastName("Sabir").role(Role.MEDECIN).build()));
-        when(notificationRouting.resolveCompteUserId(PATIENT)).thenReturn(Optional.of(PATIENT));
-        when(notificationRouting.resolveEmail(PATIENT)).thenReturn(Optional.of("patient@test.ma"));
+        when(notificationRouting.resolveTousComptes(PATIENT)).thenReturn(Set.of(PATIENT));
+        when(notificationRouting.resolveTousEmails(PATIENT)).thenReturn(Set.of("patient@test.ma"));
         when(userRepo.findById(PATIENT)).thenReturn(Optional.of(User.builder()
             .id(PATIENT).email("patient@test.ma").password("x")
             .firstName("Momo").lastName("Mimo").role(Role.PATIENT).build()));
