@@ -46,11 +46,15 @@ public class RappelScheduler {
 
     private void envoyerRappelsPourDate(LocalDate date, int joursAvant) {
         try (Stream<RendezVousEntity> rdvs = rdvRepo.streamByDateRdvAndStatutNot(date, StatutRdv.ANNULE.name())) {
-            rdvs.forEach(rdv -> notificationRouting.resolveEmail(rdv.getPatientId())
-                    .ifPresentOrElse(
-                            email -> emailService.sendRappelRdv(email, rdv, joursAvant),
-                            () -> log.warn("Aucun destinataire pour rdv {}, rappel J-{} non envoyé",
-                                    rdv.getId(), joursAvant)));
+            rdvs.forEach(rdv -> {
+                var destinataires = notificationRouting.resolveTousEmails(rdv.getPatientId());
+                if (destinataires.isEmpty()) {
+                    log.warn("Aucun destinataire pour rdv {}, rappel J-{} non envoyé",
+                        rdv.getId(), joursAvant);
+                    return;
+                }
+                destinataires.forEach(email -> emailService.sendRappelRdv(email, rdv, joursAvant));
+            });
         }
         log.info("Rappels J-{} traités pour le {}", joursAvant, date);
     }
