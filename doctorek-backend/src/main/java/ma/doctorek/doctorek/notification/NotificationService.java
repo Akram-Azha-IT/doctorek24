@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +35,7 @@ public class NotificationService {
     private final EmailService emailService;
     private final NotificationRoutingService notificationRouting;
     private final RappelRdvRegistre rappelRegistre;
+    private final ZoneId zone;
 
     public NotificationService(NotificationRepository repo,
                                 SimpMessagingTemplate stomp,
@@ -42,7 +44,8 @@ public class NotificationService {
                                 UserRepository userRepo,
                                 EmailService emailService,
                                 NotificationRoutingService notificationRouting,
-                                RappelRdvRegistre rappelRegistre) {
+                                RappelRdvRegistre rappelRegistre,
+                                ZoneId zoneApplication) {
         this.repo              = repo;
         this.stomp             = stomp;
         this.rdvRepo           = rdvRepo;
@@ -51,6 +54,7 @@ public class NotificationService {
         this.emailService      = emailService;
         this.notificationRouting = notificationRouting;
         this.rappelRegistre    = rappelRegistre;
+        this.zone              = zoneApplication;
     }
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -113,9 +117,9 @@ public class NotificationService {
      */
     private static final int RAPPEL_RATTRAPAGE_MINUTES = 4;
 
-    @Scheduled(cron = "0 * * * * *") // every minute
+    @Scheduled(cron = "0 * * * * *", zone = "${doctorek.timezone:Africa/Casablanca}")
     public void sendRdvReminders() {
-        LocalDateTime maintenant = LocalDateTime.now();
+        LocalDateTime maintenant = LocalDateTime.now(zone);
         LocalDateTime cible = maintenant.plusMinutes(RAPPEL_AVANT_MINUTES);
         LocalDateTime debut = cible.minusMinutes(RAPPEL_RATTRAPAGE_MINUTES);
 
@@ -133,10 +137,10 @@ public class NotificationService {
 
     // ── Scheduled: birthday notifications (daily at 08:00) ───────────────────
 
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 0 8 * * *", zone = "${doctorek.timezone:Africa/Casablanca}")
     @Transactional
     public void sendBirthdayNotifications() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(zone);
         patientDetailRepo.findByBirthMonthAndDay(today.getMonthValue(), today.getDayOfMonth())
                 .forEach(p -> push(
                         p.getUserId(),

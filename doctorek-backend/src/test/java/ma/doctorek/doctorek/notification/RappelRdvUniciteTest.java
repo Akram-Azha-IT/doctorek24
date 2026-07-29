@@ -21,6 +21,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -58,6 +59,7 @@ class RappelRdvUniciteTest {
     private static final UUID MEDECIN = UUID.randomUUID();
     private static final UUID PATIENT = UUID.randomUUID();
     private static final UUID RDV = UUID.randomUUID();
+    private static final ZoneId ZONE = ZoneId.of("Africa/Casablanca");
 
     /** Registre réel adossé à un jeu d'identifiants, pour rejouer plusieurs ticks. */
     private Set<UUID> dejaEnvoyes;
@@ -70,7 +72,7 @@ class RappelRdvUniciteTest {
 
         RappelRdvRegistre registre = new RappelRdvRegistre(rdvRepo);
         notificationService = new NotificationService(repo, stomp, rdvRepo, patientDetailRepo,
-            userRepo, emailService, notificationRouting, registre);
+            userRepo, emailService, notificationRouting, registre, ZONE);
 
         when(userRepo.findById(MEDECIN)).thenReturn(Optional.of(User.builder()
             .id(MEDECIN).email("doc@test.ma").password("x")
@@ -91,7 +93,7 @@ class RappelRdvUniciteTest {
      * granularité d'horloge du système.
      */
     private RendezVousEntity rdvDansLaFenetre() {
-        LocalDateTime debut = LocalDateTime.now().plusMinutes(28);
+        LocalDateTime debut = LocalDateTime.now(ZONE).plusMinutes(28);
         RendezVousEntity rdv = new RendezVousEntity();
         rdv.setId(RDV);
         rdv.setMedecinId(MEDECIN);
@@ -125,7 +127,7 @@ class RappelRdvUniciteTest {
     @DisplayName("un rendez-vous hors fenêtre ne déclenche aucun rappel")
     void sendRdvReminders_horsFenetre_aucunEnvoi() {
         // Arrange — consultation dans deux heures : trop tôt pour rappeler.
-        LocalDateTime tardif = LocalDateTime.now().plusHours(2);
+        LocalDateTime tardif = LocalDateTime.now(ZONE).plusHours(2);
         RendezVousEntity rdv = rdvDansLaFenetre();
         rdv.setDateRdv(tardif.toLocalDate());
         rdv.setHeureRdv(tardif.toLocalTime());

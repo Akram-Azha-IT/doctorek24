@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.stream.Stream;
 
 @Component
@@ -20,22 +21,25 @@ public class RappelScheduler {
     private final RendezVousRepository rdvRepo;
     private final EmailService emailService;
     private final NotificationRoutingService notificationRouting;
+    private final ZoneId zone;
 
     public RappelScheduler(RendezVousRepository rdvRepo,
             EmailService emailService,
-            NotificationRoutingService notificationRouting) {
+            NotificationRoutingService notificationRouting,
+            ZoneId zoneApplication) {
         this.rdvRepo = rdvRepo;
         this.emailService = emailService;
         this.notificationRouting = notificationRouting;
+        this.zone = zoneApplication;
     }
 
     // @Transactional here (not on the helper) — self-invocation bypasses the
     // proxy, so the helper's annotation would never apply. Streaming needs an
     // open tx/session across the whole forEach.
-    @Scheduled(cron = "${doctorek.mail.rappel-cron:0 0 8 * * *}")
+    @Scheduled(cron = "${doctorek.mail.rappel-cron:0 0 8 * * *}", zone = "${doctorek.timezone:Africa/Casablanca}")
     @Transactional(readOnly = true)
     public void envoyerRappelsQuotidiens() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(zone);
         envoyerRappelsPourDate(today.plusDays(1), 1);
         envoyerRappelsPourDate(today.plusDays(2), 2);
     }
