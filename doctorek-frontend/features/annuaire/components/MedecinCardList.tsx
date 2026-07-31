@@ -1,7 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { MedecinAvatar } from './MedecinAvatar'
+import { ListeAttenteDialog } from '@/features/agenda/components/ListeAttenteDialog'
+import { useSession } from '@/lib/useSession'
 import type { MedecinProfile, BookingSlot } from '@/lib/types'
 import { useCreneauxNavigation } from '../useCreneauxNavigation'
 
@@ -97,7 +100,7 @@ function dayChipClass(isSelected: boolean, isToday: boolean): string {
 }
 
 /** Agenda saturé sur la fenêtre visible : on oriente vers la prochaine ouverture. */
-function NoAvailability({ medecin, nav }: Readonly<{ medecin: MedecinProfile; nav: SlotPanelProps['nav'] }>) {
+function NoAvailability({ medecin, nav, onAlerter }: Readonly<{ medecin: MedecinProfile; nav: SlotPanelProps['nav']; onAlerter: () => void }>) {
   const { goToDate, nextAvailableInfo, extendedLoading } = nav
 
   let action: React.ReactNode
@@ -138,7 +141,25 @@ function NoAvailability({ medecin, nav }: Readonly<{ medecin: MedecinProfile; na
         <p className="text-[12px] font-semibold text-zinc-500">Aucune dispo cette semaine</p>
       </div>
       {action}
+      {/* L'agenda saturé est le moment où le besoin naît : proposer l'alerte ici
+          évite au patient d'aller la chercher sur la page du médecin. */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onAlerter() }}
+        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#1863A9] underline underline-offset-2 transition-colors hover:text-[#007DFF]"
+      >
+        <BellIcon />
+        Me prévenir si une place se libère
+      </button>
     </div>
+  )
+}
+
+function BellIcon() {
+  return (
+    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
   )
 }
 
@@ -254,11 +275,11 @@ function SlotChips({ medecin, onBookSlot, nav }: SlotPanelProps) {
  * ni les mêmes données. Les tenir dans une seule fonction la rendait trop touffue pour
  * être relue ; chacun vit désormais dans son composant.
  */
-function SlotPanel({ medecin, onBookSlot, nav }: SlotPanelProps) {
+function SlotPanel({ medecin, onBookSlot, nav, onAlerter }: SlotPanelProps & { onAlerter: () => void }) {
   return (
     <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-3.5 sm:w-[280px] sm:border-t-0 sm:border-l">
       {nav.allUnavailable ? (
-        <NoAvailability medecin={medecin} nav={nav} />
+        <NoAvailability medecin={medecin} nav={nav} onAlerter={onAlerter} />
       ) : (
         <>
           <DayStrip nav={nav} />
@@ -283,6 +304,10 @@ export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeav
   const accepte = medecin.acceptNouveauxPatients !== false
   // L'état des créneaux est passé tel quel au panneau, seul consommateur.
   const nav = useCreneauxNavigation(medecin.id)
+
+  const [alerteOuverte, setAlerteOuverte] = useState(false)
+  const session = useSession()
+  const patientId = session?.role === 'PATIENT' ? (session.id ?? null) : null
 
   return (
     <div
@@ -379,8 +404,18 @@ export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeav
           </div>
         </Link>
 
-        <SlotPanel medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
+        <SlotPanel medecin={medecin} onBookSlot={onBookSlot} nav={nav} onAlerter={() => setAlerteOuverte(true)} />
       </div>
+
+      {alerteOuverte && (
+        <ListeAttenteDialog
+          medecinId={medecin.id}
+          patientId={patientId}
+          medecinNom={`Dr. ${medecin.firstName} ${medecin.lastName}`}
+          returnUrl="/recherche"
+          onClose={() => setAlerteOuverte(false)}
+        />
+      )}
     </div>
   )
 }

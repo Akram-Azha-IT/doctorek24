@@ -22,8 +22,13 @@ const slots: Creneau[] = [
 const getCreneauxMock = vi.fn(async (_id: string, date: string) =>
   date === futureDate ? slots : [],
 )
+// La carte peut ouvrir la fenêtre de liste d'attente : le module API doit exposer
+// tout ce que la chaîne d'imports consomme, pas seulement les créneaux.
 vi.mock('@/features/agenda/api', () => ({
   getCreneaux: (id: string, date: string) => getCreneauxMock(id, date),
+  getListeAttente: vi.fn(async () => []),
+  rejoindreListeAttente: vi.fn(),
+  quitterListeAttente: vi.fn(),
 }))
 
 const medecin = {
@@ -60,8 +65,10 @@ describe('MedecinCardList', () => {
 
     // Sélectionne le jour de demain (chip avec le numéro du jour)
     const dayNum = String(new Date(futureDate + 'T00:00:00').getDate())
+    // Comparaison sur le nombre final, pas en sous-chaîne : « VEN31 » contient « 1 »
+    // et détournait le clic dès que le lendemain tombait un jour à un chiffre.
     const dayBtns = await screen.findAllByRole('button')
-    const dayBtn = dayBtns.find((b) => b.textContent?.includes(dayNum))
+    const dayBtn = dayBtns.find((b) => /(\d+)$/.exec(b.textContent ?? '')?.[1] === dayNum)
     expect(dayBtn).toBeDefined()
     await user.click(dayBtn!)
 
