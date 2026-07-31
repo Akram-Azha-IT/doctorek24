@@ -59,6 +59,7 @@ describe('ListeAttenteCard', () => {
     // Assert
     expect(rejoindre).toHaveBeenCalledWith(
       expect.objectContaining({ medecinId: MEDECIN, patientId: PATIENT }),
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
     )
   })
 

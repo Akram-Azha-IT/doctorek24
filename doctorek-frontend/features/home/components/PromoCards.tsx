@@ -1,83 +1,116 @@
-import Image from 'next/image'
-import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+'use client'
 
+import { useEffect, useRef, useState } from 'react'
+import { PromoCard, type PromoCardData } from './PromoCard'
+
+const CARTES: readonly PromoCardData[] = [
+  {
+    href: '/login',
+    categorie: 'Patients',
+    titre: ['Votre santé,', 'sécurisée dans votre poche'],
+    texte:
+      'Ajoutez votre carte médicale à Google Wallet ou Apple Wallet. Vos infos vitales accessibles partout, même hors ligne.',
+    lien: 'En savoir plus',
+    image: '/carte-phone.png',
+    imageAlt: 'Carte médicale Doctorek affichée sur un smartphone',
+  },
+  {
+    href: '/inscription?role=medecin',
+    categorie: 'Médecins',
+    titre: ['Rejoignez Doctorek Pro', 'et gérez votre cabinet'],
+    texte: 'Agenda en ligne, rendez-vous patients et dossiers médicaux : tout en un.',
+    lien: 'Découvrir Doctorek Pro',
+    image: '/medecin-carte-hero.png',
+    imageAlt: 'Dashboard médecin Doctorek',
+  },
+]
+
+/** La carte visible occupe l'essentiel de l'écran, la suivante dépasse pour se signaler. */
+const LARGEUR_CARTE_MOBILE = 'w-[86vw] max-w-[400px]'
+
+function prefereMoinsDeMouvement(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/**
+ * Cartes de mise en avant : carrousel sur mobile, grille sur bureau.
+ *
+ * <p>La carte Patients était purement et simplement masquée sous {@code md} : l'offre
+ * carte médicale disparaissait pour les visiteurs mobiles, qui sont la majorité. Le
+ * carrousel les rétablit toutes les deux sans allonger la page.
+ *
+ * <p>Le défilement reste natif, aimanté par CSS : pas de librairie, pas de gestionnaire
+ * de gestes concurrent du scroll de la page, et l'inertie du système est préservée.
+ */
 export function PromoCards() {
+  const pisteRef = useRef<HTMLDivElement>(null)
+  const [actif, setActif] = useState(0)
+
+  useEffect(() => {
+    const piste = pisteRef.current
+    if (!piste) return
+
+    const observer = new IntersectionObserver(
+      (entrees) => {
+        const visible = entrees
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+        if (visible) setActif(Number((visible.target as HTMLElement).dataset.index))
+      },
+      { root: piste, threshold: 0.6 },
+    )
+
+    const items = piste.querySelectorAll('[data-index]')
+    items.forEach((item) => observer.observe(item))
+    return () => observer.disconnect()
+  }, [])
+
+  const allerA = (index: number) => {
+    const cible = pisteRef.current?.querySelector<HTMLElement>(`[data-index="${index}"]`)
+    cible?.scrollIntoView({
+      behavior: prefereMoinsDeMouvement() ? 'auto' : 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    })
+  }
+
   return (
-    <div className="relative z-20 mt-4 md:-mt-30 px-4 md:px-8">
-      <div className="mx-auto max-w-[1400px] grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="relative z-20 mt-4 md:-mt-30">
+      <div
+        ref={pisteRef}
+        aria-label="Doctorek pour les patients et pour les médecins"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] md:mx-auto md:max-w-[1400px] md:grid md:grid-cols-2 md:overflow-visible md:px-8 md:pb-0 [&::-webkit-scrollbar]:hidden"
+      >
+        {CARTES.map((carte, index) => (
+          <div
+            key={carte.categorie}
+            data-index={index}
+            className={`shrink-0 snap-center ${LARGEUR_CARTE_MOBILE} md:w-auto md:max-w-none md:shrink`}
+          >
+            <PromoCard data={carte} />
+          </div>
+        ))}
+      </div>
 
-        {/* Carte Patients : masquée sur mobile (remplacée par la carte du hero), visible sur desktop */}
-        <a href="/login" className="group relative hidden md:flex md:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
-          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
-            <div className="absolute rounded-full bg-[#D0E8FF] w-[200px] h-[200px] sm:w-[210px] sm:h-[210px] left-1/2 -translate-x-1/2 bottom-2 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
-            <div className="absolute rounded-full bg-[#B6DAF7] w-[148px] h-[148px] sm:w-[155px] sm:h-[155px] left-1/2 -translate-x-1/2 bottom-6 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
-          </div>
-          <div className="relative z-10 flex-1 p-6 sm:p-7 flex flex-col justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-[#465058] uppercase tracking-widest mb-3">Patients</p>
-              <h3 className="text-[18px] font-bold text-[#00263C] leading-snug mb-2">
-                Votre santé,<br />sécurisée dans votre poche
-              </h3>
-              <p className="text-[#465058] text-[13px] leading-relaxed">
-                Ajoutez votre carte médicale à Google&nbsp;Wallet ou Apple&nbsp;Wallet. Vos infos vitales accessibles partout, même hors ligne.
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[#007DFF] font-semibold text-[14px] mt-5 group-hover:gap-2 transition-all">
-              Découvrir <ChevronRight className="h-4 w-4" />
-            </span>
-          </div>
-          <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
-            {/* L'inclinaison est intégrée au mockup (pas de rotation CSS ici) */}
-            <div className="absolute bottom-2 top-2 inset-x-[20%] sm:inset-x-auto sm:bottom-auto sm:right-9 sm:top-1/2 sm:-translate-y-1/2 sm:h-[215px] sm:w-[150px]">
-              <div className="relative h-full w-full">
-                <Image
-                  src="/carte-phone.png"
-                  alt="Carte médicale Doctorek affichée sur un smartphone"
-                  fill
-                  className="object-contain object-center drop-shadow-2xl"
-                  sizes="(max-width: 640px) 40vw, 150px"
-                />
-              </div>
-            </div>
-          </div>
-        </a>
-
-        <Link href="/inscription?role=medecin" className="group relative flex flex-col sm:flex-row rounded-2xl shadow-[0_4px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_36px_rgba(0,0,0,0.12)] transition-shadow">
-          <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none bg-white">
-            <div className="absolute rounded-full bg-[#D0E8FF] w-[200px] h-[200px] sm:w-[210px] sm:h-[210px] left-1/2 -translate-x-1/2 bottom-2 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-5 sm:top-1/2 sm:-translate-y-1/2" />
-            <div className="absolute rounded-full bg-[#B6DAF7] w-[148px] h-[148px] sm:w-[155px] sm:h-[155px] left-1/2 -translate-x-1/2 bottom-6 sm:left-auto sm:translate-x-0 sm:bottom-auto sm:right-12 sm:top-1/2 sm:-translate-y-1/2" />
-          </div>
-          <div className="relative z-10 flex-1 p-6 sm:p-7 flex flex-col justify-between">
-            <div>
-              <p className="text-[11px] font-semibold text-[#465058] uppercase tracking-widest mb-3">Médecins</p>
-              <h3 className="text-[18px] font-bold text-[#00263C] leading-snug mb-2">
-                Rejoignez Doctorek Pro<br />et gérez votre cabinet
-              </h3>
-              <p className="text-[#465058] text-[13px] leading-relaxed">
-                Agenda en ligne, rendez-vous patients et dossiers médicaux : tout en un.
-              </p>
-            </div>
-            <span className="inline-flex items-center gap-1 text-[#007DFF] font-semibold text-[14px] mt-5 group-hover:gap-2 transition-all">
-              Découvrir <ChevronRight className="h-4 w-4" />
-            </span>
-          </div>
-          <div className="relative z-20 h-52 sm:h-auto sm:w-[43%] shrink-0">
-            {/* L'inclinaison est intégrée au mockup (pas de rotation CSS ici) */}
-            <div className="absolute bottom-2 top-2 inset-x-[20%] sm:inset-x-auto sm:bottom-auto sm:right-9 sm:top-1/2 sm:-translate-y-1/2 sm:h-[215px] sm:w-[150px]">
-              <div className="relative h-full w-full">
-                <Image
-                  src="/medecin-carte-hero.png"
-                  alt="Dashboard médecin Doctorek"
-                  fill
-                  className="object-contain object-center drop-shadow-2xl"
-                  sizes="(max-width: 640px) 40vw, 140px"
-                />
-              </div>
-            </div>
-          </div>
-        </Link>
-
+      {/* Repère de position, masqué sur bureau où les deux cartes sont visibles. */}
+      <div className="mt-1 flex items-center justify-center md:hidden">
+        {CARTES.map((carte, index) => (
+          <button
+            key={carte.categorie}
+            type="button"
+            onClick={() => allerA(index)}
+            aria-label={`Voir la carte ${carte.categorie}`}
+            aria-current={actif === index ? 'true' : undefined}
+            className="flex h-11 w-11 items-center justify-center"
+          >
+            <span
+              className={`block rounded-full transition-all duration-300 ${
+                actif === index ? 'h-2 w-6 bg-[#007DFF]' : 'h-2 w-2 bg-[#C4D7EC]'
+              }`}
+            />
+          </button>
+        ))}
       </div>
     </div>
   )

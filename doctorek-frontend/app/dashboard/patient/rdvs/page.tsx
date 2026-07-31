@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRdvsPatient, useReprogrammerRdv, useAnnulerRdv } from '@/features/agenda/hooks'
+import { MesAlertes } from '@/features/agenda/components/MesAlertes'
 import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
 import { useProches } from '@/features/famille/hooks'
 import { useSession } from '@/lib/useSession'
@@ -54,6 +55,8 @@ export default function PatientRdvsPage() {
             showLabel={selected === ALL || !membre.self}
           />
         ))}
+
+      {patientId && <MesAlertes patientId={patientId} />}
 
       {!patientId && <RdvSkeleton />}
     </div>
