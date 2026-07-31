@@ -33,6 +33,13 @@ describe('ListeAttenteDialog', () => {
   beforeEach(() => {
     rejoindre.mockClear()
     useListeAttente.mockReset()
+    // jsdom n'implémente pas la modale native : on ouvre à la main.
+    HTMLDialogElement.prototype.showModal = function ouvrir(this: HTMLDialogElement) {
+      this.open = true
+    }
+    HTMLDialogElement.prototype.close = function fermer(this: HTMLDialogElement) {
+      this.open = false
+    }
   })
 
   test('nomme le médecin concerné', () => {
@@ -52,14 +59,36 @@ describe('ListeAttenteDialog', () => {
   })
 
   test('se ferme avec la touche Échap', () => {
-    // Arrange — sortie clavier obligatoire pour une fenêtre modale.
+    // Arrange — la modale native traduit Échap en événement « cancel ».
     const { onClose } = setup()
 
     // Act
-    fireEvent.keyDown(document, { key: 'Escape' })
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }))
 
     // Assert
     expect(onClose).toHaveBeenCalled()
+  })
+
+  test('se ferme au clic hors du panneau', () => {
+    // Arrange — le clic sur le fond atteint la modale elle-même.
+    const { onClose } = setup()
+
+    // Act
+    fireEvent.click(screen.getByRole('dialog'))
+
+    // Assert
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  test('un clic dans le panneau ne ferme pas', () => {
+    // Arrange
+    const { onClose } = setup()
+
+    // Act
+    fireEvent.click(screen.getByText('Dr. Hakim Tazi'))
+
+    // Assert
+    expect(onClose).not.toHaveBeenCalled()
   })
 
   test('invite à se connecter en gardant le retour vers la recherche', () => {

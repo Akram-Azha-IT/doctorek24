@@ -17,6 +17,10 @@ interface ListeAttenteDialogProps {
  * <p>Le patient réserve depuis la recherche : l'envoyer sur la page du médecin pour
  * s'inscrire lui faisait perdre ses résultats et ses filtres. La fenêtre le garde
  * dans son parcours.
+ *
+ * <p>La modale native porte le piège de focus, l'inertie de l'arrière-plan et la
+ * touche Échap. Un fond bricolé en div n'offrait rien de tout cela : il n'était
+ * atteignable qu'à la souris et annonçait un rôle trompeur aux lecteurs d'écran.
  */
 export function ListeAttenteDialog({
   medecinId,
@@ -25,58 +29,65 @@ export function ListeAttenteDialog({
   returnUrl,
   onClose,
 }: ListeAttenteDialogProps) {
-  const fermerRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    const surEchap = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (typeof dialog.showModal === 'function' && !dialog.open) dialog.showModal()
+
+    // Échap déclenche « cancel » : on reprend la main pour prévenir le parent.
+    const surAnnulation = (e: Event) => {
+      e.preventDefault()
+      onClose()
     }
-    document.addEventListener('keydown', surEchap)
-    fermerRef.current?.focus()
-    return () => document.removeEventListener('keydown', surEchap)
+    // Le clic hors du panneau atteint la modale elle-même, jamais son contenu.
+    const surClic = (e: MouseEvent) => {
+      if (e.target === dialog) onClose()
+    }
+
+    dialog.addEventListener('cancel', surAnnulation)
+    dialog.addEventListener('click', surClic)
+    return () => {
+      dialog.removeEventListener('cancel', surAnnulation)
+      dialog.removeEventListener('click', surClic)
+    }
   }, [onClose])
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#010C2D]/50 p-0 sm:items-center sm:p-4"
-      onClick={onClose}
-      role="presentation"
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="liste-attente-titre"
+      className="m-0 mt-auto w-full max-w-lg rounded-t-3xl bg-white p-0 text-left shadow-2xl backdrop:bg-[#010C2D]/50 sm:m-auto sm:rounded-3xl"
     >
-      <dialog
-        open
-        aria-labelledby="liste-attente-titre"
-        onClick={(e) => e.stopPropagation()}
-        className="m-0 w-full max-w-lg rounded-t-3xl bg-white p-0 text-left shadow-2xl sm:rounded-3xl"
-      >
-        <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F6] px-5 py-4">
-          <div className="min-w-0">
-            <h2 id="liste-attente-titre" className="text-base font-bold text-[#010C2D]">
-              Être prévenu d&apos;une annulation
-            </h2>
-            <p className="mt-0.5 truncate text-xs text-[#6B7A99]">{medecinNom}</p>
-          </div>
-          <button
-            ref={fermerRef}
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#8A97A6] transition-colors hover:bg-[#F0F2F5] hover:text-[#010C2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      <div className="flex items-start justify-between gap-4 border-b border-[#EEF1F6] px-5 py-4">
+        <div className="min-w-0">
+          <h2 id="liste-attente-titre" className="text-base font-bold text-[#010C2D]">
+            Être prévenu d&apos;une annulation
+          </h2>
+          <p className="mt-0.5 truncate text-xs text-[#6B7A99]">{medecinNom}</p>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#8A97A6] transition-colors hover:bg-[#F0F2F5] hover:text-[#010C2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-        <div className="px-5 py-5">
-          <ListeAttenteForm
-            medecinId={medecinId}
-            patientId={patientId}
-            returnUrl={returnUrl}
-            onDone={onClose}
-          />
-        </div>
-      </dialog>
-    </div>
+      <div className="px-5 py-5">
+        <ListeAttenteForm
+          medecinId={medecinId}
+          patientId={patientId}
+          returnUrl={returnUrl}
+          onDone={onClose}
+        />
+      </div>
+    </dialog>
   )
 }

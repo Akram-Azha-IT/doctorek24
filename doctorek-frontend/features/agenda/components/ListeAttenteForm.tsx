@@ -53,13 +53,14 @@ export function ListeAttenteForm({
   const [dateFin, setDateFin] = useState(() => isoDansNJours(JOURS_PAR_DEFAUT))
 
   if (!patientId) {
+    const cible = returnUrl ? `?redirect=${encodeURIComponent(returnUrl)}` : ''
     return (
       <div className="flex flex-col gap-3">
         <p className="text-xs text-[#6B7A99]">
           Connectez-vous pour être prévenu dès qu&apos;une place se libère.
         </p>
         <Link
-          href={`/login${returnUrl ? `?redirect=${encodeURIComponent(returnUrl)}` : ''}`}
+          href={`/login${cible}`}
           className="self-start rounded-xl bg-[#007DFF] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#00263C]"
         >
           Se connecter
