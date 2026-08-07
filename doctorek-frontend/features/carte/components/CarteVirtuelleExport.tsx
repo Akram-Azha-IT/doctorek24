@@ -49,11 +49,11 @@ function field(opts: {
   valueSize?: number
   valueColor?: string
 }): string {
-  const { x, y, fr, ar, value, valueSize = 17, valueColor = C_NAVY } = opts
+  const { x, y, fr, ar, value, valueSize = 21, valueColor = C_NAVY } = opts
   const blank = isBlankValue(value)
   return `
-        <text class="dk-s" x="${x}" y="${y}" font-size="8.5" font-weight="700" fill="${C_LABEL}" letter-spacing="1.9">${fr}<tspan class="dk-a" font-size="9.5" fill="${C_ARLBL}" letter-spacing="0"> · ${ar}</tspan></text>
-        <text class="${blank ? 'dk-s' : 'dk-m'}" x="${x}" y="${y + 30}" font-size="${blank ? 14 : valueSize}" font-weight="${blank ? 500 : 700}" fill="${blank ? '#A9BBD2' : valueColor}" letter-spacing="${blank ? 0 : 1.6}">${blank ? 'Non renseigné' : value}</text>`
+        <text class="dk-s" x="${x}" y="${y}" font-size="10.5" font-weight="700" fill="${C_LABEL}" letter-spacing="1.5">${fr}<tspan class="dk-a" font-size="11.5" fill="${C_ARLBL}" letter-spacing="0"> · ${ar}</tspan></text>
+        <text class="${blank ? 'dk-s' : 'dk-m'}" x="${x}" y="${y + 32}" font-size="${blank ? 17 : valueSize}" font-weight="${blank ? 500 : 700}" fill="${blank ? '#A9BBD2' : valueColor}" letter-spacing="${blank ? 0 : 1.6}">${blank ? 'Non renseigné' : value}</text>`
 }
 
 const CARD_W = 856
@@ -157,9 +157,9 @@ export function buildRectoSvg(
         <rect x="428" y="0" width="428" height="3.5" fill="${C_GREEN}"/>
 
         <image href="${logoUrl}" x="48" y="32" width="156" height="44" preserveAspectRatio="xMinYMid meet"/>
-        <text class="dk-a" x="808" y="50" text-anchor="end" font-size="14.5" font-weight="800" fill="${C_NAVY}">المملكة المغربية</text>
-        <text class="dk-s" x="808" y="68" text-anchor="end" font-size="8.5" font-weight="600" fill="${C_LABEL}" letter-spacing="3.4">ROYAUME DU MAROC</text>
-        <text class="dk-s" x="808" y="90" text-anchor="end" font-size="12" font-weight="800" fill="${C_BLUE}" letter-spacing="1.8">CARTE SANTÉ VIRTUELLE</text>
+        <text class="dk-a" x="808" y="50" text-anchor="end" font-size="16" font-weight="800" fill="${C_NAVY}">المملكة المغربية</text>
+        <text class="dk-s" x="808" y="70" text-anchor="end" font-size="10" font-weight="600" fill="${C_LABEL}" letter-spacing="3">ROYAUME DU MAROC</text>
+        <text class="dk-s" x="808" y="94" text-anchor="end" font-size="13.5" font-weight="800" fill="${C_BLUE}" letter-spacing="1.6">CARTE SANTÉ VIRTUELLE</text>
 
         <rect x="48" y="132" width="168" height="206" rx="10" fill="#FFFFFF"/>
         ${photoBlock}
@@ -175,7 +175,7 @@ export function buildRectoSvg(
           <rect x="17" y="14" width="22" height="14" rx="2" fill="none" stroke="rgba(0,0,0,0.14)" stroke-width="0.8"/>
         </g>
 
-        <text class="dk-s" x="256" y="158" font-size="8.5" font-weight="600" fill="${C_LABEL}" letter-spacing="2.2">TITULAIRE<tspan class="dk-a" font-size="9.5" fill="${C_ARLBL}" letter-spacing="0"> · حامل البطاقة</tspan></text>
+        <text class="dk-s" x="256" y="158" font-size="10.5" font-weight="600" fill="${C_LABEL}" letter-spacing="1.8">TITULAIRE<tspan class="dk-a" font-size="11.5" fill="${C_ARLBL}" letter-spacing="0"> · حامل البطاقة</tspan></text>
         <g clip-path="url(#name-clip-recto)">
           <text class="dk-s" x="256" y="210" font-size="${nameSize}" font-weight="700" fill="${C_NAVY}" letter-spacing="-0.5">${fullName}</text>
         </g>
@@ -183,17 +183,17 @@ export function buildRectoSvg(
         ${field({ x: 256, y: 274, fr: 'C.I.N.', ar: 'ب.ت.و', value: maskedCin })}
         ${field({ x: 474, y: 274, fr: 'N° CNSS / AMO', ar: 'الضمان الاجتماعي', value: cnss })}
 
-        <text class="dk-s" x="256" y="382" font-size="8.5" font-weight="600" fill="${C_LABEL}" letter-spacing="2.2">N° DE CARTE<tspan class="dk-a" font-size="9.5" fill="${C_ARLBL}" letter-spacing="0"> · رقم البطاقة</tspan></text>
-        <text class="dk-m" x="256" y="422" font-size="21" font-weight="700" fill="${C_RICH}" letter-spacing="2.6">${cardRef}</text>
+        <text class="dk-s" x="256" y="382" font-size="10.5" font-weight="600" fill="${C_LABEL}" letter-spacing="1.8">N° DE CARTE<tspan class="dk-a" font-size="11.5" fill="${C_ARLBL}" letter-spacing="0"> · رقم البطاقة</tspan></text>
+        <text class="dk-m" x="256" y="424" font-size="24" font-weight="700" fill="${C_RICH}" letter-spacing="2.4">${cardRef}</text>
 
         <rect x="678" y="288" width="136" height="136" rx="12" fill="#FFFFFF" stroke="${C_LINE}" stroke-width="1"/>
         ${qrBlock}
-        <text class="dk-s" x="746" y="444" text-anchor="middle" font-size="7.5" font-weight="600" fill="${C_LABEL}" letter-spacing="2.8">VÉRIFIER</text>
+        <text class="dk-s" x="746" y="446" text-anchor="middle" font-size="9.5" font-weight="600" fill="${C_LABEL}" letter-spacing="2.4">VÉRIFIER</text>
 
         <rect x="0" y="486" width="856" height="54" fill="${C_NAVY}"/>
         <image href="${logoUrl}" x="48" y="498" width="92" height="30" preserveAspectRatio="xMinYMid meet" style="filter:brightness(0) invert(1);"/>
-        <text class="dk-s" x="158" y="518" font-size="10" font-weight="500" fill="rgba(255,255,255,0.55)" letter-spacing="0.4">doctorek.ma · 080 100 2000</text>
-        <text class="dk-a" x="808" y="518" text-anchor="end" font-size="8.5" font-weight="700" fill="rgba(255,255,255,0.5)" letter-spacing="0.4">DOCUMENT OFFICIEL · وثيقة رسمية</text>
+        <text class="dk-s" x="158" y="518" font-size="12" font-weight="500" fill="rgba(255,255,255,0.62)" letter-spacing="0.4">doctorek.ma · 080 100 2000</text>
+        <text class="dk-a" x="808" y="518" text-anchor="end" font-size="10.5" font-weight="700" fill="rgba(255,255,255,0.58)" letter-spacing="0.4">DOCUMENT OFFICIEL · وثيقة رسمية</text>
       </g>
     </svg>
   `
@@ -360,8 +360,8 @@ export function buildVersoSvg(
         <rect x="428" y="0" width="428" height="3.5" fill="${C_GREEN}"/>
 
         <image href="${logoUrl}" x="48" y="32" width="144" height="42" preserveAspectRatio="xMinYMid meet"/>
-        <text class="dk-s" x="808" y="50" text-anchor="end" font-size="8.5" font-weight="600" fill="${C_LABEL}" letter-spacing="2.2">N° IMMATRICULATION<tspan class="dk-a" font-size="9.5" fill="${C_ARLBL}" letter-spacing="0"> · رقم التسجيل</tspan></text>
-        <text class="dk-m" x="808" y="84" text-anchor="end" font-size="22" font-weight="700" fill="${C_RICH}" letter-spacing="2.8">${immatNo}</text>
+        <text class="dk-s" x="808" y="50" text-anchor="end" font-size="10.5" font-weight="600" fill="${C_LABEL}" letter-spacing="1.8">N° IMMATRICULATION<tspan class="dk-a" font-size="11.5" fill="${C_ARLBL}" letter-spacing="0"> · رقم التسجيل</tspan></text>
+        <text class="dk-m" x="808" y="86" text-anchor="end" font-size="25" font-weight="700" fill="${C_RICH}" letter-spacing="2.6">${immatNo}</text>
 
         ${fields}
 
@@ -369,14 +369,14 @@ export function buildVersoSvg(
           <path d="M11 1L3 4v6c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V4l-8-3z" fill="${C_BLUE}" opacity="0.9"/>
           <path d="M7.5 11.5l2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
-        <text class="dk-s" x="80" y="424" font-size="10.5" font-weight="700" fill="${C_NAVY}">Carte strictement personnelle et confidentielle</text>
-        <text class="dk-s" x="80" y="442" font-size="9.5" font-weight="500" fill="${C_LABEL}">En cas de perte ou de vol, contactez le 080 100 2000 ou votre espace patient.</text>
-        <text class="dk-a" x="808" y="432" text-anchor="end" font-size="10" font-weight="700" fill="${C_ARLBL}">بطاقة شخصية وسرية</text>
+        <text class="dk-s" x="80" y="423" font-size="12.5" font-weight="700" fill="${C_NAVY}">Carte strictement personnelle et confidentielle</text>
+        <text class="dk-s" x="80" y="444" font-size="11.5" font-weight="500" fill="${C_LABEL}">En cas de perte ou de vol, contactez le 080 100 2000 ou votre espace patient.</text>
+        <text class="dk-a" x="808" y="432" text-anchor="end" font-size="12" font-weight="700" fill="${C_ARLBL}">بطاقة شخصية وسرية</text>
 
         <rect x="0" y="486" width="856" height="54" fill="${C_NAVY}"/>
         <image href="${logoUrl}" x="48" y="498" width="92" height="30" preserveAspectRatio="xMinYMid meet" style="filter:brightness(0) invert(1);"/>
-        <text class="dk-s" x="158" y="518" font-size="10" font-weight="500" fill="rgba(255,255,255,0.55)" letter-spacing="0.4">doctorek.ma</text>
-        <text class="dk-m" x="808" y="518" text-anchor="end" font-size="8.5" font-weight="700" fill="rgba(255,255,255,0.5)" letter-spacing="2">CARTE MÉDICALE NATIONALE · MA</text>
+        <text class="dk-s" x="158" y="518" font-size="12" font-weight="500" fill="rgba(255,255,255,0.62)" letter-spacing="0.4">doctorek.ma</text>
+        <text class="dk-m" x="808" y="518" text-anchor="end" font-size="10.5" font-weight="700" fill="rgba(255,255,255,0.58)" letter-spacing="1.8">CARTE MÉDICALE NATIONALE · MA</text>
       </g>
     </svg>
   `
