@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react'
 import { useCreerAvis } from '../hooks'
 import { COMMENTAIRE_MAX, CreerAvisSchema } from '../schemas'
 import { StarRatingInput } from './StarRating'
@@ -43,7 +43,9 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  function onSubmit(e: FormEvent) {
+  // FormEvent est deprecie dans les types React 19 : SyntheticEvent porte tout
+  // ce dont la soumission a besoin.
+  function onSubmit(e: SyntheticEvent) {
     e.preventDefault()
     setErreur(null)
 
