@@ -25,13 +25,14 @@ export function ConsentementGate() {
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titreId}
       className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-4"
       style={{ background: 'rgba(1,12,45,0.65)', backdropFilter: 'blur(4px)' }}
     >
-      <div className="w-full max-w-lg overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
+      <dialog
+        open
+        aria-labelledby={titreId}
+        className="m-0 w-full max-w-lg overflow-hidden rounded-t-2xl bg-white p-0 text-inherit shadow-2xl sm:rounded-2xl"
+      >
         <div className="flex items-start gap-3 border-b border-zinc-100 px-6 py-5">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EBF4FF]">
             <ShieldCheck className="h-5 w-5 text-[#007DFF]" />
@@ -96,7 +97,7 @@ export function ConsentementGate() {
             Refuser et me déconnecter
           </button>
         </div>
-      </div>
+      </dialog>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { useCreerAvis } from '../hooks'
 import { COMMENTAIRE_MAX, CreerAvisSchema } from '../schemas'
 import { StarRatingInput } from './StarRating'
@@ -20,13 +20,13 @@ interface Props {
  * obligatoire, et le commentaire ne doit pas donner l'impression qu'il faut rédiger
  * pour pouvoir noter.
  */
-export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess }: Props) {
+export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess }: Readonly<Props>) {
   const [note, setNote] = useState(0)
   const [commentaire, setCommentaire] = useState('')
   const [anonyme, setAnonyme] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
 
-  const dialogRef = useRef<HTMLDivElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
   const titreId = useId()
   const aideNoteId = useId()
 
@@ -43,7 +43,7 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  function onSubmit(e: React.FormEvent) {
+  function onSubmit(e: FormEvent) {
     e.preventDefault()
     setErreur(null)
 
@@ -81,18 +81,21 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
   const restants = COMMENTAIRE_MAX - commentaire.length
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
-      style={{ background: 'rgba(1,12,45,0.55)', backdropFilter: 'blur(4px)' }}
-      onClick={onClose}
-    >
-      <div
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+      {/* Le fond est un vrai bouton : cliquer a cote ferme la modale, et l'action reste
+          atteignable au clavier au lieu d'etre reservee a la souris. */}
+      <button
+        type="button"
+        aria-label="Fermer sans publier"
+        onClick={onClose}
+        className="absolute inset-0 cursor-default"
+        style={{ background: 'rgba(1,12,45,0.55)', backdropFilter: 'blur(4px)' }}
+      />
+      <dialog
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
+        open
         aria-labelledby={titreId}
-        className="w-full max-w-lg overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
+        className="relative m-0 w-full max-w-lg overflow-hidden rounded-t-2xl bg-white p-0 text-inherit shadow-2xl sm:rounded-2xl"
       >
         <div className="flex items-start justify-between border-b border-zinc-100 px-6 py-4">
           <div>
@@ -186,7 +189,7 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
             </button>
           </div>
         </form>
-      </div>
+      </dialog>
     </div>
   )
 }

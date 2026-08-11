@@ -164,14 +164,20 @@ public class AvisService {
             resultats.getTotalPages(),
             page,
             size,
-            noteMoyenne(medecinId),
+            calculerNoteMoyenne(medecinId),
             resultats.getTotalElements(),
-            repartition(medecinId));
+            calculerRepartition(medecinId));
     }
 
     /** Moyenne arrondie au dixième, ou {@code null} si le médecin n'a aucun avis. */
     @Transactional(readOnly = true)
     public Double noteMoyenne(UUID medecinId) {
+        return calculerNoteMoyenne(medecinId);
+    }
+
+    // Le calcul est séparé de la méthode transactionnelle : l'appeler depuis cette même
+    // classe court-circuiterait le proxy Spring, et la transaction annoncée n'existerait pas.
+    private Double calculerNoteMoyenne(UUID medecinId) {
         Double moyenne = avisRepo.moyenneParMedecin(medecinId);
         return moyenne == null ? null : Math.round(moyenne * 10) / 10.0;
     }
@@ -204,9 +210,13 @@ public class AvisService {
             .toList();
     }
 
-    /** Histogramme des notes, de 1 à 5 — les valeurs jamais attribuées valent 0. */
+    /** Histogramme des notes, de 1 à 5 : les valeurs jamais attribuées valent 0. */
     @Transactional(readOnly = true)
     public List<Integer> repartition(UUID medecinId) {
+        return calculerRepartition(medecinId);
+    }
+
+    private List<Integer> calculerRepartition(UUID medecinId) {
         int[] compteurs = new int[NOTE_MAX];
         for (RepartitionNotesProjection ligne : avisRepo.repartitionParMedecin(medecinId)) {
             int index = ligne.getNote() - 1;

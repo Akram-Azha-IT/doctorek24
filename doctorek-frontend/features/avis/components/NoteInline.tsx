@@ -7,7 +7,7 @@ import type { NoteMedecin } from '@/lib/types'
  * là où cinq étoiles répétées à chaque ligne deviennent du bruit. Le volume d'avis
  * accompagne toujours la moyenne — 5,0 sur un avis ne vaut pas 4,3 sur cent.
  */
-export function NoteInline({ note }: { note: NoteMedecin | undefined }) {
+export function NoteInline({ note }: Readonly<{ note: NoteMedecin | undefined }>) {
   if (!note || note.nombreAvis === 0) return null
 
   const moyenne = note.noteMoyenne.toFixed(1).replace('.', ',')

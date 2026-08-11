@@ -12,11 +12,11 @@ export function AvisSynthese({
   noteMoyenne,
   nombreAvis,
   repartition,
-}: {
+}: Readonly<{
   noteMoyenne: number | null
   nombreAvis: number
   repartition: number[]
-}) {
+}>) {
   if (!noteMoyenne || nombreAvis === 0) {
     return (
       <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 px-5 py-6 text-center">

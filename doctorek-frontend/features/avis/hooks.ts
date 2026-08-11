@@ -27,7 +27,8 @@ export function useAvisMedecin(medecinId: string, page = 1) {
  * donc les identifiants de la page courante.
  */
 export function useNotesMedecins(medecinIds: string[]) {
-  const ids = [...new Set(medecinIds)].sort()
+  // Tri uniquement pour rendre la clé de cache stable quel que soit l'ordre d'affichage.
+  const ids = [...new Set(medecinIds)].sort((a, b) => a.localeCompare(b))
   return useQuery({
     queryKey: ['avis', 'notes', ids.join(',')],
     queryFn: () => getNotesMedecins(ids),
@@ -57,7 +58,7 @@ export function useCreerAvis(medecinId: string) {
  * la question plutôt que réafficher le verdict de la page précédente.
  */
 export function useRdvsNotables(rdvIds: string[]) {
-  const cle = [...rdvIds].sort().join(',')
+  const cle = [...rdvIds].sort((a, b) => a.localeCompare(b)).join(',')
   return useQuery({
     queryKey: ['avis', 'notables', cle],
     queryFn: () => getRdvsNotables(rdvIds),

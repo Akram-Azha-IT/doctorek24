@@ -11,7 +11,7 @@ import { AvisSynthese } from './AvisSynthese'
  * Le dépôt ne se fait pas ici mais depuis les rendez-vous du patient — un avis
  * s'attache à une consultation précise, pas à un médecin en général.
  */
-export function AvisSection({ medecinId }: { medecinId: string }) {
+export function AvisSection({ medecinId }: Readonly<{ medecinId: string }>) {
   const [page, setPage] = useState(1)
   const { data, isLoading, isError } = useAvisMedecin(medecinId, page)
 

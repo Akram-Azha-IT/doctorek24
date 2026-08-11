@@ -31,6 +31,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +65,7 @@ class AvisServiceTest {
     void setUp() {
         service = new AvisService(avisRepo, signalementRepo, rdvRepo, patientRepo, userRepo);
 
-        PatientEntity patient = new PatientEntity("Benhammou", "Akram", LocalDate.of(1998, 4, 12));
+        PatientEntity patient = new PatientEntity("Benhammou", "Akram", LocalDate.of(1998, Month.APRIL, 12));
         patient.setId(patientId);
         patient.setCompteId(compteId);
         when(patientRepo.findByCompteId(compteId)).thenReturn(Optional.of(patient));
@@ -128,8 +129,9 @@ class AvisServiceTest {
     @DisplayName("refuse un rendez-vous qui n'est pas terminé")
     void creerAvis_rdvNonTermine_refuse() {
         when(rdvRepo.findById(rdvId)).thenReturn(Optional.of(rdv(StatutRdv.CONFIRME)));
+        CreerAvisRequest requete = requete(5, null, false);
 
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(5, null, false)))
+        assertThatThrownBy(() -> service.creerAvis(compteId, requete))
             .isInstanceOf(AvisInvalideException.class);
         verify(avisRepo, never()).save(any());
     }
@@ -138,8 +140,9 @@ class AvisServiceTest {
     @DisplayName("refuse un rendez-vous annulé")
     void creerAvis_rdvAnnule_refuse() {
         when(rdvRepo.findById(rdvId)).thenReturn(Optional.of(rdv(StatutRdv.ANNULE)));
+        CreerAvisRequest requete = requete(5, null, false);
 
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(5, null, false)))
+        assertThatThrownBy(() -> service.creerAvis(compteId, requete))
             .isInstanceOf(AvisInvalideException.class);
     }
 
@@ -149,8 +152,9 @@ class AvisServiceTest {
         RendezVousEntity autre = rdv(StatutRdv.TERMINE);
         autre.setPatientId(UUID.randomUUID());
         when(rdvRepo.findById(rdvId)).thenReturn(Optional.of(autre));
+        CreerAvisRequest requete = requete(5, null, false);
 
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(5, null, false)))
+        assertThatThrownBy(() -> service.creerAvis(compteId, requete))
             .isInstanceOf(AvisInvalideException.class);
         verify(avisRepo, never()).save(any());
     }
@@ -159,8 +163,9 @@ class AvisServiceTest {
     @DisplayName("refuse un second avis sur le même rendez-vous")
     void creerAvis_dejaNote_refuse() {
         when(avisRepo.existsByRdvId(rdvId)).thenReturn(true);
+        CreerAvisRequest requete = requete(5, null, false);
 
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(5, null, false)))
+        assertThatThrownBy(() -> service.creerAvis(compteId, requete))
             .isInstanceOf(AvisInvalideException.class);
         verify(avisRepo, never()).save(any());
     }
@@ -170,17 +175,21 @@ class AvisServiceTest {
     void creerAvis_courseSurLIndexUnique_refuse() {
         when(avisRepo.save(any(AvisEntity.class)))
             .thenThrow(new DataIntegrityViolationException("uq_avis_rdv"));
+        CreerAvisRequest requete = requete(5, null, false);
 
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(5, null, false)))
+        assertThatThrownBy(() -> service.creerAvis(compteId, requete))
             .isInstanceOf(AvisInvalideException.class);
     }
 
     @Test
     @DisplayName("refuse une note hors de l'échelle 1-5")
     void creerAvis_noteHorsEchelle_refuse() {
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(6, null, false)))
+        CreerAvisRequest tropHaute = requete(6, null, false);
+        CreerAvisRequest tropBasse = requete(0, null, false);
+
+        assertThatThrownBy(() -> service.creerAvis(compteId, tropHaute))
             .isInstanceOf(AvisInvalideException.class);
-        assertThatThrownBy(() -> service.creerAvis(compteId, requete(0, null, false)))
+        assertThatThrownBy(() -> service.creerAvis(compteId, tropBasse))
             .isInstanceOf(AvisInvalideException.class);
     }
 
@@ -271,8 +280,9 @@ class AvisServiceTest {
             .note((short) 1).statut(StatutAvis.SIGNALE.name()).build();
         when(avisRepo.findById(avisId)).thenReturn(Optional.of(avis));
         when(signalementRepo.existsByAvisIdAndAuteurId(avisId, compteId)).thenReturn(true);
+        SignalerAvisRequest signalement = new SignalerAvisRequest(null);
 
-        assertThatThrownBy(() -> service.signaler(avisId, compteId, new SignalerAvisRequest(null)))
+        assertThatThrownBy(() -> service.signaler(avisId, compteId, signalement))
             .isInstanceOf(AvisInvalideException.class);
         verify(signalementRepo, never()).save(any());
     }
@@ -282,8 +292,9 @@ class AvisServiceTest {
     void signaler_avisInconnu_404() {
         UUID inconnu = UUID.randomUUID();
         when(avisRepo.findById(inconnu)).thenReturn(Optional.empty());
+        SignalerAvisRequest signalement = new SignalerAvisRequest(null);
 
-        assertThatThrownBy(() -> service.signaler(inconnu, compteId, new SignalerAvisRequest(null)))
+        assertThatThrownBy(() -> service.signaler(inconnu, compteId, signalement))
             .isInstanceOf(AvisNotFoundException.class);
     }
 

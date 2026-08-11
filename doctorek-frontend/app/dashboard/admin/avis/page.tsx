@@ -7,6 +7,10 @@ import { useFileModeration, useModererAvis } from '@/features/avis/hooks'
 import { StarRating } from '@/features/avis/components/StarRating'
 import type { Avis } from '@/lib/types'
 
+// Clés stables pour les puces de chargement : un index de tableau se réattribuerait
+// à une autre puce dès que la liste change.
+const SQUELETTES = ['moderation-1', 'moderation-2', 'moderation-3'] as const
+
 const STATUT_STYLE: Record<string, { label: string; bg: string; text: string }> = {
   SIGNALE: { label: 'Signalé, toujours visible', bg: '#FFF4E5', text: '#8A5A00' },
   MASQUE: { label: 'Masqué', bg: '#F4F6F9', text: '#465058' },
@@ -31,8 +35,8 @@ export default function AdminAvisPage() {
   if (isLoading) {
     return (
       <div className="space-y-3" aria-busy="true">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-2xl bg-white" />
+        {SQUELETTES.map((cle) => (
+          <div key={cle} className="h-28 animate-pulse rounded-2xl bg-white" />
         ))}
       </div>
     )

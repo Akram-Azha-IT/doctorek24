@@ -564,7 +564,7 @@ function MapGrid() {
  * Le bloc disparaît tant qu'aucun avis n'existe : afficher « 0 · aucun avis » sous le
  * bouton de réservation dessert un praticien simplement nouveau sur la plateforme.
  */
-function NoteResume({ medecinId }: { medecinId: string }) {
+function NoteResume({ medecinId }: Readonly<{ medecinId: string }>) {
   const { data } = useAvisMedecin(medecinId)
   if (!data?.noteMoyenne || data.nombreAvis === 0) return null
 
@@ -613,7 +613,7 @@ function ProfileIcon({ className = 'h-4 w-4' }: { className?: string }) {
   )
 }
 
-function StarIcon({ className = 'h-4 w-4' }: { className?: string }) {
+function StarIcon({ className = 'h-4 w-4' }: Readonly<{ className?: string }>) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path

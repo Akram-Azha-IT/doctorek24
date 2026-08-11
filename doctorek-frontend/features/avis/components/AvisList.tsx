@@ -20,7 +20,7 @@ function initiales(auteur: string): string {
     .join('')
 }
 
-export function AvisList({ avis, medecinId }: { avis: Avis[]; medecinId: string }) {
+export function AvisList({ avis, medecinId }: Readonly<{ avis: Avis[]; medecinId: string }>) {
   if (avis.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-zinc-400">
@@ -38,7 +38,7 @@ export function AvisList({ avis, medecinId }: { avis: Avis[]; medecinId: string 
   )
 }
 
-function AvisItem({ avis, medecinId }: { avis: Avis; medecinId: string }) {
+function AvisItem({ avis, medecinId }: Readonly<{ avis: Avis; medecinId: string }>) {
   const [signale, setSignale] = useState(false)
   const signaler = useSignalerAvis(medecinId)
 

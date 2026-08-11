@@ -118,10 +118,11 @@ public class ClotureRdvScheduler {
         LocalDate veille = LocalDate.now(zone).minusDays(1);
 
         for (RendezVousEntity rdv : rdvRepo.findInvitationsAvisEnAttente(veille, StatutRdv.TERMINE.name())) {
-            if (avisRepo.existsByRdvId(rdv.getId())) continue;
             // La réservation est atomique : un second passage dans la journée n'invite pas deux fois.
-            if (rdvRepo.reserverInvitationAvis(rdv.getId(), Instant.now()) == 0) continue;
-            inviter(rdv);
+            // L'évaluation s'arrête au premier refus, donc rien n'est réservé pour un avis déjà déposé.
+            boolean aInviter = !avisRepo.existsByRdvId(rdv.getId())
+                && rdvRepo.reserverInvitationAvis(rdv.getId(), Instant.now()) > 0;
+            if (aInviter) inviter(rdv);
         }
     }
 

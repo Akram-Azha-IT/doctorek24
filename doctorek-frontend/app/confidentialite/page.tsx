@@ -25,11 +25,11 @@ function Section({
   id,
   titre,
   children,
-}: {
+}: Readonly<{
   id: string
   titre: string
   children: React.ReactNode
-}) {
+}>) {
   return (
     <section id={id} className="scroll-mt-24">
       <h2 className="mb-3 text-lg font-bold text-[#010C2D]">{titre}</h2>
@@ -82,8 +82,7 @@ export default function ConfidentialitePage() {
               patient au Maroc. Pour toute question relative à vos données, écrivez à{' '}
               <a className="text-[#1863A9] underline" href="mailto:contact@doctorek.ma">
                 contact@doctorek.ma
-              </a>
-              .
+              </a>{'.'}
             </p>
           </Section>
 
@@ -135,7 +134,7 @@ export default function ConfidentialitePage() {
               accessibles sans code, le reste exige un code envoyé sur votre téléphone.
             </p>
             <p>
-              <strong className="text-[#010C2D]">Nos prestataires techniques</strong>
+              <strong className="text-[#010C2D]">Nos prestataires techniques</strong>{' '}
               (hébergement, envoi d&apos;emails), liés par une obligation de confidentialité et
               sans droit d&apos;usage sur vos données.
             </p>
@@ -169,8 +168,7 @@ export default function ConfidentialitePage() {
               toute autre demande, écrivez à{' '}
               <a className="text-[#1863A9] underline" href="mailto:contact@doctorek.ma">
                 contact@doctorek.ma
-              </a>
-              .
+              </a>{'.'}
             </p>
             <p>
               Retirer votre consentement est possible à tout moment : cela entraîne la
@@ -185,8 +183,7 @@ export default function ConfidentialitePage() {
               des Données à caractère Personnel (CNDP) sous le numéro{' '}
               <span className="rounded bg-[#FFF8E6] px-1.5 py-0.5 font-semibold text-[#8A6100]">
                 à compléter
-              </span>
-              .
+              </span>{'.'}
             </p>
             <p className="text-sm text-zinc-500">
               Vous pouvez saisir la CNDP de toute réclamation relative au traitement de vos

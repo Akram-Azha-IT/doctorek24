@@ -1,6 +1,18 @@
 export interface AppNotification {
   id: string
-  type: 'CARTE_CREEE' | 'MESSAGE_RECU' | 'ANNIVERSAIRE' | 'DOCUMENT_RECU' | 'RDV_RAPPEL' | 'AVIS_INVITATION' | string
+  /**
+   * Types connus du client. Le `string & {}` garde l'autocomplétion des libellés
+   * ci-dessus sans fermer la liste : le serveur peut émettre un type plus récent
+   * que cette version du front, qui doit alors s'afficher au lieu de casser.
+   */
+  type:
+    | 'CARTE_CREEE'
+    | 'MESSAGE_RECU'
+    | 'ANNIVERSAIRE'
+    | 'DOCUMENT_RECU'
+    | 'RDV_RAPPEL'
+    | 'AVIS_INVITATION'
+    | (string & {})
   title: string
   body: string | null
   data: string | null
