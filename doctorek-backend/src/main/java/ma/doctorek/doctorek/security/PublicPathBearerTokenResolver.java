@@ -31,6 +31,10 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         // GET /api/v1/annuaire/medecins (list + nearby + by-id)
         Pattern.compile("^/api/v1/annuaire/medecins(/[^/]+)?/?$"),
         Pattern.compile("^/api/v1/annuaire/medecins/nearby/?$"),
+        // GET /api/v1/annuaire/medecins/{id}/avis (avis publics du profil)
+        Pattern.compile("^/api/v1/annuaire/medecins/[^/]+/avis/?$"),
+        // GET /api/v1/avis/notes (notes agregees des cartes de resultats)
+        Pattern.compile("^/api/v1/avis/notes/?$"),
         // GET /api/v1/agenda/medecins/{id}/creneaux (booking flow only)
         Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$"),
         // GET /api/v1/carte/ref/{cardRef} (emergency QR scan)

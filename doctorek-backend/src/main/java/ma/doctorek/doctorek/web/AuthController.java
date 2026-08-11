@@ -1,13 +1,16 @@
 package ma.doctorek.doctorek.web;
 
 import jakarta.validation.Valid;
+import ma.doctorek.doctorek.dto.ConsentementStatutResponse;
 import ma.doctorek.doctorek.dto.CurrentUserResponse;
 import ma.doctorek.doctorek.dto.MedecinRegisteredResponse;
 import ma.doctorek.doctorek.dto.PatientRegisteredResponse;
 import ma.doctorek.doctorek.dto.RegisterMedecinRequest;
 import ma.doctorek.doctorek.dto.RegisterPatientRequest;
 import ma.doctorek.doctorek.dto.VerifyEmailRequest;
+import ma.doctorek.doctorek.enums.SourceConsentement;
 import ma.doctorek.doctorek.service.AuthService;
+import ma.doctorek.doctorek.service.ConsentementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -19,9 +22,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final ConsentementService consentementService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, ConsentementService consentementService) {
         this.authService = authService;
+        this.consentementService = consentementService;
     }
 
     @PostMapping("/register/patient")
@@ -55,5 +60,30 @@ public class AuthController {
         Jwt jwt = (Jwt) authentication.getCredentials();
         CurrentUserResponse response = authService.getCurrentUser(jwt);
         return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    /**
+     * Le compte doit-il donner son consentement (loi 09-08) avant d'utiliser l'app ?
+     *
+     * <p>Interrogé après connexion : les comptes créés avant la mise en place du recueil,
+     * et ceux ouverts via Google sans passer par notre formulaire, n'ont aucune trace
+     * d'accord. Sans cet écran, la conformité ne couvrirait que les nouveaux inscrits.
+     */
+    @GetMapping("/consentement")
+    public ResponseEntity<ApiResponse<ConsentementStatutResponse>> statutConsentement(
+            JwtAuthenticationToken authentication) {
+        CurrentUserResponse me = authService.getCurrentUser((Jwt) authentication.getCredentials());
+        boolean requis = consentementService.consentementRequis(me.id(), me.role());
+        return ResponseEntity.ok(ApiResponse.ok(
+            new ConsentementStatutResponse(requis, consentementService.versionCourante())));
+    }
+
+    @PostMapping("/consentement")
+    public ResponseEntity<ApiResponse<ConsentementStatutResponse>> accepterConsentement(
+            JwtAuthenticationToken authentication) {
+        CurrentUserResponse me = authService.getCurrentUser((Jwt) authentication.getCredentials());
+        consentementService.enregistrer(me.id(), SourceConsentement.CONNEXION);
+        return ResponseEntity.ok(ApiResponse.ok(
+            new ConsentementStatutResponse(false, consentementService.versionCourante())));
     }
 }

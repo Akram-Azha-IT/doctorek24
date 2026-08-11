@@ -45,6 +45,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins/nearby").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins/*").permitAll()
+                // avis publics : le profil medecin est public, sa note et ses avis le sont aussi
+                .requestMatchers(HttpMethod.GET, "/api/v1/annuaire/medecins/*/avis").permitAll()
+                // notes agregees des cartes de resultats (lecture seule, aucun identifiant patient)
+                .requestMatchers(HttpMethod.GET, "/api/v1/avis/notes").permitAll()
                 // public creneaux (booking flow)
                 .requestMatchers(HttpMethod.GET, "/api/v1/agenda/medecins/*/creneaux").permitAll()
                 // public emergency QR scan: exposes only the vital subset (never sensible fields)

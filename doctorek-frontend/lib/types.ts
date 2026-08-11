@@ -1,6 +1,18 @@
 export interface AppNotification {
   id: string
-  type: 'CARTE_CREEE' | 'MESSAGE_RECU' | 'ANNIVERSAIRE' | 'DOCUMENT_RECU' | 'RDV_RAPPEL' | string
+  /**
+   * Types connus du client. Le `string & {}` garde l'autocomplétion des libellés
+   * ci-dessus sans fermer la liste : le serveur peut émettre un type plus récent
+   * que cette version du front, qui doit alors s'afficher au lieu de casser.
+   */
+  type:
+    | 'CARTE_CREEE'
+    | 'MESSAGE_RECU'
+    | 'ANNIVERSAIRE'
+    | 'DOCUMENT_RECU'
+    | 'RDV_RAPPEL'
+    | 'AVIS_INVITATION'
+    | (string & {})
   title: string
   body: string | null
   data: string | null
@@ -43,7 +55,15 @@ export interface PatientRegistrationPayload {
   email: string
   phone: string
   password: string
+  /** Consentement loi 09-08 : le serveur refuse la création du compte sans lui. */
+  consentementDonnees: boolean
   lang?: string
+}
+
+/** État du consentement de l'utilisateur connecté (loi 09-08). */
+export interface ConsentementStatut {
+  requis: boolean
+  version: string
 }
 
 export interface PatientRegisteredResponse {
@@ -374,4 +394,44 @@ export interface RendezVous {
   creeParNom?: string | null
   questionnaire?: QuestionnairePreConsult | null
   createdAt: string
+}
+
+// ── Avis sur les médecins ───────────────────────────────────────────────────
+
+export type StatutAvis = 'PUBLIE' | 'SIGNALE' | 'MASQUE'
+
+export interface Avis {
+  id: string
+  note: number
+  commentaire: string | null
+  /** Libellé calculé côté serveur : « Akram B. » ou « Patient vérifié ». */
+  auteur: string
+  anonyme: boolean
+  statut: StatutAvis
+  createdAt: string
+}
+
+/**
+ * Note agrégée d'un médecin, pour les cartes de résultats.
+ *
+ * Un médecin sans avis n'a pas d'entrée : l'absence est l'information, une moyenne
+ * de 0 se lirait comme une mauvaise note.
+ */
+export interface NoteMedecin {
+  medecinId: string
+  noteMoyenne: number
+  nombreAvis: number
+}
+
+export interface AvisPage {
+  content: Avis[]
+  totalElements: number
+  totalPages: number
+  page: number
+  size: number
+  /** null quand le médecin n'a encore aucun avis — à ne pas confondre avec 0. */
+  noteMoyenne: number | null
+  nombreAvis: number
+  /** Compteurs des notes 1 à 5, dans cet ordre. */
+  repartition: number[]
 }

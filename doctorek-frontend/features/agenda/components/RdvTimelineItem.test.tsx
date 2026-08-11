@@ -90,6 +90,23 @@ describe('RdvTimelineItem — annulation', () => {
     expect(screen.queryByRole('button', { name: /^annuler$/i })).not.toBeInTheDocument()
   })
 
+  test('un créneau écoulé se lit « Terminé » et ne propose plus d’annuler', () => {
+    // Le serveur dit encore CONFIRME : la clôture automatique n'a pas encore basculé
+    // le statut. Proposer l'annulation promettrait une action impossible.
+    render(
+      <RdvTimelineItem
+        rdv={{ ...rdv('CONFIRME'), dateRdv: '2020-01-15', heureRdv: '10:00' }}
+        isReprogramming={false}
+        onReprogrammer={vi.fn()}
+        onAnnuler={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('Terminé')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^annuler$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /changer la date/i })).not.toBeInTheDocument()
+  })
+
   test('masque l’action quand le parent ne la gère pas', () => {
     render(
       <RdvTimelineItem rdv={rdv('CONFIRME')} isReprogramming={false} onReprogrammer={vi.fn()} />,

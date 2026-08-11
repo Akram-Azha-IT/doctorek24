@@ -1,5 +1,6 @@
 import { apiFetch } from '@/lib/api-client'
 import type {
+  ConsentementStatut,
   PatientRegisteredResponse,
   PatientRegistrationPayload,
   MedecinRegisteredResponse,
@@ -23,6 +24,15 @@ export function registerMedecin(
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+/** Le compte connecté doit-il encore donner son consentement (loi 09-08) ? */
+export function getConsentementStatut(): Promise<ConsentementStatut> {
+  return apiFetch<ConsentementStatut>('/api/v1/auth/consentement')
+}
+
+export function accepterConsentement(): Promise<ConsentementStatut> {
+  return apiFetch<ConsentementStatut>('/api/v1/auth/consentement', { method: 'POST' })
 }
 
 export function verifyEmail(payload: VerifyEmailPayload): Promise<void> {

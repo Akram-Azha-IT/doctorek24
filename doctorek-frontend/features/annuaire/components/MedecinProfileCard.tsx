@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import type { MedecinProfile } from '@/lib/types'
+import { AvisSection } from '@/features/avis/components/AvisSection'
+import { useAvisMedecin } from '@/features/avis/hooks'
+import { StarRating } from '@/features/avis/components/StarRating'
 import { MedecinAvatar } from './MedecinAvatar'
 
 const SECTEUR_LABELS: Record<1 | 2 | 3, string> = {
@@ -64,6 +67,7 @@ export function MedecinProfileCard({ medecin }: Props) {
 
   const navItems: NavItem[] = [
     { id: 'localisation',    label: 'Localisation',    icon: MapPinIcon,  show: true },
+    { id: 'avis',            label: 'Avis',            icon: StarIcon,    show: true },
     { id: 'specialite',      label: 'Spécialité',      icon: ProfileIcon, show: true },
     { id: 'horaires',        label: 'Horaires',        icon: ClockIcon,   show: true },
     { id: 'langues',         label: 'Langues',         icon: GlobeIcon,   show: !!(medecin.langues && medecin.langues.length > 0) },
@@ -253,6 +257,16 @@ export function MedecinProfileCard({ medecin }: Props) {
                 </div>
               </SectionCard>
 
+              {/* Avis */}
+              <SectionCard id="avis">
+                <SectionHeader icon={<StarIcon className="h-4 w-4 text-[#007DFF]" aria-hidden="true" />}>
+                  Avis des patients
+                </SectionHeader>
+                <div className="mt-4">
+                  <AvisSection medecinId={medecin.id} />
+                </div>
+              </SectionCard>
+
               {/* Spécialité */}
               <SectionCard id="specialite">
                 <SectionHeader icon={<ProfileIcon className="h-4 w-4 text-[#007DFF]" aria-hidden="true" />}>
@@ -417,11 +431,7 @@ export function MedecinProfileCard({ medecin }: Props) {
                 </div>
 
                 {/* Rating row */}
-                <div className="mx-5 mb-4 flex items-center justify-center gap-2 rounded-lg bg-zinc-50 px-3 py-2">
-                  <StarRating value={4.6} />
-                  <span className="text-xs font-semibold text-zinc-700">4.6</span>
-                  <span className="text-[11px] text-zinc-400">· 127 avis</span>
-                </div>
+                <NoteResume medecinId={medecin.id} />
 
                 {/* Not accepting banner */}
                 {!accepte && (
@@ -548,28 +558,31 @@ function MapGrid() {
   )
 }
 
-function StarRating({ value }: { value: number }) {
+/**
+ * Note du médecin dans la carte d'action.
+ *
+ * Le bloc disparaît tant qu'aucun avis n'existe : afficher « 0 · aucun avis » sous le
+ * bouton de réservation dessert un praticien simplement nouveau sur la plateforme.
+ */
+function NoteResume({ medecinId }: Readonly<{ medecinId: string }>) {
+  const { data } = useAvisMedecin(medecinId)
+  if (!data?.noteMoyenne || data.nombreAvis === 0) return null
+
   return (
-    <div className="flex gap-0.5" role="img" aria-label={`Note : ${value} sur 5`}>
-      {[1, 2, 3, 4, 5].map((i) => {
-        const fill = Math.min(1, Math.max(0, value - (i - 1)))
-        const uid = `sg-prof-${i}`
-        return (
-          <svg key={i} className="h-3.5 w-3.5" viewBox="0 0 24 24" aria-hidden="true">
-            <defs>
-              <linearGradient id={uid}>
-                <stop offset={`${fill * 100}%`} stopColor="#ECB22E" />
-                <stop offset={`${fill * 100}%`} stopColor="#e5e7eb" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-              fill={`url(#${uid})`}
-            />
-          </svg>
-        )
-      })}
-    </div>
+    <a
+      href="#avis"
+      onClick={(e) => {
+        e.preventDefault()
+        document.getElementById('avis')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }}
+      className="mx-5 mb-4 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-zinc-50 px-3 py-2 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
+    >
+      <StarRating value={data.noteMoyenne} size="sm" />
+      <span className="text-xs font-semibold text-zinc-700 tabular-nums">
+        {data.noteMoyenne.toFixed(1)}
+      </span>
+      <span className="text-[11px] text-zinc-400">· {data.nombreAvis} avis</span>
+    </a>
   )
 }
 
@@ -596,6 +609,18 @@ function ProfileIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  )
+}
+
+function StarIcon({ className = 'h-4 w-4' }: Readonly<{ className?: string }>) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+      />
     </svg>
   )
 }

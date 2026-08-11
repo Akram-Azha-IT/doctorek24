@@ -28,7 +28,7 @@ const PROS = [
 
 const LEGAL = [
   { label: 'Conditions générales', href: '#' },
-  { label: 'Confidentialité', href: '#' },
+  { label: 'Confidentialité', href: '/confidentialite' },
   { label: 'Mentions légales', href: '#' },
   { label: 'Cookies', href: '#' },
 ]

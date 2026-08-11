@@ -13,6 +13,7 @@ import jakarta.persistence.QueryHint;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -81,6 +82,48 @@ public interface RendezVousRepository extends JpaRepository<RendezVousEntity, UU
         WHERE r.id = :id AND r.rappel30minEnvoyeAt IS NULL
         """)
     int reserverRappel30Min(@Param("id") UUID id, @Param("maintenant") Instant maintenant);
+
+    /**
+     * Rendez-vous dont l'heure est passée et qui attendent encore une clôture.
+     *
+     * <p>Le médecin ne clôture pas en consultation : c'est l'heure écoulée qui fait foi.
+     * Les annulés sont exclus par la liste de statuts fournie.
+     */
+    @Query("""
+        SELECT r FROM RendezVousEntity r
+        WHERE r.statut IN :statuts
+          AND (r.dateRdv < :date OR (r.dateRdv = :date AND r.heureRdv <= :heure))
+        """)
+    List<RendezVousEntity> findACloturer(
+        @Param("statuts") Collection<String> statuts,
+        @Param("date") LocalDate date,
+        @Param("heure") LocalTime heure);
+
+    /** Consultations terminées d'un jour donné qui n'ont pas encore invité à noter. */
+    @Query("""
+        SELECT r FROM RendezVousEntity r
+        WHERE r.dateRdv = :date
+          AND r.statut = :statut
+          AND r.avisInvitationEnvoyeeAt IS NULL
+        """)
+    List<RendezVousEntity> findInvitationsAvisEnAttente(
+        @Param("date") LocalDate date,
+        @Param("statut") String statut);
+
+    /**
+     * Réserve l'invitation à noter d'un rendez-vous.
+     *
+     * <p>Même garde atomique que {@link #reserverRappel30Min} : un redémarrage dans la
+     * journée ne doit pas relancer le patient une seconde fois.
+     *
+     * @return 1 si l'appelant a obtenu l'invitation, 0 si elle était déjà envoyée
+     */
+    @Modifying
+    @Query("""
+        UPDATE RendezVousEntity r SET r.avisInvitationEnvoyeeAt = :maintenant
+        WHERE r.id = :id AND r.avisInvitationEnvoyeeAt IS NULL
+        """)
+    int reserverInvitationAvis(@Param("id") UUID id, @Param("maintenant") Instant maintenant);
 
     /**
      * Patients ayant consulté ce médecin, avec leur photo de profil.

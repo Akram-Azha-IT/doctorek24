@@ -10,7 +10,14 @@ const baseFields = {
 }
 
 export const RegisterSchema = z
-  .object(baseFields)
+  .object({
+    ...baseFields,
+    // Loi 09-08 : le consentement doit être explicite, donc jamais pré-coché ni déduit
+    // de la simple création du compte.
+    consentementDonnees: z.boolean().refine((v) => v === true, {
+      message: 'Vous devez accepter le traitement de vos données pour créer un compte',
+    }),
+  })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Les mots de passe ne correspondent pas',
     path: ['confirmPassword'],

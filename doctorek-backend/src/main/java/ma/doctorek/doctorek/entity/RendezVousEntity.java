@@ -62,6 +62,10 @@ public class RendezVousEntity {
     @Column(name = "rappel_30min_envoye_at")
     private Instant rappel30minEnvoyeAt;
 
+    /** Horodatage de l'invitation à déposer un avis — une seule par consultation. */
+    @Column(name = "avis_invitation_envoyee_at")
+    private Instant avisInvitationEnvoyeeAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }

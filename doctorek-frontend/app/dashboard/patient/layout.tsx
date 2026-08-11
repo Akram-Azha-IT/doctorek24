@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Calendar, Search, CreditCard,
   LogOut, Settings, ChevronRight, FileText, MessageCircle, Users, UserRound,
 } from 'lucide-react'
+import { ConsentementGate } from '@/features/auth/components/ConsentementGate'
 import { NotificationPanel } from '@/features/notifications/components/NotificationPanel'
 import { NotificationToasts } from '@/features/notifications/components/NotificationToasts'
 import { getSession, saveSession } from '@/lib/session'
@@ -148,6 +149,9 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
+      {/* Consentement loi 09-08 : bloque l'espace patient tant qu'il n'est pas donné. */}
+      <ConsentementGate />
+
       {/* ── Sidebar — hidden on mobile ── */}
       <aside
         className="hidden lg:flex shrink-0 flex-col bg-white border-r border-zinc-100 overflow-hidden"

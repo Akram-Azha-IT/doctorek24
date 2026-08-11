@@ -10,6 +10,7 @@ import ma.doctorek.doctorek.dto.VerifyEmailRequest;
 import ma.doctorek.doctorek.entity.MedecinDetailEntity;
 import ma.doctorek.doctorek.entity.User;
 import ma.doctorek.doctorek.enums.Role;
+import ma.doctorek.doctorek.enums.SourceConsentement;
 import ma.doctorek.doctorek.exception.EmailAlreadyExistsException;
 import ma.doctorek.doctorek.exception.InpeAlreadyExistsException;
 import ma.doctorek.doctorek.exception.InvalidVerificationCodeException;
@@ -59,19 +60,22 @@ public class AuthService {
     private final EmailService            emailService;
     private final KeycloakAdminClient     keycloakAdminClient;
     private final CarteService            carteService;
+    private final ConsentementService     consentementService;
 
     public AuthService(UserRepository userRepository,
                        MedecinDetailRepository medecinRepository,
                        PasswordEncoder passwordEncoder,
                        EmailService emailService,
                        KeycloakAdminClient keycloakAdminClient,
-                       CarteService carteService) {
+                       CarteService carteService,
+                       ConsentementService consentementService) {
         this.userRepository      = userRepository;
         this.medecinRepository   = medecinRepository;
         this.passwordEncoder     = passwordEncoder;
         this.emailService        = emailService;
         this.keycloakAdminClient = keycloakAdminClient;
         this.carteService        = carteService;
+        this.consentementService = consentementService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -123,6 +127,10 @@ public class AuthService {
         } catch (Exception e) {
             log.error("Keycloak user creation failed for patient {}: {}", saved.getId(), e.getMessage());
         }
+
+        // La preuve du consentement naît avec le compte : la case du formulaire ne survit
+        // pas à la fermeture de la page.
+        consentementService.enregistrer(saved.getId(), SourceConsentement.INSCRIPTION);
 
         emailService.sendVerificationCode(saved.getEmail(), saved.getFirstName(), code);
         return PatientRegisteredResponse.from(saved);

@@ -38,7 +38,7 @@ export function TodayTimeline({ rdvs }: { rdvs: RendezVous[] }) {
         <p className="text-sm font-bold text-[#010C2D]">
           Programme du jour
           <span className="ml-2 font-semibold text-[#A0AEC0]">
-            {active.length === 0 ? '—' : active.length}
+            {active.length}
           </span>
         </p>
         <span className="text-xs font-semibold tabular-nums text-[#6B7A99]">

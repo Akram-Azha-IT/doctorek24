@@ -211,7 +211,7 @@ function UtilisateursContent() {
                             <td className="px-5 py-3.5 text-zinc-500">
                               {user.specialite || user.ville
                                 ? [user.specialite, user.ville].filter(Boolean).join(' · ')
-                                : '—'}
+                                : '-'}
                             </td>
                             <td className="px-5 py-3.5">
                               <StatusBadge active={user.active} />

@@ -41,7 +41,7 @@ export function PatientFamilleList({ patients, onOpen }: PatientFamilleListProps
             {titulaire && famille.proches.length > 0 && (
               <p className="bg-[#F7FAFF] px-5 py-1.5 text-[11px] text-[#6B7A99]">
                 {famille.proches.length} proche{famille.proches.length > 1 ? 's' : ''} géré
-                {famille.proches.length > 1 ? 's' : ''} par {famille.titulaireNom} — dossiers
+                {famille.proches.length > 1 ? 's' : ''} par {famille.titulaireNom}, dossiers
                 médicaux distincts
               </p>
             )}

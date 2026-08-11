@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { CalendarClock, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { CalendarClock, ChevronDown, ChevronUp, Star, X } from 'lucide-react'
 import { useMedecin } from '@/features/annuaire/hooks'
+import { AvisFormModal } from '@/features/avis/components/AvisFormModal'
 import { MedecinAvatar } from '@/features/annuaire/components/MedecinAvatar'
 import { useCreneaux, useDocumentsRequis } from '@/features/agenda/hooks'
 import type { QuestionnairePreConsult, RendezVous, StatutRdv } from '@/lib/types'
 import { toLocalISODate } from '@/lib/date'
+import { statutAffiche } from '../rdv-timeline'
 import { DocumentsRequisSection } from './DocumentsRequisSection'
 
 const TYPE_CONSULTATION_LABELS: Record<string, string> = {
@@ -184,23 +186,32 @@ interface RdvTimelineItemProps {
   readonly onReprogrammer: (id: string, date: string, heure: string) => void
   readonly isCancelling?: boolean
   readonly onAnnuler?: (id: string) => void
+  /** Consultation terminée que ce patient n'a pas encore notée. */
+  readonly peutNoter?: boolean
 }
 
 export function RdvTimelineItem({
-  rdv, isReprogramming, onReprogrammer, isCancelling, onAnnuler,
+  rdv, isReprogramming, onReprogrammer, isCancelling, onAnnuler, peutNoter,
 }: RdvTimelineItemProps) {
   const { data: medecin } = useMedecin(rdv.medecinId)
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [showReschedule, setShowReschedule] = useState(false)
   // L'annulation libère le créneau et prévient le praticien : on la fait confirmer.
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const [showAvis, setShowAvis] = useState(false)
+  // L'invalidation du cache met un instant : on retire le bouton dès l'envoi réussi.
+  const [avisDepose, setAvisDepose] = useState(false)
 
   const q = rdv.questionnaire
-  const config = STATUT_CONFIG[rdv.statut]
+  // Un créneau écoulé se lit « Terminé » même si le serveur n'a pas encore basculé
+  // le statut : annoncer « Confirmé » sur une consultation passée, avec un bouton
+  // d'annulation, promet une action que le patient ne peut plus faire.
+  const statut = statutAffiche(rdv)
+  const config = STATUT_CONFIG[statut]
   const { day, month } = formatDateParts(rdv.dateRdv)
-  const canReschedule = RESCHEDULABLE.includes(rdv.statut)
+  const canReschedule = RESCHEDULABLE.includes(statut)
   const motif = q?.message ?? rdv.motif
-  const isPast = rdv.statut === 'ANNULE' || rdv.statut === 'TERMINE'
+  const isPast = statut === 'ANNULE' || statut === 'TERMINE'
 
   // Les documents demandés par le médecin sont affichés d'office (pas cachés
   // derrière un clic) : le patient doit les voir sans avoir à chercher.
@@ -211,7 +222,8 @@ export function RdvTimelineItem({
   const medecinLastName = medecin?.lastName ?? ''
 
   const canCancel = canReschedule && !!onAnnuler
-  const hasFooter = (q || canReschedule) && !showReschedule
+  const canNoter = !!peutNoter && !avisDepose && !!medecin
+  const hasFooter = (q || canReschedule || canNoter) && !showReschedule
 
   return (
     <li className="list-none">
@@ -304,6 +316,16 @@ export function RdvTimelineItem({
                     {showQuestionnaire ? 'Masquer mes réponses' : 'Voir mes réponses'}
                   </button>
                 )}
+                {canNoter && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAvis(true)}
+                    className="flex items-center gap-1.5 rounded-lg bg-[#FFF6E3] px-3 py-2 text-xs font-semibold text-[#8A6100] transition-colors hover:bg-[#FFEFCC]"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                    Donner mon avis
+                  </button>
+                )}
                 {canReschedule && (
                   <button
                     type="button"
@@ -376,6 +398,16 @@ export function RdvTimelineItem({
           </div>
         )}
       </div>
+
+      {showAvis && medecin && (
+        <AvisFormModal
+          rdvId={rdv.id}
+          medecinId={rdv.medecinId}
+          medecinNom={`${medecinFirstName} ${medecinLastName}`.trim()}
+          onClose={() => setShowAvis(false)}
+          onSuccess={() => setAvisDepose(true)}
+        />
+      )}
     </li>
   )
 }
