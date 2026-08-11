@@ -32,6 +32,7 @@ class AuthServiceReRegisterTest {
     @Mock private EmailService emailService;
     @Mock private KeycloakAdminClient keycloakAdminClient;
     @Mock private CarteService carteService;
+    @Mock private ConsentementService consentementService;
 
     private AuthService authService;
 
@@ -40,11 +41,11 @@ class AuthServiceReRegisterTest {
     @BeforeEach
     void setUp() {
         authService = new AuthService(userRepository, medecinRepository, passwordEncoder,
-            emailService, keycloakAdminClient, carteService);
+            emailService, keycloakAdminClient, carteService, consentementService);
     }
 
     private RegisterPatientRequest request() {
-        return new RegisterPatientRequest(EMAIL, "password123", "Akram", "Azhar", "0612345678", "fr");
+        return new RegisterPatientRequest(EMAIL, "password123", "Akram", "Azhar", "0612345678", true, "fr");
     }
 
     private User existing(boolean verified, String keycloakId) {

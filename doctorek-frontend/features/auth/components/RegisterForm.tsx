@@ -2,6 +2,7 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { AuthField, Icons, PrimaryButton } from './AuthField'
@@ -118,6 +119,34 @@ export function RegisterForm() {
           aria-required="true"
           {...register('confirmPassword')}
         />
+      </div>
+
+      <div className="mt-1.5">
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-[#F4F6F9] px-3.5 py-3">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#007DFF]"
+            aria-invalid={!!errors.consentementDonnees}
+            {...register('consentementDonnees')}
+          />
+          <span className="text-xs leading-relaxed text-[#465058]">
+            J&apos;accepte que Doctorek traite mes données personnelles et de santé pour gérer
+            mes rendez-vous et mon dossier médical, conformément à la{' '}
+            <Link
+              href="/confidentialite"
+              target="_blank"
+              className="font-semibold text-[#1863A9] underline underline-offset-2"
+            >
+              politique de confidentialité
+            </Link>{' '}
+            et à la loi 09-08.
+          </span>
+        </label>
+        {errors.consentementDonnees && (
+          <p role="alert" className="mt-1.5 text-xs font-medium text-[#B4232A]">
+            {errors.consentementDonnees.message}
+          </p>
+        )}
       </div>
 
       <PrimaryButton type="submit" loading={isPending}>

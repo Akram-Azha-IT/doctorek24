@@ -43,7 +43,15 @@ export interface PatientRegistrationPayload {
   email: string
   phone: string
   password: string
+  /** Consentement loi 09-08 : le serveur refuse la création du compte sans lui. */
+  consentementDonnees: boolean
   lang?: string
+}
+
+/** État du consentement de l'utilisateur connecté (loi 09-08). */
+export interface ConsentementStatut {
+  requis: boolean
+  version: string
 }
 
 export interface PatientRegisteredResponse {
