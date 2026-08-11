@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { MedecinAvatar } from './MedecinAvatar'
 import { ListeAttenteDialog } from '@/features/agenda/components/ListeAttenteDialog'
 import { useSession } from '@/lib/useSession'
-import type { MedecinProfile, BookingSlot } from '@/lib/types'
+import { NoteInline } from '@/features/avis/components/NoteInline'
+import type { MedecinProfile, BookingSlot, NoteMedecin } from '@/lib/types'
 import { useCreneauxNavigation } from '../useCreneauxNavigation'
 
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
@@ -294,13 +295,15 @@ function SlotPanel({ medecin, onBookSlot, nav, onAlerter }: SlotPanelProps & { o
 
 interface MedecinCardListProps {
   readonly medecin: MedecinProfile
+  /** Absente tant que les notes de la page chargent, ou si le médecin n'a aucun avis. */
+  readonly note?: NoteMedecin
   readonly distanceKm?: number
   readonly onMouseEnter?: () => void
   readonly onMouseLeave?: () => void
   readonly onBookSlot?: (slot: BookingSlot) => void
 }
 
-export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
+export function MedecinCardList({ medecin, note, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
   const accepte = medecin.acceptNouveauxPatients !== false
   // L'état des créneaux est passé tel quel au panneau, seul consommateur.
   const nav = useCreneauxNavigation(medecin.id)
@@ -366,8 +369,11 @@ export function MedecinCardList({ medecin, distanceKm, onMouseEnter, onMouseLeav
                 )}
               </div>
 
-              {/* Specialty */}
-              <p className="text-[13px] font-semibold text-[#007DFF]">{medecin.specialite}</p>
+              {/* Specialty + note : la qualité se lit avec la spécialité, pas dans un coin */}
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <p className="text-[13px] font-semibold text-[#007DFF]">{medecin.specialite}</p>
+                <NoteInline note={note} />
+              </div>
 
               {/* Address */}
               <p className="flex items-center gap-1 truncate text-xs text-zinc-400">

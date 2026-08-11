@@ -7,6 +7,7 @@ import {
   CreditCard,
   FileText,
   MessageSquare,
+  Star,
 } from 'lucide-react'
 
 export interface NotifTypeConfig {
@@ -46,6 +47,11 @@ export const NOTIF_TYPE_CONFIG: Record<string, NotifTypeConfig> = {
     icon: <FileText className="h-4 w-4" />,
     chipClass: 'bg-[#F0F2F5] text-[#465058]',
     href: { PATIENT: '/dashboard/patient/dossier', MEDECIN: '/dashboard/medecin/patients' },
+  },
+  AVIS_INVITATION: {
+    icon: <Star className="h-4 w-4" />,
+    chipClass: 'bg-[#FFF8E6] text-[#B7791F]',
+    href: { PATIENT: '/dashboard/patient/rdvs', MEDECIN: null },
   },
   ANNIVERSAIRE: {
     icon: <Cake className="h-4 w-4" />,

@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import { MedecinCardList } from '@/features/annuaire/components/MedecinCardList'
+import { useNotesMedecins } from '@/features/avis/hooks'
 import LogoLoader from '@/components/LogoLoader'
 import type { BookingSlot, MedecinNearbyResult, MedecinProfile } from '@/lib/types'
 import type { DisponibiliteFilter } from '@/lib/disponibilite'
@@ -62,6 +64,13 @@ export function ResultsList({
 }: ResultsListProps) {
   const loading = isLoading || geoLoading
 
+  // Les notes des cartes visibles en une requête : une par carte suivrait la pagination.
+  const idsAffiches = useMemo(
+    () => (nearbyMode ? pagedNearby.map((r) => r.medecin.id) : searchContent.map((m) => m.id)),
+    [nearbyMode, pagedNearby, searchContent],
+  )
+  const { data: notes } = useNotesMedecins(idsAffiches)
+
   return (
     <div className={`flex-1 min-w-0 px-4 py-5 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
       {/* Barre de résultats (compteur + tri + filtres actifs) — cachée en erreur */}
@@ -116,6 +125,7 @@ export function ResultsList({
               <MedecinCardList
                 key={r.medecin.id}
                 medecin={r.medecin}
+                note={notes?.get(r.medecin.id)}
                 distanceKm={r.distanceKm}
                 onMouseEnter={() => onHover(r.medecin.id)}
                 onMouseLeave={() => onHover(null)}
@@ -180,6 +190,7 @@ export function ResultsList({
               <MedecinCardList
                 key={medecin.id}
                 medecin={medecin}
+                note={notes?.get(medecin.id)}
                 onMouseEnter={() => onHover(medecin.id)}
                 onMouseLeave={() => onHover(null)}
                 onBookSlot={onBookSlot}

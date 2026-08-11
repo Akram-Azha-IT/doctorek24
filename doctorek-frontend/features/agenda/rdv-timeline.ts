@@ -27,6 +27,27 @@ function compareByDateTimeDesc(a: RendezVous, b: RendezVous): number {
   return -compareByDateTimeAsc(a, b)
 }
 
+/** Fin du créneau réservé : début + durée. */
+function finDeCreneau(rdv: RendezVous): Date {
+  const [year, month, day] = rdv.dateRdv.split('-').map(Number)
+  const [heure, minute] = rdv.heureRdv.split(':').map(Number)
+  return new Date(year, month - 1, day, heure, minute + (rdv.duree || 0))
+}
+
+/**
+ * Statut à afficher, l'heure faisant foi.
+ *
+ * La clôture côté serveur passe à la minute : entre la fin d'une consultation et le
+ * tick suivant, un rendez-vous écoulé serait encore annoncé « Confirmé », avec ses
+ * boutons d'annulation. Les anciennes données, antérieures à la clôture automatique,
+ * poseraient le même problème indéfiniment.
+ */
+export function statutAffiche(rdv: RendezVous, now: Date = new Date()): RendezVous['statut'] {
+  const enCours = rdv.statut === 'EN_ATTENTE' || rdv.statut === 'CONFIRME'
+  if (enCours && finDeCreneau(rdv) <= now) return 'TERMINE'
+  return rdv.statut
+}
+
 export function groupRdvsBySection(rdvs: readonly RendezVous[], now: Date = new Date()): GroupedRdvs {
   const today = startOfDay(now)
   const upcoming: RendezVous[] = []

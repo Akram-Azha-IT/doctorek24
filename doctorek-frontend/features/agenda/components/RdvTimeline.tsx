@@ -1,7 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import type { RendezVous } from '@/lib/types'
-import { groupRdvsBySection } from '../rdv-timeline'
+import { useRdvsNotables } from '@/features/avis/hooks'
+import { groupRdvsBySection, statutAffiche } from '../rdv-timeline'
 import { RdvTimelineItem } from './RdvTimelineItem'
 
 interface RdvTimelineProps {
@@ -51,10 +53,11 @@ interface TimeSectionProps {
   readonly isCancelling?: boolean
   readonly onAnnuler?: (id: string) => void
   readonly accent?: boolean
+  readonly notables?: ReadonlySet<string>
 }
 
 function TimeSection({
-  title, rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler, accent,
+  title, rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler, accent, notables,
 }: TimeSectionProps) {
   if (rdvs.length === 0) return null
 
@@ -70,6 +73,7 @@ function TimeSection({
             onReprogrammer={onReprogrammer}
             isCancelling={isCancelling}
             onAnnuler={onAnnuler}
+            peutNoter={notables?.has(rdv.id) ?? false}
           />
         ))}
       </ol>
@@ -81,6 +85,17 @@ export function RdvTimeline({
   rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler,
 }: RdvTimelineProps) {
   const { upcoming, today, past } = groupRdvsBySection(rdvs)
+
+  // Une seule question pour toute la liste : demander carte par carte referait
+  // une requête par rendez-vous passé.
+  // Les créneaux écoulés sont inclus même si le serveur n'a pas encore basculé leur
+  // statut : il reste seul juge de l'éligibilité, et le bouton apparaît dès sa réponse.
+  const idsTermines = useMemo(
+    () => rdvs.filter((r) => statutAffiche(r) === 'TERMINE').map((r) => r.id),
+    [rdvs],
+  )
+  const { data: notables } = useRdvsNotables(idsTermines)
+  const notablesSet = useMemo(() => new Set(notables ?? []), [notables])
 
   if (upcoming.length === 0 && today.length === 0 && past.length === 0) {
     return (
@@ -108,7 +123,9 @@ export function RdvTimeline({
     )
   }
 
-  const sectionProps = { isReprogramming, onReprogrammer, isCancelling, onAnnuler }
+  const sectionProps = {
+    isReprogramming, onReprogrammer, isCancelling, onAnnuler, notables: notablesSet,
+  }
 
   return (
     <div>

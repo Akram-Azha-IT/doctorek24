@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, LogOut, Users, CreditCard, ChevronDown, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, LogOut, Users, CreditCard, ChevronDown, ShieldCheck, Star } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useSession as useLocalSession } from '@/lib/useSession'
 import { logout } from '@/lib/auth'
@@ -12,12 +12,14 @@ const NAV_ITEMS = [
   { href: '/dashboard/admin', label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
   { href: '/dashboard/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/cartes', label: 'Cartes virtuelles', icon: CreditCard },
+  { href: '/dashboard/admin/avis', label: 'Modération des avis', icon: Star },
 ]
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard/admin': "Vue d'ensemble",
   '/dashboard/admin/utilisateurs': 'Utilisateurs',
   '/dashboard/admin/cartes': 'Cartes virtuelles',
+  '/dashboard/admin/avis': 'Modération des avis',
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
