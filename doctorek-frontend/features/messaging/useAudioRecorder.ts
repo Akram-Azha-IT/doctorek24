@@ -74,7 +74,7 @@ export function useAudioRecorder() {
       }, 250)
     } catch {
       setState('error')
-      setError("Micro inaccessible — autorise l'accès au microphone")
+      setError("Micro inaccessible : autorise l'accès au microphone")
     }
   }, [cleanup])
 

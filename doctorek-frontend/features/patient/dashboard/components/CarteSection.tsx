@@ -59,12 +59,12 @@ export function CarteSection({ carte, carteLoading, hasCarte, profile, firstName
           {/* Quick vitals strip */}
           <div className="mt-4 grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-[#F1F4F7] px-3 py-2.5 text-center">
-              <p className="text-sm font-bold text-[#007DFF]">{carte?.groupeSanguin ?? '—'}</p>
+              <p className="text-sm font-bold text-[#007DFF]">{carte?.groupeSanguin ?? '-'}</p>
               <p className="text-[10px] text-[#465058] font-medium mt-0.5">Groupe sanguin</p>
             </div>
             <div className="rounded-xl bg-[#F1F4F7] px-3 py-2.5 text-center">
               <p className={`text-sm font-bold ${allergiesCount > 0 ? 'text-[#E01E5A]' : 'text-[#333333]'}`}>
-                {allergiesCount > 0 ? allergiesCount : '—'}
+                {allergiesCount > 0 ? allergiesCount : '-'}
               </p>
               <p className="text-[10px] text-[#465058] font-medium mt-0.5">Allergie{allergiesCount > 1 ? 's' : ''}</p>
             </div>

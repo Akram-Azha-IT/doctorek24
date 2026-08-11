@@ -34,7 +34,7 @@ function StatCard({ def, value }: { def: StatCardDef; value: number | undefined 
         </span>
       </div>
       <p className="text-[28px] font-extrabold leading-none tabular-nums text-[#010C2D]">
-        {value !== undefined ? value.toLocaleString('fr-FR') : '—'}
+        {value !== undefined ? value.toLocaleString('fr-FR') : '-'}
       </p>
       <p className="mt-1.5 text-sm font-medium text-zinc-500">{def.label}</p>
     </div>

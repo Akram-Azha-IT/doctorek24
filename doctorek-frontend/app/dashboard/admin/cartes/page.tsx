@@ -24,7 +24,7 @@ function StatutBadge({ statut }: { statut: string }) {
 }
 
 function GroupeSanguinBadge({ value }: { value: string | null }) {
-  if (!value) return <span className="text-zinc-400">—</span>
+  if (!value) return <span className="text-zinc-400">-</span>
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600">
       <Droplet className="h-3 w-3" />
@@ -36,7 +36,7 @@ function GroupeSanguinBadge({ value }: { value: string | null }) {
 function CarteRow({ carte }: { carte: CarteSummary }) {
   const createdAt = carte.createdAt
     ? new Date(carte.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—'
+    : '-'
 
   return (
     <tr className="border-b border-zinc-50 transition-colors last:border-0 hover:bg-[#F8F9FB]">
@@ -60,7 +60,7 @@ function CarteRow({ carte }: { carte: CarteSummary }) {
             Donneur
           </span>
         ) : (
-          <span className="text-sm text-zinc-400">—</span>
+          <span className="text-sm text-zinc-400">-</span>
         )}
       </td>
       <td className="px-6 py-4 text-sm text-zinc-500">{createdAt}</td>
