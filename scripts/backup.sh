@@ -89,5 +89,7 @@ if [ "$DISTANT_OK" = "1" ] && [ -n "${HEALTHCHECK_URL:-}" ]; then
 fi
 
 # Sortie en erreur si la copie distante a echoue : l'archive locale existe, mais
-# elle ne protege pas de la perte de la machine.
-[ "$DISTANT_OK" = "1" ]
+# elle ne protege pas de la perte de la machine. Le piege ERR est retire avant,
+# sinon cette sortie deliberee se journaliserait comme un plantage.
+trap - ERR
+[ "$DISTANT_OK" = "1" ] || exit 1
