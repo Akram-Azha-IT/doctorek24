@@ -54,18 +54,40 @@ tar czf - -C "$TMP" . \
         --passphrase-file "$PASSPHRASE" -o "$ARCHIVE"
 chown ubuntu:ubuntu "$ARCHIVE"
 
-# ── Copie hors machine ──────────────────────────────────────────────────
-if command -v rclone >/dev/null 2>&1; then
-  rclone copy "$ARCHIVE" "$DISTANT" --log-level ERROR
-else
-  echoj "ATTENTION: rclone absent, archive gardee uniquement sur la VM"
+# Une archive qu'on ne sait pas rouvrir n'est pas une sauvegarde : on verifie
+# tout de suite qu'elle se dechiffre avec la phrase de passe en place.
+if ! gpg --batch --quiet --decrypt --passphrase-file "$PASSPHRASE" "$ARCHIVE" \
+     | tar tzf - >/dev/null 2>&1; then
+  echoj "ECHEC: archive illisible apres chiffrement"
+  exit 1
 fi
 
 # ── Purge locale ────────────────────────────────────────────────────────
 find "$LOCAL_DIR" -name 'doctorek-*.tar.gz.gpg' -mtime "+$RETENTION_JOURS" -delete
 
-echoj "OK $(basename "$ARCHIVE") $(du -h "$ARCHIVE" | cut -f1)"
+echoj "OK local $(basename "$ARCHIVE") $(du -h "$ARCHIVE" | cut -f1)"
+
+# ── Copie hors machine ──────────────────────────────────────────────────
+# Un envoi distant impossible ne doit pas annuler la sauvegarde locale, qui
+# reste valide et couvre le cas le plus frequent (fausse manipulation). Mais il
+# doit se voir : le script sort en erreur pour que le cron et la supervision
+# le signalent.
+DISTANT_OK=0
+if ! command -v rclone >/dev/null 2>&1; then
+  echoj "ATTENTION: rclone absent, archive gardee uniquement sur la VM"
+elif rclone copy "$ARCHIVE" "$DISTANT" --log-level ERROR; then
+  DISTANT_OK=1
+  echoj "OK distant $DISTANT"
+else
+  echoj "ATTENTION: copie vers $DISTANT impossible, archive locale conservee"
+fi
 
 # Ping optionnel : si la sauvegarde ne tourne plus, healthchecks.io alerte.
 # Une sauvegarde qui echoue en silence est pire que pas de sauvegarde.
-[ -n "${HEALTHCHECK_URL:-}" ] && curl -fsS -m 10 "$HEALTHCHECK_URL" >/dev/null || true
+if [ "$DISTANT_OK" = "1" ] && [ -n "${HEALTHCHECK_URL:-}" ]; then
+  curl -fsS -m 10 "$HEALTHCHECK_URL" >/dev/null || true
+fi
+
+# Sortie en erreur si la copie distante a echoue : l'archive locale existe, mais
+# elle ne protege pas de la perte de la machine.
+[ "$DISTANT_OK" = "1" ]
