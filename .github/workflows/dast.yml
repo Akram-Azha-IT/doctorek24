@@ -31,7 +31,7 @@ jobs:
           echo "url=$TARGET" >> "$GITHUB_OUTPUT"
 
       - name: ZAP baseline (passif — sans attaque active)
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: ${{ steps.target.outputs.url }}
           # -a : inclut les règles alpha ; rapport en artifact + issue GitHub
