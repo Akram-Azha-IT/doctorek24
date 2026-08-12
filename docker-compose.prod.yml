@@ -77,6 +77,9 @@ services:
         condition: service_healthy
 
   app:
+    # Image construite par GitHub Actions (docs/EXPLOITATION.md). La section build
+    # reste comme filet : si GHCR est indisponible, --build fonctionne toujours.
+    image: ghcr.io/akram-azha-it/doctorek24/api:${IMAGE_TAG:-latest}
     build: .
     restart: unless-stopped
     environment:
@@ -154,6 +157,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: ghcr.io/akram-azha-it/doctorek24/web:${IMAGE_TAG:-latest}
     build:
       context: ./doctorek-frontend
       args:

@@ -1,0 +1,100 @@
+name: Deploy production
+
+# Declenchement manuel uniquement. Doctorek sert de vrais patients et n'a pas
+# d'environnement de preproduction : une fusion sur master ne doit pas partir en
+# production sans decision explicite.
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: Services a deployer
+        type: choice
+        options: [tous, api, web]
+        default: tous
+
+env:
+  REGISTRE: ghcr.io/akram-azha-it/doctorek24
+  # La VM est en ARM (Ampere A1). Les runners GitHub sont en x86, donc le build
+  # passe par QEMU : c'est lent, mais asynchrone, et surtout ca ne compile plus
+  # rien sur le serveur de production.
+  PLATEFORME: linux/arm64
+
+jobs:
+  build:
+    name: Construire et publier les images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Backend
+        if: inputs.services == 'tous' || inputs.services == 'api'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ env.PLATEFORME }}
+          push: true
+          tags: |
+            ${{ env.REGISTRE }}/api:latest
+            ${{ env.REGISTRE }}/api:${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+      - name: Frontend
+        if: inputs.services == 'tous' || inputs.services == 'web'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./doctorek-frontend
+          platforms: ${{ env.PLATEFORME }}
+          push: true
+          # Les NEXT_PUBLIC_* sont figees a la construction : elles doivent etre
+          # ici et non dans l'environnement du conteneur.
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.${{ vars.DOMAIN }}
+            NEXT_PUBLIC_KEYCLOAK_URL=https://auth.${{ vars.DOMAIN }}
+          tags: |
+            ${{ env.REGISTRE }}/web:latest
+            ${{ env.REGISTRE }}/web:${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  deploy:
+    name: Deployer sur la VM
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Telecharger les images et redemarrer
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd ~/doctorek
+            export IMAGE_TAG=${{ github.sha }}
+            sudo -E docker compose -f docker-compose.prod.yml --env-file .env.prod pull app frontend
+            sudo -E docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-build app frontend
+            sudo docker image prune -f
+            sudo docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+
+      - name: Verifier que la production repond
+        run: |
+          sleep 45
+          for h in app api auth; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$h.${{ vars.DOMAIN }}")
+            echo "$h -> $code"
+            [ "$code" -lt 500 ] || exit 1
+          done
