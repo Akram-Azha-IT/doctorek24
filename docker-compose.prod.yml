@@ -77,6 +77,9 @@ services:
         condition: service_healthy
 
   app:
+    # Image construite par GitHub Actions (docs/EXPLOITATION.md). La section build
+    # reste comme filet : si GHCR est indisponible, --build fonctionne toujours.
+    image: ghcr.io/akram-azha-it/doctorek24/api:${IMAGE_TAG:-latest}
     build: .
     restart: unless-stopped
     environment:
@@ -108,6 +111,11 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: doctorek-uploads
+      # Assistant IA — desactive par defaut. L'autoconfiguration Spring AI echouerait
+      # au demarrage si le commutateur etait pose sans cle : les deux vont ensemble.
+      SPRING_AI_MODEL_CHAT: ${SPRING_AI_MODEL_CHAT:-none}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       JAVA_TOOL_OPTIONS: -Xms256m -Xmx640m
     volumes:
       - ./secrets:/app/secrets:ro
@@ -120,8 +128,17 @@ services:
   # ── SonarQube Community (SAST self-hosted) ──────────────────────────
   # Prérequis hôte : sysctl -w vm.max_map_count=262144 (Elasticsearch)
   # Base : CREATE DATABASE sonar_db; (voir docs/SECURITY-PIPELINE.md)
+  #
+  # Hors du démarrage par défaut : SonarQube consommait 3 Go des 12 Go du
+  # quota Always Free, pour 0,6 % de CPU. Un outil d'analyse n'a pas à occuper
+  # la memoire de l'hote de production en permanence.
+  # Analyse ponctuelle :
+  #   docker compose -f docker-compose.prod.yml --env-file .env.prod \
+  #     --profile sonar up -d sonarqube
+  # Les volumes et sonar_db survivent a l'arret : l'historique est conserve.
   sonarqube:
     image: sonarqube:community
+    profiles: ["sonar"]
     restart: unless-stopped
     environment:
       SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonar_db
@@ -140,6 +157,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: ghcr.io/akram-azha-it/doctorek24/web:${IMAGE_TAG:-latest}
     build:
       context: ./doctorek-frontend
       args:
