@@ -14,7 +14,7 @@ LOCAL_DIR=/home/ubuntu/backups
 PASSPHRASE=/home/ubuntu/.backup-passphrase
 JOURNAL=/home/ubuntu/backup.log
 RETENTION_JOURS=7
-DISTANT="${BACKUP_REMOTE:-b2:doctorek-backups}"
+DISTANT="${BACKUP_REMOTE:-drive:doctorek-backups}"
 
 echoj() { echo "$(date -Iseconds) $*" | tee -a "$JOURNAL"; }
 trap 'echoj "ECHEC a la ligne $LINENO"' ERR
