@@ -1,0 +1,9 @@
+# Les fichiers executes sous Linux gardent des fins de ligne LF, meme edites
+# depuis Windows. Un CRLF sur un script shell rend le shebang invalide et
+# produit un "bad interpreter" a l'execution sur la VM.
+*.sh text eol=lf
+mvnw text eol=lf
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
+docker/Caddyfile text eol=lf
+*.env.example text eol=lf
