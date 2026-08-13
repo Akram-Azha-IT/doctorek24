@@ -49,10 +49,25 @@ construire_web() {
     -t "doctorek/web:$TAG" -t doctorek/web:latest "$SRC/doctorek-frontend"
 }
 
+# Compose demande les deux images a l'etiquette du commit, meme quand un seul
+# service est redeploye. Le service inchange est donc reetiquete depuis sa
+# version courante, sans etre reconstruit : c'est bien le meme binaire qui
+# continue de tourner. S'il n'existe pas encore, il faut le construire.
+reprendre() {
+  local nom="doctorek/$1"
+  if sudo docker image inspect "$nom:latest" >/dev/null 2>&1; then
+    echo "-- $1 inchange, reetiquete depuis latest --"
+    sudo docker tag "$nom:latest" "$nom:$TAG"
+  else
+    echo "-- $1 absent de cette machine, construction obligatoire --"
+    "construire_$1"
+  fi
+}
+
 case "$SERVICES" in
   tous) construire_api; construire_web ;;
-  api)  construire_api ;;
-  web)  construire_web ;;
+  api)  construire_api; reprendre web ;;
+  web)  construire_web; reprendre api ;;
   *) echo "ERREUR: service inconnu '$SERVICES'" >&2; exit 1 ;;
 esac
 
