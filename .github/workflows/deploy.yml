@@ -12,89 +12,52 @@ on:
         options: [tous, api, web]
         default: tous
 
-env:
-  REGISTRE: ghcr.io/akram-azha-it/doctorek24
-  PLATEFORME: linux/arm64
+# Deux deploiements simultanes construiraient sur les memes coeurs et se
+# marcheraient dessus au moment du redemarrage des conteneurs.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
 
 jobs:
-  build:
-    name: Construire et publier les images
-    # Runner ARM natif, indispensable. Sur un runner x86, la construction passe
-    # par QEMU : "npm ci" y devient si lent que le job a ete tue par la limite
-    # des 6 heures de GitHub. On ne cherche pas a rendre l'emulation supportable,
-    # on la supprime.
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: read
-      packages: write
+  deploy:
+    name: Construire sur la VM et mettre en service
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
+      - name: Charger la cle SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          ssh-private-key: ${{ secrets.VM_SSH_KEY }}
 
-      - name: Backend
-        if: inputs.services == 'tous' || inputs.services == 'api'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: ${{ env.PLATEFORME }}
-          push: true
-          tags: |
-            ${{ env.REGISTRE }}/api:latest
-            ${{ env.REGISTRE }}/api:${{ github.sha }}
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,scope=api,mode=max
+      - name: Faire confiance a l'hote
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Frontend
-        if: inputs.services == 'tous' || inputs.services == 'web'
-        uses: docker/build-push-action@v6
-        with:
-          context: ./doctorek-frontend
-          platforms: ${{ env.PLATEFORME }}
-          push: true
-          # Les NEXT_PUBLIC_* sont figees a la construction : elles doivent etre
-          # ici et non dans l'environnement du conteneur.
-          build-args: |
-            NEXT_PUBLIC_API_URL=https://api.${{ vars.DOMAIN }}
-            NEXT_PUBLIC_KEYCLOAK_URL=https://auth.${{ vars.DOMAIN }}
-          tags: |
-            ${{ env.REGISTRE }}/web:latest
-            ${{ env.REGISTRE }}/web:${{ github.sha }}
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,scope=web,mode=max
+      # Le depot fait foi. Un scp manuel depuis un poste de travail pouvait
+      # envoyer un etat different de la branche deployee : ici la VM recoit
+      # exactement le commit choisi.
+      - name: Envoyer le code sur la VM
+        run: |
+          rsync -az --delete \
+            --exclude '.git' --exclude 'node_modules' --exclude 'target' \
+            ./ "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:~/doctorek-src/"
 
-  deploy:
-    name: Deployer sur la VM
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Telecharger les images et redemarrer
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_KEY }}
-          script_stop: true
-          script: |
-            set -euo pipefail
-            cd ~/doctorek
-            export IMAGE_TAG=${{ github.sha }}
-            sudo -E docker compose -f docker-compose.prod.yml --env-file .env.prod pull app frontend
-            sudo -E docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --no-build app frontend
-            sudo docker image prune -f
-            sudo docker compose -f docker-compose.prod.yml --env-file .env.prod ps
+      # La construction a lieu sur la VM, confinee a un coeur : pas de runner
+      # ARM gratuit pour un depot prive, et l'emulation QEMU a deja fait
+      # exploser un job a six heures sur "npm ci".
+      - name: Construire et mettre en service
+        run: |
+          ssh "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
+            "chmod +x ~/doctorek-src/scripts/deploy-vm.sh && \
+             IMAGE_TAG=${{ github.sha }} ~/doctorek-src/scripts/deploy-vm.sh ${{ inputs.services }}"
 
       - name: Verifier que la production repond
         run: |
           sleep 45
           for h in app api auth; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$h.${{ vars.DOMAIN }}")
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$h.${{ vars.DOMAIN }}")
             echo "$h -> $code"
             [ "$code" -lt 500 ] || exit 1
           done
