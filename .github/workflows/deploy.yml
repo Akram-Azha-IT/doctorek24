@@ -14,22 +14,22 @@ on:
 
 env:
   REGISTRE: ghcr.io/akram-azha-it/doctorek24
-  # La VM est en ARM (Ampere A1). Les runners GitHub sont en x86, donc le build
-  # passe par QEMU : c'est lent, mais asynchrone, et surtout ca ne compile plus
-  # rien sur le serveur de production.
   PLATEFORME: linux/arm64
 
 jobs:
   build:
     name: Construire et publier les images
-    runs-on: ubuntu-latest
+    # Runner ARM natif, indispensable. Sur un runner x86, la construction passe
+    # par QEMU : "npm ci" y devient si lent que le job a ete tue par la limite
+    # des 6 heures de GitHub. On ne cherche pas a rendre l'emulation supportable,
+    # on la supprime.
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
