@@ -210,12 +210,39 @@
   0%   { -webkit-mask-position: 120% 0;  mask-position: 120% 0; }
   100% { -webkit-mask-position: -120% 0; mask-position: -120% 0; }
 }
+
+/* Variante compacte pour les boutons, toasts et contrôles étroits. */
+.logo-loader-mark {
+  display: inline-block;
+  width: var(--ll-size, 18px);
+  height: var(--ll-size, 18px);
+  flex: 0 0 auto;
+  background: url('/icone-doctorek.png') center / contain no-repeat;
+  animation: logo-mark-breathe 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center;
+}
+.logo-loader-mark--inverse {
+  /* L’icône possède déjà une tuile blanche : on garde ses couleurs de marque
+     sur les fonds soutenus et on renforce seulement sa séparation. */
+  filter: drop-shadow(0 1px 2px rgba(1, 12, 45, 0.22));
+}
+@keyframes logo-mark-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.88); }
+  50% { opacity: 1; transform: scale(1); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .logo-loader__draw {
+  .logo-loader__draw,
+  .logo-loader-mark {
     animation: none;
+  }
+  .logo-loader__draw {
     -webkit-mask-image: none;
             mask-image: none;
     opacity: 1;
+  }
+  .logo-loader-mark {
+    opacity: 1;
+    transform: none;
   }
 }
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -232,4 +259,136 @@
   background-color: var(--dk-canvas);
   background-image: radial-gradient(var(--dk-canvas-dot) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Assistant conversationnel (widget flottant)
+
+   Budget de mouvement volontairement serré : rien ne se déclenche au défilement,
+   et seules des propriétés composables sont animées (opacity, transform).
+   ────────────────────────────────────────────────────────────────────────────── */
+.agent-orbe,
+.agent-barre,
+.agent-panneau {
+  animation: agent-apparition 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.agent-entree {
+  animation: agent-apparition 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.agent-barre:not(.agent-barre-ouverte) {
+  background-image: linear-gradient(
+    105deg,
+    #010c2d 0%,
+    #003b67 24%,
+    #0067b8 43%,
+    #007dff 52%,
+    #004574 67%,
+    #010c2d 100%
+  );
+  background-size: 240% 100%;
+  animation:
+    agent-apparition 200ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    agent-courant 8s ease-in-out infinite;
+}
+.agent-barre-ouverte {
+  animation: agent-fusion 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.agent-voile {
+  animation: agent-voile 180ms ease-out both;
+}
+.agent-parcours-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.agent-parcours-scroll::-webkit-scrollbar {
+  display: none;
+}
+.agent-care-rail {
+  position: absolute;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  /* Centre exact de la pastille : padding horizontal + demi-pastille - demi-ligne. */
+  left: calc(1rem + 1.175rem - 1px);
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #007dff 0%, #70bcff 52%, #d7e6f3 100%);
+  box-shadow: 0 0 16px rgba(0, 125, 255, 0.22);
+}
+@media (min-width: 640px) {
+  .agent-care-rail {
+    left: calc(1.5rem + 1.175rem - 1px);
+  }
+}
+.agent-care-node {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  height: 2.35rem;
+  width: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.agent-care-node-active {
+  color: white;
+  background: #007dff;
+  box-shadow: 0 0 0 5px rgba(235, 245, 255, 0.96), 0 8px 20px rgba(0, 125, 255, 0.3);
+}
+.agent-care-node-complete {
+  color: white;
+  background: #007dff;
+  box-shadow: 0 0 0 5px rgba(235, 245, 255, 0.96);
+}
+.agent-care-node-idle {
+  color: #8293a5;
+  background: white;
+  border: 1.5px solid #bfd0df;
+}
+.agent-care-node-error {
+  color: white;
+  background: #e01e5a;
+  box-shadow: 0 0 0 5px #fff1f5;
+}
+@keyframes agent-apparition {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes agent-fusion {
+  from { opacity: 0; transform: translateY(8px) scaleX(0.96); }
+  to   { opacity: 1; transform: translateY(0) scaleX(1); }
+}
+@keyframes agent-voile {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes agent-courant {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+.agent-pulse {
+  animation: agent-pulse 1.4s ease-in-out infinite;
+}
+@keyframes agent-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-orbe,
+  .agent-barre,
+  .agent-panneau,
+  .agent-voile,
+  .agent-entree {
+    animation: none;
+  }
+  .agent-pulse {
+    animation: none;
+    opacity: 1;
+  }
 }

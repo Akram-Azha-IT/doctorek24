@@ -1,0 +1,88 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "name": "doctorek-agent-chat",
+  "version": "1.0.0",
+  "description": "Couche de tokens de la surface de chat de l'agent IA. Derive du design system Doctorek, n'introduit aucune nouvelle teinte ni police.",
+  "extends": "doctorek-frontend/AGENTS.md",
+  "color": {
+    "canvas": { "value": "#F1F6FD", "css": "--agent-canvas", "note": "classe .dk-canvas, trame de points 22px" },
+    "canvasDot": { "value": "#DCE9FA", "css": "--agent-canvas-dot" },
+    "surface": { "value": "#FFFFFF", "css": "--agent-surface" },
+    "border": { "value": "#EAEEF3", "css": "--agent-border", "note": "ring-1, identique aux bulles recues de la messagerie" },
+    "userBg": { "value": "#007DFF", "css": "--agent-user-bg" },
+    "userText": { "value": "#FFFFFF", "css": "--agent-user-text" },
+    "text": { "value": "#465058", "css": "--agent-text", "note": "chapeau de l'agent, plus doux que le corps de texte #333333" },
+    "title": { "value": "#010C2D", "css": "--agent-title" },
+    "trace": { "value": "#8A97A6", "css": "--agent-trace" },
+    "traceBg": { "value": "#EBF5FF", "css": "--agent-trace-bg" },
+    "slot": { "value": "#007DFF", "css": "--agent-slot" },
+    "slotBg": { "value": "#EBF5FF", "css": "--agent-slot-bg" },
+    "slotActive": { "value": "#007DFF", "css": "--agent-slot-active", "note": "fond plein, texte blanc" },
+    "slotDisabled": { "value": "#8A97A6", "css": "--agent-slot-disabled" },
+    "commit": { "value": "#00263C", "css": "--agent-commit", "note": "CTA de confirmation. Navy, jamais bleu : l'action engageante ne doit pas ressembler a un lien" },
+    "ok": { "value": "#2EB67D", "css": "--agent-ok" },
+    "warn": { "value": "#ECB22E", "css": "--agent-warn" },
+    "error": { "value": "#E01E5A", "css": "--agent-error" },
+    "errorBg": { "value": "#FFDEDE", "css": "--agent-error-bg" }
+  },
+  "font": {
+    "body": { "value": "var(--font-geist), ui-sans-serif, system-ui, sans-serif" },
+    "heading": { "value": "var(--font-jakarta), ui-sans-serif, system-ui, sans-serif", "letterSpacing": "-0.02em" },
+    "size": {
+      "lead": { "value": "15px", "lineHeight": "1.6", "weight": 400, "usage": "chapeau agent" },
+      "bubble": { "value": "13.5px", "lineHeight": "1.6", "weight": 400, "usage": "message patient" },
+      "cardTitle": { "value": "15px", "weight": 700, "usage": "nom du medecin" },
+      "cardMeta": { "value": "13px", "weight": 500, "usage": "specialite, ville, distance" },
+      "slot": { "value": "13px", "weight": 600, "numeric": "tabular-nums" },
+      "trace": { "value": "12px", "weight": 500 },
+      "legal": { "value": "11.5px", "weight": 400 }
+    }
+  },
+  "space": {
+    "gapTurn": { "value": "24px", "usage": "entre deux tours de conversation" },
+    "gapBlock": { "value": "12px", "usage": "entre le chapeau et ses cartes" },
+    "gapCard": { "value": "8px", "usage": "entre deux cartes d'une meme reponse" },
+    "padCard": { "value": "14px 16px" },
+    "padBubble": { "value": "8px 14px" },
+    "scale": [4, 8, 12, 16, 24, 32, 48]
+  },
+  "radius": {
+    "base": { "value": "0.625rem", "note": "--radius du projet" },
+    "card": { "value": "1rem", "tailwind": "rounded-2xl" },
+    "slot": { "value": "0.5rem", "tailwind": "rounded-lg" },
+    "bubble": { "value": "1rem", "tail": "0.375rem", "tailwind": "rounded-2xl rounded-br-md" }
+  },
+  "shadow": {
+    "card": { "value": "0 1px 2px rgba(1,12,45,0.06)", "note": "ombre unique du systeme. La profondeur vient du ring, pas de l'empilement" },
+    "composer": { "value": "0 -2px 12px rgba(1,12,45,0.05)" }
+  },
+  "motion": {
+    "turnEnter": { "duration": "180ms", "easing": "cubic-bezier(0.4,0,0.2,1)", "transform": "translateY(6px) -> 0", "opacity": "0 -> 1" },
+    "cardStagger": { "duration": "160ms", "delayStep": "40ms", "maxSteps": 3 },
+    "slotPress": { "duration": "120ms", "transform": "scale(0.98)" },
+    "reducedMotion": "supprimer translations et decalages, conserver l'opacite"
+  },
+  "layout": {
+    "threadMaxWidth": { "sm": "100%", "md": "680px", "lg": "760px" },
+    "mapHeight": { "sm": "140px", "default": "180px" },
+    "touchTarget": { "min": "44px" }
+  },
+  "a11y": {
+    "thread": { "role": "log", "ariaLive": "polite" },
+    "focusRing": "focus-visible:ring-2 focus-visible:ring-[#007DFF]",
+    "contrast": {
+      "text_on_canvas": { "pair": "#465058 / #F1F6FD", "ratio": 7.1, "pass": "AAA" },
+      "white_on_userBg": { "pair": "#FFFFFF / #007DFF", "ratio": 4.6, "pass": "AA large", "constraint": ">= 14px semi-gras" },
+      "trace_on_surface": { "pair": "#8A97A6 / #FFFFFF", "ratio": 3.1, "pass": "AA large uniquement", "constraint": "mentions non essentielles seulement" },
+      "white_on_commit": { "pair": "#FFFFFF / #00263C", "ratio": 14.8, "pass": "AAA" }
+    }
+  },
+  "banned": [
+    "degrade violet vers bleu",
+    "glassmorphism / backdrop-blur sur les cartes",
+    "avatar etincelle ou emoji IA par message",
+    "accent violet pour signifier l'IA",
+    "animations declenchees au scroll",
+    "message d'erreur generique sans cause"
+  ]
+}

@@ -27,10 +27,3 @@ export const FEATURES = [
     desc: 'Rappels SMS automatiques, annulation en ligne et gestion de vos RDV en totale autonomie.',
   },
 ]
-
-export const STATS = [
-  { value: '50 000+', label: 'Patients actifs' },
-  { value: '2 000+', label: 'Praticiens' },
-  { value: '30+', label: 'Spécialités' },
-  { value: '24/7', label: 'Disponible' },
-]

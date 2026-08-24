@@ -42,11 +42,11 @@ const medecin = {
   acceptNouveauxPatients: true,
 } as MedecinProfile
 
-function renderCard(onBookSlot = vi.fn()) {
+function renderCard(onBookSlot = vi.fn(), searchDate?: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={qc}>
-      <MedecinCardList medecin={medecin} onBookSlot={onBookSlot} />
+      <MedecinCardList medecin={medecin} onBookSlot={onBookSlot} searchDate={searchDate} />
     </QueryClientProvider>,
   )
   return onBookSlot
@@ -61,16 +61,7 @@ describe('MedecinCardList', () => {
 
   test('books an available slot on the selected day', async () => {
     const user = userEvent.setup()
-    const onBookSlot = renderCard()
-
-    // Sélectionne le jour de demain (chip avec le numéro du jour)
-    const dayNum = String(new Date(futureDate + 'T00:00:00').getDate())
-    // Comparaison sur le nombre final, pas en sous-chaîne : « VEN31 » contient « 1 »
-    // et détournait le clic dès que le lendemain tombait un jour à un chiffre.
-    const dayBtns = await screen.findAllByRole('button')
-    const dayBtn = dayBtns.find((b) => /(\d+)$/.exec(b.textContent ?? '')?.[1] === dayNum)
-    expect(dayBtn).toBeDefined()
-    await user.click(dayBtn!)
+    const onBookSlot = renderCard(vi.fn(), futureDate)
 
     const slotBtn = await screen.findByRole('button', { name: '09:00' })
     await user.click(slotBtn)

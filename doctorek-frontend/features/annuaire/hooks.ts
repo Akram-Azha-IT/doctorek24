@@ -55,13 +55,15 @@ export function useSearchMedecinsDisponibles(
   ville: string,
   filter: DisponibiliteFilter,
   page: number,
+  dateRecherche: string | null = null,
+  size = 10,
 ) {
   const debouncedSpecialite = useDebounce(specialite.trim(), 400)
   const debouncedVille = useDebounce(ville.trim(), 400)
 
   return useQuery({
-    queryKey: ['medecins', 'search', debouncedSpecialite, debouncedVille, filter, page],
-    queryFn: () => searchMedecins(debouncedSpecialite, debouncedVille, filter, page),
+    queryKey: ['medecins', 'search', debouncedSpecialite, debouncedVille, filter, dateRecherche, page, size],
+    queryFn: () => searchMedecins(debouncedSpecialite, debouncedVille, filter, page, size, dateRecherche),
     staleTime: 60 * 1000,
   })
 }

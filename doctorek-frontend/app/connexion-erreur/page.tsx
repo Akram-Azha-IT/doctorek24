@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import LogoLoader from '@/components/LogoLoader'
 
 /**
  * Page d'erreur de connexion — remplace la page Auth.js par défaut (anglaise,
@@ -77,7 +78,7 @@ function ErreurContenu() {
 export default function ConnexionErreurPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F0F2F5] px-4 py-12">
-      <Suspense fallback={<div className="h-6 w-6 animate-spin rounded-full border-2 border-[#007DFF]/30 border-t-[#007DFF]" />}>
+      <Suspense fallback={<LogoLoader width={120} label="Chargement…" />}>
         <ErreurContenu />
       </Suspense>
     </main>

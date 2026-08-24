@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { signOut as nextAuthSignOut } from 'next-auth/react'
 import { clearSession } from '@/lib/session'
+import LogoLoader from '@/components/LogoLoader'
 
 /**
  * Single logout pipeline (no auth guards here, so no redirect races):
@@ -49,12 +50,5 @@ export default function LoggedOutPage() {
     return () => { cancelled = true }
   }, [])
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F0F2F5]">
-      <div className="flex flex-col items-center gap-3">
-        <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#007DFF]/30 border-t-[#007DFF]" />
-        <p className="text-sm text-[#465058]">Déconnexion en cours…</p>
-      </div>
-    </div>
-  )
+  return <LogoLoader fullScreen width={140} label="Déconnexion en cours…" />
 }

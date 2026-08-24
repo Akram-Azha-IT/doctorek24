@@ -7,6 +7,7 @@ import { useConversations } from '../hooks'
 import { ConversationList } from './ConversationList'
 import { ChatWindow } from './ChatWindow'
 import { NewConversationButton } from './NewConversationButton'
+import LogoLoader from '@/components/LogoLoader'
 
 function MessagesContent() {
   const searchParams = useSearchParams()
@@ -51,7 +52,7 @@ function MessagesContent() {
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-5 h-5 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin" />
+              <LogoLoader width={100} label="Chargement des conversations…" />
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -123,7 +124,7 @@ export function MessagesView() {
   return (
     <Suspense fallback={
       <div className="flex h-full items-center justify-center">
-        <div className="w-5 h-5 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin" />
+        <LogoLoader width={100} label="Chargement des messages…" />
       </div>
     }>
       <MessagesContent />

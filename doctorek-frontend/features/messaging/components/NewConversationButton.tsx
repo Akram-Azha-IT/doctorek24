@@ -8,6 +8,7 @@ import { useRdvsPatient } from '@/features/agenda/hooks'
 import { useMedecin } from '@/features/annuaire/hooks'
 import { useStartConversation } from '../hooks'
 import { Avatar } from '@/components/Avatar'
+import LogoLoader from '@/components/LogoLoader'
 
 interface NewConversationButtonProps {
   onStarted: (conv: Conversation) => void
@@ -109,7 +110,7 @@ function DoctorPickerModal({
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-5 h-5 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin" />
+              <LogoLoader width={100} label="Chargement des médecins…" />
             </div>
           ) : medecinIds.length === 0 ? (
             <div className="flex flex-col items-center text-center py-12 px-6">
@@ -168,7 +169,7 @@ function DoctorRow({
           )}
         </div>
         {starting && (
-          <div className="w-4 h-4 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin shrink-0" />
+          <LogoLoader variant="mark" size={16} decorative />
         )}
       </button>
     </li>

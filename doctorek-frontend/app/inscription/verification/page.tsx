@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { AuthShell } from '@/features/auth/components/AuthShell'
 import { AuthField, PrimaryButton } from '@/features/auth/components/AuthField'
 import { useVerifyEmail } from '@/features/auth/hooks'
+import LogoLoader from '@/components/LogoLoader'
 
 const VerifyEmailSchema = z.object({
   code: z
@@ -107,11 +108,7 @@ function VerificationForm() {
 export default function VerificationPage() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen grid place-items-center bg-[#F0F2F5]">
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#007DFF]/30 border-t-[#007DFF]" />
-        </div>
-      }
+      fallback={<LogoLoader fullScreen width={140} label="Chargement de la vérification…" />}
     >
       <VerificationForm />
     </Suspense>

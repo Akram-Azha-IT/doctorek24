@@ -37,6 +37,9 @@ async function fetchCurrentUser(accessToken: string): Promise<CurrentUserRespons
   try {
     const res = await fetch(`${apiUrl}/api/v1/auth/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
+      // The local profile enriches the session but must never block the OAuth
+      // callback indefinitely when the backend or its database is unavailable.
+      signal: AbortSignal.timeout(4_000),
     })
     if (!res.ok) return null
     const body = await res.json()
@@ -53,6 +56,7 @@ async function refreshKeycloakToken(refreshToken: string): Promise<KeycloakToken
   const res = await fetch(`${issuer}/protocol/openid-connect/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    signal: AbortSignal.timeout(5_000),
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       client_id: process.env.AUTH_KEYCLOAK_ID ?? '',

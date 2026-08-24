@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getSession } from '@/lib/session'
 import { Suspense } from 'react'
+import LogoLoader from '@/components/LogoLoader'
 
 function Redirector() {
   const router = useRouter()
@@ -18,16 +19,12 @@ function Redirector() {
     router.replace(conv ? `${base}?conv=${conv}` : base)
   }, [router, conv])
 
-  return (
-    <div className="min-h-screen bg-[#F0F2F5] flex items-center justify-center">
-      <div className="w-5 h-5 border-2 border-[#007DFF] border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  return <LogoLoader fullScreen width={140} label="Ouverture de vos messages…" />
 }
 
 export default function MessagesRedirectPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F0F2F5]" />}>
+    <Suspense fallback={<LogoLoader fullScreen width={140} label="Ouverture de vos messages…" />}>
       <Redirector />
     </Suspense>
   )

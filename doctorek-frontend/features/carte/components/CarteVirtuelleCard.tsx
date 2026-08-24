@@ -14,6 +14,18 @@ interface CarteVirtuelleCardProps {
   onEdit?: () => void
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.style.display = 'none'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000)
+}
+
 // ── RECTO — même design que l'export (source unique : buildRectoSvg) ────────
 
 export function CarteRecto({
@@ -136,12 +148,28 @@ export default function CarteVirtuelleCard({
       })
       if (!response.ok) throw new Error('Export failed')
       const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `carte-nationale-doctorek-${carte.cardRef || 'doc'}.png`
-      a.click()
-      URL.revokeObjectURL(url)
+      const filename = `carte-nationale-doctorek-${carte.cardRef || 'doc'}.png`
+      const file = new File([blob], filename, { type: 'image/png' })
+      const canShareFile =
+        navigator.maxTouchPoints > 0 &&
+        typeof navigator.share === 'function' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] })
+
+      if (canShareFile) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Ma carte santé Doctorek',
+          })
+          return
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') return
+          // Le partage natif peut être refusé par le système : téléchargement de secours.
+        }
+      }
+
+      downloadBlob(blob, filename)
     } catch {
       alert("Erreur lors de l'exportation de la carte. Veuillez réessayer.")
     } finally {

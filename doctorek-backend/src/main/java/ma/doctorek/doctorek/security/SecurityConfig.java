@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/avis/notes").permitAll()
                 // public creneaux (booking flow)
                 .requestMatchers(HttpMethod.GET, "/api/v1/agenda/medecins/*/creneaux").permitAll()
+                // public agent availability; conversation remains PATIENT-only
+                .requestMatchers(HttpMethod.GET, "/api/v1/agent/statut").permitAll()
                 // public emergency QR scan: exposes only the vital subset (never sensible fields)
                 .requestMatchers(HttpMethod.GET, "/api/v1/carte/ref/*").permitAll()
                 // OTP flow for the sensible section (code sent to the patient, gated by grant token)

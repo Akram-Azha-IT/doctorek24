@@ -7,9 +7,11 @@ import ma.doctorek.doctorek.dto.UpdateMedecinPhotoRequest;
 import ma.doctorek.doctorek.dto.UpdateMedecinProfileRequest;
 import ma.doctorek.doctorek.service.AnnuaireService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,10 +45,12 @@ public class AnnuaireController {
             @RequestParam(required = false) String ville,
             @RequestParam(required = false) String nom,
             @RequestParam(defaultValue = "all") String disponibilite,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(ApiResponse.ok(
-            annuaireService.searchMedecins(specialite, ville, nom, disponibilite, page, size)));
+            annuaireService.searchMedecins(specialite, ville, nom, disponibilite, date, page, size)));
     }
 
     @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")

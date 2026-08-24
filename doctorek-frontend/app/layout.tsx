@@ -7,6 +7,7 @@ import { AutoRefreshProvider } from '@/lib/AutoRefreshProvider'
 import { AuthSessionProvider } from '@/lib/AuthSessionProvider'
 import { SessionBridge } from '@/lib/SessionBridge'
 import { Toaster } from '@/components/ui/sonner'
+import { AgentWidget } from '@/features/agent/components/AgentWidget'
 
 const geist = Geist({
   variable: '--font-geist',
@@ -68,6 +69,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AutoRefreshProvider>
               <StompProvider>
                 {children}
+                {/* Ne s'affiche que pour un patient connecté, et seulement si un
+                    modèle est configuré côté serveur (voir AgentWidget). */}
+                <AgentWidget />
                 <Toaster position="top-right" richColors />
               </StompProvider>
             </AutoRefreshProvider>

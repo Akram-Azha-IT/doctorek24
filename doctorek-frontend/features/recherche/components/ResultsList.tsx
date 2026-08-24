@@ -9,7 +9,7 @@ import type { DisponibiliteFilter } from '@/lib/disponibilite'
 import { LocationIcon } from './icons'
 import { Pagination } from './Pagination'
 import { ErrorState } from '@/components/ErrorState'
-import { ResultsToolbar, type SortKey, type ActiveFilter } from './ResultsToolbar'
+import { ResultsToolbar, type ActiveFilter } from './ResultsToolbar'
 
 interface ResultsListProps {
   nearbyMode: boolean
@@ -20,10 +20,11 @@ interface ResultsListProps {
   onRetry?: () => void
   isRetrying?: boolean
   total: number
-  sort: SortKey
-  onSortChange: (s: SortKey) => void
   activeFilters: ActiveFilter[]
   filter: DisponibiliteFilter
+  exactDate?: string | null
+  ville?: string
+  specialite?: string
   nearbyMedecins: MedecinNearbyResult[]
   pagedNearby: MedecinNearbyResult[]
   searchContent: MedecinProfile[]
@@ -34,6 +35,7 @@ interface ResultsListProps {
   onHover: (id: string | null) => void
   onBookSlot: (slot: BookingSlot) => void
   onFilterChange?: (f: DisponibiliteFilter) => void
+  onClearAvailability?: () => void
   mobileView: 'list' | 'map'
 }
 
@@ -46,10 +48,11 @@ export function ResultsList({
   onRetry,
   isRetrying,
   total,
-  sort,
-  onSortChange,
   activeFilters,
   filter,
+  exactDate,
+  ville,
+  specialite,
   nearbyMedecins,
   pagedNearby,
   searchContent,
@@ -60,6 +63,7 @@ export function ResultsList({
   onHover,
   onBookSlot,
   onFilterChange,
+  onClearAvailability,
   mobileView,
 }: ResultsListProps) {
   const loading = isLoading || geoLoading
@@ -72,15 +76,15 @@ export function ResultsList({
   const { data: notes } = useNotesMedecins(idsAffiches)
 
   return (
-    <div className={`flex-1 min-w-0 px-4 py-5 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
+    <div className={`min-w-0 flex-1 px-4 py-6 lg:px-0 ${mobileView === 'map' ? 'hidden lg:block' : 'block'}`}>
       {/* Barre de résultats (compteur + tri + filtres actifs) — cachée en erreur */}
       {!isError && (
         <ResultsToolbar
           total={total}
           loading={loading}
           nearbyMode={nearbyMode}
-          sort={sort}
-          onSortChange={onSortChange}
+          ville={ville}
+          specialite={specialite}
           activeFilters={activeFilters}
         />
       )}
@@ -123,13 +127,14 @@ export function ResultsList({
           <div className="flex flex-col">
             {pagedNearby.map((r) => (
               <MedecinCardList
-                key={r.medecin.id}
+                key={`${r.medecin.id}:${exactDate ?? 'default'}`}
                 medecin={r.medecin}
                 note={notes?.get(r.medecin.id)}
                 distanceKm={r.distanceKm}
                 onMouseEnter={() => onHover(r.medecin.id)}
                 onMouseLeave={() => onHover(null)}
                 onBookSlot={onBookSlot}
+                searchDate={exactDate}
               />
             ))}
           </div>
@@ -157,17 +162,20 @@ export function ResultsList({
             Aucun médecin trouvé
           </h3>
           <p className="text-sm text-zinc-500 mb-6 max-w-xs leading-relaxed">
-            {filter !== 'all'
+            {filter !== 'all' || exactDate
               ? 'Aucun praticien disponible avec ce filtre. Élargissez la recherche.'
               : 'Aucun praticien enregistré dans cette zone pour le moment.'}
           </p>
 
           {/* Action suggestions */}
           <div className="flex flex-col sm:flex-row gap-2 w-full max-w-xs">
-            {filter !== 'all' && (
+            {(filter !== 'all' || exactDate) && (
               <button
                 type="button"
-                onClick={() => onFilterChange?.('all')}
+                onClick={() => {
+                  if (onClearAvailability) onClearAvailability()
+                  else onFilterChange?.('all')
+                }}
                 className="cursor-pointer flex-1 rounded-xl bg-[#007DFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#00263C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
               >
                 Toutes les dates
@@ -188,12 +196,13 @@ export function ResultsList({
           <div className="flex flex-col">
             {searchContent.map((medecin) => (
               <MedecinCardList
-                key={medecin.id}
+                key={`${medecin.id}:${exactDate ?? 'default'}`}
                 medecin={medecin}
                 note={notes?.get(medecin.id)}
                 onMouseEnter={() => onHover(medecin.id)}
                 onMouseLeave={() => onHover(null)}
                 onBookSlot={onBookSlot}
+                searchDate={exactDate}
               />
             ))}
           </div>

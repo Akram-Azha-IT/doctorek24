@@ -13,6 +13,7 @@ import type { Disponibilite } from '@/lib/types'
 import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { toast } from 'sonner'
+import LogoLoader from '@/components/LogoLoader'
 
 const MIN_LEFT = 220
 const MAX_LEFT = 560
@@ -139,7 +140,7 @@ export default function DisponibilitesPage() {
   if (!medecinId) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-blue-600" />
+        <LogoLoader width={120} label="Chargement des disponibilités…" />
       </div>
     )
   }

@@ -10,7 +10,7 @@ import { DonneesSection } from '@/features/home/components/DonneesSection'
 
 export default function HomePage() {
   return (
-    <main id="main-content">
+    <main id="main-content" className="overflow-x-clip">
       <HeroSection />
       <PromoCards />
       <StatsStrip />

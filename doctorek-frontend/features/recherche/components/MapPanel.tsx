@@ -15,8 +15,8 @@ interface MapPanelProps {
 
 export function DesktopMapPanel({ DoctorMap, doctors, hoveredId, center, isLoading }: Omit<MapPanelProps, 'mobileView'>) {
   return (
-    <div className="hidden lg:block w-[380px] shrink-0">
-      <div className="sticky top-[97px] h-[calc(100vh-97px)] overflow-hidden rounded-tl-xl border-l border-zinc-200">
+    <aside className="hidden w-[400px] shrink-0 py-6 lg:block xl:w-[430px]" aria-label="Carte des médecins">
+      <div className="sticky top-[154px] h-[calc(100vh-178px)] min-h-[540px] max-h-[720px] overflow-hidden rounded-[20px] border border-[#DCE5EE] bg-white shadow-[0_12px_36px_rgba(1,38,81,0.10)]">
         <DoctorMap doctors={doctors} hoveredId={hoveredId} center={center} />
         {doctors.length === 0 && !isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#E8EFF6]/80 pointer-events-none">
@@ -26,7 +26,7 @@ export function DesktopMapPanel({ DoctorMap, doctors, hoveredId, center, isLoadi
           </div>
         )}
       </div>
-    </div>
+    </aside>
   )
 }
 

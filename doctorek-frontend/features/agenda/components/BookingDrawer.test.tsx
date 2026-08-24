@@ -52,4 +52,30 @@ describe('BookingDrawer', () => {
     act(() => vi.advanceTimersByTime(350))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
+
+  test('preserves search state in the login return URL', () => {
+    act(() => __setCachedSession(null))
+    render(
+      <BookingDrawer
+        slot={slot}
+        returnUrl="/recherche?specialite=Karim&ville=Rabat&disponibilite=week&tri=nom&page=2"
+        onClose={() => {}}
+      />,
+    )
+
+    const loginLink = screen.getByRole('link', { name: 'Se connecter' })
+    const redirect = new URL(loginLink.getAttribute('href')!, 'http://doctorek.local').searchParams.get('redirect')
+    const returnPath = new URL(redirect!, 'http://doctorek.local')
+
+    expect(returnPath.pathname).toBe('/recherche')
+    expect(returnPath.searchParams.get('specialite')).toBe('Karim')
+    expect(returnPath.searchParams.get('ville')).toBe('Rabat')
+    expect(returnPath.searchParams.get('disponibilite')).toBe('week')
+    expect(returnPath.searchParams.get('tri')).toBe('nom')
+    expect(returnPath.searchParams.get('page')).toBe('2')
+    expect(returnPath.searchParams.get('bookMedecinId')).toBe('m1')
+    expect(returnPath.searchParams.get('bookDate')).toBe('2026-08-01')
+    expect(returnPath.searchParams.get('bookDebut')).toBe('10:00')
+    expect(returnPath.searchParams.get('bookFin')).toBe('10:30')
+  })
 })

@@ -7,6 +7,7 @@ import { useMedecin } from '@/features/annuaire/hooks'
 import { useStartConversation } from '@/features/messaging/hooks'
 import type { RendezVous } from '@/lib/types'
 import { formatDateShort } from '../utils'
+import LogoLoader from '@/components/LogoLoader'
 
 function UpcomingRdvRow({ rdv }: { rdv: RendezVous }) {
   const { data: medecin } = useMedecin(rdv.medecinId)
@@ -52,9 +53,7 @@ function UpcomingRdvRow({ rdv }: { rdv: RendezVous }) {
           className="w-8 h-8 rounded-full border border-[#007DFF]/30 bg-[#EBF4FF] flex items-center justify-center text-[#007DFF] hover:bg-[#007DFF] hover:text-white transition-colors disabled:opacity-50"
         >
           {messaging ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-            </svg>
+            <LogoLoader variant="mark" size={14} decorative />
           ) : (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
