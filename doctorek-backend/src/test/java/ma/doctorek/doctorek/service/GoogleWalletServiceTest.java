@@ -18,6 +18,8 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class GoogleWalletServiceTest {
 
@@ -34,9 +36,11 @@ class GoogleWalletServiceTest {
         properties.setClassId("carte-sante");
         properties.setServiceAccountPath(writeServiceAccount().toUri().toString());
 
+        GoogleWalletClassService classService = mock(GoogleWalletClassService.class);
         GoogleWalletService service = new GoogleWalletService(
                 properties,
                 new DefaultResourceLoader(),
+                classService,
                 "https://doctorek.ma"
         );
 
@@ -51,10 +55,16 @@ class GoogleWalletServiceTest {
 
         Map<String, Object> walletObject = walletObjectFrom(saveUrl);
 
+        verify(classService).ensurePremiumTemplate(
+                org.mockito.ArgumentMatchers.eq("wallet-test@doctorek.test"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.eq("issuer-123.carte-sante")
+        );
+
         assertEquals("GENERIC_OTHER", walletObject.get("genericType"));
         assertEquals("#216ACF", walletObject.get("hexBackgroundColor"));
         assertEquals("Carte santé", localizedValue(walletObject.get("subheader")));
-        assertEquals("Akram BENHAMMOU", localizedValue(walletObject.get("header")));
+        assertEquals("Akram Benhammou", localizedValue(walletObject.get("header")));
         assertEquals(
                 "https://doctorek.ma/wallet-logo-840.png",
                 nestedUri(walletObject.get("logo"))
@@ -74,8 +84,9 @@ class GoogleWalletServiceTest {
         assertFalse(serialized.contains("AB123456"));
         assertFalse(serialized.contains("99887766"));
         assertFalse(serialized.contains("patient.jpg"));
-        assertTrue(serialized.contains("Ouvrir Doctorek"));
-        assertTrue(serialized.contains("/dashboard/patient/carte"));
+        assertTrue(serialized.contains("Voir ma carte"));
+        assertTrue(serialized.contains("https://doctorek.ma/carte/VMC-2026-00DA4AFC"));
+        assertFalse(serialized.contains("/dashboard/patient/carte"));
     }
 
     private Path writeServiceAccount() throws Exception {
