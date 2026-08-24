@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import LogoLoader from '@/components/LogoLoader'
 
 /**
  * Landing spot for signIn('keycloak') when no explicit ?redirect= was set.
@@ -42,9 +43,5 @@ export default function DashboardRedirectPage() {
     else router.replace('/dashboard/patient')
   }, [status, data, router, searchParams])
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F0F2F5]">
-      <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#007DFF]/30 border-t-[#007DFF]" />
-    </div>
-  )
+  return <LogoLoader fullScreen width={140} label="Ouverture de votre espace…" />
 }

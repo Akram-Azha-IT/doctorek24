@@ -48,18 +48,34 @@ public class AnnuaireService {
         key = "#specialite + ':' + #ville + ':' + #nom + ':' + #disponibilite + ':' + #page + ':' + #size")
     public PagedMedecinsResponse searchMedecins(String specialite, String ville, String nom,
                                                  String disponibilite, int page, int size) {
+        return searchMedecins(specialite, ville, nom, disponibilite, null, page, size);
+    }
+
+    @Cacheable(value = "medecins-search",
+        key = "#specialite + ':' + #ville + ':' + #nom + ':' + #disponibilite + ':' + #date + ':' + #page + ':' + #size")
+    public PagedMedecinsResponse searchMedecins(String specialite, String ville, String nom,
+                                                 String disponibilite, LocalDate date, int page, int size) {
         PageRequest pageable = PageRequest.of(page - 1, size);
         Page<MedecinDetailEntity> result;
 
-        if ("today".equals(disponibilite)) {
-            List<String> days = List.of(LocalDate.now().getDayOfWeek().name());
-            result = medecinRepository.searchActiveMedecinsWithDispoPaged(specialite, ville, nom, days, pageable);
+        if (date != null) {
+            List<String> days = List.of(date.getDayOfWeek().name());
+            result = medecinRepository.searchActiveMedecinsWithDispoPaged(
+                specialite, ville, nom, days, date, date, pageable);
+        } else if ("today".equals(disponibilite)) {
+            LocalDate today = LocalDate.now();
+            List<String> days = List.of(today.getDayOfWeek().name());
+            result = medecinRepository.searchActiveMedecinsWithDispoPaged(
+                specialite, ville, nom, days, today, today, pageable);
         } else if ("week".equals(disponibilite)) {
+            LocalDate today = LocalDate.now();
+            LocalDate weekEnd = today.plusDays(6);
             List<String> days = IntStream.range(0, 7)
-                .mapToObj(i -> LocalDate.now().plusDays(i).getDayOfWeek().name())
+                .mapToObj(i -> today.plusDays(i).getDayOfWeek().name())
                 .distinct()
                 .toList();
-            result = medecinRepository.searchActiveMedecinsWithDispoPaged(specialite, ville, nom, days, pageable);
+            result = medecinRepository.searchActiveMedecinsWithDispoPaged(
+                specialite, ville, nom, days, today, weekEnd, pageable);
         } else {
             result = medecinRepository.searchActiveMedecinsPaged(specialite, ville, nom, pageable);
         }

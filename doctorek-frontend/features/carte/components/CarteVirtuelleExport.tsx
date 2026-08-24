@@ -13,12 +13,12 @@ const C_GREEN = '#006233'
 
 /**
  * Styles typographiques de la carte, injectés dans le SVG.
- * `--font-figtree` est fourni par next/font dans l'app ; l'export PNG charge Figtree
- * via Google Fonts (cf. app/api/carte/export). Les replis couvrent les deux cas.
+ * Outfit est fourni par next/font dans l'app ; resvg utilise ensuite Segoe UI ou
+ * Noto Sans selon la plateforme. La famille générique reste toujours sans-serif.
  */
 const SVG_TYPE_STYLE = `
       <style>
-        .dk-s { font-family: var(--font-outfit, 'Outfit'), var(--font-figtree, 'Figtree'), 'Segoe UI', system-ui, sans-serif; }
+        .dk-s { font-family: 'Outfit', 'Figtree', 'Segoe UI', 'Noto Sans', sans-serif; }
         .dk-m { font-family: ui-monospace, 'SF Mono', 'DejaVu Sans Mono', 'Roboto Mono', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
         .dk-a { font-family: 'Noto Sans Arabic', 'Noto Naskh Arabic', system-ui, sans-serif; }
       </style>`
@@ -127,7 +127,7 @@ export function buildRectoSvg(
   const nameSize = nameFontSize(fullName)
 
   return `
-    <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
       <defs>
         <clipPath id="card-clip-recto"><rect width="856" height="540" rx="24"/></clipPath>
         <clipPath id="photo-clip-recto"><rect x="48" y="132" width="168" height="206" rx="10"/></clipPath>
@@ -221,8 +221,17 @@ export function renderCarteRectoHtml(
   return buildRectoSvg(fullName, maskedCin, cnss, carte.cardRef ?? '-', logoUrl, profile?.photoUrl ?? undefined, qrDataUrl)
 }
 
-/** Modern full-bleed hero banner for the Google Wallet pass (recommended ratio ~1032x336). */
-export function renderWalletHeroHtml(opts: {
+function escapeSvgText(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;')
+}
+
+/** Bannière Google Wallet en SVG pur, rendue sans navigateur headless. */
+export function buildWalletHeroSvg(opts: {
   fullName: string
   maskedCin: string
   cnss: string
@@ -234,87 +243,71 @@ export function renderWalletHeroHtml(opts: {
   logoDataUrl?: string
 }): string {
   const { fullName, maskedCin, cnss, cardRef, qrDataUrl, origin, photoUrl, logoDataUrl } = opts
-  const logoUrl = logoDataUrl ?? `${origin}/logo0.png`
+  const logoUrl = escapeSvgText(logoDataUrl ?? `${origin}/logo0.png`)
+  const safeName = escapeSvgText(fullName)
+  const safeCardRef = escapeSvgText(cardRef)
+  const contentX = photoUrl ? 216 : 52
+  const nameWidth = photoUrl ? 600 : 780
+  const nameSize = fullName.length > 30 ? 30 : fullName.length > 24 ? 34 : 40
 
-  // Le grand QR du pass est déjà affiché par Google Wallet juste au-dessus du hero —
-  // le dupliquer ici encombre la carte. qrDataUrl est ignoré volontairement.
+  // Le grand QR est déjà affiché par Google Wallet ; le répéter surcharge le hero.
   void qrDataUrl
 
-  const arabicFont = `font-family:'Noto Sans Arabic','Noto Naskh Arabic',system-ui,sans-serif;`
-
-  const field = (labelFr: string, labelAr: string, value: string) => `
-    <div style="display:flex;flex-direction:column;gap:3px;min-width:150px;">
-      <div style="display:flex;align-items:baseline;gap:8px;">
-        <span style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#8FB8E8;">${labelFr}</span>
-        <span style="${arabicFont}font-size:10px;color:#8FB8E8;">${labelAr}</span>
-      </div>
-      <span style="font-size:19px;font-weight:700;color:#FFFFFF;letter-spacing:0.04em;">${value}</span>
-    </div>`
+  const walletField = (x: number, labelFr: string, labelAr: string, value: string) => `
+    <text class="dk-s" x="${x}" y="216" font-size="10" font-weight="700" fill="#8FB8E8" letter-spacing="1.6">${labelFr}</text>
+    <text class="dk-a" x="${x + 92}" y="216" font-size="10" fill="#8FB8E8">${labelAr}</text>
+    <text class="dk-s" x="${x}" y="245" font-size="19" font-weight="700" fill="#FFFFFF" letter-spacing="0.8">${escapeSvgText(value)}</text>`
 
   const fields = [
-    maskedCin && maskedCin !== '-' ? field('C.I.N.', 'ب.ت.و', maskedCin) : '',
-    cnss && cnss !== '-' ? field('N° CNSS / AMO', 'الضمان الاجتماعي', cnss) : '',
+    maskedCin && maskedCin !== '-' ? walletField(contentX, 'C.I.N.', 'ب.ت.و', maskedCin) : '',
+    cnss && cnss !== '-' ? walletField(contentX + 250, 'N° CNSS / AMO', 'الضمان الاجتماعي', cnss) : '',
   ].join('')
 
   const photoBlock = photoUrl
-    ? `<div style="width:132px;height:158px;border-radius:10px;overflow:hidden;border:3px solid rgba(255,255,255,0.85);box-shadow:0 8px 26px rgba(0,0,0,0.35);flex-shrink:0;">
-         <img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" />
-       </div>`
+    ? `<image href="${escapeSvgText(photoUrl)}" x="52" y="112" width="132" height="154"
+        clip-path="url(#wallet-photo-clip)" preserveAspectRatio="xMidYMid slice"/>
+       <rect x="52" y="112" width="132" height="154" rx="10" fill="none"
+        stroke="rgba(255,255,255,0.85)" stroke-width="3"/>`
     : ''
 
   return `
-    <div style="position:relative;width:1032px;height:336px;background:#042651;overflow:hidden;font-family:'Inter',system-ui,sans-serif;">
-      <!-- guilloche discret (arcs concentriques, motif document officiel) -->
-      <svg style="position:absolute;inset:0;" width="1032" height="336" viewBox="0 0 1032 336" fill="none">
-        ${Array.from({ length: 9 }, (_, i) =>
-          `<circle cx="1000" cy="360" r="${120 + i * 34}" stroke="rgba(255,255,255,0.045)" stroke-width="1.2"/>`
-        ).join('')}
-        ${Array.from({ length: 7 }, (_, i) =>
-          `<circle cx="30" cy="-20" r="${90 + i * 30}" stroke="rgba(61,168,255,0.07)" stroke-width="1.2"/>`
-        ).join('')}
-      </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1032 336" width="1032" height="336" font-family="sans-serif">
+      <defs>
+        <clipPath id="wallet-photo-clip"><rect x="52" y="112" width="132" height="154" rx="10"/></clipPath>
+        <clipPath id="wallet-name-clip"><rect x="${contentX}" y="139" width="${nameWidth}" height="50"/></clipPath>
+      </defs>
+      ${SVG_TYPE_STYLE}
+      <rect width="1032" height="336" fill="#042651"/>
+      ${Array.from({ length: 9 }, (_, i) =>
+        `<circle cx="1000" cy="360" r="${120 + i * 34}" fill="none" stroke="rgba(255,255,255,0.045)" stroke-width="1.2"/>`
+      ).join('')}
+      ${Array.from({ length: 7 }, (_, i) =>
+        `<circle cx="30" cy="-20" r="${90 + i * 30}" fill="none" stroke="rgba(61,168,255,0.07)" stroke-width="1.2"/>`
+      ).join('')}
 
-      <!-- liseré drapeau (rouge → vert) -->
-      <div style="position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,#C1272D 0%,#C1272D 48%,#006233 52%,#006233 100%);"></div>
+      <rect x="0" y="0" width="516" height="7" fill="#C1272D"/>
+      <rect x="516" y="0" width="516" height="7" fill="#006233"/>
 
-      <div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:26px 52px 20px;box-sizing:border-box;">
-        <!-- en-tête : marque + mention officielle bilingue -->
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
-          <div style="background:#FFFFFF;border-radius:10px;padding:7px 16px;box-shadow:0 4px 14px rgba(0,0,0,0.3);">
-            <img src="${logoUrl}" style="height:30px;width:auto;display:block;" />
-          </div>
-          <div style="text-align:right;">
-            <div style="${arabicFont}font-size:15px;font-weight:700;color:#FFFFFF;line-height:1.3;">المملكة المغربية</div>
-            <div style="font-size:10px;font-weight:700;letter-spacing:0.26em;color:#B6DAF7;margin-top:2px;">ROYAUME DU MAROC</div>
-            <div style="font-size:11px;font-weight:800;letter-spacing:0.2em;color:#3DA8FF;margin-top:4px;">CARTE SANTÉ VIRTUELLE</div>
-          </div>
-        </div>
+      <rect x="52" y="26" width="154" height="46" rx="10" fill="#FFFFFF"/>
+      <image href="${logoUrl}" x="68" y="34" width="122" height="30" preserveAspectRatio="xMinYMid meet"/>
 
-        <!-- identité -->
-        <div style="display:flex;align-items:center;gap:32px;min-width:0;">
-          ${photoBlock}
-          <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
-            <div>
-              <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
-                <span style="font-size:10px;font-weight:700;letter-spacing:0.18em;color:#8FB8E8;">NOM COMPLET</span>
-                <span style="${arabicFont}font-size:10px;color:#8FB8E8;">الاسم الكامل</span>
-              </div>
-              <div style="font-size:40px;font-weight:800;line-height:1.05;color:#FFFFFF;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:560px;">${fullName}</div>
-            </div>
-            <div style="display:flex;gap:44px;">${fields}</div>
-          </div>
-        </div>
+      <text class="dk-a" x="980" y="39" text-anchor="end" font-size="15" font-weight="700" fill="#FFFFFF">المملكة المغربية</text>
+      <text class="dk-s" x="980" y="57" text-anchor="end" font-size="10" font-weight="700" fill="#B6DAF7" letter-spacing="2.6">ROYAUME DU MAROC</text>
+      <text class="dk-s" x="980" y="76" text-anchor="end" font-size="11" font-weight="800" fill="#3DA8FF" letter-spacing="2">CARTE SANTÉ VIRTUELLE</text>
 
-        <!-- pied : référence + mention officielle -->
-        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.14);padding-top:10px;">
-          <span style="font-size:13px;font-weight:700;letter-spacing:0.12em;color:#3DA8FF;">${cardRef}</span>
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <span style="font-size:10px;font-weight:600;letter-spacing:0.14em;color:#8FB8E8;">DOCUMENT OFFICIEL ·</span>
-            <span style="${arabicFont}font-size:11px;color:#8FB8E8;">وثيقة رسمية</span>
-          </div>
-        </div>
-      </div>
-    </div>
+      ${photoBlock}
+      <text class="dk-s" x="${contentX}" y="132" font-size="10" font-weight="700" fill="#8FB8E8" letter-spacing="1.8">NOM COMPLET</text>
+      <text class="dk-a" x="${contentX + 112}" y="132" font-size="10" fill="#8FB8E8">الاسم الكامل</text>
+      <g clip-path="url(#wallet-name-clip)">
+        <text class="dk-s" x="${contentX}" y="177" font-size="${nameSize}" font-weight="800" fill="#FFFFFF">${safeName}</text>
+      </g>
+      ${fields}
+
+      <line x1="52" y1="292" x2="980" y2="292" stroke="rgba(255,255,255,0.14)"/>
+      <text class="dk-s" x="52" y="321" font-size="13" font-weight="700" fill="#3DA8FF" letter-spacing="1.6">${safeCardRef}</text>
+      <text class="dk-s" x="828" y="321" text-anchor="end" font-size="10" font-weight="600" fill="#8FB8E8" letter-spacing="1.4">DOCUMENT OFFICIEL ·</text>
+      <text class="dk-a" x="980" y="321" text-anchor="end" font-size="11" fill="#8FB8E8">وثيقة رسمية</text>
+    </svg>
   `
 }
 
@@ -337,7 +330,7 @@ export function buildVersoSvg(
   ].join('')
 
   return `
-    <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 856 540" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
       <defs>
         <clipPath id="card-clip-verso"><rect width="856" height="540" rx="24"/></clipPath>
         <linearGradient id="bg-grad-verso" x1="0" y1="0" x2="0" y2="540" gradientUnits="userSpaceOnUse">

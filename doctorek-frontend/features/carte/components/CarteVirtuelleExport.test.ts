@@ -2,10 +2,10 @@ import { describe, expect, test } from 'vitest'
 import {
   buildRectoSvg,
   buildVersoSvg,
+  buildWalletHeroSvg,
   nameFontSize,
   renderCarteRectoHtml,
   renderCarteVersoHtml,
-  renderWalletHeroHtml,
 } from './CarteVirtuelleExport'
 import type { CarteVirtuelle, PatientProfile } from '@/lib/types'
 
@@ -138,9 +138,9 @@ describe('renderCarteVersoHtml', () => {
   })
 })
 
-describe('renderWalletHeroHtml', () => {
+describe('buildWalletHeroSvg', () => {
   test('rend la bannière du pass et masque les champs absents', () => {
-    const html = renderWalletHeroHtml({
+    const svg = buildWalletHeroSvg({
       fullName: 'Akram BENHAMMOU',
       maskedCin: '-',
       cnss: 'CNSS-42',
@@ -148,10 +148,11 @@ describe('renderWalletHeroHtml', () => {
       origin: 'https://x',
       logoDataUrl: LOGO,
     })
-    expect(html).toContain('Akram BENHAMMOU')
-    expect(html).toContain('CNSS-42')
-    expect(html).toContain('VMC-2026-ABC')
+    expect(svg).toContain('viewBox="0 0 1032 336"')
+    expect(svg).toContain('Akram BENHAMMOU')
+    expect(svg).toContain('CNSS-42')
+    expect(svg).toContain('VMC-2026-ABC')
     // Un CIN absent ne doit pas produire de champ vide dans le pass.
-    expect(html).not.toContain('C.I.N.')
+    expect(svg).not.toContain('C.I.N.')
   })
 })

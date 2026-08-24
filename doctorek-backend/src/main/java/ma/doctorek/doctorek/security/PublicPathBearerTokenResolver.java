@@ -35,6 +35,8 @@ public class PublicPathBearerTokenResolver implements BearerTokenResolver {
         Pattern.compile("^/api/v1/annuaire/medecins/[^/]+/avis/?$"),
         // GET /api/v1/avis/notes (notes agregees des cartes de resultats)
         Pattern.compile("^/api/v1/avis/notes/?$"),
+        // GET /api/v1/agent/statut (configuration flag only; no patient data)
+        Pattern.compile("^/api/v1/agent/statut/?$"),
         // GET /api/v1/agenda/medecins/{id}/creneaux (booking flow only)
         Pattern.compile("^/api/v1/agenda/medecins/[^/]+/creneaux/?$"),
         // GET /api/v1/carte/ref/{cardRef} (emergency QR scan)

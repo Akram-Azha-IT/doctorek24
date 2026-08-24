@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import path from 'path'
-import puppeteer from 'puppeteer'
-import QRCode from 'qrcode'
-import { renderWalletHeroHtml } from '@/features/carte/components/CarteVirtuelleExport'
+import { buildWalletHeroSvg } from '@/features/carte/components/CarteVirtuelleExport'
+import { inlineRemoteImage, renderSvgToPng } from '@/features/carte/server/CartePngRenderer'
 import { verifyWalletHeroSignature } from '@/lib/walletHeroSignature'
+
+export const runtime = 'nodejs'
 
 export async function GET(req: Request) {
   try {
@@ -34,45 +35,23 @@ export async function GET(req: Request) {
 
     // Domaine public (le conteneur voit 0.0.0.0:3000 en interne)
     const origin = process.env.AUTH_URL ?? url.origin
-    const qrUrl = `${origin}/carte/${cardRef}`
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-      width: 168,
-      margin: 1,
-      color: { dark: '#010C2D', light: '#FFFFFF' },
-    })
 
     // Le conteneur ne peut pas recharger son propre domaine public (hairpin NAT) —
     // on inline le logo depuis le disque.
     const logoBuffer = await readFile(path.join(process.cwd(), 'public', 'logo0.png'))
     const logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`
 
-    const heroHtml = renderWalletHeroHtml({ fullName, maskedCin, cnss, cardRef, origin, qrDataUrl, photoUrl: photo || undefined, logoDataUrl })
-
-    const fullHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-            body { margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-          </style>
-        </head>
-        <body>${heroHtml}</body>
-      </html>
-    `
-
-    const browser = await puppeteer.launch({
-      headless: true,
-      // In the Docker image puppeteer's bundled Chrome is absent — use system Chromium.
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
+    const photoDataUrl = await inlineRemoteImage(photo)
+    const heroSvg = buildWalletHeroSvg({
+      fullName,
+      maskedCin,
+      cnss,
+      cardRef,
+      origin,
+      photoUrl: photoDataUrl,
+      logoDataUrl,
     })
-    const page = await browser.newPage()
-    await page.setViewport({ width: 1032, height: 336, deviceScaleFactor: 1 })
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' })
-    const buffer = await page.screenshot({ type: 'png', omitBackground: false })
-    await browser.close()
+    const buffer = renderSvgToPng(heroSvg, 1032)
 
     return new NextResponse(buffer as BodyInit, {
       status: 200,

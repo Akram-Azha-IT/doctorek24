@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import LogoLoader from '@/components/LogoLoader'
 
 type AuthInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label: string
@@ -168,10 +169,7 @@ export function PrimaryButton({
       ].join(' ')}
     >
       {loading && (
-        <span
-          aria-hidden
-          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white"
-        />
+        <LogoLoader variant="mark" size={14} inverse decorative />
       )}
       <span>{children}</span>
       {!loading && (

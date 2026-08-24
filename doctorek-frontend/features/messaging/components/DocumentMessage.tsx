@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { fetchAudioObjectUrl } from '../api'
+import LogoLoader from '@/components/LogoLoader'
 
 interface DocumentMessageProps {
   readonly mediaUrl: string
@@ -54,7 +55,7 @@ export function DocumentMessage({ mediaUrl, filename, size, mine }: DocumentMess
     >
       <span className={`flex-none flex h-10 w-9 items-center justify-center rounded-md text-[9px] font-bold tracking-wide shadow-sm ${chip}`}>
         {loading ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <LogoLoader variant="mark" size={16} inverse decorative />
         ) : (
           typeLabel
         )}

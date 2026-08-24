@@ -115,7 +115,7 @@ services:
       # au demarrage si le commutateur etait pose sans cle : les deux vont ensemble.
       SPRING_AI_MODEL_CHAT: ${SPRING_AI_MODEL_CHAT:-none}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
       JAVA_TOOL_OPTIONS: -Xms256m -Xmx640m
     volumes:
       - ./secrets:/app/secrets:ro

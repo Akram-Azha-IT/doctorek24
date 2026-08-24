@@ -31,10 +31,12 @@ function hasFutureSlots(date: string, todayISO: string, data: Creneau[] | undefi
  * <p>Extrait de la carte de résultat, dont il représentait l'essentiel de la
  * complexité. Le composant n'a plus qu'à afficher ce que ce hook calcule.
  */
-export function useCreneauxNavigation(medecinId: string) {
+export function useCreneauxNavigation(medecinId: string, preferredDate: string | null = null) {
   const allFutureDates = useMemo(() => nextNDaysISO(365), [])
-  const [windowStart, setWindowStart] = useState(0)
-  const [selectedDate, setSelectedDate] = useState(allFutureDates[0])
+  const preferredIndex = preferredDate ? allFutureDates.indexOf(preferredDate) : -1
+  const initialIndex = preferredIndex >= 0 ? preferredIndex : 0
+  const [windowStart, setWindowStart] = useState(initialIndex)
+  const [selectedDate, setSelectedDate] = useState(allFutureDates[initialIndex])
   const [showAll, setShowAll] = useState(false)
 
   const visibleDates = useMemo(
@@ -87,7 +89,24 @@ export function useCreneauxNavigation(medecinId: string) {
     })),
   })
 
-  const nextAvailableInfo = (() => {
+  const firstVisibleAvailableInfo = (() => {
+    for (let i = 0; i < visibleDates.length; i++) {
+      const date = visibleDates[i]
+      const candidates = (visibleResults[i]?.data ?? []).filter((slot) => slot.disponible)
+      const slot = date === todayISO
+        ? candidates.find((candidate) => {
+            const [hours, minutes] = candidate.debut.split(':').map(Number)
+            const slotTime = new Date()
+            slotTime.setHours(hours, minutes, 0, 0)
+            return slotTime > new Date()
+          })
+        : candidates[0]
+      if (slot) return { date, heure: slot.debut }
+    }
+    return null
+  })()
+
+  const nextAvailableInfo = firstVisibleAvailableInfo ?? (() => {
     if (!allUnavailable) return null
     for (let i = 0; i < extendedDates.length; i++) {
       const slot = extendedResults[i]?.data?.find((s) => s.disponible)

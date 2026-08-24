@@ -10,6 +10,8 @@ import type { BookingSlot, RendezVous } from '@/lib/types'
 interface BookingDrawerProps {
   slot: BookingSlot | null
   onClose: () => void
+  /** Page à restaurer après authentification, filtres de recherche compris. */
+  returnUrl?: string
 }
 
 function formatDate(iso: string): string {
@@ -48,7 +50,7 @@ function ClockIcon() {
   )
 }
 
-export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
+export function BookingDrawer({ slot, onClose, returnUrl = '/recherche' }: BookingDrawerProps) {
   const [visible, setVisible] = useState(false)
   const [confirmedRdv, setConfirmedRdv] = useState<RendezVous | null>(null)
 
@@ -102,7 +104,7 @@ export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[70] bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
           visible ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}
@@ -114,7 +116,7 @@ export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label={`Prise de rendez-vous avec ${doctorName}`}
-        className={`fixed z-50 bg-white shadow-2xl transition-transform duration-300 ease-out
+        className={`fixed z-[71] bg-white shadow-2xl transition-transform duration-300 ease-out
           /* mobile: bottom sheet */
           bottom-0 left-0 right-0 rounded-t-3xl max-h-[92dvh] overflow-y-auto
           /* desktop: right side panel */
@@ -193,7 +195,7 @@ export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
                 onCancel={handleClose}
               />
             ) : (
-              <LoginPrompt onClose={handleClose} slot={slot} />
+              <LoginPrompt onClose={handleClose} slot={slot} returnUrl={returnUrl} />
             )}
           </div>
         </div>
@@ -202,10 +204,17 @@ export function BookingDrawer({ slot, onClose }: BookingDrawerProps) {
   )
 }
 
-function LoginPrompt({ onClose, slot }: { onClose: () => void; slot: BookingSlot }) {
-  const returnUrl = encodeURIComponent(
-    `/recherche?bookMedecinId=${slot.medecin.id}&bookDate=${slot.date}&bookDebut=${encodeURIComponent(slot.debut)}&bookFin=${encodeURIComponent(slot.fin)}`
-  )
+function LoginPrompt({
+  onClose,
+  slot,
+  returnUrl,
+}: {
+  onClose: () => void
+  slot: BookingSlot
+  returnUrl: string
+}) {
+  const returnPath = buildBookingReturnPath(returnUrl, slot)
+  const encodedReturnPath = encodeURIComponent(returnPath)
   return (
     <div className="flex flex-col items-center text-center py-6">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#EBF4FF]">
@@ -224,7 +233,7 @@ function LoginPrompt({ onClose, slot }: { onClose: () => void; slot: BookingSlot
 
       <div className="mt-8 flex w-full flex-col gap-3">
         <a
-          href={`/login?redirect=${returnUrl}`}
+          href={`/login?redirect=${encodedReturnPath}`}
           className="flex w-full items-center justify-center rounded-xl bg-[#007DFF] py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#00263C]"
         >
           Se connecter
@@ -245,6 +254,16 @@ function LoginPrompt({ onClose, slot }: { onClose: () => void; slot: BookingSlot
       </div>
     </div>
   )
+}
+
+/** Ajoute le créneau à une URL existante sans effacer sa recherche ni ses filtres. */
+export function buildBookingReturnPath(returnUrl: string, slot: BookingSlot): string {
+  const url = new URL(returnUrl, 'http://doctorek.local')
+  url.searchParams.set('bookMedecinId', slot.medecin.id)
+  url.searchParams.set('bookDate', slot.date)
+  url.searchParams.set('bookDebut', slot.debut)
+  url.searchParams.set('bookFin', slot.fin)
+  return `${url.pathname}?${url.searchParams.toString()}`
 }
 
 function SuccessState({ rdv, onClose }: { rdv: RendezVous; onClose: () => void }) {

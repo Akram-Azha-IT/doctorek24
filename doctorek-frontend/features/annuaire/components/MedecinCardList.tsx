@@ -12,15 +12,6 @@ import { useCreneauxNavigation } from '../useCreneauxNavigation'
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 
-function formatDayLabel(iso: string) {
-  const d = new Date(iso + 'T00:00:00')
-  return {
-    day: DAYS_FR[d.getDay()].toUpperCase(),
-    date: d.getDate(),
-    month: MONTHS_FR[d.getMonth()],
-  }
-}
-
 function formatNextAvailable(iso: string) {
   const d = new Date(iso + 'T00:00:00')
   return `${DAYS_FR[d.getDay()]} ${d.getDate()} ${MONTHS_FR[d.getMonth()]}`
@@ -52,31 +43,6 @@ function VideoIcon() {
   )
 }
 
-function ChevronLeftIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
-    </svg>
-  )
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
-    </svg>
-  )
-}
-
-function CalendarOffIcon() {
-  return (
-    <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18M9 14l6 6M15 14l-6 6" />
-    </svg>
-  )
-}
-
 function CalendarNextIcon() {
   return (
     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
@@ -93,69 +59,6 @@ interface SlotPanelProps {
   readonly nav: ReturnType<typeof useCreneauxNavigation>
 }
 
-/** Habillage d'une pastille de jour, sorti du JSX pour éviter un ternaire imbriqué. */
-function dayChipClass(isSelected: boolean, isToday: boolean): string {
-  if (isSelected) return 'bg-[#007DFF] text-white shadow-sm'
-  if (isToday) return 'bg-[#EBF4FF] text-[#1863A9] hover:bg-[#D6EAFF]'
-  return 'bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
-}
-
-/** Agenda saturé sur la fenêtre visible : on oriente vers la prochaine ouverture. */
-function NoAvailability({ medecin, nav, onAlerter }: Readonly<{ medecin: MedecinProfile; nav: SlotPanelProps['nav']; onAlerter: () => void }>) {
-  const { goToDate, nextAvailableInfo, extendedLoading } = nav
-
-  let action: React.ReactNode
-  if (extendedLoading) {
-    action = <div className="h-8 w-40 animate-pulse rounded-full bg-zinc-200" />
-  } else if (nextAvailableInfo) {
-    action = (
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); goToDate(nextAvailableInfo.date) }}
-        className="inline-flex items-center gap-2 rounded-full bg-[#007DFF] px-4 py-2 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#00263C] hover:scale-[1.02] active:scale-95"
-      >
-        <CalendarNextIcon />
-        Prochaine dispo : {formatNextAvailable(nextAvailableInfo.date)}
-      </button>
-    )
-  } else {
-    action = (
-      <Link
-        href={`/medecins/${medecin.id}`}
-        className="inline-flex items-center gap-1 rounded-full bg-[#EBF4FF] px-3 py-1.5 text-[11px] font-semibold text-[#1863A9] transition-colors hover:bg-[#D6EAFF]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        Voir le profil
-        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
-        </svg>
-      </Link>
-    )
-  }
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl bg-zinc-50 px-4 py-5 ring-1 ring-inset ring-zinc-100">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
-        <CalendarOffIcon />
-      </div>
-      <div className="text-center">
-        <p className="text-[12px] font-semibold text-zinc-500">Aucune dispo cette semaine</p>
-      </div>
-      {action}
-      {/* L'agenda saturé est le moment où le besoin naît : proposer l'alerte ici
-          évite au patient d'aller la chercher sur la page du médecin. */}
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onAlerter() }}
-        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#1863A9] underline underline-offset-2 transition-colors hover:text-[#007DFF]"
-      >
-        <BellIcon />
-        Me prévenir si une place se libère
-      </button>
-    </div>
-  )
-}
-
 function BellIcon() {
   return (
     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -164,66 +67,15 @@ function BellIcon() {
   )
 }
 
-/** Bande des cinq jours visibles, avec les flèches de navigation. */
-function DayStrip({ nav }: Readonly<{ nav: SlotPanelProps['nav'] }>) {
-  const { visibleDates, selectedDate, setSelectedDate, windowStart, setWindowStart, daysWithSlots } = nav
-
-  return (
-    <div className="mb-2.5 flex items-center gap-1">
-      <button
-        type="button"
-        aria-label="Jours précédents"
-        onClick={(e) => { e.preventDefault(); setWindowStart((w) => Math.max(0, w - 1)) }}
-        disabled={windowStart === 0}
-        className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <ChevronLeftIcon />
-      </button>
-
-      <div className="flex flex-1 gap-1">
-        {visibleDates.map((date, i) => {
-          const { day, date: d } = formatDayLabel(date)
-          const isSelected = date === selectedDate
-          const isToday = windowStart === 0 && i === 0
-          return (
-            <button
-              key={date}
-              type="button"
-              onClick={(e) => { e.preventDefault(); setSelectedDate(date) }}
-              className={`relative flex flex-1 flex-col items-center rounded-lg px-1 py-1 text-center transition-all duration-150 ${dayChipClass(isSelected, isToday)}`}
-            >
-              <span className="text-[9px] font-bold uppercase leading-tight">{day}</span>
-              <span className="text-[13px] font-bold leading-tight">{d}</span>
-              {daysWithSlots[i] && !isSelected && (
-                <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-emerald-400" />
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      <button
-        type="button"
-        aria-label="Jours suivants"
-        onClick={(e) => { e.preventDefault(); setWindowStart((w) => Math.min(360, w + 1)) }}
-        disabled={windowStart >= 360}
-        className="flex shrink-0 h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 transition-all hover:bg-zinc-200 hover:text-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <ChevronRightIcon />
-      </button>
-    </div>
-  )
-}
-
 /** Créneaux réservables du jour choisi : squelette, message vide, ou pastilles horaires. */
 function SlotChips({ medecin, onBookSlot, nav }: SlotPanelProps) {
   const { selectedDate, showAll, setShowAll, isLoading, availableSlots, isUnavailable } = nav
-  const MAX_CHIPS = 6
+  const MAX_CHIPS = 3
 
   if (isLoading) {
     return (
       <div className="grid w-full grid-cols-3 gap-1.5">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="h-8 animate-pulse rounded-lg bg-zinc-100" />
         ))}
       </div>
@@ -269,23 +121,74 @@ function SlotChips({ medecin, onBookSlot, nav }: SlotPanelProps) {
   )
 }
 
-/**
- * Panneau de réservation d'une carte de résultat.
- *
- * <p>Les deux états — agenda saturé ou créneaux à choisir — n'ont ni la même structure
- * ni les mêmes données. Les tenir dans une seule fonction la rendait trop touffue pour
- * être relue ; chacun vit désormais dans son composant.
- */
 function SlotPanel({ medecin, onBookSlot, nav, onAlerter }: SlotPanelProps & { onAlerter: () => void }) {
+  const nextDifferentDate = nav.nextAvailableInfo?.date !== nav.selectedDate
+    ? nav.nextAvailableInfo
+    : null
+
   return (
-    <div className="flex w-full shrink-0 flex-col border-t border-zinc-100 px-4 py-3.5 sm:w-[280px] sm:border-t-0 sm:border-l">
-      {nav.allUnavailable ? (
-        <NoAvailability medecin={medecin} nav={nav} onAlerter={onAlerter} />
+    <div className="flex w-full shrink-0 flex-col justify-center border-t border-[#E7EDF4] bg-[#FCFDFE] px-5 py-4 sm:w-[320px] sm:border-l sm:border-t-0">
+      {nav.isLoading ? (
+        <>
+          <div className="mb-3 h-4 w-40 animate-pulse rounded bg-zinc-100" />
+          <SlotChips medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
+        </>
+      ) : !nav.isUnavailable ? (
+        <>
+          <div className="mb-3">
+            <p className="flex items-center gap-2 text-[13px] font-bold text-[#15935A]">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#2EB67D]" aria-hidden="true" />
+              Disponible · {formatNextAvailable(nav.selectedDate)}
+            </p>
+            <p className="ml-[18px] mt-0.5 text-[11px] text-[#7A8795]">Choisissez un horaire</p>
+          </div>
+          <SlotChips medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
+          <Link
+            href={`/medecins/${medecin.id}/rdv?date=${nav.selectedDate}`}
+            className="mt-3 flex min-h-9 items-center justify-center rounded-lg border border-[#9CCEFF] bg-white px-3 text-xs font-bold text-[#007DFF] transition-colors hover:bg-[#EBF4FF]"
+          >
+            Voir les disponibilités
+          </Link>
+        </>
       ) : (
         <>
-          <DayStrip nav={nav} />
-          <div className="flex flex-1 items-start">
-            <SlotChips medecin={medecin} onBookSlot={onBookSlot} nav={nav} />
+          <p className={`flex items-center gap-2 text-[13px] font-bold ${nextDifferentDate ? 'text-[#D47B00]' : 'text-[#E01E5A]'}`}>
+            <span className={`h-2.5 w-2.5 rounded-full ${nextDifferentDate ? 'bg-[#ECB22E]' : 'bg-[#E01E5A]'}`} aria-hidden="true" />
+            {nextDifferentDate
+              ? `Prochain créneau ${formatNextAvailable(nextDifferentDate.date)}`
+              : 'Aucune disponibilité cette semaine'}
+          </p>
+          <p className="ml-[18px] mt-1 text-[11px] text-[#7A8795]">
+            {nextDifferentDate ? `Première place à ${nextDifferentDate.heure}` : 'Aucun créneau trouvé sur les prochains jours'}
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {nextDifferentDate && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  nav.goToDate(nextDifferentDate.date)
+                }}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#9CCEFF] bg-white px-3 text-xs font-bold text-[#007DFF] transition-colors hover:bg-[#EBF4FF]"
+              >
+                <CalendarNextIcon />
+                Voir ce créneau
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                onAlerter()
+              }}
+              className="inline-flex min-h-9 items-center gap-1.5 px-1 text-xs font-semibold text-[#1863A9] underline underline-offset-2 hover:text-[#007DFF]"
+            >
+              <BellIcon />
+              Me prévenir
+            </button>
           </div>
         </>
       )}
@@ -301,12 +204,13 @@ interface MedecinCardListProps {
   readonly onMouseEnter?: () => void
   readonly onMouseLeave?: () => void
   readonly onBookSlot?: (slot: BookingSlot) => void
+  readonly searchDate?: string | null
 }
 
-export function MedecinCardList({ medecin, note, distanceKm, onMouseEnter, onMouseLeave, onBookSlot }: MedecinCardListProps) {
+export function MedecinCardList({ medecin, note, distanceKm, onMouseEnter, onMouseLeave, onBookSlot, searchDate }: MedecinCardListProps) {
   const accepte = medecin.acceptNouveauxPatients !== false
   // L'état des créneaux est passé tel quel au panneau, seul consommateur.
-  const nav = useCreneauxNavigation(medecin.id)
+  const nav = useCreneauxNavigation(medecin.id, searchDate)
 
   const [alerteOuverte, setAlerteOuverte] = useState(false)
   const session = useSession()
@@ -314,33 +218,17 @@ export function MedecinCardList({ medecin, note, distanceKm, onMouseEnter, onMou
 
   return (
     <div
-      className="group relative mb-3 rounded-2xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.07)] transition-all duration-200 hover:shadow-[0_6px_28px_rgba(0,125,255,0.11)] overflow-hidden border border-transparent hover:border-[#007DFF]/10"
+      className="group relative mb-3 overflow-hidden rounded-xl border border-[#DCE5EE] bg-white shadow-[0_3px_12px_rgba(1,38,81,0.055)] transition-all duration-200 hover:border-[#B6DAF7] hover:shadow-[0_9px_26px_rgba(1,38,81,0.09)]"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {/* Left accent bar */}
-      <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl bg-gradient-to-b from-[#007DFF] to-[#3DA8FF] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      <div aria-hidden="true" className="absolute bottom-0 left-0 top-0 w-1 rounded-l-xl bg-[#007DFF] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
       <div className="flex flex-col sm:flex-row sm:items-stretch">
 
         {/* ── Doctor info ─────────────────────────────── */}
-        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 px-5 py-4 overflow-hidden">
-          {/* Gradient background blob */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: 'radial-gradient(ellipse 120px 100px at top right, rgba(0,125,255,0.06) 0%, transparent 70%)',
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            style={{
-              background: 'radial-gradient(ellipse 160px 130px at top right, rgba(0,125,255,0.09) 0%, transparent 70%)',
-            }}
-          />
-
+        <Link href={`/medecins/${medecin.id}`} className="relative flex min-w-0 flex-1 gap-4 overflow-hidden px-5 py-4">
           {/* Avatar */}
           <div className="relative shrink-0 self-start mt-0.5">
             <div className="rounded-full ring-2 ring-offset-2 ring-[#B6DAF7]">

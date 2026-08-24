@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -114,8 +115,8 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
             AND EXISTS (
                 SELECT 1 FROM agenda.disponibilites d
                 WHERE d.medecin_id = md.user_id
-                AND d.date_debut <= CURRENT_DATE
-                AND (d.date_fin IS NULL OR d.date_fin >= CURRENT_DATE)
+                AND d.date_debut <= :dateFin
+                AND (d.date_fin IS NULL OR d.date_fin >= :dateDebut)
                 AND d.jour_semaine IN (:joursSemaine)
             )
             ORDER BY
@@ -146,8 +147,8 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
             AND EXISTS (
                 SELECT 1 FROM agenda.disponibilites d
                 WHERE d.medecin_id = md.user_id
-                AND d.date_debut <= CURRENT_DATE
-                AND (d.date_fin IS NULL OR d.date_fin >= CURRENT_DATE)
+                AND d.date_debut <= :dateFin
+                AND (d.date_fin IS NULL OR d.date_fin >= :dateDebut)
                 AND d.jour_semaine IN (:joursSemaine)
             )
             """,
@@ -158,6 +159,8 @@ public interface MedecinDetailRepository extends JpaRepository<MedecinDetailEnti
         @Param("ville") String ville,
         @Param("nom") String nom,
         @Param("joursSemaine") List<String> joursSemaine,
+        @Param("dateDebut") LocalDate dateDebut,
+        @Param("dateFin") LocalDate dateFin,
         Pageable pageable
     );
 }

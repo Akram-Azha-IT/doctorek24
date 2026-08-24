@@ -42,6 +42,13 @@ describe('useCreneauxNavigation', () => {
     expect(result.current.selectedDate).toBe(dates[0])
   })
 
+  test('ouvre sur la date précise fournie par la recherche', async () => {
+    const { result } = renderHook(() => useCreneauxNavigation('m1', FAR_DAY), { wrapper })
+
+    expect(result.current.selectedDate).toBe(FAR_DAY)
+    expect(result.current.visibleDates[0]).toBe(FAR_DAY)
+  })
+
   test('ne retient que les créneaux disponibles du jour sélectionné', async () => {
     getCreneauxMock.mockImplementation(async (_id, date) => (date === TOMORROW ? slots : []))
     const { result } = setup()

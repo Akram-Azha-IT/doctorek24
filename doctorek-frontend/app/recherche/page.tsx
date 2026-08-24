@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -17,20 +17,21 @@ import { ResultsList } from '@/features/recherche/components/ResultsList'
 import type { SortKey, ActiveFilter } from '@/features/recherche/components/ResultsToolbar'
 import { DesktopMapPanel, MobileMapOverlay } from '@/features/recherche/components/MapPanel'
 import { MapIcon, ListIcon } from '@/features/recherche/components/icons'
+import { buildRechercheUrl, readRechercheState, type RechercheState } from '@/features/recherche/searchState'
 
 const DoctorMap = dynamic(
   () => import('@/features/annuaire/components/DoctorMap').then((m) => ({ default: m.DoctorMap })),
   { ssr: false },
 )
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 5
 
 export default function RecherchePage() {
   const searchParams = useSearchParams()
+  const [initialSearchState] = useState(() => readRechercheState(searchParams))
 
   const latParam = searchParams.get('lat')
   const lngParam = searchParams.get('lng')
-  const nearbyParam = searchParams.get('nearby')
   // Objet recréé à chaque rendu sans mémoïsation : l'effet qui en dépend se relancerait
   // en boucle.
   const urlCoords = useMemo(() => {
@@ -39,9 +40,10 @@ export default function RecherchePage() {
     return latParam && lngParam && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
   }, [latParam, lngParam])
 
-  const [filter, setFilter] = useState<DisponibiliteFilter>('all')
-  const [sort, setSort] = useState<SortKey>('pertinence')
-  const [nearbyMode, setNearbyMode] = useState(nearbyParam === '1' && urlCoords !== null)
+  const [filter, setFilter] = useState<DisponibiliteFilter>(initialSearchState.filter)
+  const [selectedDate, setSelectedDate] = useState<string | null>(initialSearchState.date)
+  const [sort, setSort] = useState<SortKey>(initialSearchState.sort)
+  const [nearbyMode, setNearbyMode] = useState(initialSearchState.nearbyMode)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list')
   const [nearBottom, setNearBottom] = useState(false)
@@ -55,7 +57,7 @@ export default function RecherchePage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
   const [bookingSlot, setBookingSlot] = useState<BookingSlot | null>(null)
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(initialSearchState.page)
 
   // Return-to-booking after login redirect
   const bookMedecinId = searchParams.get('bookMedecinId') ?? ''
@@ -63,6 +65,7 @@ export default function RecherchePage() {
   const bookDebut = searchParams.get('bookDebut') ?? ''
   const bookFin = searchParams.get('bookFin') ?? ''
   const hasBookingParams = !!(bookMedecinId && bookDate && bookDebut && bookFin)
+  const [preserveBookingParams, setPreserveBookingParams] = useState(hasBookingParams)
   const { data: bookMedecin } = useMedecin(bookMedecinId)
 
   useEffect(() => {
@@ -74,26 +77,73 @@ export default function RecherchePage() {
 
   const { register, watch, setValue } = useForm<SearchFormValues>({
     defaultValues: {
-      specialite: searchParams.get('specialite') ?? '',
-      ville: searchParams.get('ville') ?? '',
+      specialite: initialSearchState.specialite,
+      ville: initialSearchState.ville,
     },
   })
 
   const [query, setQuery] = useState<SearchFormValues>({
-    specialite: searchParams.get('specialite') ?? '',
-    ville: searchParams.get('ville') ?? '',
+    specialite: initialSearchState.specialite,
+    ville: initialSearchState.ville,
   })
 
   const values = watch()
+  const previousSearchRef = useRef(query)
   useEffect(() => {
-    setQuery({ specialite: values.specialite, ville: values.ville })
-    setPage(1)
+    const nextQuery = { specialite: values.specialite, ville: values.ville }
+    const searchChanged =
+      previousSearchRef.current.specialite !== nextQuery.specialite ||
+      previousSearchRef.current.ville !== nextQuery.ville
+
+    previousSearchRef.current = nextQuery
+    setQuery(nextQuery)
+    if (searchChanged) setPage(1)
   }, [values.specialite, values.ville])  
 
   const { state: geoState, request: requestGeo } = useGeolocation()
-  const geoCoords =
-    urlCoords ??
-    (geoState.status === 'success' ? { lat: geoState.lat, lng: geoState.lng } : null)
+  const geoLat = geoState.status === 'success' ? geoState.lat : null
+  const geoLng = geoState.status === 'success' ? geoState.lng : null
+  const geoCoords = useMemo(
+    () => urlCoords ?? (geoLat !== null && geoLng !== null ? { lat: geoLat, lng: geoLng } : null),
+    [geoLat, geoLng, urlCoords],
+  )
+
+  const rechercheState = useMemo<RechercheState>(() => ({
+    specialite: query.specialite,
+    ville: query.ville,
+    filter,
+    date: selectedDate,
+    sort,
+    nearbyMode,
+    page,
+    coords: geoCoords,
+  }), [filter, geoCoords, nearbyMode, page, query.specialite, query.ville, selectedDate, sort])
+
+  const rechercheUrl = useMemo(
+    () => buildRechercheUrl(searchParams, rechercheState, {
+      removeBookingParams: !preserveBookingParams,
+    }),
+    [preserveBookingParams, rechercheState, searchParams],
+  )
+  const cleanRechercheUrl = useMemo(
+    () => buildRechercheUrl(searchParams, rechercheState, { removeBookingParams: true }),
+    [rechercheState, searchParams],
+  )
+
+  // L'URL est la sauvegarde durable de la liste visible. replaceState évite une
+  // navigation Next.js et conserve donc aussi le scroll et le tiroir en cours.
+  useEffect(() => {
+    const currentUrl = `${window.location.pathname}${window.location.search}`
+    if (currentUrl !== rechercheUrl) {
+      window.history.replaceState(window.history.state, '', rechercheUrl)
+    }
+  }, [rechercheUrl])
+
+  const handleBookingClose = useCallback(() => {
+    setBookingSlot(null)
+    setPreserveBookingParams(false)
+    window.history.replaceState(window.history.state, '', cleanRechercheUrl)
+  }, [cleanRechercheUrl])
 
   const handleNearbyClick = () => {
     setPage(1)
@@ -111,6 +161,8 @@ export default function RecherchePage() {
     nearbyMode ? '' : query.ville,
     filter,
     nearbyMode ? 1 : page,
+    selectedDate,
+    PAGE_SIZE,
   )
 
   const nearbyResult = useNearbyMedecins(
@@ -159,6 +211,13 @@ export default function RecherchePage() {
 
   const handleFilterChange = (f: DisponibiliteFilter) => {
     setFilter(f)
+    setSelectedDate(null)
+    setPage(1)
+  }
+
+  const handleAvailabilityChange = (value: { filter: DisponibiliteFilter; date: string | null }) => {
+    setFilter(value.filter)
+    setSelectedDate(value.date)
     setPage(1)
   }
 
@@ -197,7 +256,18 @@ export default function RecherchePage() {
       activeFilters.push({ key: 'ville', label: query.ville, onRemove: () => setValue('ville', '') })
     }
   }
-  if (filter === 'today') {
+  if (selectedDate) {
+    const dateLabel = new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    }).format(new Date(`${selectedDate}T00:00:00`))
+    activeFilters.push({
+      key: 'date',
+      label: `Disponible le ${dateLabel}`,
+      onRemove: () => setSelectedDate(null),
+    })
+  } else if (filter === 'today') {
     activeFilters.push({ key: 'today', label: "Disponible aujourd'hui", onRemove: () => handleFilterChange('all') })
   } else if (filter === 'week') {
     activeFilters.push({ key: 'week', label: 'Disponible cette semaine', onRemove: () => handleFilterChange('all') })
@@ -215,6 +285,9 @@ export default function RecherchePage() {
           onVilleChange={(v) => setValue('ville', v)}
           onNearbyClick={handleNearbyClick}
           nearbyLoading={geoLoading}
+          filter={filter}
+          date={selectedDate}
+          onAvailabilityChange={handleAvailabilityChange}
           onSearch={() => window.scrollTo({ top: 200, behavior: 'smooth' })}
         />
         <FilterBar
@@ -222,13 +295,16 @@ export default function RecherchePage() {
           geoLoading={geoLoading}
           geoState={geoState}
           filter={filter}
+          date={selectedDate}
+          sort={sort}
           onNearbyClick={handleNearbyClick}
-          onFilterChange={handleFilterChange}
+          onAvailabilityChange={handleAvailabilityChange}
+          onSortChange={setSort}
         />
       </div>
 
-      <div className="min-h-screen bg-[#EBF4FF]">
-        <div className="mx-auto flex max-w-6xl">
+      <div className="min-h-screen bg-[#F6F9FC]">
+        <div className="mx-auto flex max-w-6xl gap-6 lg:px-4">
           <ResultsList
             nearbyMode={nearbyMode}
             isLoading={isLoading}
@@ -238,10 +314,11 @@ export default function RecherchePage() {
             onRetry={retry}
             isRetrying={isFetching}
             total={totalResults}
-            sort={sort}
-            onSortChange={setSort}
             activeFilters={activeFilters}
             filter={filter}
+            exactDate={selectedDate}
+            ville={nearbyMode ? '' : query.ville}
+            specialite={nearbyMode ? '' : query.specialite}
             nearbyMedecins={nearbyMedecins}
             pagedNearby={sortedPagedNearby}
             searchContent={sortedSearchContent}
@@ -252,6 +329,10 @@ export default function RecherchePage() {
             onHover={setHoveredId}
             onBookSlot={setBookingSlot}
             onFilterChange={handleFilterChange}
+            onClearAvailability={() => {
+              setFilter('all')
+              setSelectedDate(null)
+            }}
             mobileView={mobileView}
           />
           <DesktopMapPanel
@@ -273,7 +354,11 @@ export default function RecherchePage() {
         mobileView={mobileView}
       />
 
-      <BookingDrawer slot={bookingSlot} onClose={() => setBookingSlot(null)} />
+      <BookingDrawer
+        slot={bookingSlot}
+        returnUrl={cleanRechercheUrl}
+        onClose={handleBookingClose}
+      />
 
       <button
         type="button"

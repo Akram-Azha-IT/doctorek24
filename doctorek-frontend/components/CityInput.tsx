@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import LogoLoader from '@/components/LogoLoader'
 
 // Fallback if API unavailable
 const FALLBACK_VILLES = [
@@ -208,10 +209,7 @@ export function CityInput({
               {opt.type === 'nearby' ? (
                 <>
                   {nearbyLoading ? (
-                    <svg className="h-4 w-4 shrink-0 text-[#007DFF] animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
+                    <LogoLoader variant="mark" size={16} decorative />
                   ) : (
                     <svg className="h-4 w-4 shrink-0 text-[#007DFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                       <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>

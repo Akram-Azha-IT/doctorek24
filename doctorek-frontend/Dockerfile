@@ -25,9 +25,8 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-# Chromium for the Google Wallet hero image route (puppeteer)
-RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont font-noto font-noto-arabic
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Polices utilisées par le rendu SVG serveur. Aucun navigateur headless n'est requis.
+RUN apk add --no-cache ca-certificates ttf-freefont font-noto font-noto-arabic
 
 # Runtime = `node server.js` uniquement : npm/corepack inutiles, et leurs
 # dépendances embarquées (sigstore, picomatch) trainent des CVE — on les retire.

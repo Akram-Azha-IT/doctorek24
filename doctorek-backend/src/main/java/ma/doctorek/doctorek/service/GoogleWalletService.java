@@ -36,6 +36,11 @@ import java.util.Map;
 public class GoogleWalletService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String DESIGN_VERSION = "v3-global-care";
+    private static final String PASS_BACKGROUND_COLOR = "#216ACF";
+    private static final String WALLET_LOGO_PATH = "/wallet-logo-840.png";
+    private static final String WALLET_HERO_PATH = "/wallet-hero-global-care.png";
+    private static final String PATIENT_CARD_PATH = "/dashboard/patient/carte";
 
     private final GoogleWalletProperties properties;
     private final ResourceLoader resourceLoader;
@@ -75,51 +80,61 @@ public class GoogleWalletService {
         // the stored data and ignores the JWT's fields — so edits (photo, CIN, CNSS...) never show.
         // Version the object id with a hash of the displayed content: any change yields a new object
         // the user adds fresh, always reflecting current data.
-        // "v2" = refonte visuelle (hero officiel + fond marine) : force un nouvel objet
-        // pour que les utilisateurs ré-ajoutant la carte voient le nouveau design.
-        String contentVersion = shortHash(String.join("|", "v2",
-                fullName, nullToEmpty(numIdentite), nullToEmpty(assuranceNumero), nullToEmpty(photoUrl)));
+        String coverage = assuranceNumero == null || assuranceNumero.isBlank()
+                ? "À compléter"
+                : "AMO / CNSS";
+        // Toute refonte doit produire un nouvel objet : Google réutilise sinon l'objet
+        // déjà enregistré et ignore les nouvelles propriétés du JWT.
+        String contentVersion = shortHash(String.join("|", DESIGN_VERSION,
+                fullName, cardRef, coverage));
         String objectSuffix = sanitize(cardRef) + "-" + contentVersion;
         String fullObjectId = issuerId + "." + objectSuffix;
 
         Map<String, Object> genericObject = new java.util.LinkedHashMap<>();
         genericObject.put("id", fullObjectId);
         genericObject.put("classId", fullClassId);
-        genericObject.put("genericType", "GENERIC_TYPE_UNSPECIFIED");
+        genericObject.put("genericType", "GENERIC_OTHER");
         genericObject.put("state", "ACTIVE");
         genericObject.put("cardTitle", textValue("Doctorek"));
-        genericObject.put("subheader", textValue("Carte Santé Virtuelle"));
+        genericObject.put("subheader", textValue("Carte santé"));
         genericObject.put("header", textValue(fullName.isBlank() ? "Patient Doctorek" : fullName.trim()));
-        // Marine "document officiel" — aligné sur le fond du hero et de la carte (#042651).
-        genericObject.put("hexBackgroundColor", "#042651");
+        genericObject.put("hexBackgroundColor", PASS_BACKGROUND_COLOR);
         // Google fetches the logo server-side: a non-public (e.g. localhost) URL breaks pass creation,
         // so dev/test falls back to a publicly reachable placeholder until a public domain is deployed.
         // TODO: switch to frontendUrl + "/icone-doctorek.png" once a public HTTPS domain is deployed
         // (Google fetches this image server-side; localhost/non-public URLs are rejected).
-        String logoUri = frontendUrl.startsWith("https://")
-                ? frontendUrl + "/icone-doctorek.png"
+        String logoUri = isPublicFrontend()
+                ? frontendUrl + WALLET_LOGO_PATH
                 : "https://files.catbox.moe/nxeqy6.png";
-        genericObject.put("logo", Map.of("sourceUri", Map.of("uri", logoUri)));
-        String heroImageUri = buildHeroImageUrl(cardRef, fullName.trim(), maskCin(numIdentite),
-                orDash(assuranceNumero), photoUrl);
-        if (heroImageUri != null) {
-            genericObject.put("heroImage", Map.of("sourceUri", Map.of("uri", heroImageUri)));
+        genericObject.put("logo", Map.of(
+                "sourceUri", Map.of("uri", logoUri),
+                "contentDescription", textValue("Logo Doctorek")
+        ));
+
+        if (isPublicFrontend()) {
+            genericObject.put("heroImage", Map.of(
+                    "sourceUri", Map.of("uri", frontendUrl + WALLET_HERO_PATH),
+                    "contentDescription", textValue("Parcours de soins Doctorek")
+            ));
+            genericObject.put("appLinkData", Map.of(
+                    "webAppLinkInfo", Map.of(
+                            "appTarget", Map.of(
+                                    "targetUri", Map.of(
+                                            "uri", frontendUrl + PATIENT_CARD_PATH,
+                                            "description", "Espace patient Doctorek"
+                                    )
+                            )
+                    ),
+                    "displayText", textValue("Ouvrir Doctorek")
+            ));
         }
-        // Direct image module: Google fetches it server-side, so only a publicly reachable URL
-        // works (a social-login avatar). Manual uploads are data: URIs Google can't fetch — those
-        // only appear via the server-rendered hero image above. Visible even on localhost.
-        if (isPublicHttpUrl(photoUrl)) {
-            genericObject.put("imageModulesData", List.of(Map.of(
-                    "id", "patient_photo",
-                    "mainImage", Map.of(
-                            "sourceUri", Map.of("uri", photoUrl),
-                            "contentDescription", textValue("Photo du patient"))
-            )));
-        }
+
+        // Les données sensibles restent hors du recto. Google Wallet affiche au maximum
+        // deux champs par ligne ; les valeurs courtes évitent la troncature internationale.
         genericObject.put("textModulesData", List.of(
-                Map.of("id", "cin", "header", "CIN", "body", maskCin(numIdentite)),
-                Map.of("id", "cnss", "header", "N° CNSS / AMO", "body", orDash(assuranceNumero)),
-                Map.of("id", "ref", "header", "N° Carte", "body", cardRef)
+                Map.of("id", "member", "header", "N° adhérent", "body", memberNumber(cardRef)),
+                Map.of("id", "status", "header", "Statut", "body", "Active"),
+                Map.of("id", "coverage", "header", "Couverture", "body", coverage)
         ));
         genericObject.put("barcode", Map.of(
                 "type", "QR_CODE",
@@ -196,6 +211,10 @@ public class GoogleWalletService {
         return !lower.contains("localhost") && !lower.contains("127.0.0.1");
     }
 
+    private boolean isPublicFrontend() {
+        return frontendUrl != null && frontendUrl.startsWith("https://");
+    }
+
     private static String hmacSha256Hex(String payload, String secret) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
@@ -266,6 +285,17 @@ public class GoogleWalletService {
 
     private static String nullToEmpty(String v) {
         return v == null ? "" : v;
+    }
+
+    private static String memberNumber(String cardRef) {
+        if (cardRef == null || cardRef.isBlank()) {
+            return "-";
+        }
+        int separator = cardRef.lastIndexOf('-');
+        String memberNumber = separator >= 0 ? cardRef.substring(separator + 1) : cardRef;
+        return memberNumber.length() <= 15
+                ? memberNumber
+                : memberNumber.substring(memberNumber.length() - 15);
     }
 
     /** Short content-derived id segment (8 hex chars) — stable for identical content. */

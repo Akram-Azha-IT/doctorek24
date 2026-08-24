@@ -35,7 +35,7 @@ export function ProfessionnelSection() {
             }}>
               <Image
                 src="/Entice Beauty By Shah Emran The Artist.jpg"
-                alt="Tableau de bord médecin"
+                alt="Médecin consultant le dossier d’une patiente"
                 width={240}
                 height={240}
                 className="w-full h-full object-cover"

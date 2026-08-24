@@ -42,11 +42,13 @@ export function searchMedecins(
   disponibilite: DisponibiliteFilter = 'all',
   page = 1,
   size = 10,
+  dateRecherche?: string | null,
 ): Promise<PagedMedecinsResponse> {
   const params = new URLSearchParams()
   if (specialite.trim()) params.set('specialite', specialite.trim())
   if (ville.trim()) params.set('ville', ville.trim())
   if (disponibilite !== 'all') params.set('disponibilite', disponibilite)
+  if (dateRecherche) params.set('date', dateRecherche)
   params.set('page', String(page))
   params.set('size', String(size))
   return apiFetch<PagedMedecinsResponse>(`/api/v1/annuaire/medecins?${params}`)
@@ -70,4 +72,3 @@ export function searchMedecinsNearby(
   if (specialite?.trim()) params.set('specialite', specialite.trim())
   return apiFetch<MedecinNearbyResult[]>(`/api/v1/annuaire/medecins/nearby?${params}`)
 }
-

@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { MessageBubble } from './MessageBubble'
 import { sendMessageRest, sendAudioMessage, sendAttachment, setPatientReply } from '../api'
 import { ApiError } from '@/lib/api-client'
+import LogoLoader from '@/components/LogoLoader'
 
 const ACCEPTED_FILES = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png'
 
@@ -316,7 +317,7 @@ function InputBar({ composer }: { readonly composer: Composer }) {
         aria-label="Joindre un document (PDF, JPEG, PNG)"
       >
         {uploadingDoc ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          <LogoLoader variant="mark" size={16} decorative />
         ) : (
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
@@ -350,7 +351,7 @@ function InputBar({ composer }: { readonly composer: Composer }) {
           aria-label="Enregistrer un message vocal"
         >
           {uploadingAudio ? (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <LogoLoader variant="mark" size={16} inverse decorative />
           ) : (
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />

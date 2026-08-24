@@ -13,6 +13,7 @@ import {
 import type { MedicamentDto } from '@/features/dossier/api'
 import { useProches } from '@/features/famille/hooks'
 import { getDocumentDownloadUrl, uploadOrdonnanceFichier, getOrdonnanceFichierUrl, openProtectedFile } from '@/features/dossier/api'
+import LogoLoader from '@/components/LogoLoader'
 
 const TYPE_OPTIONS = [
   'Analyse de sang',
@@ -434,7 +435,7 @@ export default function DossierPage() {
 
           {loadingOrds ? (
             <div className="flex justify-center py-16">
-              <div className="h-8 w-8 rounded-full border-2 border-[#007DFF]/30 border-t-[#007DFF] animate-spin" />
+              <LogoLoader width={112} label="Chargement des ordonnances…" />
             </div>
           ) : ordonnances.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
@@ -674,7 +675,7 @@ export default function DossierPage() {
                 >
                   {uploadDoc.isPending ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <LogoLoader variant="mark" size={16} inverse decorative />
                       Envoi…
                     </span>
                   ) : 'Envoyer'}
@@ -690,7 +691,7 @@ export default function DossierPage() {
           {/* Documents list */}
           {loadingDocs ? (
             <div className="flex justify-center py-12">
-              <div className="h-8 w-8 rounded-full border-2 border-[#007DFF]/30 border-t-[#007DFF] animate-spin" />
+              <LogoLoader width={112} label="Chargement des documents…" />
             </div>
           ) : documents.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-12 text-center">

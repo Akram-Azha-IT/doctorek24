@@ -226,7 +226,7 @@ export default function CarteEditPage() {
                 <p className="text-[#DFEFFE] text-xs mt-0.5">Groupe sanguin, allergies et contacts disponibles en quelques secondes pour les secours.</p>
               </div>
               <div className="self-start sm:self-auto relative w-14 h-14 flex-shrink-0">
-                <Image src="/free-badge.png" alt="100% Gratuit" fill className="object-contain" />
+                <Image src="/free-badge.png" alt="100% Gratuit" fill sizes="56px" className="object-contain" />
               </div>
             </div>
 
@@ -678,7 +678,7 @@ export default function CarteEditPage() {
                       >
                         {isMutating ? (
                           <>
-                            <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            <LogoLoader variant="mark" size={16} inverse decorative />
                             {isUpdating ? 'Mise à jour...' : 'Création...'}
                           </>
                         ) : (

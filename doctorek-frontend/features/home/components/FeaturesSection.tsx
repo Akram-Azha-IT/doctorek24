@@ -18,7 +18,7 @@ export function FeaturesSection() {
         <a href="/login" className="group lg:w-[34%]">
           <div className="bg-[#00263C] rounded-2xl shadow-md p-7 h-full relative overflow-hidden group-hover:shadow-xl transition-shadow flex flex-col min-h-[320px]">
             <div className="absolute top-3 right-3 z-20 w-14 h-14 pointer-events-none">
-              <Image src="/free-badge.png" alt="100% Gratuit" fill className="object-contain" />
+              <Image src="/free-badge.png" alt="100% Gratuit" fill sizes="56px" className="object-contain" />
             </div>
             <h3 className="text-[20px] font-bold text-white mb-2 relative z-10 pr-16">Carte médicale digitale</h3>
             <p className="text-[#B6DAF7] text-[14px] leading-relaxed mb-5 relative z-10">

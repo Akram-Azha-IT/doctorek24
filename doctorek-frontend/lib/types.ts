@@ -435,3 +435,66 @@ export interface AvisPage {
   /** Compteurs des notes 1 à 5, dans cet ordre. */
   repartition: number[]
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Assistant conversationnel (module agent)
+
+   Le texte est écrit par le modèle ; les cartes viennent du retour réel des
+   services métier. C'est cette séparation qui garantit qu'un nom de praticien
+   ou un horaire affiché ne peut pas être inventé.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+export type AgentCardType = 'medecins' | 'medecin' | 'creneaux' | 'rdvs' | 'brouillon'
+
+export interface AgentCard {
+  type: AgentCardType
+  donnees: unknown
+}
+
+export interface AgentChatResponse {
+  conversationId: string
+  texte: string
+  cartes: AgentCard[]
+  outilsAppeles: string[]
+}
+
+export interface AgentMedecinCarte {
+  profil: MedecinProfile
+  noteMoyenne: number | null
+  nombreAvis: number | null
+  distanceKm: number | null
+}
+
+export interface AgentJourCreneaux {
+  date: string
+  creneaux: Creneau[]
+}
+
+export interface AgentCreneauxCarte {
+  /** Profil complet : le tiroir de réservation l'attend tel quel au clic sur un créneau. */
+  medecin: MedecinProfile
+  jours: AgentJourCreneaux[]
+}
+
+/** Proposition de rendez-vous : rien n'est réservé tant que le patient n'a pas confirmé. */
+export interface AgentRdvBrouillon {
+  medecinId: string
+  medecinNom: string
+  patientId: string | null
+  date: string
+  heure: string
+  dureeMinutes: number
+  motif: string | null
+  creneauLibre: boolean
+  indisponibilite: string | null
+}
+
+/** Un tour affiché dans le fil. Les cartes n'existent que côté assistant. */
+export interface AgentTour {
+  id: string
+  role: 'patient' | 'assistant'
+  texte: string
+  cartes?: AgentCard[]
+  outils?: string[]
+  erreur?: boolean
+}

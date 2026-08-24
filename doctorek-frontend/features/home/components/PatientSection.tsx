@@ -54,17 +54,16 @@ export function PatientSection() {
               top: 0, right: 0,
               opacity: 0.8,
             }} />
-            <div className="absolute overflow-hidden" style={{
-              width: '82%', height: '82%',
-              borderRadius: '55% 45% 45% 55% / 55% 45% 55% 45%',
-              top: '5%', right: '5%',
+            <div className="absolute flex items-center justify-center" style={{
+              width: '72%', height: '94%',
+              top: '1%', right: '10%',
             }}>
               <Image
-                src="/Telehealth at Your Fingertips_ Convenient Care from Home.jpg"
-                alt="Prise de rendez-vous en ligne"
-                width={240}
-                height={240}
-                className="w-full h-full object-cover"
+                src="/medecin-carte-hero.png"
+                alt="Application patient Doctorek sur smartphone"
+                width={552}
+                height={900}
+                className="h-full w-auto object-contain drop-shadow-[0_18px_24px_rgba(1,12,45,0.24)]"
               />
             </div>
           </div>

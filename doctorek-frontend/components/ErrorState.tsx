@@ -2,6 +2,7 @@
 
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { describeError } from '@/lib/error-message'
+import LogoLoader from '@/components/LogoLoader'
 
 interface ErrorStateProps {
   error: unknown
@@ -42,7 +43,11 @@ export function ErrorState({ error, onRetry, isRetrying, compact }: ErrorStatePr
           disabled={isRetrying}
           className="mt-6 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#007DFF] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#00263C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/50 disabled:opacity-60 cursor-pointer"
         >
-          <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+          {isRetrying ? (
+            <LogoLoader variant="mark" size={16} inverse decorative />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
           {isRetrying ? 'Nouvelle tentative…' : 'Réessayer'}
         </button>
       )}
