@@ -178,11 +178,21 @@ export default function CarteVirtuelleCard({
   }
 
   const addToGoogleWallet = async () => {
+    // Préouvrir pendant le clic utilisateur évite que le navigateur bloque
+    // l'onglet après l'appel asynchrone qui génère l'URL Google Wallet.
+    const walletWindow = window.open('about:blank', '_blank')
+    if (!walletWindow) {
+      alert("Autorisez les fenêtres pop-up pour ouvrir Google Wallet dans un nouvel onglet.")
+      return
+    }
+
+    walletWindow.opener = null
     setAddingToWallet(true)
     try {
       const { saveUrl } = await getGoogleWalletSaveUrl(carte.patientId)
-      window.location.href = saveUrl
+      walletWindow.location.replace(saveUrl)
     } catch {
+      walletWindow.close()
       alert("Erreur lors de l'ajout à Google Wallet. Veuillez réessayer.")
     } finally {
       setAddingToWallet(false)

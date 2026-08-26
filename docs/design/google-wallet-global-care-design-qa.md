@@ -1,40 +1,57 @@
 # Design QA — Google Wallet « Global Care »
 
-## Cible visuelle
+## Preuves
 
-- Référence choisie : `C:\Users\Akram\.codex\generated_images\01a01075-fbdd-78f3-9624-28505d60d2be\exec-cefdc12c-cb45-470c-8e74-833b24a9cf67.png`
-- Intégration : pass Google Wallet générique généré par `GoogleWalletService`.
-- Direction : fond Doctorek bleu `#216ACF`, identité compacte, hero abstrait santé, informations essentielles, QR et lien vers l'espace patient.
+- Vérité visuelle : `C:\Users\Akram\.codex\generated_images\01a01075-fbdd-78f3-9624-28505d60d2be\exec-cefdc12c-cb45-470c-8e74-833b24a9cf67.png`
+- Vérité visuelle : 853 × 1844 px ; carte recadrée à 668 × 1339 px.
+- Capture Wallet réelle avant correction : `C:\Users\Akram\AppData\Local\Temp\codex-clipboard-eb1e7b07-e44d-4e87-b3e4-951d9f214dc6.png`
+- Capture réelle : 1029 × 668 px ; carte recadrée à 364 × 580 px.
+- Comparaison normalisée avant correction : `C:\Users\Akram\AppData\Local\Temp\doctorek-wallet-comparison-before.png`
+- État : patient connecté, pass Google Wallet ouvert sur le Web, carte active.
+- Densité : les deux cartes ont été recadrées puis ramenées à une largeur commune de 340 px sans déformation.
 
-## Vérifications réalisées
+La comparaison focalisée sur la carte suffit pour juger la hiérarchie, l'ordre des blocs, le hero, le nom et le QR. Le chrome Google Wallet et le panneau Détails sont exclus de la comparaison de fidélité du recto.
 
-- Payload JWT Google Wallet : test automatisé réussi.
-- Hero : PNG 1032 × 812, sans texte, sans photo et sans donnée patient.
-- Logo : PNG 840 × 840 avec marge de sécurité.
-- Hiérarchie : `Doctorek` → `Carte santé` → nom du patient.
-- Champs : `N° adhérent`, `Statut`, `Couverture`.
-- Action : `Ouvrir Doctorek` vers l'espace carte du patient.
-- Données sensibles : CIN, numéro CNSS/AMO et photo absents du payload du nouveau pass.
-- Ancienne image patient supprimée pour éviter le grand panneau d'initiale/photo vu dans le rendu précédent.
-- Identifiant de design versionné (`v3-global-care`) afin que Google crée le nouveau pass au lieu de réutiliser l'ancien objet.
+## Constats avant correction
+
+- [P1] Le QR était placé avant l'illustration alors que la maquette exige l'ordre `hero → N° adhérent / Statut → QR`.
+- [P1] Les champs `N° adhérent` et `Statut` étaient absents du recto et relégués dans le panneau Détails.
+- [P2] Le nom de famille était forcé en majuscules (`BENHAMMOU`) au lieu du rendu approuvé (`Benhammou`).
+- [P3] Google Wallet contrôle la police, la taille finale du logo, les espacements, les rayons et le cadre externe ; ces éléments ne peuvent pas être reproduits pixel pour pixel par l'émetteur.
+
+## Correctifs implémentés
+
+- Synchronisation OAuth du `GenericClass` existant avec l'API officielle Google Wallet.
+- `classTemplateInfo.cardTemplateOverride` limité à une ligne de deux champs : `N° adhérent` et `Statut`.
+- L'unique ligne personnalisée force Google Wallet à placer le hero avant les champs, puis le QR.
+- `detailsTemplateOverride` conserve `N° adhérent`, `Statut` et `Couverture` dans la vue Détails.
+- Normalisation typographique du nom pour obtenir `Akram Benhammou`.
+- Version de design `v4-global-care-template` afin que Google crée un nouvel objet avec la casse corrigée au lieu de réutiliser l'ancien payload immuable.
+- Mise en cache du gabarit et du jeton OAuth afin de ne pas appeler Google à chaque génération de carte.
+- Création automatique de la classe si elle n'existe pas ; mise à jour sinon.
+
+## Surfaces de fidélité
+
+- Typographie : contenu et casse corrigés ; famille, taille et interlignage restent gérés par Google Wallet.
+- Mise en page : ordre des grandes régions corrigé par le gabarit de classe ; rayons et marges restent gérés par Google.
+- Couleurs : fond `#216ACF`, blanc et hero bleu clair inchangés et conformes à la maquette.
+- Images : logo Doctorek et hero `wallet-hero-global-care.png` réutilisés sans approximation ni remplacement.
+- Contenu : hiérarchie `Doctorek → Carte santé → nom → hero → adhérent/statut → QR` restaurée ; couverture conservée dans Détails.
 
 ## Vérification automatisée
 
-- Commande : `.\mvnw.cmd -Dtest=GoogleWalletServiceTest test`
-- Résultat : 1 test, 0 échec, 0 erreur.
-- `git diff --check` : réussi, avertissement de fin de ligne uniquement.
+- `GoogleWalletClassServiceTest` : gabarit à une ligne, références de champs, PATCH, création sur 404 et cache vérifiés.
+- `GoogleWalletServiceTest` : payload, assets, couleur, contenu non sensible et appel de synchronisation vérifiés.
+- Résultat : 4 tests exécutés, 0 échec, 0 erreur, 1 test de contexte préexistant ignoré.
 
-## Limite de validation visuelle
+## Historique de comparaison
 
-Le rendu final est composé par Google Wallet. Une capture réelle du nouveau pass nécessite d'ouvrir l'URL « Save to Google Wallet », ce qui transmet les données du pass à Google et ajoute un objet au compte de l'utilisateur. Cette action externe n'a pas été déclenchée automatiquement.
+### Itération 1 — code corrigé, rendu externe à revalider
 
-En développement local, Google ne peut pas télécharger les nouveaux assets depuis `localhost`. Le hero et le logo Doctorek complets sont donc activés lorsque `app.frontend-url` pointe vers le domaine HTTPS public de Doctorek.
+La comparaison source/rendu réel a révélé les P1/P2 ci-dessus. Le gabarit de classe et la casse du nom ont été corrigés. Une nouvelle capture ne peut être produite localement : le rendu final n'existe qu'après déploiement, synchronisation du `GenericClass` dans Google Wallet et actualisation du pass du compte utilisateur.
 
-## Étape de recette manuelle
+## Blocage restant
 
-1. Démarrer l'application avec un `FRONTEND_URL` HTTPS public.
-2. Supprimer l'ancienne carte Wallet si elle est encore enregistrée.
-3. Depuis l'espace patient, utiliser « Ajouter à Google Wallet ».
-4. Vérifier le hero, le nom, les trois champs, le QR et l'action « Ouvrir Doctorek ».
+La recette visuelle finale nécessite le prochain déploiement puis une nouvelle capture du même pass. Tant que cette capture Google Wallet post-correction n'est pas disponible, les P1 sont corrigés dans le payload et testés, mais ne peuvent pas être certifiés visuellement.
 
-**final result: blocked — validation visuelle Google Wallet réelle requise**
+final result: blocked

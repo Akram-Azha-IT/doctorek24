@@ -1,7 +1,8 @@
-import { render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
-import { CarteRecto } from './CarteVirtuelleCard'
+import CarteVirtuelleCard, { CarteRecto } from './CarteVirtuelleCard'
 import type { CarteVirtuelle } from '@/lib/types'
+import { getGoogleWalletSaveUrl } from '@/features/carte/api'
 
 const toDataURL = vi.fn(async () => 'data:image/png;base64,QR')
 vi.mock('qrcode', () => ({
@@ -42,5 +43,28 @@ describe('CarteRecto', () => {
       'https://x/carte/REF123',
       expect.objectContaining({ width: 192 }),
     ))
+  })
+
+  test('opens Google Wallet in a new tab without leaving Doctorek', async () => {
+    const replace = vi.fn()
+    const close = vi.fn()
+    const walletWindow = {
+      opener: window,
+      location: { replace },
+      close,
+    } as unknown as Window
+    const open = vi.spyOn(window, 'open').mockReturnValue(walletWindow)
+    vi.mocked(getGoogleWalletSaveUrl).mockResolvedValue({
+      saveUrl: 'https://pay.google.com/gp/v/save/test-token',
+    })
+
+    render(<CarteVirtuelleCard carte={carte} firstName="Ali" lastName="Idrissi" />)
+    fireEvent.click(screen.getByRole('button', { name: /ajouter à google wallet/i }))
+
+    expect(open).toHaveBeenCalledWith('about:blank', '_blank')
+    await waitFor(() => expect(replace).toHaveBeenCalledWith(
+      'https://pay.google.com/gp/v/save/test-token',
+    ))
+    expect(close).not.toHaveBeenCalled()
   })
 })

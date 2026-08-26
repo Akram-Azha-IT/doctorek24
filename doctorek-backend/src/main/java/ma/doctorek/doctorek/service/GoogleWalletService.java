@@ -30,20 +30,21 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
 public class GoogleWalletService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String DESIGN_VERSION = "v3-global-care";
+    private static final String DESIGN_VERSION = "v5-global-care-card-link";
     private static final String PASS_BACKGROUND_COLOR = "#216ACF";
     private static final String WALLET_LOGO_PATH = "/wallet-logo-840.png";
     private static final String WALLET_HERO_PATH = "/wallet-hero-global-care.png";
-    private static final String PATIENT_CARD_PATH = "/dashboard/patient/carte";
 
     private final GoogleWalletProperties properties;
     private final ResourceLoader resourceLoader;
+    private final GoogleWalletClassService walletClassService;
     private final String frontendUrl;
 
     private String clientEmail;
@@ -51,9 +52,11 @@ public class GoogleWalletService {
 
     public GoogleWalletService(GoogleWalletProperties properties,
                                 ResourceLoader resourceLoader,
+                                GoogleWalletClassService walletClassService,
                                 @Value("${app.frontend-url}") String frontendUrl) {
         this.properties = properties;
         this.resourceLoader = resourceLoader;
+        this.walletClassService = walletClassService;
         this.frontendUrl = frontendUrl;
     }
 
@@ -71,10 +74,10 @@ public class GoogleWalletService {
 
         String issuerId = properties.getIssuerId();
         String fullClassId = issuerId + "." + properties.getClassId();
+        walletClassService.ensurePremiumTemplate(clientEmail, privateKey, fullClassId);
         String qrUrl = frontendUrl + "/carte/" + cardRef;
 
-        String fullName = (firstName == null ? "" : firstName) + " "
-                + (lastName == null ? "" : lastName.toUpperCase());
+        String fullName = displayName(firstName, lastName);
 
         // Google's "save to wallet" URL only CREATES an object; if the id already exists it reuses
         // the stored data and ignores the JWT's fields — so edits (photo, CIN, CNSS...) never show.
@@ -86,7 +89,7 @@ public class GoogleWalletService {
         // Toute refonte doit produire un nouvel objet : Google réutilise sinon l'objet
         // déjà enregistré et ignore les nouvelles propriétés du JWT.
         String contentVersion = shortHash(String.join("|", DESIGN_VERSION,
-                fullName, cardRef, coverage));
+                fullName, cardRef, coverage, qrUrl));
         String objectSuffix = sanitize(cardRef) + "-" + contentVersion;
         String fullObjectId = issuerId + "." + objectSuffix;
 
@@ -120,12 +123,12 @@ public class GoogleWalletService {
                     "webAppLinkInfo", Map.of(
                             "appTarget", Map.of(
                                     "targetUri", Map.of(
-                                            "uri", frontendUrl + PATIENT_CARD_PATH,
-                                            "description", "Espace patient Doctorek"
+                                            "uri", qrUrl,
+                                            "description", "Carte santé Doctorek"
                                     )
                             )
                     ),
-                    "displayText", textValue("Ouvrir Doctorek")
+                    "displayText", textValue("Voir ma carte")
             ));
         }
 
@@ -296,6 +299,31 @@ public class GoogleWalletService {
         return memberNumber.length() <= 15
                 ? memberNumber
                 : memberNumber.substring(memberNumber.length() - 15);
+    }
+
+    private static String displayName(String firstName, String lastName) {
+        return java.util.stream.Stream.of(firstName, lastName)
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .map(GoogleWalletService::titleCaseName)
+                .collect(java.util.stream.Collectors.joining(" "));
+    }
+
+    private static String titleCaseName(String value) {
+        String lower = value.toLowerCase(Locale.FRENCH);
+        StringBuilder result = new StringBuilder(lower.length());
+        boolean capitalizeNext = true;
+        for (int index = 0; index < lower.length(); index++) {
+            char current = lower.charAt(index);
+            if (Character.isLetter(current) && capitalizeNext) {
+                result.append(Character.toUpperCase(current));
+                capitalizeNext = false;
+            } else {
+                result.append(current);
+                capitalizeNext = current == ' ' || current == '-' || current == '\'';
+            }
+        }
+        return result.toString();
     }
 
     /** Short content-derived id segment (8 hex chars) — stable for identical content. */
