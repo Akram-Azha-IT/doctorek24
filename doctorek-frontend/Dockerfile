@@ -25,8 +25,10 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-# Polices utilisées par le rendu SVG serveur. Aucun navigateur headless n'est requis.
-RUN apk add --no-cache ca-certificates ttf-freefont font-noto font-noto-arabic
+# Met à niveau les paquets de l'image de base avant d'installer les polices.
+# Cela garantit notamment les correctifs OpenSSL publiés entre deux images Node.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates ttf-freefont font-noto font-noto-arabic
 
 # Runtime = `node server.js` uniquement : npm/corepack inutiles, et leurs
 # dépendances embarquées (sigstore, picomatch) trainent des CVE — on les retire.
