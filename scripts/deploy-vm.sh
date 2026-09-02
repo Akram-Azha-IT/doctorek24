@@ -13,6 +13,7 @@ SRC=/home/ubuntu/doctorek-src
 PROD=/home/ubuntu/doctorek
 SERVICES="${1:-tous}"
 TAG="${IMAGE_TAG:-manuel}"
+TRANSCRIPTION_SETTING="${AGENT_TRANSCRIPTION_SETTING:-conserver}"
 # Numero du coeur reserve a la construction, pas un nombre de coeurs : le coeur
 # 0 reste libre pour l'application.
 CPUSET="${BUILD_CPUSET:-1}"
@@ -33,6 +34,39 @@ cp "$SRC/docker-compose.prod.yml" "$PROD/"
 cp "$SRC/docker/Caddyfile" "$PROD/docker/"
 
 set -a; source "$PROD/.env.prod"; set +a
+
+configurer_transcription() {
+  local valeur
+  case "$TRANSCRIPTION_SETTING" in
+    conserver) return ;;
+    activer) valeur=true ;;
+    desactiver) valeur=false ;;
+    *)
+      echo "ERREUR: configuration de transcription inconnue '$TRANSCRIPTION_SETTING'" >&2
+      exit 1
+      ;;
+  esac
+
+  if [ "$valeur" = true ] \
+      && [ -z "${GEMINI_TRANSCRIBE_API_KEY:-${GEMINI_API_KEY:-}}" ]; then
+    echo "ERREUR: activation refusee sans cle Gemini de transcription" >&2
+    exit 1
+  fi
+
+  # La decision operateur est persistante : un deploiement ulterieur avec
+  # "conserver" ne doit ni activer ni desactiver silencieusement le service.
+  cp -p "$PROD/.env.prod" "$PROD/.env.prod.bak"
+  if grep -q '^AGENT_TRANSCRIPTION_ENABLED=' "$PROD/.env.prod"; then
+    sed -i "s/^AGENT_TRANSCRIPTION_ENABLED=.*/AGENT_TRANSCRIPTION_ENABLED=$valeur/" \
+      "$PROD/.env.prod"
+  else
+    printf '\nAGENT_TRANSCRIPTION_ENABLED=%s\n' "$valeur" >> "$PROD/.env.prod"
+  fi
+  export AGENT_TRANSCRIPTION_ENABLED="$valeur"
+  echo "-- dictee vocale configuree: $valeur --"
+}
+
+configurer_transcription
 
 construire_api() {
   echo "-- backend --"

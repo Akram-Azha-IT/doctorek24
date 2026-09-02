@@ -17,6 +17,9 @@
 - Racine : copier `.env.example` → `.env` (Postgres, Keycloak admin + client secret, MinIO).
 - Frontend : copier `doctorek-frontend/.env.example` → `.env.local` (`AUTH_SECRET` via `npx auth secret`).
 - **Production** : définir en plus `VMC_ENCRYPTION_KEY` (`openssl rand -base64 32`), SMTP réel, et `SPRING_PROFILES_ACTIVE=prod`.
+- La dictée de l'agent est pilotée par `AGENT_TRANSCRIPTION_ENABLED`. Le workflow
+  manuel de production propose `conserver`, `activer` ou `désactiver` et refuse
+  l'activation si aucune clé Gemini n'est configurée.
 - Aucun fichier `.env*` n'est commité (vérifié). Le secret client Keycloak a été retiré du code et **régénéré** — l'ancienne valeur présente dans l'historique git est révoquée.
 
 ## 2. Build & run
