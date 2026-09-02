@@ -11,6 +11,11 @@ on:
         type: choice
         options: [tous, api, web]
         default: tous
+      transcription:
+        description: Configuration de la dictee vocale de l'agent
+        type: choice
+        options: [conserver, activer, desactiver]
+        default: conserver
 
 # Deux deploiements simultanes construiraient sur les memes coeurs et se
 # marcheraient dessus au moment du redemarrage des conteneurs.
@@ -51,6 +56,7 @@ jobs:
         run: |
           ssh "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
             "chmod +x ~/doctorek-src/scripts/deploy-vm.sh && \
+             AGENT_TRANSCRIPTION_SETTING=${{ inputs.transcription }} \
              IMAGE_TAG=${{ github.sha }} ~/doctorek-src/scripts/deploy-vm.sh ${{ inputs.services }}"
 
       - name: Verifier que la production repond
