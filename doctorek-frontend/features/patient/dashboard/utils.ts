@@ -1,4 +1,5 @@
-import type { StatutRdv } from '@/lib/types'
+import { statutAffiche } from '@/features/agenda/rdv-timeline'
+import type { RendezVous, StatutRdv } from '@/lib/types'
 
 export const STATUT_LABELS: Record<StatutRdv, string> = {
   EN_ATTENTE: 'En attente',
@@ -53,4 +54,53 @@ export function calcAgeDetailed(dateNaissance: string): AgeDetail {
 
   const totalDays = Math.floor((today.getTime() - birth.getTime()) / 86_400_000)
   return { years, months, days, totalDays }
+}
+
+function rdvDateTime(rdv: RendezVous): number {
+  const [year, month, day] = rdv.dateRdv.split('-').map(Number)
+  const [hours, minutes] = rdv.heureRdv.split(':').map(Number)
+  return new Date(year, month - 1, day, hours, minutes).getTime()
+}
+
+function localDateKey(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export interface DashboardRdvSelection {
+  active: RendezVous[]
+  today: RendezVous | undefined
+  next: RendezVous | undefined
+  latestCompleted: RendezVous | undefined
+}
+
+/**
+ * Sélectionne uniquement les rendez-vous réellement pertinents pour l'accueil.
+ *
+ * Le statut brut du serveur ne suffit pas : une ancienne donnée encore marquée
+ * CONFIRME ne doit jamais être présentée comme un prochain rendez-vous.
+ */
+export function selectDashboardRdvs(
+  rdvs: readonly RendezVous[],
+  now: Date = new Date(),
+): DashboardRdvSelection {
+  const active = rdvs
+    .filter((rdv) => {
+      const statut = statutAffiche(rdv, now)
+      return statut === 'EN_ATTENTE' || statut === 'CONFIRME'
+    })
+    .sort((a, b) => rdvDateTime(a) - rdvDateTime(b))
+
+  const completed = rdvs
+    .filter((rdv) => statutAffiche(rdv, now) === 'TERMINE' && rdvDateTime(rdv) <= now.getTime())
+    .sort((a, b) => rdvDateTime(b) - rdvDateTime(a))
+
+  return {
+    active,
+    today: active.find((rdv) => rdv.dateRdv === localDateKey(now)),
+    next: active[0],
+    latestCompleted: completed[0],
+  }
 }

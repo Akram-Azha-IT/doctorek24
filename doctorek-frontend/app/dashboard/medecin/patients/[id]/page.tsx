@@ -43,11 +43,25 @@ import {
   ChevronUp,
   Download,
   FileImage,
+  Bed,
+  Droplets,
+  HeartPulse,
+  MessageCircle,
+  ShieldCheck,
+  Syringe,
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type TabId = 'infos' | 'ordonnances' | 'documents' | 'historique'
+type MedicalEditorId =
+  | 'allergies'
+  | 'maladies'
+  | 'medicaments'
+  | 'antecedents'
+  | 'vaccinations'
+  | 'notes'
+  | null
 
 interface DrugForm {
   id: string
@@ -100,18 +114,109 @@ function Card({
   icon,
   title,
   children,
+  action,
+  className = '',
+  bodyClassName = '',
 }: {
   icon: React.ReactNode
   title: string
   children: React.ReactNode
+  action?: React.ReactNode
+  className?: string
+  bodyClassName?: string
 }) {
   return (
-    <div className="rounded-2xl border border-[#EEF1F6] bg-white overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-[#F0F2F5] px-5 py-3.5">
-        {icon}
-        <p className="text-sm font-bold text-[#010C2D]">{title}</p>
+    <section className={`overflow-hidden rounded-xl border border-[#DCE3ED] bg-white ${className}`}>
+      <div className="flex min-h-12 items-center gap-2 border-b border-[#E7ECF2] px-4 py-3">
+        <span className="shrink-0">{icon}</span>
+        <h3 className="min-w-0 flex-1 truncate text-sm font-bold text-[#10224A]">{title}</h3>
+        {action}
       </div>
-      <div className="px-5 py-4">{children}</div>
+      <div className={`px-4 py-4 ${bodyClassName}`}>{children}</div>
+    </section>
+  )
+}
+
+function formatDateLongFR(date: Date) {
+  const label = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+  return label.charAt(0).toLocaleUpperCase('fr-FR') + label.slice(1)
+}
+
+function AddAction({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[#007DFF] transition-colors hover:bg-[#F0F7FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/10"
+    >
+      <Plus className="h-4 w-4" aria-hidden="true" />
+      {label}
+    </button>
+  )
+}
+
+function EmptyMedicalState({
+  icon,
+  title,
+  hint,
+  compact = false,
+}: {
+  icon: React.ReactNode
+  title: string
+  hint: string
+  compact?: boolean
+}) {
+  if (compact) {
+    return (
+      <div className="flex min-h-10 items-center justify-center gap-4 px-3 text-center">
+        <span className="shrink-0 text-[#BCC5D1]">{icon}</span>
+        <div>
+          <p className="text-xs text-[#66738F]">{title}</p>
+          <p className="mt-0.5 text-[11px] leading-4 text-[#8D99AA]">{hint}</p>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="flex min-h-28 flex-col items-center justify-center px-3 py-4 text-center">
+      <span className="mb-3 text-[#BCC5D1]">{icon}</span>
+      <p className="text-xs text-[#66738F]">{title}</p>
+      <p className="mt-1 text-[11px] leading-4 text-[#8D99AA]">{hint}</p>
+    </div>
+  )
+}
+
+function EditorActions({
+  onCancel,
+  onSubmit,
+  disabled = false,
+}: {
+  onCancel: () => void
+  onSubmit: () => void
+  disabled?: boolean
+}) {
+  return (
+    <div className="flex shrink-0 items-center justify-end gap-2">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="min-h-10 rounded-lg px-3 text-sm font-medium text-[#007DFF] transition-colors hover:bg-[#F0F7FF]"
+      >
+        Annuler
+      </button>
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={disabled}
+        className="min-h-10 rounded-lg bg-[#087CF0] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#006EE6] disabled:cursor-not-allowed disabled:opacity-45"
+      >
+        Ajouter
+      </button>
     </div>
   )
 }
@@ -162,7 +267,7 @@ function TabBtn({
 
 // ── Informations médicales ─────────────────────────────────────────────────
 
-function InfosTab({ patientId }: { patientId: string }) {
+export function InfosTab({ patientId }: { patientId: string }) {
   const { data, isLoading } = useInfosMedicales(patientId)
   const { data: carte } = useCarteByPatient(patientId)
   const upsert = useUpsertInfosMedicales(patientId)
@@ -174,8 +279,14 @@ function InfosTab({ patientId }: { patientId: string }) {
   const [newVaccin, setNewVaccin] = useState('')
   const [newAntecedent, setNewAntecedent] = useState<AntecedentChirurgical>({ description: '', date: '' })
   const [newMedicament, setNewMedicament] = useState({ nom: '', dosage: '' })
+  const [activeEditor, setActiveEditor] = useState<MedicalEditorId>('allergies')
+  const noteRef = useRef<HTMLTextAreaElement>(null)
 
   const notesGenerales = data?.notesGenerales ?? ''
+
+  function toggleEditor(editor: Exclude<MedicalEditorId, null>) {
+    setActiveEditor((current) => (current === editor ? null : editor))
+  }
 
   function saveCarteField(patch: Partial<CarteVirtuelleRequest>) {
     const base: CarteVirtuelleRequest = {
@@ -218,6 +329,7 @@ function InfosTab({ patientId }: { patientId: string }) {
     if (!val || (carte?.allergies ?? []).includes(val)) return
     saveCarteField({ allergies: [...(carte?.allergies ?? []), val] })
     setNewAllergie('')
+    setActiveEditor(null)
   }
 
   function removeAllergie(a: string) {
@@ -229,6 +341,7 @@ function InfosTab({ patientId }: { patientId: string }) {
     if (!val) return
     saveCarteField({ maladiesChroniques: [...(carte?.maladiesChroniques ?? []), val] })
     setNewMaladie('')
+    setActiveEditor(null)
   }
 
   function removeMaladie(m: string) {
@@ -245,6 +358,7 @@ function InfosTab({ patientId }: { patientId: string }) {
       ],
     })
     setNewMedicament({ nom: '', dosage: '' })
+    setActiveEditor(null)
   }
 
   function removeMedicament(idx: number) {
@@ -263,6 +377,7 @@ function InfosTab({ patientId }: { patientId: string }) {
       ],
     })
     setNewAntecedent({ description: '', date: '' })
+    setActiveEditor(null)
   }
 
   function removeAntecedentChir(idx: number) {
@@ -276,6 +391,7 @@ function InfosTab({ patientId }: { patientId: string }) {
     if (!val) return
     saveCarteField({ vaccinations: [...(carte?.vaccinations ?? []), val] })
     setNewVaccin('')
+    setActiveEditor(null)
   }
 
   function removeVaccin(v: string) {
@@ -291,244 +407,298 @@ function InfosTab({ patientId }: { patientId: string }) {
       </div>
     )
 
+  const inputClass =
+    'min-h-10 w-full min-w-0 flex-1 rounded-lg border border-[#CDD6E2] bg-white px-3 text-sm text-[#243547] outline-none placeholder:text-[#97A3B3] focus:border-[#007DFF] focus:ring-4 focus:ring-[#007DFF]/10'
+
   return (
-    <div className="space-y-5">
-      {/* Groupe sanguin */}
-      <Card icon={<Heart className="h-4 w-4 text-red-500" />} title="Groupe sanguin">
-        <div className="flex flex-wrap gap-2">
-          {GROUPES.map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => saveCarteField({ groupeSanguin: g })}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                carte?.groupeSanguin === g
-                  ? 'border-[#007DFF] bg-[#007DFF] text-white'
-                  : 'border-zinc-200 text-zinc-600 hover:border-[#007DFF] hover:text-[#007DFF]'
-              }`}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      {/* Allergies */}
-      <Card icon={<AlertTriangle className="h-4 w-4 text-amber-500" />} title="Allergies">
-        <div className="flex flex-wrap gap-2 mb-3">
-          {(carte?.allergies ?? []).length === 0 && (
-            <p className="text-sm text-zinc-400">Aucune allergie enregistrée</p>
-          )}
-          {(carte?.allergies ?? []).map((a) => (
-            <span
-              key={a}
-              className="flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-sm font-medium text-amber-700"
-            >
-              {a}
-              <button type="button" onClick={() => removeAllergie(a)} className="hover:text-amber-900">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newAllergie}
-            onChange={(e) => setNewAllergie(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addAllergie()}
-            placeholder="Ajouter une allergie…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
-          />
-          <button
-            type="button"
-            onClick={addAllergie}
-            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+      <div className="space-y-3 lg:col-span-3">
+        <Card icon={<Droplets className="h-4 w-4 text-[#6B7A99]" />} title="Groupe sanguin">
+          <label className="sr-only" htmlFor="groupe-sanguin">Groupe sanguin</label>
+          <select
+            id="groupe-sanguin"
+            value={carte?.groupeSanguin ?? 'Inconnu'}
+            onChange={(event) => saveCarteField({ groupeSanguin: event.target.value })}
+            className="h-11 w-full rounded-lg border border-[#D5DDE8] bg-white px-3 text-sm text-[#52617A] outline-none transition focus:border-[#007DFF] focus:ring-4 focus:ring-[#007DFF]/10"
           >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-      </Card>
+            {GROUPES.map((groupe) => <option key={groupe}>{groupe}</option>)}
+          </select>
+        </Card>
 
-      {/* Maladies chroniques */}
-      <Card icon={<ClipboardList className="h-4 w-4 text-[#007DFF]" />} title="Maladies chroniques">
-        <div className="flex flex-wrap gap-2 mb-3">
-          {(carte?.maladiesChroniques ?? []).length === 0 && (
-            <p className="text-sm text-zinc-400">Aucune maladie chronique enregistrée</p>
+        <Card
+          icon={<HeartPulse className="h-4 w-4 text-[#007DFF]" />}
+          title="Maladies chroniques"
+          action={<AddAction label="Ajouter" onClick={() => toggleEditor('maladies')} />}
+          bodyClassName="min-h-[174px]"
+        >
+          {activeEditor === 'maladies' && (
+            <div className="mb-4 space-y-3 border-b border-[#E7ECF2] pb-4">
+              <input
+                aria-label="Maladie chronique"
+                value={newMaladie}
+                onChange={(event) => setNewMaladie(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && addMaladie()}
+                placeholder="Maladie chronique"
+                className={inputClass}
+              />
+              <EditorActions
+                onCancel={() => setActiveEditor(null)}
+                onSubmit={addMaladie}
+                disabled={!newMaladie.trim()}
+              />
+            </div>
           )}
-          {(carte?.maladiesChroniques ?? []).map((m) => (
-            <span
-              key={m}
-              className="flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-sm font-medium text-blue-700"
-            >
-              {m}
-              <button type="button" onClick={() => removeMaladie(m)} className="hover:text-blue-900">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMaladie}
-            onChange={(e) => setNewMaladie(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addMaladie()}
-            placeholder="Ajouter une maladie chronique…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
-          />
-          <button
-            type="button"
-            onClick={addMaladie}
-            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-      </Card>
+          {(carte?.maladiesChroniques ?? []).length ? (
+            <div className="flex flex-wrap gap-2">
+              {(carte?.maladiesChroniques ?? []).map((maladie) => (
+                <span key={maladie} className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                  {maladie}
+                  <button type="button" onClick={() => removeMaladie(maladie)} aria-label={`Supprimer ${maladie}`}>
+                    <X className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <EmptyMedicalState
+              icon={<Heart className="h-9 w-9" aria-hidden="true" />}
+              title="Aucune maladie chronique enregistrée."
+              hint="Cliquez sur “+ Ajouter” pour en ajouter une."
+            />
+          )}
+        </Card>
+      </div>
 
-      {/* Médicaments actuels */}
-      <Card icon={<Pill className="h-4 w-4 text-[#007DFF]" />} title="Médicaments actuels">
-        <ul className="space-y-1.5 mb-3">
-          {(carte?.medicamentsActuels ?? []).length === 0 && (
-            <li className="text-sm text-zinc-400">Aucun médicament enregistré</li>
-          )}
-          {(carte?.medicamentsActuels ?? []).map((med, i) => (
-            <li key={i} className="flex items-center gap-2 rounded-lg bg-zinc-50 border border-zinc-100 px-3 py-2">
-              <span className="flex-1 text-sm font-medium text-zinc-800">
-                {med.nom}
-                {med.dosage.length > 0 && <span className="ml-2 text-xs text-zinc-400 font-normal">{med.dosage}</span>}
+      <Card
+        icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
+        title="Allergies"
+        action={<AddAction label="Ajouter" onClick={() => toggleEditor('allergies')} />}
+        className="lg:col-span-5"
+        bodyClassName="min-h-[312px]"
+      >
+        {activeEditor === 'allergies' && (
+          <div className="mb-4 border-b border-[#E7ECF2] pb-4">
+            <label htmlFor="nouvelle-allergie" className="mb-2 block text-sm font-medium text-[#66738F]">
+              Ajouter une allergie
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                id="nouvelle-allergie"
+                value={newAllergie}
+                onChange={(event) => setNewAllergie(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && addAllergie()}
+                placeholder="Allergie (ex. pénicilline)"
+                className={inputClass}
+              />
+              <EditorActions
+                onCancel={() => setActiveEditor(null)}
+                onSubmit={addAllergie}
+                disabled={!newAllergie.trim()}
+              />
+            </div>
+          </div>
+        )}
+        {(carte?.allergies ?? []).length ? (
+          <div className="flex flex-wrap gap-2">
+            {(carte?.allergies ?? []).map((allergie) => (
+              <span key={allergie} className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                {allergie}
+                <button type="button" onClick={() => removeAllergie(allergie)} aria-label={`Supprimer ${allergie}`}>
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
               </span>
-              <button
-                type="button"
-                onClick={() => removeMedicament(i)}
-                className="text-zinc-300 hover:text-red-500 transition-colors"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMedicament.nom}
-            onChange={(e) => setNewMedicament((p) => ({ ...p, nom: e.target.value }))}
-            onKeyDown={(e) => e.key === 'Enter' && addMedicament()}
-            placeholder="Nom du médicament…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
+            ))}
+          </div>
+        ) : (
+          <EmptyMedicalState
+            icon={<ShieldCheck className="h-10 w-10" aria-hidden="true" />}
+            title="Aucune allergie enregistrée."
+            hint="Les allergies ajoutées apparaîtront ici."
           />
-          <input
-            type="text"
-            value={newMedicament.dosage}
-            onChange={(e) => setNewMedicament((p) => ({ ...p, dosage: e.target.value }))}
-            placeholder="Dosage (optionnel)"
-            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
-          />
-          <button
-            type="button"
-            onClick={addMedicament}
-            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
+        )}
       </Card>
 
-      {/* Antécédents chirurgicaux */}
-      <Card icon={<Stethoscope className="h-4 w-4 text-zinc-500" />} title="Antécédents chirurgicaux">
-        <ul className="space-y-1 mb-3">
-          {(carte?.antecedentsChirurgicaux ?? []).length === 0 && (
-            <li className="text-sm text-zinc-400">Aucun antécédent chirurgical</li>
+      <div className="space-y-3 lg:col-span-4">
+        <Card
+          icon={<Pill className="h-4 w-4 text-[#007DFF]" />}
+          title="Médicaments actuels"
+          action={<AddAction label="Ajouter" onClick={() => toggleEditor('medicaments')} />}
+          bodyClassName="min-h-[164px]"
+        >
+          {activeEditor === 'medicaments' && (
+            <div className="mb-4 space-y-2 border-b border-[#E7ECF2] pb-4">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  aria-label="Nom du médicament"
+                  value={newMedicament.nom}
+                  onChange={(event) => setNewMedicament((current) => ({ ...current, nom: event.target.value }))}
+                  onKeyDown={(event) => event.key === 'Enter' && addMedicament()}
+                  placeholder="Médicament"
+                  className={inputClass}
+                />
+                <input
+                  aria-label="Dosage du médicament"
+                  value={newMedicament.dosage}
+                  onChange={(event) => setNewMedicament((current) => ({ ...current, dosage: event.target.value }))}
+                  placeholder="Dosage"
+                  className={`${inputClass} sm:max-w-32`}
+                />
+              </div>
+              <EditorActions
+                onCancel={() => setActiveEditor(null)}
+                onSubmit={addMedicament}
+                disabled={!newMedicament.nom.trim()}
+              />
+            </div>
           )}
-          {(carte?.antecedentsChirurgicaux ?? []).map((a, i) => (
-            <li key={i} className="flex items-center gap-2 text-sm text-zinc-700">
-              <span className="flex-1">
-                {a.description}
-                {a.date && <span className="text-zinc-400 ml-1">({a.date})</span>}
-              </span>
-              <button
-                type="button"
-                onClick={() => removeAntecedentChir(i)}
-                className="text-zinc-300 hover:text-red-500 transition-colors"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newAntecedent.description}
-            onChange={(e) => setNewAntecedent((p) => ({ ...p, description: e.target.value }))}
-            onKeyDown={(e) => e.key === 'Enter' && addAntecedentChir()}
-            placeholder="Description (ex: Appendicectomie)…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
-          />
-          <input
-            type="text"
-            value={newAntecedent.date ?? ''}
-            onChange={(e) => setNewAntecedent((p) => ({ ...p, date: e.target.value }))}
-            placeholder="Date (optionnel)"
-            className="w-36 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
-          />
-          <button
-            type="button"
-            onClick={addAntecedentChir}
-            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-      </Card>
-
-      {/* Vaccinations */}
-      <Card icon={<Heart className="h-4 w-4 text-emerald-500" />} title="Vaccinations">
-        <div className="flex flex-wrap gap-2 mb-3">
-          {(carte?.vaccinations ?? []).length === 0 && (
-            <p className="text-sm text-zinc-400">Aucune vaccination enregistrée</p>
+          {(carte?.medicamentsActuels ?? []).length ? (
+            <ul className="space-y-2">
+              {(carte?.medicamentsActuels ?? []).map((medicament, index) => (
+                <li key={`${medicament.nom}-${index}`} className="flex items-center gap-2 rounded-lg bg-[#F7F9FC] px-3 py-2 text-sm text-[#243547]">
+                  <span className="min-w-0 flex-1 truncate">{medicament.nom} {medicament.dosage && <span className="text-[#8D99AA]">· {medicament.dosage}</span>}</span>
+                  <button type="button" onClick={() => removeMedicament(index)} aria-label={`Supprimer ${medicament.nom}`} className="text-[#AAB4C1] hover:text-red-500">
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyMedicalState
+              icon={<Pill className="h-10 w-10" aria-hidden="true" />}
+              title="Aucun médicament enregistré."
+              hint="Cliquez sur “+ Ajouter” pour en ajouter un."
+            />
           )}
-          {(carte?.vaccinations ?? []).map((v) => (
-            <span
-              key={v}
-              className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-sm font-medium text-emerald-700"
-            >
-              {v}
-              <button type="button" onClick={() => removeVaccin(v)} className="hover:text-emerald-900">
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newVaccin}
-            onChange={(e) => setNewVaccin(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addVaccin()}
-            placeholder="Ajouter un vaccin…"
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30"
+        </Card>
+
+        <Card
+          icon={<ShieldCheck className="h-4 w-4 text-[#007DFF]" />}
+          title="Vaccinations"
+          action={<AddAction label="Ajouter" onClick={() => toggleEditor('vaccinations')} />}
+          bodyClassName="min-h-[135px]"
+        >
+          {activeEditor === 'vaccinations' && (
+            <div className="mb-4 space-y-3 border-b border-[#E7ECF2] pb-4">
+              <input
+                aria-label="Vaccin"
+                value={newVaccin}
+                onChange={(event) => setNewVaccin(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && addVaccin()}
+                placeholder="Nom du vaccin"
+                className={inputClass}
+              />
+              <EditorActions
+                onCancel={() => setActiveEditor(null)}
+                onSubmit={addVaccin}
+                disabled={!newVaccin.trim()}
+              />
+            </div>
+          )}
+          {(carte?.vaccinations ?? []).length ? (
+            <div className="flex flex-wrap gap-2">
+              {(carte?.vaccinations ?? []).map((vaccin) => (
+                <span key={vaccin} className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                  {vaccin}
+                  <button type="button" onClick={() => removeVaccin(vaccin)} aria-label={`Supprimer ${vaccin}`}>
+                    <X className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <EmptyMedicalState
+              icon={<Syringe className="h-9 w-9" aria-hidden="true" />}
+              title="Aucune vaccination enregistrée."
+              hint="Cliquez sur “+ Ajouter” pour en ajouter une."
+            />
+          )}
+        </Card>
+      </div>
+
+      <Card
+        icon={<Stethoscope className="h-4 w-4 text-[#007DFF]" />}
+        title="Antécédents chirurgicaux"
+        action={<AddAction label="Ajouter" onClick={() => toggleEditor('antecedents')} />}
+        className="lg:col-span-12"
+      >
+        {activeEditor === 'antecedents' && (
+          <div className="mb-4 flex flex-col gap-2 border-b border-[#E7ECF2] pb-4 md:flex-row md:items-center">
+            <input
+              aria-label="Antécédent chirurgical"
+              value={newAntecedent.description}
+              onChange={(event) => setNewAntecedent((current) => ({ ...current, description: event.target.value }))}
+              onKeyDown={(event) => event.key === 'Enter' && addAntecedentChir()}
+              placeholder="Description (ex. appendicectomie)"
+              className={inputClass}
+            />
+            <input
+              aria-label="Date de l’antécédent"
+              value={newAntecedent.date ?? ''}
+              onChange={(event) => setNewAntecedent((current) => ({ ...current, date: event.target.value }))}
+              placeholder="Date (optionnelle)"
+              className={`${inputClass} md:max-w-44`}
+            />
+            <EditorActions
+              onCancel={() => setActiveEditor(null)}
+              onSubmit={addAntecedentChir}
+              disabled={!newAntecedent.description.trim()}
+            />
+          </div>
+        )}
+        {(carte?.antecedentsChirurgicaux ?? []).length ? (
+          <ul className="space-y-2">
+            {(carte?.antecedentsChirurgicaux ?? []).map((antecedent, index) => (
+              <li key={`${antecedent.description}-${index}`} className="flex items-center gap-3 rounded-lg bg-[#F7F9FC] px-3 py-2 text-sm text-[#243547]">
+                <span className="min-w-0 flex-1">{antecedent.description} {antecedent.date && <span className="text-[#8D99AA]">· {antecedent.date}</span>}</span>
+                <button type="button" onClick={() => removeAntecedentChir(index)} aria-label={`Supprimer ${antecedent.description}`} className="text-[#AAB4C1] hover:text-red-500">
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyMedicalState
+            icon={<Bed className="h-9 w-9" aria-hidden="true" />}
+            title="Aucun antécédent chirurgical enregistré."
+            hint="Cliquez sur “+ Ajouter” pour en ajouter un."
+            compact
           />
-          <button
-            type="button"
-            onClick={addVaccin}
-            className="rounded-lg bg-[#007DFF] px-3 py-2 text-white hover:bg-[#00263C] transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
+        )}
       </Card>
 
-      {/* Notes médecin — dossier only */}
-      <Card icon={<FileText className="h-4 w-4 text-zinc-400" />} title="Notes du médecin">
-        <textarea
-          rows={4}
-          defaultValue={notesGenerales}
-          onBlur={(e) => saveNotes(e.target.value)}
-          placeholder="Observations, remarques importantes du médecin…"
-          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#007DFF]/30 resize-none"
-        />
+      <Card
+        icon={<FileText className="h-4 w-4 text-[#6B7A99]" />}
+        title="Notes du médecin"
+        action={<AddAction label="Ajouter" onClick={() => toggleEditor('notes')} />}
+        className="lg:col-span-12"
+      >
+        {activeEditor === 'notes' ? (
+          <div className="space-y-3">
+            <textarea
+              ref={noteRef}
+              rows={3}
+              defaultValue={notesGenerales}
+              placeholder="Observations, remarques importantes du médecin…"
+              className="w-full resize-none rounded-lg border border-[#CDD6E2] bg-white px-3 py-2 text-sm text-[#243547] outline-none placeholder:text-[#97A3B3] focus:border-[#007DFF] focus:ring-4 focus:ring-[#007DFF]/10"
+            />
+            <EditorActions
+              onCancel={() => setActiveEditor(null)}
+              onSubmit={() => {
+                saveNotes(noteRef.current?.value ?? '')
+                setActiveEditor(null)
+              }}
+            />
+          </div>
+        ) : notesGenerales ? (
+          <p className="whitespace-pre-wrap text-sm leading-6 text-[#52617A]">{notesGenerales}</p>
+        ) : (
+          <EmptyMedicalState
+            icon={<MessageCircle className="h-8 w-8" aria-hidden="true" />}
+            title="Aucune note du médecin."
+            hint="Cliquez sur “+ Ajouter” pour rédiger une note."
+            compact
+          />
+        )}
       </Card>
     </div>
   )
@@ -1101,10 +1271,8 @@ export default function DossierPatientPage() {
     )
   }
 
-  const nextRdv = rdvs.find((r) => r.statut === 'CONFIRME' || r.statut === 'EN_ATTENTE')
-
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 space-y-5 sm:py-8">
+    <main className="mx-auto w-full max-w-[1180px] flex-1 space-y-4 px-4 py-5 sm:py-6">
       <button
         type="button"
         onClick={() => router.back()}
@@ -1114,48 +1282,37 @@ export default function DossierPatientPage() {
         Retour aux patients
       </button>
 
-      {/* Identité du patient — bandeau de marque, la photo ancre le dossier */}
-      <header className="overflow-hidden rounded-2xl border border-[#E7ECF3] bg-white shadow-sm">
-        <div
-          className="px-5 pb-5 pt-6 sm:px-7"
-          style={{ background: 'linear-gradient(180deg, #F4F9FF 0%, #FFFFFF 100%)' }}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+      <header className="overflow-hidden rounded-xl border border-[#DCE3ED] bg-white">
+        <div className="flex flex-col sm:flex-row sm:items-stretch">
+          <div className="flex min-w-0 flex-1 items-center gap-5 px-5 py-5 sm:px-6">
             <Avatar
               name={fullName}
               photoUrl={patientProfile?.photoUrl}
-              size={72}
+              size={80}
               ring
-              className="shadow-md"
+              className="shadow-sm"
             />
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[26px] font-extrabold leading-tight tracking-tight text-[#010C2D]">
+              <h1 className="truncate text-[28px] font-extrabold leading-tight tracking-[-0.03em] text-[#010C2D]">
                 {fullName}
               </h1>
-              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F6EE] px-2.5 py-1 text-[11px] font-semibold text-[#0B7A4B]">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#CFEFDE] bg-[#EAF9F1] px-2.5 py-1 text-[11px] font-semibold text-[#118252]">
                   <Stethoscope className="h-3 w-3" />
                   Relation de soin active
                 </span>
-                {nextRdv && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DFEFFE] px-2.5 py-1 text-[11px] font-semibold text-[#1863A9]">
-                    <Calendar className="h-3 w-3" />
-                    Prochain RDV : {formatDateShortFR(nextRdv.dateRdv)} · {nextRdv.heureRdv}
-                  </span>
-                )}
-                <span className="rounded-full bg-[#F1F4F7] px-2.5 py-1 font-mono text-[11px] font-semibold text-[#6B7A99]">
+                <span className="rounded-full border border-[#E2E7EE] bg-[#F6F8FB] px-2.5 py-1 font-mono text-[11px] font-semibold text-[#6B7A99]">
                   {patientId.slice(0, 8)}
                 </span>
               </div>
             </div>
           </div>
+          <FoyerBanner medecinId={medecinId} patientId={patientId} variant="summary" />
         </div>
-
-        <FoyerBanner medecinId={medecinId} patientId={patientId} />
 
         {/* Repères du dossier : une seule rangée, séparée par des filets plutôt que
             quatre cartes qui se disputent l'attention. */}
-        <div className="grid grid-cols-2 divide-x divide-[#EEF1F6] border-t border-[#EEF1F6] sm:grid-cols-4">
+        <div className="grid grid-cols-2 divide-x divide-[#E4E9F0] border-t border-[#E4E9F0] sm:grid-cols-4">
           {[
             { label: 'RDV au total', value: rdvs.length, icon: <Calendar className="h-3.5 w-3.5" /> },
             { label: 'Consultations', value: rdvsTermines, icon: <Stethoscope className="h-3.5 w-3.5" /> },
@@ -1164,13 +1321,13 @@ export default function DossierPatientPage() {
           ].map((s, i) => (
             <div
               key={s.label}
-              className={`px-5 py-3.5 ${i > 1 ? 'border-t border-[#EEF1F6] sm:border-t-0' : ''}`}
+              className={`px-5 py-4 ${i > 1 ? 'border-t border-[#E4E9F0] sm:border-t-0' : ''}`}
             >
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[#8A97A6]">
+              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#66738F]">
                 <span className="text-[#007DFF]">{s.icon}</span>
                 {s.label}
               </p>
-              <p className="mt-1 text-2xl font-extrabold tabular-nums leading-none text-[#010C2D]">
+              <p className="mt-2 text-[22px] font-extrabold tabular-nums leading-none text-[#010C2D]">
                 {s.value}
               </p>
             </div>
@@ -1180,7 +1337,7 @@ export default function DossierPatientPage() {
 
       {/* Tabs — scrollables sur mobile, badges de comptage */}
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div role="tablist" className="flex min-w-max gap-6 border-b border-[#EEF1F6]">
+        <div role="tablist" className="flex min-w-max gap-7 border-b border-[#DCE3ED]">
           <TabBtn
             id="infos"
             active={tab === 'infos'}
@@ -1231,6 +1388,12 @@ export default function DossierPatientPage() {
         ) : (
           <HistoriqueTab rdvs={rdvs} />
         ))}
+      {tab === 'infos' && (
+        <p className="flex items-center gap-2 pb-2 text-xs text-[#66738F]">
+          <Calendar className="h-4 w-4" aria-hidden="true" />
+          {formatDateLongFR(new Date())}
+        </p>
+      )}
     </main>
   )
 }

@@ -1,15 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarDays, MapPin, ShieldCheck } from 'lucide-react'
 import { useRdvsPatient } from '@/features/agenda/hooks'
 import { useCarteByPatient } from '@/features/carte/hooks'
-import { usePatientProfile, useUpsertPatientProfile } from '@/features/patient/hooks'
-import { getSession, saveSession } from '@/lib/session'
+import { usePatientProfile } from '@/features/patient/hooks'
+import { CareJourney } from '@/features/patient/dashboard/components/CareJourney'
+import { DashboardActions } from '@/features/patient/dashboard/components/DashboardActions'
+import { DashboardHealthRail } from '@/features/patient/dashboard/components/DashboardHealthRail'
+import { selectDashboardRdvs } from '@/features/patient/dashboard/utils'
+import { getSession } from '@/lib/session'
 import { useRoleGuard } from '@/lib/useRoleGuard'
-import { StatCards } from '@/features/patient/dashboard/components/StatCards'
-import { UpcomingAppointments } from '@/features/patient/dashboard/components/UpcomingAppointments'
-import { CarteSection } from '@/features/patient/dashboard/components/CarteSection'
-import { ProfileSidebar } from '@/features/patient/dashboard/components/ProfileSidebar'
+
+function contextualDate(date: Date): string {
+  return new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+}
 
 export default function DashboardPatientPage() {
   useRoleGuard('PATIENT')
@@ -19,9 +29,6 @@ export default function DashboardPatientPage() {
   const [lastName, setLastName] = useState<string | null>(null)
 
   useEffect(() => {
-    // SessionBridge mirrors the Auth.js session into the synchronous cache *after* mount on a
-    // fresh login, and backfills name/photo later — so re-read on every 'session-updated' event
-    // instead of a one-shot read, otherwise patientId can stay empty and the carte never loads.
     function syncFromSession() {
       const session = getSession()
       if (session?.role === 'PATIENT' && session.id) {
@@ -30,122 +37,93 @@ export default function DashboardPatientPage() {
         setLastName(session.lastName ?? null)
       }
     }
+
     syncFromSession()
     window.addEventListener('session-updated', syncFromSession)
     return () => window.removeEventListener('session-updated', syncFromSession)
   }, [])
 
-  const { data: rdvs = [], isLoading } = useRdvsPatient(patientId)
+  const { data: rdvs = [], isLoading: rdvsLoading } = useRdvsPatient(patientId)
   const { data: carte, isLoading: carteLoading } = useCarteByPatient(patientId || null)
   const { data: profile } = usePatientProfile(patientId || null)
-  const upsertProfile = useUpsertPatientProfile(patientId)
 
-  useEffect(() => {
-    if (!profile?.photoUrl) return
-    const session = getSession()
-    if (session && session.photoUrl !== profile.photoUrl) saveSession({ ...session, photoUrl: profile.photoUrl })
-  }, [profile?.photoUrl])
+  const now = useMemo(() => new Date(), [])
+  const dashboardRdvs = useMemo(() => selectDashboardRdvs(rdvs, now), [rdvs, now])
+  const city = profile?.adresseVille?.trim()
+  const activeCount = dashboardRdvs.active.length
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const photoUrl = reader.result as string
-      upsertProfile.mutate(
-        {
-          dateNaissance: profile?.dateNaissance ?? null,
-          genre: profile?.genre ?? null,
-          nationalite: profile?.nationalite ?? null,
-          numIdentite: profile?.numIdentite ?? null,
-          photoUrl,
-          telephone: profile?.telephone ?? null,
-          adresseRue: profile?.adresseRue ?? null,
-          adresseVille: profile?.adresseVille ?? null,
-          adressePays: profile?.adressePays ?? null,
-        },
-        {
-          onSuccess: () => {
-            const session = getSession()
-            if (session) saveSession({ ...session, photoUrl })
-          },
-        }
-      )
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const prochainRdvs = rdvs
-    .filter((r) => r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRME')
-    .sort((a, b) => a.dateRdv.localeCompare(b.dateRdv))
-    .slice(0, 3)
-
-  const derniersRdvs = rdvs
-    .slice()
-    .sort((a, b) => b.dateRdv.localeCompare(a.dateRdv))
-    .slice(0, 3)
-
-  const totalRdvs = rdvs.length
-  const rdvsAVenir = rdvs.filter((r) => r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRME').length
-  const hasCarte = !!carte
-
-  if (!patientId || isLoading) {
-    return (
-      <div className="p-8 space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-20 animate-pulse rounded-2xl bg-white" />
-        ))}
-      </div>
-    )
+  if (!patientId || rdvsLoading) {
+    return <DashboardSkeleton />
   }
 
   return (
-    <div>
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <main className="mx-auto w-full max-w-[1240px] px-4 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-7 lg:pb-10">
+      <header className="mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-[-0.035em] text-[#010C2D] sm:text-[34px]">
+              Salam {firstName ?? 'Patient'},
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#52667B]">
+              <span className="flex items-center gap-2 capitalize" suppressHydrationWarning>
+                <CalendarDays className="h-4 w-4 text-[#007DFF]" aria-hidden="true" />
+                {contextualDate(now)}
+              </span>
+              {city && (
+                <span className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[#007DFF]" aria-hidden="true" />
+                  {city}
+                </span>
+              )}
+            </div>
+          </div>
 
-        {/* Welcome — inline, no wrapper component */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#333333]">
-            Salam {firstName ?? 'Patient'},
-          </h1>
-          <p className="text-sm text-[#465058] mt-1">
-            {rdvsAVenir === 0
-              ? "Vous n'avez aucun rendez-vous à venir"
-              : `Vous avez ${rdvsAVenir} rendez-vous à venir`}
+          <p className="flex items-center gap-2 text-sm font-medium text-[#3E566D]">
+            <ShieldCheck className="h-4 w-4 text-[#2EB67D]" aria-hidden="true" />
+            {activeCount === 0
+              ? 'Votre parcours est à jour'
+              : `${activeCount} rendez-vous à venir`}
           </p>
         </div>
+      </header>
 
-        <div className="flex gap-6 items-start">
-          <div className="flex-1 min-w-0 space-y-6">
-            <StatCards
-              totalRdvs={totalRdvs}
-              prochainRdv={prochainRdvs[0]}
-              derniersRdvs={derniersRdvs}
-            />
-            <CarteSection
-              carte={carte}
-              carteLoading={carteLoading}
-              hasCarte={hasCarte}
-              profile={profile}
-              firstName={firstName}
-              lastName={lastName}
-            />
-            <UpcomingAppointments rdvs={prochainRdvs} />
-          </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+        <div className="min-w-0 space-y-5">
+          <CareJourney
+            todayRdv={dashboardRdvs.today}
+            nextRdv={dashboardRdvs.next}
+            latestCompleted={dashboardRdvs.latestCompleted}
+          />
+          <DashboardActions />
+        </div>
 
-          {/* Profile sidebar — always visible, no toggle */}
-          <div className="hidden lg:block shrink-0 w-72 space-y-4">
-            <ProfileSidebar
-              firstName={firstName}
-              lastName={lastName}
-              profile={profile}
-              carte={carte}
-              hasCarte={hasCarte}
-              onPhotoChange={handlePhotoChange}
-            />
-          </div>
+        <DashboardHealthRail
+          carte={carte}
+          carteLoading={carteLoading}
+          profile={profile}
+          firstName={firstName}
+          lastName={lastName}
+        />
+      </div>
+    </main>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <main className="mx-auto w-full max-w-[1240px] px-4 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-7 lg:pb-10" aria-label="Chargement du tableau de bord">
+      <div className="h-9 w-56 animate-pulse rounded-lg bg-[#E4ECF4]" />
+      <div className="mt-3 h-4 w-80 max-w-full animate-pulse rounded bg-[#E8EFF6]" />
+      <div className="mt-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-5">
+          <div className="h-[520px] animate-pulse rounded-[22px] border border-[#DCE7F3] bg-white" />
+          <div className="h-40 animate-pulse rounded-[22px] border border-[#DCE7F3] bg-white" />
+        </div>
+        <div className="space-y-5">
+          <div className="h-[390px] animate-pulse rounded-[22px] border border-[#DCE7F3] bg-white" />
+          <div className="h-[360px] animate-pulse rounded-[22px] border border-[#DCE7F3] bg-white" />
         </div>
       </div>
-    </div>
+    </main>
   )
 }

@@ -128,7 +128,6 @@ export function HeroSection() {
             className="absolute left-1/2 top-1/2 h-8 w-auto -translate-x-1/2 -translate-y-1/2"
             width={132}
             height={44}
-            priority
           />
           <a
             href="/login"
@@ -146,10 +145,11 @@ export function HeroSection() {
             className="absolute -right-1 top-5 h-[250px] w-[220px] overflow-hidden rounded-[52%_48%_44%_56%/45%_42%_58%_55%] bg-[#B6DAF7]"
           >
             <Image
-              src="/hero-doctorek.png"
+              src="/hero-doctorek.webp"
               alt=""
               fill
-              priority
+              fetchPriority="high"
+              quality={70}
               className="object-cover object-[78%_42%] mix-blend-multiply"
               sizes="220px"
             />
@@ -229,7 +229,7 @@ export function HeroSection() {
 
       <nav className="hidden md:block relative z-50" aria-label="Navigation principale">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 md:px-8">
-          <Logo className="h-10 w-auto" width={140} height={47} priority />
+          <Logo className="h-10 w-auto" width={140} height={47} />
           <div className="flex items-center gap-5">
             {langSwitcher}
             <Link
@@ -264,11 +264,13 @@ export function HeroSection() {
         />
         <div className="absolute right-4 pointer-events-none select-none" style={{ zIndex: 5, bottom: '120px' }}>
           <Image
-            src="/hero-doctorek.png"
+            src="/hero-doctorek.webp"
             alt="Médecin Doctorek"
             width={460}
             height={560}
-            priority
+            fetchPriority="high"
+            quality={70}
+            sizes="460px"
             style={{ mixBlendMode: 'multiply', height: 'clamp(400px, 48vh, 390px)', width: 'auto', objectFit: 'contain', display: 'block' }}
           />
         </div>

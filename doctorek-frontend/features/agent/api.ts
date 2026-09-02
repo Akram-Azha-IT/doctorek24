@@ -27,6 +27,22 @@ export function postAgentChat(payload: AgentChatPayload): Promise<AgentChatRespo
  * L'assistant est un module optionnel : sans clé API configurée, l'endpoint de
  * chat répond 503. On masque alors le lanceur plutôt que d'offrir un bouton mort.
  */
-export function getAgentStatut(): Promise<{ disponible: boolean }> {
-  return apiFetch<{ disponible: boolean }>('/api/v1/agent/statut')
+export function getAgentStatut(): Promise<{ disponible: boolean; transcriptionDisponible: boolean }> {
+  return apiFetch<{ disponible: boolean; transcriptionDisponible: boolean }>(
+    '/api/v1/agent/statut'
+  )
+}
+
+export function postAgentTranscription(
+  audio: Blob,
+  extension: string,
+  dureeSecondes: number,
+): Promise<{ transcription: string }> {
+  const body = new FormData()
+  body.append('audio', audio, `dictee.${extension}`)
+  body.append('dureeSecondes', dureeSecondes.toFixed(3))
+  return apiFetch<{ transcription: string }>('/api/v1/agent/transcriptions', {
+    method: 'POST',
+    body,
+  })
 }

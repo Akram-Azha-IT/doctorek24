@@ -40,7 +40,7 @@ class EmailPlaceLibereeTest {
 
     @BeforeEach
     void setUp() {
-        emailService = new EmailService(mailSender, "no-reply@doctorek.ma", true);
+        emailService = new EmailService(mailSender, "no-reply@doctorek.ma", true, "https://doctorek.ma");
         when(mailSender.createMimeMessage())
             .thenAnswer(i -> new org.springframework.mail.javamail.JavaMailSenderImpl().createMimeMessage());
     }
@@ -80,12 +80,27 @@ class EmailPlaceLibereeTest {
     @DisplayName("rien n'est envoyé quand l'expédition est désactivée")
     void sendPlaceLiberee_desactive_nEnvoieRien() {
         // Arrange
-        EmailService desactive = new EmailService(mailSender, "no-reply@doctorek.ma", false);
+        EmailService desactive = new EmailService(mailSender, "no-reply@doctorek.ma", false, "https://doctorek.ma");
 
         // Act
         desactive.sendPlaceLiberee("patient@test.ma", libere(), "Dr. Hakim Tazi");
 
         // Assert
         verify(mailSender, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("les emails n'embarquent aucune image inline")
+    void sendPlaceLiberee_hasNoInlineImage() throws Exception {
+        var captor = org.mockito.ArgumentCaptor.forClass(MimeMessage.class);
+
+        emailService.sendPlaceLiberee("patient@test.ma", libere(), "Dr. Hakim Tazi");
+
+        verify(mailSender).send(captor.capture());
+        String corps = contenu(captor.getValue()).toLowerCase();
+        assertThat(corps)
+                .doesNotContain("content-id:")
+                .doesNotContain("content-type: image/")
+                .doesNotContain("content-disposition: inline");
     }
 }

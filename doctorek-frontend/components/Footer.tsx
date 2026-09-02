@@ -17,7 +17,7 @@ const PATIENTS = [
   { label: 'Prendre rendez-vous', href: '/recherche' },
   { label: 'Se connecter', href: '/login' },
   { label: 'Créer un compte', href: '/inscription' },
-  { label: "Centre d'aide", href: '/help' },
+  { label: "Centre d'aide", href: '/aide' },
 ]
 
 const PROS = [

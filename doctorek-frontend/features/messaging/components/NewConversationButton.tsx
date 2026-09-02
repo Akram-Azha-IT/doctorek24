@@ -9,9 +9,12 @@ import { useMedecin } from '@/features/annuaire/hooks'
 import { useStartConversation } from '../hooks'
 import { Avatar } from '@/components/Avatar'
 import LogoLoader from '@/components/LogoLoader'
+import { Plus, SquarePen, X } from 'lucide-react'
 
 interface NewConversationButtonProps {
   onStarted: (conv: Conversation) => void
+  variant?: 'compact' | 'icon'
+  onDoctorAction?: () => void
 }
 
 /**
@@ -19,11 +22,29 @@ interface NewConversationButtonProps {
  * renders nothing for them. Doctors are sourced from the patient's appointments — you can only
  * message a doctor you have (or had) a RDV with.
  */
-export function NewConversationButton({ onStarted }: NewConversationButtonProps) {
+export function NewConversationButton({
+  onStarted,
+  variant = 'compact',
+  onDoctorAction,
+}: NewConversationButtonProps) {
   const session = useSession()
   const patientId = session?.id ?? ''
   const role = session?.role ?? null
   const [open, setOpen] = useState(false)
+
+  if (role === 'MEDECIN') {
+    if (!onDoctorAction) return null
+    return (
+      <button
+        type="button"
+        onClick={onDoctorAction}
+        aria-label="Rechercher une conversation"
+        className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#D9E1EC] bg-white text-[#007DFF] transition-colors hover:border-[#B6DAF7] hover:bg-[#F0F7FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/10"
+      >
+        <SquarePen className="h-5 w-5" aria-hidden="true" />
+      </button>
+    )
+  }
 
   if (role !== 'PATIENT') return null
 
@@ -32,12 +53,19 @@ export function NewConversationButton({ onStarted }: NewConversationButtonProps)
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-full bg-[#007DFF] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#00263C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40"
+        aria-label={variant === 'icon' ? 'Nouvelle conversation' : undefined}
+        className={variant === 'icon'
+          ? 'flex h-11 w-11 items-center justify-center rounded-xl border border-[#D9E1EC] bg-white text-[#007DFF] transition-colors hover:border-[#B6DAF7] hover:bg-[#F0F7FF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/10'
+          : 'flex items-center gap-1.5 rounded-full bg-[#007DFF] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#00263C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40'}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-        </svg>
-        Nouveau
+        {variant === 'icon' ? (
+          <SquarePen className="h-5 w-5" aria-hidden="true" />
+        ) : (
+          <>
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Nouveau
+          </>
+        )}
       </button>
 
       {open && (
@@ -101,9 +129,7 @@ function DoctorPickerModal({
             aria-label="Fermer"
             className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 transition-colors"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <X className="h-[18px] w-[18px]" aria-hidden="true" />
           </button>
         </div>
 

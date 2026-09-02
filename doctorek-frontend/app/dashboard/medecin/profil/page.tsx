@@ -26,6 +26,7 @@ export default function ProfilPage() {
     firstName: '', lastName: '', phone: '', specialite: '',
     ville: '', adresse: '', lang: 'fr', latitude: null, longitude: null,
   })
+  const [baselineForm, setBaselineForm] = useState<ProfilForm | null>(null)
 
   const photoInputRef = useRef<HTMLInputElement>(null)
 
@@ -37,12 +38,14 @@ export default function ProfilPage() {
   const [formSeeded, setFormSeeded] = useState(false)
   if (profile && !formSeeded) {
     setFormSeeded(true)
-    setForm({
+    const seededForm: ProfilForm = {
       firstName: profile.firstName ?? '', lastName: profile.lastName ?? '',
       phone: '', specialite: profile.specialite ?? '', ville: profile.ville ?? '',
       adresse: profile.adresse ?? '', lang: 'fr',
       latitude: profile.latitude ?? null, longitude: profile.longitude ?? null,
-    })
+    }
+    setForm(seededForm)
+    setBaselineForm(seededForm)
     setPhotoUrl(profile.photoUrl ?? session?.photoUrl ?? null)
   }
 
@@ -58,6 +61,8 @@ export default function ProfilPage() {
   const set = (field: keyof ProfilForm) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
+
+  const isDirty = baselineForm !== null && JSON.stringify(form) !== JSON.stringify(baselineForm)
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -99,14 +104,28 @@ export default function ProfilPage() {
       lang: form.lang || undefined, latitude: form.latitude, longitude: form.longitude,
     }
     mutation.mutate(payload, {
-      onSuccess: () => setSaveStatus('success'),
+      onSuccess: () => {
+        setSaveStatus('success')
+        setBaselineForm(form)
+        const current = getSession()
+        if (current) {
+          saveSession({ ...current, firstName: form.firstName, lastName: form.lastName })
+        }
+      },
       onError: (error) => setSaveError(parseApiError(error)),
     })
   }
 
+  function handleReset() {
+    if (!baselineForm) return
+    setForm(baselineForm)
+    setSaveStatus('idle')
+    setSaveError(null)
+  }
+
   if (profileLoading) {
     return (
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
+      <main className="mx-auto w-full max-w-[1160px] flex-1 px-4 py-8 xl:px-6">
         <div className="h-8 w-48 animate-pulse rounded bg-zinc-200" />
         <div className="mt-6 space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -118,35 +137,36 @@ export default function ProfilPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">Mon profil</h1>
-        <p className="mt-1 text-sm text-zinc-500">Informations professionnelles et localisation.</p>
+    <main className="w-full flex-1 px-4 py-6 xl:px-6 xl:py-5">
+      <div className="mx-auto grid w-full max-w-[1160px] items-start gap-5 xl:grid-cols-[248px_minmax(0,1fr)]">
+        <PhotoSection
+          photoUrl={photoUrl}
+          photoStatus={photoStatus}
+          firstName={form.firstName}
+          lastName={form.lastName}
+          specialite={form.specialite}
+          ville={form.ville}
+          photoInputRef={photoInputRef}
+          onUploadClick={() => photoInputRef.current?.click()}
+          onRemove={handleRemovePhoto}
+          onPhotoChange={handlePhotoChange}
+        />
+
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+          <GeneralInfoSection form={form} set={set} />
+          <LocalisationSection
+            form={form}
+            setLatLng={(lat, lng) => setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))}
+          />
+          <SaveActions
+            isPending={mutation.isPending}
+            saveStatus={saveStatus}
+            saveError={saveError}
+            isDirty={isDirty}
+            onReset={handleReset}
+          />
+        </form>
       </div>
-
-      <PhotoSection
-        photoUrl={photoUrl}
-        photoStatus={photoStatus}
-        firstName={form.firstName}
-        lastName={form.lastName}
-        photoInputRef={photoInputRef}
-        onUploadClick={() => photoInputRef.current?.click()}
-        onRemove={handleRemovePhoto}
-        onPhotoChange={handlePhotoChange}
-      />
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <GeneralInfoSection form={form} set={set} />
-        <LocalisationSection
-          form={form}
-          setLatLng={(lat, lng) => setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))}
-        />
-        <SaveActions
-          isPending={mutation.isPending}
-          saveStatus={saveStatus}
-          saveError={saveError}
-        />
-      </form>
     </main>
   )
 }

@@ -23,12 +23,12 @@ export function UpcomingAppointments({ rdvs, today }: UpcomingAppointmentsProps)
   const [openPrepId, setOpenPrepId] = useState<string | null>(null)
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#EEF1F6] bg-white">
-      <div className="flex items-center justify-between border-b border-[#F0F2F5] px-5 py-4">
-        <p className="text-sm font-bold text-[#010C2D]">
+    <section aria-labelledby="upcoming-title" className="overflow-hidden rounded-2xl border border-[#E4EAF2] bg-white shadow-[0_10px_25px_rgba(26,58,100,0.035)]">
+      <div className="flex items-center justify-between border-b border-[#EEF2F7] px-6 py-5">
+        <h2 id="upcoming-title" className="text-[15px] font-bold text-[#071A47]">
           Prochains rendez-vous
           <span className="ml-2 font-semibold text-[#A0AEC0]">{rdvs.length}</span>
-        </p>
+        </h2>
         <button
           type="button"
           className="flex items-center gap-1 text-xs font-semibold text-[#007DFF] hover:text-[#00263C] transition-colors"
@@ -39,12 +39,12 @@ export function UpcomingAppointments({ rdvs, today }: UpcomingAppointmentsProps)
       </div>
 
       {rdvs.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-14">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F0F2F5]">
-            <CalendarDays className="h-5 w-5 text-[#A0AEC0]" />
+        <div className="flex min-h-[238px] flex-col items-center justify-center gap-4 px-6 py-10">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F4F7FB]">
+            <CalendarDays className="h-7 w-7 text-[#AEBBD0]" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-[#010C2D]">Aucun rendez-vous à venir</p>
+            <p className="text-sm font-bold text-[#071A47]">Aucun rendez-vous à venir</p>
             <p className="mt-1 text-xs text-[#A0AEC0]">
               Les nouvelles réservations apparaîtront ici.
             </p>
@@ -125,6 +125,6 @@ export function UpcomingAppointments({ rdvs, today }: UpcomingAppointmentsProps)
           })}
         </ul>
       )}
-    </div>
+    </section>
   )
 }

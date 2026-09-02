@@ -7,12 +7,13 @@ const SIZE_CLASSES = {
   sm: 'w-9 h-9 text-sm',
   md: 'w-12 h-12 text-base',
   lg: 'w-16 h-16 text-xl',
+  xl: 'w-16 h-16 text-xl sm:w-20 sm:h-20 sm:text-2xl',
 }
 
 interface ProcheAvatarProps {
   firstName: string
   lastName: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 export function ProcheAvatar({ firstName, lastName, size = 'md' }: ProcheAvatarProps) {

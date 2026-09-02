@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePatientsMedecin } from '@/features/agenda/hooks'
 import { PatientFamilleList } from '@/features/agenda/components/PatientFamilleList'
+import { ErrorState } from '@/components/ErrorState'
+import { ResilientState } from '@/components/ResilientState'
 import { useSession } from '@/lib/useSession'
 import { useResetOnChange } from '@/lib/useResetOnChange'
 import { useRoleGuard } from '@/lib/useRoleGuard'
@@ -39,7 +41,12 @@ export default function PatientsPage() {
   // Reset pagination quand la recherche/le filtre change.
   useResetOnChange(`${debouncedSearch}|${filtre}`, () => setPage(0))
 
-  const { data, isLoading, isError } = usePatientsMedecin(medecinId, debouncedSearch, filtre, page)
+  const { data, error, isLoading, isError, isFetching, refetch } = usePatientsMedecin(
+    medecinId,
+    debouncedSearch,
+    filtre,
+    page,
+  )
 
   const patients = data?.content ?? []
   const total = data?.total ?? 0
@@ -133,18 +140,22 @@ export default function PatientsPage() {
           ))}
         </div>
       ) : isError ? (
-        <p className="rounded-2xl border border-[#FFDEDE] bg-[#FFF5F5] px-4 py-3 text-sm text-[#B4232A]">
-          Impossible de charger les patients. Réessayez dans un instant.
-        </p>
+        <ErrorState error={error} onRetry={() => refetch()} isRetrying={isFetching} />
       ) : patients.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#E3E8EF] bg-white py-16 text-center">
-          <p className="text-sm font-semibold text-[#010C2D]">Aucun patient trouvé</p>
-          <p className="mt-1 text-xs text-[#A0AEC0]">
-            {debouncedSearch
-              ? `Aucun résultat pour « ${debouncedSearch} »`
-              : 'Les patients apparaîtront ici après leur premier rendez-vous.'}
-          </p>
-        </div>
+        <ResilientState
+          variant="empty"
+          title="Aucun patient trouvé"
+          description={
+            debouncedSearch
+              ? `Aucun résultat pour « ${debouncedSearch} ». Essayez un autre nom.`
+              : 'Les patients apparaîtront ici automatiquement après leur premier rendez-vous.'
+          }
+          primaryAction={
+            debouncedSearch
+              ? { label: 'Effacer la recherche', onClick: () => setSearch('') }
+              : undefined
+          }
+        />
       ) : (
         <>
           <div className="overflow-hidden rounded-2xl border border-[#EEF1F6] bg-white">

@@ -6,14 +6,16 @@ import ma.doctorek.doctorek.service.EmailTemplate.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -23,6 +25,9 @@ public class EmailService {
 
     private static final DateTimeFormatter DATE_FR = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH);
     private static final DateTimeFormatter HOUR_FR = DateTimeFormatter.ofPattern("HH'h'mm", Locale.FRENCH);
+    private static final DateTimeFormatter DAY_SHORT_FR = DateTimeFormatter.ofPattern("EEE", Locale.FRENCH);
+    private static final DateTimeFormatter MONTH_SHORT_FR = DateTimeFormatter.ofPattern("MMM", Locale.FRENCH);
+    private static final DateTimeFormatter CALENDAR_DATE = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
 
     private static final String GREETING = "Bonjour,";
     private static final String HELLO = "Bonjour ";
@@ -36,13 +41,16 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final String from;
     private final boolean enabled;
+    private final String frontendUrl;
 
     public EmailService(JavaMailSender mailSender,
             @Value("${doctorek.mail.from}") String from,
-            @Value("${doctorek.mail.enabled:true}") boolean enabled) {
+            @Value("${doctorek.mail.enabled:true}") boolean enabled,
+            @Value("${app.frontend-url}") String frontendUrl) {
         this.mailSender = mailSender;
         this.from = from;
         this.enabled = enabled;
+        this.frontendUrl = stripTrailingSlash(frontendUrl);
     }
 
     @Async
@@ -107,18 +115,20 @@ public class EmailService {
 
         String subject = "Confirmation de votre rendez-vous | Doctorek";
         String motif = motifOf(rdv);
-        String html = EmailTemplate.shell(
+        String fullDate = DATE_FR.format(rdv.getDateRdv());
+        String weekday = DAY_SHORT_FR.format(rdv.getDateRdv()).replace(".", "").toUpperCase(Locale.FRENCH);
+        String month = MONTH_SHORT_FR.format(rdv.getDateRdv()).replace(".", "").toUpperCase(Locale.FRENCH);
+        String html = EmailTemplate.confirmationRdv(
                 "Votre rendez-vous du " + DATE_FR.format(rdv.getDateRdv()) + " est enregistré",
-                "Votre rendez-vous est enregistré",
-                EmailTemplate.p(GREETING)
-              + EmailTemplate.p("Nous confirmons l'enregistrement de votre rendez-vous.")
-              + EmailTemplate.details(List.of(
-                    new Row(LBL_DATE, DATE_FR.format(rdv.getDateRdv())),
-                    new Row(LBL_HEURE, HOUR_FR.format(rdv.getHeureRdv())),
-                    new Row(LBL_DUREE, rdv.getDuree() + MINUTES),
-                    new Row(LBL_MOTIF, motif),
-                    new Row(LBL_REF, rdv.getId().toString())))
-              + EmailTemplate.note("Vous pouvez gérer ou annuler ce rendez-vous depuis votre espace patient."));
+                weekday,
+                String.valueOf(rdv.getDateRdv().getDayOfMonth()),
+                month,
+                fullDate,
+                HOUR_FR.format(rdv.getHeureRdv()),
+                motif,
+                rdv.getId().toString(),
+                googleCalendarUrl(rdv),
+                frontendUrl + "/dashboard/patient/rdvs");
 
         String text = """
                 Bonjour,
@@ -126,7 +136,6 @@ public class EmailService {
                 Votre rendez-vous est bien enregistré.
                 Date : %s
                 Heure : %s
-                Durée : %d minutes
                 Motif : %s
                 Référence : %s
 
@@ -134,7 +143,7 @@ public class EmailService {
 
                 L'équipe Doctorek
                 """.formatted(DATE_FR.format(rdv.getDateRdv()), HOUR_FR.format(rdv.getHeureRdv()),
-                rdv.getDuree(), motif, rdv.getId());
+                motif, rdv.getId());
 
         send(toEmail, subject, text, html, "confirmation", rdv.getId().toString());
     }
@@ -362,6 +371,27 @@ public class EmailService {
         return rdv.getMotif() == null || rdv.getMotif().isBlank() ? "Non précisé" : rdv.getMotif();
     }
 
+    private static String googleCalendarUrl(RendezVousEntity rdv) {
+        LocalDateTime start = LocalDateTime.of(rdv.getDateRdv(), rdv.getHeureRdv());
+        LocalDateTime end = start.plusMinutes(rdv.getDuree());
+        String dates = CALENDAR_DATE.format(start) + "/" + CALENDAR_DATE.format(end);
+        String details = "Référence Doctorek : " + rdv.getId();
+        return "https://calendar.google.com/calendar/render?action=TEMPLATE"
+                + "&text=" + urlEncode("Rendez-vous Doctorek")
+                + "&dates=" + urlEncode(dates)
+                + "&ctz=" + urlEncode("Africa/Casablanca")
+                + "&details=" + urlEncode(details);
+    }
+
+    private static String urlEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
+    private static String stripTrailingSlash(String value) {
+        if (value == null || value.isBlank()) return "";
+        return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+    }
+
     private boolean shouldSend(String toEmail) {
         if (!enabled) {
             log.debug("Mail disabled (doctorek.mail.enabled=false), skipping send to {}", toEmail);
@@ -374,22 +404,16 @@ public class EmailService {
         return true;
     }
 
-    /** Logo de marque embarqué (inline) dans chaque email, référencé par cid dans le HTML. */
-    private static final ClassPathResource LOGO = new ClassPathResource("email/logo-doctorek-white.png");
-
-    /** Envoie un email multipart (texte brut + HTML de marque + logo inline) avec bonne délivrabilité. */
+    /** Envoie un email multipart texte/HTML, sans ressource inline ni pièce jointe. */
     private void send(String to, String subject, String text, String html, String kind, String rdvId) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            // multipart=true pour permettre l'image inline (contenu related).
+            // multipart=true conserve les alternatives texte brut + HTML sans joindre d'asset.
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(from);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(text, html); // (plain, html) => multipart/alternative
-            if (LOGO.exists()) {
-                helper.addInline(EmailTemplate.LOGO_CID, LOGO, "image/png");
-            }
             mailSender.send(message);
             log.info("Sent {} email to {} for rdv {}", kind, to, rdvId);
         } catch (Exception ex) {

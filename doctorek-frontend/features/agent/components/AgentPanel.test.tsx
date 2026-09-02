@@ -14,6 +14,7 @@ describe('AgentPanel', () => {
     render(
       <AgentPanel
         acces="anonyme"
+        loginHref="/login?redirect=%2F%3Fassistant%3Douvert"
         tours={[]}
         enCours={false}
         onEnvoyer={vi.fn()}

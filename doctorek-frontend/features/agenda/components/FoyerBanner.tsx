@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation'
 import { Avatar } from '@/components/Avatar'
 import { useFoyerPatient } from '@/features/agenda/hooks'
 import type { FamilleMembre } from '@/lib/types'
+import { House } from 'lucide-react'
 
 interface FoyerBannerProps {
   readonly medecinId: string
   readonly patientId: string
+  readonly variant?: 'banner' | 'summary'
 }
 
 /**
@@ -17,7 +19,7 @@ interface FoyerBannerProps {
  * des dossiers apparemment sans lien. La navigation reste explicite — chaque membre
  * garde son dossier, ses allergies et ses traitements, aucune donnée n'est agrégée.
  */
-export function FoyerBanner({ medecinId, patientId }: FoyerBannerProps) {
+export function FoyerBanner({ medecinId, patientId, variant = 'banner' }: FoyerBannerProps) {
   const router = useRouter()
   const { data } = useFoyerPatient(medecinId, patientId)
 
@@ -36,16 +38,23 @@ export function FoyerBanner({ medecinId, patientId }: FoyerBannerProps) {
   return (
     <section
       aria-label="Membres du foyer"
-      className="border-t border-[#EEF1F6] bg-[#F7FAFF] px-5 py-3.5"
+      className={variant === 'summary'
+        ? 'min-w-0 flex-1 border-t border-[#E7ECF2] px-5 py-4 sm:border-l sm:border-t-0 sm:px-7'
+        : 'border-t border-[#EEF1F6] bg-[#F7FAFF] px-5 py-3.5'}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A97A6]">
+        {variant === 'summary' && <House className="h-4 w-4 text-[#6B7A99]" aria-hidden="true" />}
+        <p className={variant === 'summary'
+          ? 'text-sm font-medium text-[#66738F]'
+          : 'text-[11px] font-semibold uppercase tracking-wide text-[#8A97A6]'}>
           {titulaireNom ? `Foyer de ${titulaireNom}` : 'Même foyer'}
         </p>
-        <span className="text-[11px] text-[#8A97A6]">· dossiers médicaux distincts</span>
+        {variant === 'banner' && (
+          <span className="text-[11px] text-[#8A97A6]">· dossiers médicaux distincts</span>
+        )}
       </div>
 
-      <ul className="mt-2.5 flex flex-wrap gap-2">
+      <ul className={`${variant === 'summary' ? 'mt-3' : 'mt-2.5'} flex flex-wrap gap-2`}>
         {membres.map((membre) => {
           const nom = `${membre.firstName} ${membre.lastName}`.trim()
           const actif = membre.patientId === patientId

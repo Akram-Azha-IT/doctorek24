@@ -10,7 +10,7 @@ const postAgentChat = vi.fn()
 
 vi.mock('./api', () => ({
   postAgentChat: (payload: AgentChatPayload) => postAgentChat(payload),
-  getAgentStatut: () => Promise.resolve({ disponible: true }),
+  getAgentStatut: () => Promise.resolve({ disponible: true, transcriptionDisponible: true }),
 }))
 
 function reponse(over: Partial<AgentChatResponse> = {}): AgentChatResponse {

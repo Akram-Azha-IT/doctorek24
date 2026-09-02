@@ -3,6 +3,7 @@ import { CalendarDays, CircleCheckBig, MessageCircleMore, ShieldCheck } from 'lu
 
 interface AgentAccessGateProps {
   readonly estConnecte: boolean
+  readonly loginHref: string
 }
 
 const ETAPES = [
@@ -12,7 +13,7 @@ const ETAPES = [
 ] as const
 
 /** Point d’entrée rassurant vers le parcours patient, sans simuler une conversation. */
-export function AgentAccessGate({ estConnecte }: AgentAccessGateProps) {
+export function AgentAccessGate({ estConnecte, loginHref }: AgentAccessGateProps) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       <section className="shrink-0 bg-[#00263C] px-6 py-4 text-center sm:px-8 sm:py-5">
@@ -52,7 +53,7 @@ export function AgentAccessGate({ estConnecte }: AgentAccessGateProps) {
 
         <div className={`${estConnecte ? '' : 'mt-3 sm:mt-3.5'} flex w-full flex-col gap-2`}>
           <a
-            href="/login"
+            href={loginHref}
             className="flex min-h-11 items-center justify-center rounded-xl bg-[#007DFF] px-5 font-heading text-[12.5px] font-semibold text-white shadow-[0_4px_12px_rgba(0,125,255,0.16)] transition-colors hover:bg-[#006FE6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] focus-visible:ring-offset-2 sm:min-h-12 sm:text-[13px]"
           >
             {estConnecte ? 'Changer de compte' : 'Se connecter pour commencer'}

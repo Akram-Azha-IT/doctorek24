@@ -5,7 +5,25 @@ import { Client } from '@stomp/stompjs'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const SockJS = require('sockjs-client') as new (url: string) => WebSocket
 import { getSession } from './session'
-import { refreshAccessToken } from './auth'
+import { getTokenExpiry, refreshAccessToken } from './auth'
+
+const STOMP_TOKEN_MARGIN_MS = 30_000
+
+async function getValidAccessToken(): Promise<string | null> {
+  let session = getSession()
+  if (!session?.accessToken) return null
+
+  const expiry = getTokenExpiry(session.accessToken)
+  if (expiry !== null && expiry * 1000 <= Date.now() + STOMP_TOKEN_MARGIN_MS) {
+    if (!(await refreshAccessToken())) return null
+    session = getSession()
+  }
+
+  if (!session?.accessToken) return null
+  const refreshedExpiry = getTokenExpiry(session.accessToken)
+  if (refreshedExpiry !== null && refreshedExpiry * 1000 <= Date.now()) return null
+  return session.accessToken
+}
 
 interface StompContextValue {
   connected: boolean
@@ -53,10 +71,13 @@ export function StompProvider({ children }: { children: React.ReactNode }) {
           new SockJS(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'}/ws`),
         reconnectDelay: 5000,
         beforeConnect: async () => {
-          const s = getSession()
-          if (s?.accessToken) {
-            client.connectHeaders = { Authorization: `Bearer ${s.accessToken}` }
+          const accessToken = await getValidAccessToken()
+          if (!accessToken) {
+            setConnected(false)
+            await client.deactivate()
+            return
           }
+          client.connectHeaders = { Authorization: `Bearer ${accessToken}` }
         },
         onConnect: () => {
           setConnected(true)
@@ -67,12 +88,12 @@ export function StompProvider({ children }: { children: React.ReactNode }) {
           setConnected(false)
           const msg = frame.headers?.message ?? ''
           if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('expired')) {
-            await refreshAccessToken()
+            const refreshed = await refreshAccessToken()
+            if (!refreshed) await client.deactivate()
           }
         },
       })
 
-      client.connectHeaders = { Authorization: `Bearer ${session.accessToken}` }
       client.activate()
       clientRef.current = client
     }

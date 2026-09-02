@@ -26,6 +26,23 @@ describe('NewConversationButton', () => {
     expect(container.firstChild).toBeNull()
   })
 
+  test('lets a doctor focus the conversation search from the icon action', async () => {
+    act(() => __setCachedSession({ role: 'MEDECIN', id: 'm1', email: 'm@x.ma' }))
+    const onDoctorAction = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <NewConversationButton
+        variant="icon"
+        onDoctorAction={onDoctorAction}
+        onStarted={() => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Rechercher une conversation' }))
+    expect(onDoctorAction).toHaveBeenCalledOnce()
+  })
+
   test('renders nothing when logged out', () => {
     const { container } = render(<NewConversationButton onStarted={() => {}} />)
     expect(container.firstChild).toBeNull()

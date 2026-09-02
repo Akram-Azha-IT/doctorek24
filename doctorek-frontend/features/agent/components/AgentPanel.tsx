@@ -11,6 +11,7 @@ export type AccesAgent = 'patient' | 'anonyme' | 'autre-role'
 
 interface AgentPanelProps {
   readonly acces: AccesAgent
+  readonly loginHref: string
   readonly tours: AgentTour[]
   readonly enCours: boolean
   readonly onEnvoyer: (message: string) => void
@@ -28,6 +29,7 @@ interface AgentPanelProps {
  */
 export function AgentPanel({
   acces,
+  loginHref,
   tours,
   enCours,
   onEnvoyer,
@@ -98,7 +100,7 @@ export function AgentPanel({
             onBrouillon={onBrouillon}
           />
         ) : (
-          <AgentAccessGate estConnecte={acces === 'autre-role'} />
+          <AgentAccessGate estConnecte={acces === 'autre-role'} loginHref={loginHref} />
         )}
       </div>
 

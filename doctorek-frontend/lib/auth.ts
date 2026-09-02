@@ -22,11 +22,19 @@ function mapToSession(authSession: Awaited<ReturnType<typeof getAuthSession>>): 
 export async function refreshAccessToken(): Promise<boolean> {
   try {
     const authSession = await getAuthSession()
+    if (authSession?.error) {
+      __setCachedSession(null)
+      return false
+    }
     const session = mapToSession(authSession)
-    if (!session?.accessToken) return false
+    if (!session?.accessToken) {
+      __setCachedSession(null)
+      return false
+    }
     __setCachedSession(session)
     return true
   } catch {
+    __setCachedSession(null)
     return false
   }
 }

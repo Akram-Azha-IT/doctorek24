@@ -6,6 +6,7 @@ import { parseMapUrl } from '../utils'
 import { useGeoDetect } from '../hooks'
 import type { ProfilForm } from '../types'
 import LogoLoader from '@/components/LogoLoader'
+import { CheckCircle2, ChevronDown, LocateFixed, MapPin } from 'lucide-react'
 
 interface LocalisationSectionProps {
   form: ProfilForm
@@ -15,6 +16,7 @@ interface LocalisationSectionProps {
 export function LocalisationSection({ form, setLatLng }: LocalisationSectionProps) {
   const [mapUrl, setMapUrl] = useState('')
   const [mapUrlError, setMapUrlError] = useState('')
+  const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const { geo, detect } = useGeoDetect((lat, lng) => setLatLng(lat, lng))
 
@@ -32,58 +34,39 @@ export function LocalisationSection({ form, setLatLng }: LocalisationSectionProp
   }
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-800">Localisation</h2>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Permet aux patients de vous trouver via la recherche par proximité.
-          </p>
-        </div>
-        {form.latitude !== null && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-            Position enregistrée
-          </span>
-        )}
+    <section className="space-y-4 rounded-2xl border border-[#DCE3ED] bg-white p-5 shadow-[0_2px_10px_rgba(15,39,73,0.05)] sm:p-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF6FF] text-[#007DFF]">
+          <MapPin className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <h2 className="text-lg font-bold tracking-[-0.02em] text-[#101A38]">Localisation du cabinet</h2>
       </div>
 
       {form.latitude !== null && form.longitude !== null ? (
-        <div className="flex items-center gap-3 rounded-lg border border-[#B6DAF7] bg-[#DFEFFE] px-4 py-3">
-          <svg className="h-5 w-5 shrink-0 text-[#1863A9]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-          </svg>
-          <div className="flex-1 text-sm">
-            <span className="font-medium text-zinc-800">
+        <div className="flex items-start gap-3 rounded-xl border border-[#CDEEDF] bg-[#F2FCF7] px-4 py-4">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1DBF73]" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-[#1AA467]">Position enregistrée</p>
+            <p className="mt-1 text-sm text-[#66738F]">
+              {form.ville || 'Position GPS'}
+              <span className="mx-2">•</span>
               {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
-            </span>
-            <span className="ml-2 text-zinc-500">· {form.ville || 'Position GPS'}</span>
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setLatLng(null, null)}
-            className="text-xs text-zinc-400 hover:text-red-500 transition-colors"
-          >
-            Effacer
-          </button>
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-center">
-          <svg className="mx-auto h-8 w-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-          </svg>
-          <p className="mt-2 text-sm text-zinc-500">Aucune position enregistrée</p>
+        <div className="rounded-xl border border-dashed border-[#CAD4E1] bg-[#F8FAFC] px-4 py-5 text-center">
+          <MapPin className="mx-auto h-7 w-7 text-[#A0AEC0]" aria-hidden="true" />
+          <p className="mt-2 text-sm text-[#66738F]">Aucune position enregistrée</p>
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div>
         <button
           type="button"
           onClick={detect}
           disabled={geo.status === 'loading'}
-          className="inline-flex items-center gap-2 rounded-lg border border-[#1863A9] bg-white px-4 py-2 text-sm font-medium text-[#1863A9] hover:bg-[#DFEFFE] disabled:opacity-50 transition-colors"
+          className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#007DFF] bg-white px-4 text-sm font-semibold text-[#007DFF] transition-colors hover:bg-[#F0F7FF] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/15"
         >
           {geo.status === 'loading' ? (
             <>
@@ -92,59 +75,86 @@ export function LocalisationSection({ form, setLatLng }: LocalisationSectionProp
             </>
           ) : (
             <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-              </svg>
+              <LocateFixed className="h-4 w-4" aria-hidden="true" />
               Détecter ma position
             </>
           )}
         </button>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            step="any"
-            value={form.latitude ?? ''}
-            onChange={(e) => setLatLng(e.target.value === '' ? null : Number(e.target.value), form.longitude)}
-            className={INPUT_CLS + ' w-36 text-sm'}
-            placeholder="Latitude"
-          />
-          <input
-            type="number"
-            step="any"
-            value={form.longitude ?? ''}
-            onChange={(e) => setLatLng(form.latitude, e.target.value === '' ? null : Number(e.target.value))}
-            className={INPUT_CLS + ' w-36 text-sm'}
-            placeholder="Longitude"
-          />
-        </div>
       </div>
 
       {geo.status === 'error' && (
         <p className="text-sm text-red-600">{geo.message}</p>
       )}
 
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-zinc-700">Coller un lien de carte</label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={mapUrl}
-            onChange={(e) => handleMapUrlPaste(e.target.value)}
-            onPaste={(e) => {
-              const pasted = e.clipboardData.getData('text')
-              handleMapUrlPaste(pasted)
-              e.preventDefault()
-            }}
-            className={INPUT_CLS + ' flex-1'}
-            placeholder="Google Maps, Apple Maps, OpenStreetMap ou « lat, lng »"
-          />
-        </div>
-        {mapUrlError && <p className="text-xs text-red-500">{mapUrlError}</p>}
-        <p className="text-xs text-zinc-400">
-          Collez le lien de partage depuis Google Maps, Apple Maps, OpenStreetMap ou Bing Maps.
-        </p>
+      <div className="overflow-hidden rounded-xl border border-[#DCE3ED]">
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen((open) => !open)}
+          aria-expanded={advancedOpen}
+          className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[#007DFF]/10"
+        >
+          <span>
+            <span className="block text-sm font-semibold text-[#35415D]">Options avancées</span>
+            <span className="mt-1 block text-xs text-[#8290A8]">Coller un lien de carte ou saisir les coordonnées manuellement.</span>
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-[#35415D] transition-transform ${advancedOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+
+        {advancedOpen && (
+          <div className="space-y-4 border-t border-[#E3E8F0] bg-[#FBFCFE] p-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input
+                id="profile-latitude"
+                aria-label="Latitude"
+                type="number"
+                step="any"
+                value={form.latitude ?? ''}
+                onChange={(e) => setLatLng(e.target.value === '' ? null : Number(e.target.value), form.longitude)}
+                className={INPUT_CLS}
+                placeholder="Latitude"
+              />
+              <input
+                id="profile-longitude"
+                aria-label="Longitude"
+                type="number"
+                step="any"
+                value={form.longitude ?? ''}
+                onChange={(e) => setLatLng(form.latitude, e.target.value === '' ? null : Number(e.target.value))}
+                className={INPUT_CLS}
+                placeholder="Longitude"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="profile-map-url" className="block text-sm font-medium text-[#35415D]">Coller un lien de carte</label>
+              <input
+                id="profile-map-url"
+                type="text"
+                value={mapUrl}
+                onChange={(e) => handleMapUrlPaste(e.target.value)}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData('text')
+                  handleMapUrlPaste(pasted)
+                  e.preventDefault()
+                }}
+                className={INPUT_CLS}
+                placeholder="Google Maps, Apple Maps, OpenStreetMap ou « lat, lng »"
+              />
+              {mapUrlError && <p className="text-xs text-red-500">{mapUrlError}</p>}
+            </div>
+
+            {form.latitude !== null && form.longitude !== null && (
+              <button
+                type="button"
+                onClick={() => setLatLng(null, null)}
+                className="text-xs font-medium text-[#8290A8] transition-colors hover:text-red-600"
+              >
+                Effacer la position enregistrée
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   )

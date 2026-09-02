@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Conversation, Message } from '@/lib/types'
 import { getSession } from '@/lib/session'
@@ -14,6 +14,17 @@ import { MessageBubble } from './MessageBubble'
 import { sendMessageRest, sendAudioMessage, sendAttachment, setPatientReply } from '../api'
 import { ApiError } from '@/lib/api-client'
 import LogoLoader from '@/components/LogoLoader'
+import {
+  ArrowUp,
+  EllipsisVertical,
+  Info,
+  LockKeyhole,
+  MessageCircle,
+  Mic,
+  Paperclip,
+  Send,
+  Trash2,
+} from 'lucide-react'
 
 const ACCEPTED_FILES = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png'
 
@@ -28,6 +39,22 @@ interface ChatWindowProps {
 
 function getOtherName(conv: Conversation, myId: string) {
   return myId === conv.patientId ? conv.medecinName : conv.patientName
+}
+
+function dayKey(iso: string): string {
+  const date = new Date(iso)
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
+function formatDay(iso: string): string {
+  const date = new Date(iso)
+  const label = date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  return label.charAt(0).toLocaleUpperCase('fr-FR') + label.slice(1)
 }
 
 function makeOptimistic(conversationId: string, senderId: string, content: string): Message {
@@ -227,30 +254,24 @@ interface ReplyToggleProps {
 
 function ReplyToggle({ canReply, togglingReply, onToggle }: ReplyToggleProps) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={togglingReply}
-      aria-pressed={canReply}
-      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
-        canReply
-          ? 'bg-[#DFEFFE] text-[#007DFF] hover:bg-[#B6DAF7]'
-          : 'bg-[#FFDEDE] text-[#E01E5A] hover:bg-[#ffc9c9]'
-      }`}
-      title="Autoriser ou bloquer les réponses du patient"
-    >
-      {canReply ? (
-        <>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" /></svg>
-          Réponses activées
-        </>
-      ) : (
-        <>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" /></svg>
-          Réponses bloquées
-        </>
-      )}
-    </button>
+    <div className="flex items-center gap-3">
+      <span className="hidden text-sm font-medium text-[#66738F] lg:block">
+        Réponses du patient {canReply ? 'activées' : 'bloquées'}
+      </span>
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={togglingReply}
+        aria-pressed={canReply}
+        aria-label={canReply ? 'Désactiver les réponses du patient' : 'Activer les réponses du patient'}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/15 disabled:opacity-50 ${
+          canReply ? 'bg-[#1688F8]' : 'bg-[#C8D1DC]'
+        }`}
+        title="Autoriser ou bloquer les réponses du patient"
+      >
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${canReply ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      </button>
+    </div>
   )
 }
 
@@ -261,13 +282,12 @@ function RecordingBar({ composer }: { readonly composer: Composer }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[#FEF2F2] px-3 py-2 ring-1 ring-[#FADCDC]">
       <button
+        type="button"
         onClick={recorder.cancel}
         className="flex-none flex h-9 w-9 items-center justify-center rounded-full text-[#E01E5A] hover:bg-[#FFDEDE] transition-colors"
         aria-label="Annuler l'enregistrement"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m-9 0v14a2 2 0 002 2h6a2 2 0 002-2V6" />
-        </svg>
+        <Trash2 className="h-[18px] w-[18px]" aria-hidden="true" />
       </button>
       <span className="flex-none h-2.5 w-2.5 rounded-full bg-[#E01E5A] animate-pulse" />
       <span className="flex-1 text-[13px] font-semibold text-[#B4144A] tabular-nums">
@@ -275,13 +295,12 @@ function RecordingBar({ composer }: { readonly composer: Composer }) {
         <span className="text-[#E9899F]"> / {Math.floor(MAX_AUDIO_SEC / 60)}:00</span>
       </span>
       <button
+        type="button"
         onClick={handleMicToggle}
         className="flex-none flex h-9 w-9 items-center justify-center rounded-full bg-[#007DFF] text-white shadow-sm hover:bg-[#00263C] transition-colors"
         aria-label="Envoyer le message vocal"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
+        <ArrowUp className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   )
@@ -290,7 +309,7 @@ function RecordingBar({ composer }: { readonly composer: Composer }) {
 function DisabledNotice() {
   return (
     <div className="flex items-center justify-center gap-2 rounded-2xl bg-[#F3F6FA] px-4 py-3 text-[13px] font-medium text-[#6B7A8D]">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+      <LockKeyhole className="h-[15px] w-[15px]" aria-hidden="true" />
       Le médecin a désactivé les réponses sur cette conversation.
     </div>
   )
@@ -302,7 +321,7 @@ function InputBar({ composer }: { readonly composer: Composer }) {
     fileInputRef, handleSend, handleKeyDown, handleMicToggle, handleFilePick,
   } = composer
   return (
-    <div className="flex items-end gap-1.5 rounded-2xl bg-[#F3F6FA] px-2 py-1.5 ring-1 ring-transparent transition focus-within:bg-white focus-within:ring-[#007DFF]/30">
+    <div className="flex items-center gap-2 rounded-xl border border-[#D9E1EC] bg-white p-2 transition-[border-color,box-shadow] focus-within:border-[#B6DAF7] focus-within:ring-4 focus-within:ring-[#007DFF]/10">
       <input
         ref={fileInputRef}
         type="file"
@@ -311,17 +330,16 @@ function InputBar({ composer }: { readonly composer: Composer }) {
         className="hidden"
       />
       <button
+        type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={uploadingDoc}
-        className="flex-none flex h-9 w-9 items-center justify-center rounded-full text-[#6B7A8D] hover:bg-[#EAF4FF] hover:text-[#007DFF] disabled:opacity-40 transition-colors"
+        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[#D9E1EC] bg-[#F8FAFC] text-[#66738F] transition-colors hover:border-[#B6DAF7] hover:bg-[#F0F7FF] hover:text-[#007DFF] disabled:opacity-40"
         aria-label="Joindre un document (PDF, JPEG, PNG)"
       >
         {uploadingDoc ? (
           <LogoLoader variant="mark" size={16} decorative />
         ) : (
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
-          </svg>
+          <Paperclip className="h-5 w-5" aria-hidden="true" />
         )}
       </button>
       <textarea
@@ -330,36 +348,32 @@ function InputBar({ composer }: { readonly composer: Composer }) {
         onKeyDown={handleKeyDown}
         placeholder="Écrire un message…"
         rows={1}
-        className="flex-1 resize-none bg-transparent py-1.5 text-[13.5px] text-[#1c2733] placeholder-[#9AA7B5] focus:outline-none max-h-32"
+        aria-label="Écrire un message"
+        className="max-h-32 min-w-0 flex-1 resize-none bg-transparent px-2 py-2.5 text-sm text-[#1C2733] outline-none placeholder:text-[#9AA7B5]"
       />
-      {input.trim() ? (
-        <button
-          onClick={handleSend}
-          disabled={sending}
-          className="flex-none flex h-9 w-9 items-center justify-center rounded-full bg-[#007DFF] text-white shadow-sm transition-colors hover:bg-[#00263C] disabled:opacity-40"
-          aria-label="Envoyer"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </button>
-      ) : (
-        <button
-          onClick={handleMicToggle}
-          disabled={uploadingAudio}
-          className="flex-none flex h-9 w-9 items-center justify-center rounded-full bg-[#007DFF] text-white shadow-sm transition-colors hover:bg-[#00263C] disabled:opacity-40"
-          aria-label="Enregistrer un message vocal"
-        >
-          {uploadingAudio ? (
-            <LogoLoader variant="mark" size={16} inverse decorative />
-          ) : (
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-              <path strokeLinecap="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v4" />
-            </svg>
-          )}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={handleMicToggle}
+        disabled={uploadingAudio}
+        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[#D9E1EC] bg-[#F8FAFC] text-[#66738F] transition-colors hover:border-[#B6DAF7] hover:bg-[#F0F7FF] hover:text-[#007DFF] disabled:opacity-40"
+        aria-label="Enregistrer un message vocal"
+      >
+        {uploadingAudio ? (
+          <LogoLoader variant="mark" size={16} decorative />
+        ) : (
+          <Mic className="h-5 w-5" aria-hidden="true" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={handleSend}
+        disabled={sending}
+        aria-disabled={!input.trim() || sending}
+        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-[#007DFF] text-white shadow-sm transition-colors hover:bg-[#006EE6] disabled:opacity-50"
+        aria-label="Envoyer"
+      >
+        <Send className="h-5 w-5" aria-hidden="true" />
+      </button>
     </div>
   )
 }
@@ -410,11 +424,11 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#F7F9FC]">
+    <div className="flex h-full flex-col bg-[#FBFCFE]">
       {/* En-tête */}
-      <div className="flex items-center gap-3 border-b border-[#E7ECF2] bg-white px-5 py-3">
+      <div className="flex min-h-24 items-center gap-4 border-b border-[#DCE3ED] bg-white px-6 py-4">
         <div className="relative flex-none">
-          <Avatar name={otherName} photoUrl={otherPhotoUrl} size={40} className="shadow-sm" />
+          <Avatar name={otherName} photoUrl={otherPhotoUrl} size={50} className="shadow-sm" />
           <span
             className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
               connected ? 'bg-[#2EB67D]' : 'bg-[#C7D0DA]'
@@ -422,8 +436,8 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-bold leading-tight text-[#010C2D]">{otherName}</p>
-          <p className={`text-[11.5px] font-medium ${connected ? 'text-[#2EB67D]' : 'text-[#9AA7B5]'}`}>
+          <p className="truncate text-base font-bold leading-tight text-[#010C2D]">{otherName}</p>
+          <p className={`mt-1 text-sm font-medium ${connected ? 'text-[#2EB67D]' : 'text-[#9AA7B5]'}`}>
             {connected ? 'En ligne' : 'Hors ligne'}
           </p>
         </div>
@@ -432,14 +446,30 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
         {isMedecin && (
           <ReplyToggle canReply={canReply} togglingReply={togglingReply} onToggle={handleToggleReply} />
         )}
+        <button
+          type="button"
+          aria-label="Informations sur la conversation"
+          title="Informations sur la conversation"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#66738F] transition-colors hover:bg-[#F0F4F8] hover:text-[#007DFF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/10"
+        >
+          <Info className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Plus d’options"
+          title="Plus d’options"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#66738F] transition-colors hover:bg-[#F0F4F8] hover:text-[#007DFF] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/10"
+        >
+          <EllipsisVertical className="h-5 w-5" aria-hidden="true" />
+        </button>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-5">
+      <div className="flex-1 overflow-y-auto px-6 py-5">
         {allMessages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EAF4FF] text-[#007DFF]">
-              <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5M21 12a9 9 0 11-3.6-7.2L21 3v9z" /></svg>
+              <MessageCircle className="h-7 w-7" aria-hidden="true" />
             </div>
             <div>
               <p className="text-[14px] font-semibold text-[#243547]">Démarrez la conversation</p>
@@ -447,17 +477,29 @@ export function ChatWindow({ conversation }: ChatWindowProps) {
             </div>
           </div>
         ) : (
-          <div className="mx-auto flex max-w-2xl flex-col">
-            {allMessages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} isMine={msg.senderId === myId} />
-            ))}
+          <div className="mx-auto flex w-full flex-col">
+            {allMessages.map((msg, index) => {
+              const showDay = index === 0 || dayKey(msg.sentAt) !== dayKey(allMessages[index - 1].sentAt)
+              return (
+                <Fragment key={msg.id}>
+                  {showDay && (
+                    <div className="mb-5 flex items-center gap-4 text-xs font-medium text-[#66738F]">
+                      <span className="h-px flex-1 bg-[#DCE3ED]" />
+                      <span>{formatDay(msg.sentAt)}</span>
+                      <span className="h-px flex-1 bg-[#DCE3ED]" />
+                    </div>
+                  )}
+                  <MessageBubble message={msg} isMine={msg.senderId === myId} />
+                </Fragment>
+              )
+            })}
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
       {/* Zone de saisie */}
-      <div className="border-t border-[#E7ECF2] bg-white px-4 py-3">
+      <div className="border-t border-[#DCE3ED] bg-white px-6 py-4">
         {composerBody}
         {!composerDisabled && (
           <p className="text-[10px] text-gray-400 mt-1 text-center">

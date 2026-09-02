@@ -1,15 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { CalendarDays, Clock4, Users, TrendingUp } from 'lucide-react'
 import { useRdvsMedecin, useDisponibilites } from '@/features/agenda/hooks'
 import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import { HeroBanner } from '@/features/medecin/dashboard/components/HeroBanner'
-import { StatCard } from '@/features/medecin/dashboard/components/StatCard'
+import { DailyOverviewPanel } from '@/features/medecin/dashboard/components/DailyOverviewPanel'
+import { ActivityOverview } from '@/features/medecin/dashboard/components/ActivityOverview'
 import { UpcomingAppointments } from '@/features/medecin/dashboard/components/UpcomingAppointments'
-import { OccupationBar } from '@/features/medecin/dashboard/components/OccupationBar'
-import { WeeklyChart } from '@/features/medecin/dashboard/components/WeeklyChart'
 import { TodayTimeline } from '@/features/medecin/dashboard/components/TodayTimeline'
 import { todayISO } from '@/features/medecin/dashboard/utils'
 
@@ -41,13 +39,14 @@ export default function MedecinDashboardPage() {
     .filter((r) => r.dateRdv >= today && r.statut !== 'ANNULE')
     .sort((a, b) => a.dateRdv.localeCompare(b.dateRdv) || a.heureRdv.localeCompare(b.heureRdv))
     .slice(0, 6)
+  const patientCount = new Set(allRdvs.map((rdv) => rdv.patientId)).size
 
   const dateLabel = new Intl.DateTimeFormat('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }).format(new Date())
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 py-5 md:px-6 md:py-7 space-y-5">
+    <div className="mx-auto max-w-[1240px] space-y-5 px-4 py-5 md:px-6 md:py-7">
       <HeroBanner
         firstName={firstName}
         lastName={lastName}
@@ -62,24 +61,21 @@ export default function MedecinDashboardPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="RDV aujourd'hui" value={todayRdvs.length} sub="Journée en cours" icon={<CalendarDays />} />
-            <StatCard label="Cette semaine" value={cettesSemaine} sub="7 prochains jours" icon={<TrendingUp />} />
-            <StatCard label="Patients suivis" value={new Set(allRdvs.map(r => r.patientId)).size} sub="Total" icon={<Users />} />
-            <StatCard label="Temps de consultation" value={dureeMinutes} sub="Minutes aujourd'hui" icon={<Clock4 />} />
+          <DailyOverviewPanel
+            todayCount={todayRdvs.length}
+            weekCount={cettesSemaine}
+            patientCount={patientCount}
+            consultationMinutes={dureeMinutes}
+            onAgenda={() => router.push('/dashboard/medecin/agenda')}
+            onDisponibilites={() => router.push('/dashboard/medecin/disponibilites')}
+          />
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(360px,0.78fr)_minmax(0,1.22fr)]">
+            <UpcomingAppointments rdvs={upcomingRdvs} today={today} />
+            <ActivityOverview rdvs={allRdvs} disponibilites={allDispos} />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_360px]">
-            <div className="space-y-4 min-w-0">
-              <UpcomingAppointments rdvs={upcomingRdvs} today={today} />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <OccupationBar rdvs={allRdvs} disponibilites={allDispos} />
-                <WeeklyChart rdvs={allRdvs} />
-              </div>
-            </div>
-
-            <TodayTimeline rdvs={todayRdvs} />
-          </div>
+          {todayRdvs.length > 0 && <TodayTimeline rdvs={todayRdvs} />}
         </>
       )}
     </div>

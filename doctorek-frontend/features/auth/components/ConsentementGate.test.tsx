@@ -37,8 +37,8 @@ describe('ConsentementGate', () => {
 
     render(<ConsentementGate />)
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText(/Vos données de santé/)).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
+    expect(screen.getByText(/Vos données de santé restent protégées/)).toBeInTheDocument()
   })
 
   test('n’offre aucune fermeture silencieuse : accepter ou se déconnecter', () => {
@@ -47,7 +47,7 @@ describe('ConsentementGate', () => {
     render(<ConsentementGate />)
 
     expect(screen.queryByRole('button', { name: /fermer/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /j’accepte/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /accepter et continuer/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /refuser/i })).toBeInTheDocument()
   })
 
@@ -55,7 +55,7 @@ describe('ConsentementGate', () => {
     statut.mockReturnValue({ data: { requis: true, version: '2026-08-10' }, isLoading: false })
     render(<ConsentementGate />)
 
-    await userEvent.click(screen.getByRole('button', { name: /j’accepte/i }))
+    await userEvent.click(screen.getByRole('button', { name: /accepter et continuer/i }))
 
     expect(accepter).toHaveBeenCalled()
   })

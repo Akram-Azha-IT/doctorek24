@@ -14,6 +14,7 @@
             <link href="${url.resourcesPath}/${style}" rel="stylesheet" />
         </#list>
     </#if>
+    <script src="${url.resourcesPath}/js/loopback-host.js" defer></script>
     <script type="importmap">
         {
             "imports": {

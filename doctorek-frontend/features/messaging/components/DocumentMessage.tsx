@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { fetchAudioObjectUrl } from '../api'
 import LogoLoader from '@/components/LogoLoader'
+import { Download } from 'lucide-react'
 
 interface DocumentMessageProps {
   readonly mediaUrl: string
@@ -41,8 +42,8 @@ export function DocumentMessage({ mediaUrl, filename, size, mine }: DocumentMess
   }
 
   const chip = pdf ? 'bg-[#E01E5A] text-white' : 'bg-[#2EB67D] text-white'
-  const surface = mine ? 'bg-white/12 hover:bg-white/20' : 'bg-[#F6F8FB] hover:bg-[#EDF2F8]'
-  const sub = mine ? 'text-blue-50/80' : 'text-[#6B7A8D]'
+  const surface = mine ? 'bg-white/35 hover:bg-white/60' : 'bg-[#F6F8FB] hover:bg-[#EDF2F8]'
+  const sub = mine ? 'text-[#5E7EA8]' : 'text-[#6B7A8D]'
   const typeLabel = pdf ? 'PDF' : 'IMG'
   const typeName = pdf ? 'Document PDF' : 'Image'
 
@@ -66,10 +67,7 @@ export function DocumentMessage({ mediaUrl, filename, size, mine }: DocumentMess
           {error ? "Erreur d'ouverture" : `${typeName} · ${fmtSize(size)}`}
         </span>
       </span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-           className={`flex-none ${mine ? 'text-white/70' : 'text-[#9AA7B5]'}`}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
-      </svg>
+      <Download className={`h-4 w-4 flex-none ${mine ? 'text-[#007DFF]' : 'text-[#9AA7B5]'}`} aria-hidden="true" />
     </button>
   )
 }
