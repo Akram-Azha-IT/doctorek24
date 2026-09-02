@@ -1,9 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
+import { CalendarDays } from 'lucide-react'
 import type { RendezVous } from '@/lib/types'
 import { useRdvsNotables } from '@/features/avis/hooks'
-import { groupRdvsBySection, statutAffiche } from '../rdv-timeline'
+import { statutAffiche } from '../rdv-timeline'
 import { RdvTimelineItem } from './RdvTimelineItem'
 
 interface RdvTimelineProps {
@@ -14,124 +16,129 @@ interface RdvTimelineProps {
   readonly onAnnuler?: (id: string) => void
 }
 
-interface SectionHeaderProps {
-  title: string
-  count: number
-  accent?: boolean
+function compareDateTimeAsc(a: RendezVous, b: RendezVous): number {
+  return `${a.dateRdv}T${a.heureRdv}`.localeCompare(`${b.dateRdv}T${b.heureRdv}`)
 }
 
-function SectionHeader({ title, count, accent }: SectionHeaderProps) {
-  return (
-    <div className="flex items-center gap-2.5 mb-4">
-      <span
-        className={`h-2 w-2 shrink-0 rounded-full ${accent ? 'bg-[#007DFF]' : 'bg-zinc-300'}`}
-      />
-      <h2
-        className={`text-[11px] font-bold uppercase tracking-[0.08em] ${
-          accent ? 'text-[#007DFF]' : 'text-zinc-400'
-        }`}
-      >
-        {title}
-      </h2>
-      <span
-        className={`rounded-full px-1.5 py-px text-[10px] font-bold tabular-nums ${
-          accent ? 'bg-[#007DFF]/10 text-[#007DFF]' : 'bg-zinc-100 text-zinc-400'
-        }`}
-      >
-        {count}
-      </span>
-      <div className="flex-1 h-px bg-zinc-200/80" />
-    </div>
-  )
-}
-
-interface TimeSectionProps {
-  readonly title: string
-  readonly rdvs: readonly RendezVous[]
-  readonly isReprogramming: boolean
-  readonly onReprogrammer: (id: string, date: string, heure: string) => void
-  readonly isCancelling?: boolean
-  readonly onAnnuler?: (id: string) => void
-  readonly accent?: boolean
-  readonly notables?: ReadonlySet<string>
-}
-
-function TimeSection({
-  title, rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler, accent, notables,
-}: TimeSectionProps) {
-  if (rdvs.length === 0) return null
-
-  return (
-    <section className="mb-7 last:mb-0">
-      <SectionHeader title={title} count={rdvs.length} accent={accent} />
-      <ol className="space-y-2.5">
-        {rdvs.map((rdv) => (
-          <RdvTimelineItem
-            key={rdv.id}
-            rdv={rdv}
-            isReprogramming={isReprogramming}
-            onReprogrammer={onReprogrammer}
-            isCancelling={isCancelling}
-            onAnnuler={onAnnuler}
-            peutNoter={notables?.has(rdv.id) ?? false}
-          />
-        ))}
-      </ol>
-    </section>
-  )
+function formatToday(): string {
+  const date = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date())
+  return date.charAt(0).toUpperCase() + date.slice(1)
 }
 
 export function RdvTimeline({
-  rdvs, isReprogramming, onReprogrammer, isCancelling, onAnnuler,
+  rdvs,
+  isReprogramming,
+  onReprogrammer,
+  isCancelling,
+  onAnnuler,
 }: RdvTimelineProps) {
-  const { upcoming, today, past } = groupRdvsBySection(rdvs)
-
-  // Une seule question pour toute la liste : demander carte par carte referait
-  // une requête par rendez-vous passé.
-  // Les créneaux écoulés sont inclus même si le serveur n'a pas encore basculé leur
-  // statut : il reste seul juge de l'éligibilité, et le bouton apparaît dès sa réponse.
-  const idsTermines = useMemo(
-    () => rdvs.filter((r) => statutAffiche(r) === 'TERMINE').map((r) => r.id),
+  const activeRdvs = useMemo(
+    () => rdvs
+      .filter((rdv) => {
+        const statut = statutAffiche(rdv)
+        return statut === 'EN_ATTENTE' || statut === 'CONFIRME'
+      })
+      .sort(compareDateTimeAsc),
     [rdvs],
+  )
+
+  const historyRdvs = useMemo(
+    () => rdvs
+      .filter((rdv) => {
+        const statut = statutAffiche(rdv)
+        return statut === 'ANNULE' || statut === 'TERMINE'
+      })
+      .sort((a, b) => -compareDateTimeAsc(a, b)),
+    [rdvs],
+  )
+
+  const idsTermines = useMemo(
+    () => historyRdvs.filter((rdv) => statutAffiche(rdv) === 'TERMINE').map((rdv) => rdv.id),
+    [historyRdvs],
   )
   const { data: notables } = useRdvsNotables(idsTermines)
   const notablesSet = useMemo(() => new Set(notables ?? []), [notables])
 
-  if (upcoming.length === 0 && today.length === 0 && past.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white py-16 px-4 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#007DFF]/10">
-          <svg
-            className="h-7 w-7 text-[#007DFF]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
-            />
-          </svg>
-        </div>
-        <p className="text-sm font-medium text-zinc-500">Aucun rendez-vous trouvé</p>
-        <p className="mt-1 text-xs text-zinc-400">
-          Vos prochains rendez-vous apparaîtront ici
-        </p>
-      </div>
-    )
-  }
-
-  const sectionProps = {
-    isReprogramming, onReprogrammer, isCancelling, onAnnuler, notables: notablesSet,
-  }
+  const [featuredRdv, ...remainingActive] = activeRdvs
+  const itemProps = { isReprogramming, onReprogrammer, isCancelling, onAnnuler }
 
   return (
-    <div>
-      <TimeSection title="Aujourd'hui" rdvs={today} accent {...sectionProps} />
-      <TimeSection title="À venir" rdvs={upcoming} accent {...sectionProps} />
-      <TimeSection title="Passés" rdvs={past} {...sectionProps} />
+    <div className="space-y-5">
+      <div className="flex max-w-xl items-center gap-3 text-sm text-[#243652]">
+        <p className="shrink-0 font-semibold">
+          Aujourd&apos;hui <span className="px-1.5 text-[#9AA8BA]">-</span> {formatToday()}
+        </p>
+        <span className="h-2 w-2 shrink-0 rounded-full bg-[#007DFF]" aria-hidden="true" />
+        <span className="h-px min-w-10 flex-1 border-t border-dotted border-[#78B8FF]" aria-hidden="true" />
+      </div>
+
+      {featuredRdv ? (
+        <ol>
+          <RdvTimelineItem rdv={featuredRdv} variant="featured" {...itemProps} />
+        </ol>
+      ) : (
+        <EmptyUpcoming />
+      )}
+
+      {remainingActive.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-[#D7E0EC] bg-white shadow-[0_5px_18px_rgba(1,38,60,0.04)]">
+          <div className="border-b border-[#E5EAF1] px-5 py-3">
+            <h2 className="font-heading text-lg font-bold text-[#010C2D]">Autres rendez-vous à venir</h2>
+          </div>
+          <ol className="divide-y divide-[#E5EAF1]">
+            {remainingActive.map((rdv) => (
+              <RdvTimelineItem key={rdv.id} rdv={rdv} variant="upcoming" {...itemProps} />
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {historyRdvs.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-[#D7E0EC] bg-white shadow-[0_5px_18px_rgba(1,38,60,0.04)]">
+          <div className="border-b border-[#E5EAF1] px-5 py-3">
+            <h2 className="font-heading text-lg font-bold text-[#010C2D]">Historique</h2>
+          </div>
+          <ol className="divide-y divide-[#E5EAF1]">
+            {historyRdvs.map((rdv) => (
+              <RdvTimelineItem
+                key={rdv.id}
+                rdv={rdv}
+                variant="history"
+                peutNoter={notablesSet.has(rdv.id)}
+                {...itemProps}
+              />
+            ))}
+          </ol>
+        </section>
+      )}
     </div>
+  )
+}
+
+function EmptyUpcoming() {
+  return (
+    <section className="rounded-2xl border border-[#D7E0EC] bg-white px-5 py-8 shadow-[0_5px_18px_rgba(1,38,60,0.04)] sm:px-6">
+      <h2 className="font-heading text-xl font-bold text-[#010C2D]">Prochain rendez-vous</h2>
+      <div className="mt-5 flex flex-col items-start gap-4 rounded-xl border border-dashed border-[#C7D7EA] bg-[#F8FBFF] p-5 sm:flex-row sm:items-center">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EAF3FF] text-[#007DFF]">
+          <CalendarDays className="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div className="flex-1">
+          <p className="font-semibold text-[#10213F]">Aucun rendez-vous à venir</p>
+          <p className="mt-1 text-sm leading-6 text-[#64748B]">Trouvez un médecin et choisissez un horaire adapté.</p>
+        </div>
+        <Link
+          href="/recherche"
+          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#007DFF] px-5 text-sm font-bold text-white transition-colors hover:bg-[#0069D7]"
+        >
+          Trouver un médecin
+        </Link>
+      </div>
+    </section>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { StarRating } from './StarRating'
+import { ResilientState } from '@/components/ResilientState'
 
 /**
  * Moyenne et histogramme des notes.
@@ -19,12 +20,13 @@ export function AvisSynthese({
 }>) {
   if (!noteMoyenne || nombreAvis === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 px-5 py-6 text-center">
-        <p className="text-sm font-medium text-zinc-600">Aucun avis pour le moment</p>
-        <p className="mt-1 text-xs text-zinc-400">
-          Les avis proviennent uniquement de patients ayant consulté ce médecin.
-        </p>
-      </div>
+      <ResilientState
+        compact
+        surface="plain"
+        variant="empty"
+        title="Aucun avis pour le moment"
+        description="Les avis apparaîtront ici après une consultation vérifiée."
+      />
     )
   }
 

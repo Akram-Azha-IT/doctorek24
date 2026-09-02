@@ -36,6 +36,15 @@ describe('Avatar', () => {
     expect(screen.getByRole('img', { name: 'Akram Ben' })).toHaveAttribute('src', 'https://cdn/photo.jpg')
   })
 
+  test('optimise les avatars Google autorisés', () => {
+    render(<Avatar name="Akram Ben" photoUrl="https://lh3.googleusercontent.com/avatar.jpg" size={48} />)
+
+    expect(screen.getByRole('img', { name: 'Akram Ben' })).toHaveAttribute(
+      'src',
+      expect.stringContaining('/_next/image?url='),
+    )
+  })
+
   test('affiche les initiales sans photo', () => {
     render(<Avatar name="Akram Ben" />)
     expect(screen.getByText('AB')).toBeInTheDocument()

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { getKeycloakBrowserIssuer } from '@/lib/keycloak-url'
 
 /**
  * RP-initiated logout: builds the Keycloak end_session_endpoint URL so the client
@@ -7,8 +8,8 @@ import { getToken } from 'next-auth/jwt'
  * Reads the raw JWT (not the public session) so the id_token never reaches the client session object.
  */
 export async function GET(req: NextRequest) {
-  const issuer = process.env.AUTH_KEYCLOAK_ISSUER
-  if (!issuer) {
+  const browserIssuer = getKeycloakBrowserIssuer()
+  if (!browserIssuer) {
     return NextResponse.json({ url: null })
   }
 
@@ -35,5 +36,7 @@ export async function GET(req: NextRequest) {
     params.set('client_id', process.env.AUTH_KEYCLOAK_ID)
   }
 
-  return NextResponse.json({ url: `${issuer}/protocol/openid-connect/logout?${params.toString()}` })
+  return NextResponse.json({
+    url: `${browserIssuer}/protocol/openid-connect/logout?${params.toString()}`,
+  })
 }

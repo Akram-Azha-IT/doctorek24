@@ -64,6 +64,14 @@ describe('FoyerBanner', () => {
     expect(screen.getByText(/dossiers médicaux distincts/)).toBeInTheDocument()
   })
 
+  test('affiche la variante synthèse sans le texte explicatif', () => {
+    useFoyerPatient.mockReturnValue({ data: FOYER })
+    render(<FoyerBanner medecinId="doc-1" patientId={PROCHE} variant="summary" />)
+
+    expect(screen.getByText('Foyer de Akram Benhammou')).toBeInTheDocument()
+    expect(screen.queryByText(/dossiers médicaux distincts/)).not.toBeInTheDocument()
+  })
+
   test('ouvre le dossier de l’autre membre avec son nom en paramètre', () => {
     // Arrange
     setup(PROCHE)

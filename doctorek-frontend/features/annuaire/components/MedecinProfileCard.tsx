@@ -6,6 +6,7 @@ import type { MedecinProfile } from '@/lib/types'
 import { AvisSection } from '@/features/avis/components/AvisSection'
 import { useAvisMedecin } from '@/features/avis/hooks'
 import { StarRating } from '@/features/avis/components/StarRating'
+import { MissingValue } from '@/components/MissingValue'
 import { MedecinAvatar } from './MedecinAvatar'
 
 const SECTEUR_LABELS: Record<1 | 2 | 3, string> = {
@@ -239,7 +240,9 @@ export function MedecinProfileCard({ medecin }: Props) {
                       <p className="text-sm text-zinc-500">{medecin.ville}</p>
                     )}
                     {!medecin.adresse && !medecin.ville && (
-                      <p className="text-sm text-zinc-400">Adresse non renseignée</p>
+                      <p className="text-sm text-zinc-400">
+                        <MissingValue value={null} fallback="Adresse non renseignée" />
+                      </p>
                     )}
                   </div>
                   {(medecin.adresse || medecin.ville) && (

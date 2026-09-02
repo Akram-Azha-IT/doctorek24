@@ -1,16 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { Plus, X, Users, UserRound, Mail, BellRing } from 'lucide-react'
 import { useRoleGuard } from '@/lib/useRoleGuard'
 import type { Proche } from '@/lib/types'
 import { useAddProche, useDeleteProche, useProches, useUpdateProche } from '@/features/famille/hooks'
 import type { ProcheFormValues } from '@/features/famille/schemas'
 import { ProcheForm } from '@/features/famille/components/ProcheForm'
 import { ProchesList } from '@/features/famille/components/ProchesList'
-import { ProcheAvatar } from '@/features/famille/components/ProcheAvatar'
-import { MoroccanPattern } from '@/features/famille/components/MoroccanPattern'
 
 export default function ProchesPage() {
   useRoleGuard('PATIENT')
@@ -22,9 +20,11 @@ export default function ProchesPage() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Proche | null>(null)
+  const [selectedId, setSelectedId] = useState('')
 
-  const self = useMemo(() => proches?.find((p) => p.self) ?? null, [proches])
-  const managed = useMemo(() => proches?.filter((p) => !p.self) ?? [], [proches])
+  const profils = proches ?? []
+  const defaultSelectedId = profils.find((profil) => !profil.self)?.id ?? profils[0]?.id ?? ''
+  const activeId = profils.some((profil) => profil.id === selectedId) ? selectedId : defaultSelectedId
 
   function openAdd() {
     setEditing(null)
@@ -32,6 +32,7 @@ export default function ProchesPage() {
   }
 
   function openEdit(proche: Proche) {
+    if (proche.self) return
     setEditing(proche)
     setFormOpen(true)
   }
@@ -50,184 +51,142 @@ export default function ProchesPage() {
             toast.success('Proche modifié')
             closeForm()
           },
-          onError: (err) => toast.error(err.message || 'Erreur lors de la modification'),
+          onError: (error) => toast.error(error.message || 'Erreur lors de la modification'),
         },
       )
-    } else {
-      addProche.mutate(values, {
-        onSuccess: (proche) => {
-          toast.success(`${proche.prenom} a été ajouté à vos proches`)
-          closeForm()
-        },
-        onError: (err) => toast.error(err.message || "Erreur lors de l'ajout du proche"),
-      })
+      return
     }
+
+    addProche.mutate(values, {
+      onSuccess: (proche) => {
+        toast.success(`${proche.prenom} a été ajouté à vos proches`)
+        setSelectedId(proche.id)
+        closeForm()
+      },
+      onError: (error) => toast.error(error.message || "Erreur lors de l'ajout du proche"),
+    })
   }
 
   function handleRemove(proche: Proche) {
-    if (!window.confirm(`Retirer ${proche.prenom} ${proche.nom} de vos proches ? Son dossier médical est conservé.`)) {
-      return
-    }
+    const confirmation = window.confirm(
+      `Retirer ${proche.prenom} ${proche.nom} de vos proches ? Son dossier médical est conservé.`,
+    )
+    if (!confirmation) return
+
     deleteProche.mutate(proche.id, {
-      onSuccess: () => toast.success('Proche retiré'),
-      onError: (err) => toast.error(err.message || 'Erreur lors du retrait'),
+      onSuccess: () => {
+        toast.success('Proche retiré')
+        setSelectedId('')
+      },
+      onError: (error) => toast.error(error.message || 'Erreur lors du retrait'),
     })
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-      {/* ── En-tête : identité famille, zellige marocain en filigrane ── */}
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#007DFF] to-[#0A5CBF] px-6 py-7 sm:px-8">
-        <MoroccanPattern className="pointer-events-none absolute inset-0 h-full w-full" />
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
-              <Users className="h-3.5 w-3.5 text-white" />
-              <span className="text-xs font-semibold text-white">
-                {managed.length === 0
-                  ? 'Compte personnel'
-                  : `${managed.length} proche${managed.length > 1 ? 's' : ''} géré${managed.length > 1 ? 's' : ''}`}
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold text-white sm:text-[28px]">Ma famille</h1>
-            <p className="mt-1 max-w-md text-sm text-white/80">
-              Gérez les profils de vos proches et prenez rendez-vous en leur nom, en toute simplicité.
-            </p>
-          </div>
-          {!formOpen && (
-            <button
-              type="button"
-              onClick={openAdd}
-              className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[#10A56A] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0C8355] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              Ajouter un proche
-            </button>
-          )}
+    <main className="mx-auto w-full max-w-[1160px] px-4 pb-32 pt-5 sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
+        <div>
+          <h1 className="font-heading text-[28px] font-bold leading-tight tracking-[-0.035em] text-[#010C2D] sm:text-[38px]">
+            Mes proches
+          </h1>
+          <p className="mt-1.5 max-w-2xl text-base leading-6 text-[#52627A] sm:mt-2">
+            Gérez les rendez-vous de votre famille.
+          </p>
         </div>
+
+        {!formOpen && (
+          <button
+            type="button"
+            onClick={openAdd}
+            className="inline-flex min-h-12 w-full shrink-0 touch-manipulation items-center justify-center gap-2 rounded-xl bg-[#007DFF] px-5 text-base font-bold text-white shadow-[0_6px_16px_rgba(0,125,255,0.18)] transition-colors hover:bg-[#0069D7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/35 focus-visible:ring-offset-2 sm:w-auto sm:text-sm"
+          >
+            <Plus className="h-5 w-5" aria-hidden="true" />
+            Ajouter un proche
+          </button>
+        )}
       </header>
 
-      {/* ── Formulaire (ajout / édition) ── */}
       {formOpen && (
-        <div className="mt-5 rounded-2xl border border-[#EDF1F5] bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="font-bold text-[#010C2D]">
-              {editing ? `Modifier ${editing.prenom} ${editing.nom}` : 'Nouveau proche'}
-            </h2>
+        <section className="mt-5 overflow-hidden rounded-2xl border border-[#D7E0EC] bg-white shadow-[0_8px_24px_rgba(1,38,60,0.05)] sm:mt-6 sm:rounded-[20px]">
+          <div className="flex items-start justify-between gap-3 border-b border-[#E5EAF1] px-4 py-4 sm:items-center sm:px-6">
+            <div>
+              <h2 className="font-heading text-lg font-bold text-[#010C2D]">
+                {editing ? `Modifier ${editing.prenom} ${editing.nom}` : 'Ajouter un proche'}
+              </h2>
+              <p className="mt-1 text-sm text-[#64748B]">
+                Renseignez uniquement les informations nécessaires à sa prise en charge.
+              </p>
+            </div>
             <button
               type="button"
               onClick={closeForm}
               aria-label="Fermer le formulaire"
-              className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/40 cursor-pointer"
+              className="inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-xl text-[#64748B] transition-colors hover:bg-[#F1F6FD] hover:text-[#010C2D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/35"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          <ProcheForm
-            proche={editing ?? undefined}
-            isPending={addProche.isPending || updateProche.isPending}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-          />
-        </div>
-      )}
-
-      {/* ── Loading ── */}
-      {isLoading && (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="h-40 animate-pulse rounded-2xl border border-[#EDF1F5] bg-white shadow-sm" />
-          ))}
-        </div>
-      )}
-
-      {isError && (
-        <p className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-600">
-          Impossible de charger vos proches.
-        </p>
-      )}
-
-      {/* ── Carte titulaire ── */}
-      {!isLoading && self && (
-        <section className="mt-6">
-          <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-            Mon profil
-          </h2>
-          <div className="flex items-center gap-4 rounded-2xl border-l-4 border-[#10A56A] border-y border-r border-y-[#EDF1F5] border-r-[#EDF1F5] bg-white p-5 shadow-sm">
-            <ProcheAvatar firstName={self.prenom} lastName={self.nom} size="lg" />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate text-[15px] font-bold text-[#010C2D]">
-                  {self.prenom} {self.nom}
-                </p>
-                <span className="rounded-full bg-[#010C2D] px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                  Vous
-                </span>
-              </div>
-              <p className="mt-1 flex items-center gap-2 truncate text-[13px] text-[#465058]">
-                {self.email ? (
-                  <>
-                    <Mail className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                    <span className="truncate">{self.email}</span>
-                  </>
-                ) : (
-                  <>
-                    <UserRound className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                    Titulaire du compte
-                  </>
-                )}
-              </p>
-            </div>
+          <div className="px-4 py-5 sm:px-6">
+            <ProcheForm
+              proche={editing ?? undefined}
+              isPending={addProche.isPending || updateProche.isPending}
+              onSubmit={handleSubmit}
+              onCancel={closeForm}
+            />
           </div>
         </section>
       )}
 
-      {/* ── Proches gérés / état vide ── */}
-      {!isLoading && !isError && (
-        <section className="mt-6">
-          <h2 className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-            Proches gérés
-          </h2>
+      {isLoading && <ProchesSkeleton />}
 
-          {managed.length > 0 ? (
-            <ProchesList
-              proches={managed}
-              onEdit={openEdit}
-              onRemove={handleRemove}
-              isRemoving={deleteProche.isPending}
-            />
-          ) : (
-            <div className="flex flex-col items-center rounded-2xl border border-dashed border-[#CBD9E8] bg-[#F7FAFD] px-6 py-12 text-center">
-              <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#DFEFFE]">
-                <Users className="h-6 w-6 text-[#007DFF]" />
-              </span>
-              <p className="text-[15px] font-semibold text-[#010C2D]">Aucun proche pour le moment</p>
-              <p className="mt-1 max-w-xs text-sm text-[#465058]">
-                Ajoutez un enfant, un parent ou toute personne dont vous gérez les rendez-vous.
-              </p>
-              {!formOpen && (
-                <button
-                  type="button"
-                  onClick={openAdd}
-                  className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#10A56A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0C8355] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10A56A]/40 cursor-pointer"
-                >
-                  <Plus className="h-4 w-4" />
-                  Ajouter mon premier proche
-                </button>
-              )}
-            </div>
+      {isError && (
+        <div className="mt-7 rounded-2xl border border-[#F3C7CB] bg-[#FFF5F6] px-5 py-4 text-sm text-[#B4232D]">
+          Impossible de charger vos proches. Réessayez dans quelques instants.
+        </div>
+      )}
+
+      {!isLoading && !isError && profils.length > 0 && (
+        <ProchesList
+          proches={profils}
+          selectedId={activeId}
+          onSelect={setSelectedId}
+          onEdit={openEdit}
+          onRemove={handleRemove}
+          isRemoving={deleteProche.isPending}
+        />
+      )}
+
+      {!isLoading && !isError && profils.length === 0 && (
+        <section className="mt-7 rounded-[20px] border border-dashed border-[#B9CCE2] bg-white px-6 py-12 text-center">
+          <h2 className="font-heading text-xl font-bold text-[#010C2D]">Votre espace famille est prêt</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#52627A]">
+            Ajoutez un enfant, un parent ou une personne dont vous gérez les rendez-vous.
+          </p>
+          {!formOpen && (
+            <button
+              type="button"
+              onClick={openAdd}
+              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#007DFF] px-5 text-sm font-bold text-white transition-colors hover:bg-[#0069D7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/35"
+            >
+              <Plus className="h-5 w-5" aria-hidden="true" />
+              Ajouter mon premier proche
+            </button>
           )}
         </section>
       )}
+    </main>
+  )
+}
 
-      {/* Note discrète : rappel de la portée légale */}
-      {!isLoading && managed.length > 0 && (
-        <p className="mt-5 flex items-start gap-2 px-1 text-xs text-zinc-400">
-          <BellRing className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Les proches majeurs disposant de leur propre email reçoivent leurs notifications
-          directement ; pour les mineurs, c&apos;est vous qui les recevez.
-        </p>
-      )}
+function ProchesSkeleton() {
+  return (
+    <div className="mt-5 space-y-4 sm:mt-7 sm:space-y-5" aria-label="Chargement des proches">
+      <div className="-mx-4 flex gap-2 overflow-hidden px-4 sm:mx-0 sm:grid sm:max-w-[780px] sm:grid-cols-2 sm:gap-4 sm:px-0 lg:grid-cols-3">
+        <div className="h-[72px] animate-pulse rounded-xl border border-[#D7E0EC] bg-white sm:h-[88px] sm:rounded-2xl" />
+        <div className="h-[72px] animate-pulse rounded-xl border border-[#D7E0EC] bg-white sm:h-[88px] sm:rounded-2xl" />
+        <div className="h-[72px] w-[148px] shrink-0 animate-pulse rounded-xl border border-[#D7E0EC] bg-white sm:h-[88px] sm:w-auto sm:rounded-2xl" />
+      </div>
+      <div className="h-[430px] animate-pulse rounded-2xl border border-[#D7E0EC] bg-white sm:h-[390px] sm:rounded-[20px]" />
     </div>
   )
 }

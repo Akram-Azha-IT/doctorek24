@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useAvisMedecin } from '../hooks'
 import { AvisList } from './AvisList'
 import { AvisSynthese } from './AvisSynthese'
+import { ResilientState } from '@/components/ResilientState'
 
 /**
  * Section « Avis » du profil médecin : synthèse, liste paginée.
@@ -13,7 +14,7 @@ import { AvisSynthese } from './AvisSynthese'
  */
 export function AvisSection({ medecinId }: Readonly<{ medecinId: string }>) {
   const [page, setPage] = useState(1)
-  const { data, isLoading, isError } = useAvisMedecin(medecinId, page)
+  const { data, isLoading, isError, isFetching, refetch } = useAvisMedecin(medecinId, page)
 
   if (isLoading) {
     return (
@@ -25,7 +26,16 @@ export function AvisSection({ medecinId }: Readonly<{ medecinId: string }>) {
   }
 
   if (isError || !data) {
-    return <p className="py-4 text-sm text-zinc-400">Les avis n&apos;ont pas pu être chargés.</p>
+    return (
+      <ResilientState
+        compact
+        variant="error"
+        title="Avis momentanément indisponibles"
+        description="Les avis n'ont pas pu être chargés. Le reste du profil reste accessible."
+        isBusy={isFetching}
+        primaryAction={{ label: 'Réessayer', onClick: () => refetch() }}
+      />
+    )
   }
 
   return (

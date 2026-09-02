@@ -8,4 +8,4 @@ export const SPECIALITES = [
 export const LANGUES = ['Arabe', 'Français', 'Anglais', 'Amazigh', 'Espagnol']
 
 export const INPUT_CLS =
-  'block w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-[#1863A9] focus:ring-2 focus:ring-[#1863A9]/10 placeholder:text-zinc-400'
+  'block h-12 w-full rounded-xl border border-[#D9E1EC] bg-white px-4 text-[15px] text-[#16213D] outline-none transition-[border-color,box-shadow] placeholder:text-[#A0AEC0] hover:border-[#B8C6D9] focus:border-[#007DFF] focus:ring-4 focus:ring-[#007DFF]/10'

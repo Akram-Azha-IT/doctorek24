@@ -7,6 +7,7 @@ import { RdvTimeline } from '@/features/agenda/components/RdvTimeline'
 import { useProches } from '@/features/famille/hooks'
 import { useSession } from '@/lib/useSession'
 import { useRoleGuard } from '@/lib/useRoleGuard'
+import type { Proche } from '@/lib/types'
 import { toast } from 'sonner'
 
 const ALL = 'TOUS'
@@ -20,18 +21,40 @@ export default function PatientRdvsPage() {
   const selected = selectedOverride || patientId
 
   const { data: profils } = useProches(!!patientId)
-  const hasProches = (profils?.length ?? 0) > 1
+  const fallbackSelf: Proche | null = patientId
+    ? {
+        id: patientId,
+        nom: session?.lastName ?? '',
+        prenom: session?.firstName ?? '',
+        dateNaissance: null,
+        mineur: false,
+        self: true,
+        role: null,
+        declarationRepresentantLegal: null,
+      }
+    : null
+  const profilsDisponibles = profils?.length ? profils : fallbackSelf ? [fallbackSelf] : []
+  const hasProches = profilsDisponibles.length > 1
 
   const membres = selected === ALL
-    ? (profils ?? [])
-    : (profils ?? []).filter((p) => p.id === selected)
+    ? profilsDisponibles
+    : profilsDisponibles.filter((profil) => profil.id === selected)
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-8">
-      {/* Compte famille : filtre par membre */}
+    <div className="mx-auto w-full max-w-[1160px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <header className="mb-4">
+        <h1 className="font-heading text-[30px] font-bold leading-tight tracking-[-0.03em] text-[#010C2D] sm:text-[36px]">
+          Mes rendez-vous
+        </h1>
+        <p className="mt-2 flex items-start gap-2 text-sm leading-6 text-[#52627A]">
+          <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#2EB67D]" aria-hidden="true" />
+          Gérez vos consultations et préparez chaque rendez-vous en toute sérénité.
+        </p>
+      </header>
+
       {hasProches && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {(profils ?? []).map((profil) => (
+        <div className="mb-5 inline-flex max-w-full overflow-x-auto rounded-xl border border-[#CFD8E6] bg-white p-0.5 shadow-[0_1px_2px_rgba(1,12,45,0.04)]" aria-label="Afficher les rendez-vous de">
+          {profilsDisponibles.map((profil) => (
             <FilterChip
               key={profil.id}
               active={selected === profil.id}
@@ -76,11 +99,12 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+      className={`min-h-10 shrink-0 rounded-[9px] px-5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]/35 ${
         active
-          ? 'bg-[#007DFF] text-white border-[#007DFF]'
-          : 'bg-white text-zinc-600 border-zinc-300 hover:border-zinc-500'
+          ? 'bg-[#007DFF] text-white shadow-sm'
+          : 'bg-white text-[#34425A] hover:bg-[#F3F7FC]'
       }`}
+      aria-pressed={active}
     >
       {children}
     </button>
@@ -115,9 +139,9 @@ function MemberRdvSection({
   }
 
   return (
-    <section className="mb-8">
+    <section className="mb-7">
       {showLabel && (
-        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-zinc-400">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#71809A]">
           {label ?? 'Mes rendez-vous'}
         </h2>
       )}
@@ -150,19 +174,10 @@ function MemberRdvSection({
 
 function RdvSkeleton() {
   return (
-    <div className="space-y-2.5">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          className="h-[84px] animate-pulse rounded-2xl border border-zinc-100 bg-white shadow-sm overflow-hidden flex"
-        >
-          <div className="w-16 shrink-0 bg-[#DFEFFE]/60" />
-          <div className="flex-1 p-4 space-y-2">
-            <div className="h-3 w-40 rounded bg-zinc-100" />
-            <div className="h-2.5 w-24 rounded bg-zinc-100" />
-          </div>
-        </div>
-      ))}
+    <div className="space-y-5" aria-label="Chargement des rendez-vous">
+      <div className="h-6 w-72 max-w-full animate-pulse rounded-md bg-[#DCE9FA]" />
+      <div className="h-56 animate-pulse rounded-2xl border border-[#DCE4EF] bg-white" />
+      <div className="h-52 animate-pulse rounded-2xl border border-[#DCE4EF] bg-white" />
     </div>
   )
 }

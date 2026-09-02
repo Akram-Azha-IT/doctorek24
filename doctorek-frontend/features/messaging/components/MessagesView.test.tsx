@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import type { Conversation } from '@/lib/types'
 import { MessagesView } from './MessagesView'
@@ -18,8 +18,18 @@ vi.mock('../hooks', () => ({
 }))
 
 vi.mock('./ConversationList', () => ({
-  ConversationList: ({ selectedId }: { selectedId: string | null }) => (
-    <div data-testid="conv-list" data-selected={selectedId ?? ''} />
+  ConversationList: ({
+    selectedId,
+    conversations: visibleConversations,
+  }: {
+    selectedId: string | null
+    conversations: Conversation[]
+  }) => (
+    <div
+      data-testid="conv-list"
+      data-selected={selectedId ?? ''}
+      data-count={visibleConversations.length}
+    />
   ),
 }))
 vi.mock('./ChatWindow', () => ({
@@ -44,12 +54,24 @@ describe('MessagesView', () => {
     expect(screen.getByText('Aucune conversation')).toBeInTheDocument()
   })
 
-  test('renders the list when conversations exist', () => {
+  test('selects the first conversation when the list loads', () => {
     mockSearchParams.get.mockReturnValue(null)
     mockUseConversations.mockReturnValue({ data: conversations, isLoading: false })
     render(<MessagesView />)
     expect(screen.getByTestId('conv-list')).toBeInTheDocument()
-    expect(screen.queryByTestId('chat')).not.toBeInTheDocument()
+    expect(screen.getByTestId('chat')).toHaveAttribute('data-conv', 'c1')
+  })
+
+  test('filters conversations from the search field', () => {
+    mockSearchParams.get.mockReturnValue(null)
+    mockUseConversations.mockReturnValue({ data: conversations, isLoading: false })
+    render(<MessagesView />)
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Rechercher dans les messages' }), {
+      target: { value: 'Sara' },
+    })
+
+    expect(screen.getByTestId('conv-list')).toHaveAttribute('data-count', '1')
   })
 
   test('deep link ?conv= selects the matching conversation', () => {

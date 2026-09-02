@@ -27,7 +27,65 @@ class EmailTemplateTest {
                 .contains("Doctorek")
                 .contains("Mon titre")
                 .contains("aperçu")
-                .contains("L'équipe Doctorek");
+                .contains("L'équipe Doctorek")
+                .contains("background:#F3F6FA")
+                .contains("background:#00263C")
+                .contains("Vos données sont sécurisées et confidentielles")
+                .doesNotContain("<img")
+                .doesNotContain("cid:");
+    }
+
+    @Test
+    @DisplayName("le shell partagé unifie bienvenue, codes et notifications")
+    void shell_unifiesAllTransactionalMessages() {
+        String html = EmailTemplate.shell(
+                "Votre compte Doctorek est prêt",
+                "Bienvenue sur Doctorek",
+                EmailTemplate.p("Votre compte est créé.")
+              + EmailTemplate.codeBox("123456")
+              + EmailTemplate.details(List.of(new Row("Statut", "Actif")))
+              + EmailTemplate.button("Ouvrir mon espace", "https://doctorek.ma/dashboard/patient"));
+
+        assertThat(html)
+                .contains("Bienvenue sur Doctorek")
+                .contains("123456")
+                .contains("Statut")
+                .contains("Ouvrir mon espace")
+                .contains("Besoin d'aide ?")
+                .contains("Ceci est un message automatique")
+                .doesNotContain("<img")
+                .doesNotContain("cid:");
+    }
+
+    @Test
+    @DisplayName("confirmationRdv reprend la hiérarchie agenda-first sans image")
+    void confirmationRdv_containsCalendarFirstLayoutWithoutImage() {
+        String html = EmailTemplate.confirmationRdv(
+                "Votre rendez-vous du vendredi 28 août 2026 est enregistré",
+                "VEN",
+                "28",
+                "AOÛT",
+                "vendredi 28 août 2026",
+                "09h00",
+                "test",
+                "dc7adaab-cc6d-4c39-b1ba-4dbd9323f92f",
+                "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Rendez-vous+Doctorek",
+                "https://doctorek.ma/dashboard/patient/rdvs");
+
+        assertThat(html)
+                .contains("CONFIRMÉ")
+                .contains("VEN")
+                .contains(">28<")
+                .contains("AOÛT")
+                .contains("09h00")
+                .contains("Ajouter à mon agenda")
+                .contains("Gérer ou annuler le rendez-vous")
+                .contains("https://calendar.google.com/calendar/render?action=TEMPLATE&amp;text=Rendez-vous+Doctorek")
+                .contains("https://doctorek.ma/dashboard/patient/rdvs")
+                .doesNotContain("30 minutes")
+                .doesNotContain("Durée")
+                .doesNotContain("<img")
+                .doesNotContain("cid:");
     }
 
     @Test

@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import Keycloak from 'next-auth/providers/keycloak'
+import { getKeycloakBrowserIssuer } from '@/lib/keycloak-url'
 
 type Role = 'ADMIN' | 'MEDECIN' | 'PATIENT'
 
@@ -26,6 +27,8 @@ interface CurrentUserResponse {
   role: Role
   avatarUrl?: string | null
 }
+
+const keycloakBrowserIssuer = getKeycloakBrowserIssuer()
 
 /**
  * The Keycloak JWT subject is NOT the app's local user id — the backend's resources
@@ -73,6 +76,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Keycloak({
       clientId: process.env.AUTH_KEYCLOAK_ID,
       issuer: process.env.AUTH_KEYCLOAK_ISSUER,
+      authorization: keycloakBrowserIssuer
+        ? `${keycloakBrowserIssuer}/protocol/openid-connect/auth`
+        : undefined,
       // Public client (PKCE only, no client secret) — matches the "doctorek-frontend"
       // Keycloak client configured with Standard Flow + PKCE-S256.
       client: { token_endpoint_auth_method: 'none' },

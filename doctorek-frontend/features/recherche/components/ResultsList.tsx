@@ -4,9 +4,9 @@ import { useMemo } from 'react'
 import { MedecinCardList } from '@/features/annuaire/components/MedecinCardList'
 import { useNotesMedecins } from '@/features/avis/hooks'
 import LogoLoader from '@/components/LogoLoader'
+import { ResilientState } from '@/components/ResilientState'
 import type { BookingSlot, MedecinNearbyResult, MedecinProfile } from '@/lib/types'
 import type { DisponibiliteFilter } from '@/lib/disponibilite'
-import { LocationIcon } from './icons'
 import { Pagination } from './Pagination'
 import { ErrorState } from '@/components/ErrorState'
 import { ResultsToolbar, type ActiveFilter } from './ResultsToolbar'
@@ -98,28 +98,13 @@ export function ResultsList({
       )}
 
       {nearbyMode && !loading && !isError && nearbyMedecins.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-          <div className="relative mb-6">
-            <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#EBF4FF] to-[#DFEFFE] flex items-center justify-center">
-              <LocationIcon className="h-10 w-10 text-[#007DFF]/40" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#FFF3CD] flex items-center justify-center shadow-sm">
-              <svg className="h-4 w-4 text-[#856404]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/>
-              </svg>
-            </div>
-          </div>
-          <h3 className="text-base font-bold text-[#010C2D] mb-1">Aucun médecin à proximité</h3>
-          <p className="text-sm text-zinc-500 mb-6 max-w-xs leading-relaxed">
-            Aucun praticien dans un rayon de 20 km. Essayez une recherche par ville.
-          </p>
-          <a
-            href="/recherche"
-            className="rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-sm font-semibold text-zinc-600 hover:border-[#007DFF] hover:text-[#007DFF] transition-colors"
-          >
-            Rechercher par ville
-          </a>
-        </div>
+        <ResilientState
+          surface="plain"
+          variant="empty"
+          title="Aucun médecin à proximité"
+          description="Aucun praticien n'est actuellement disponible dans un rayon de 20 km. La recherche par ville reste accessible."
+          primaryAction={{ label: 'Rechercher par ville', href: '/recherche' }}
+        />
       )}
 
       {nearbyMode && !loading && nearbyMedecins.length > 0 && (
@@ -143,52 +128,28 @@ export function ResultsList({
       )}
 
       {!nearbyMode && !loading && hasSearchData && searchContent.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-          {/* Illustration */}
-          <div className="relative mb-6">
-            <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[#EBF4FF] to-[#DFEFFE] flex items-center justify-center shadow-inner">
-              <svg className="h-10 w-10 text-[#007DFF]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-                <circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35"/>
-              </svg>
-            </div>
-            <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-[#FFDEDE] flex items-center justify-center shadow-sm">
-              <svg className="h-4 w-4 text-[#E01E5A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </div>
-          </div>
-
-          <h3 className="text-base font-bold text-[#010C2D] mb-1">
-            Aucun médecin trouvé
-          </h3>
-          <p className="text-sm text-zinc-500 mb-6 max-w-xs leading-relaxed">
-            {filter !== 'all' || exactDate
-              ? 'Aucun praticien disponible avec ce filtre. Élargissez la recherche.'
-              : 'Aucun praticien enregistré dans cette zone pour le moment.'}
-          </p>
-
-          {/* Action suggestions */}
-          <div className="flex flex-col sm:flex-row gap-2 w-full max-w-xs">
-            {(filter !== 'all' || exactDate) && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onClearAvailability) onClearAvailability()
-                  else onFilterChange?.('all')
-                }}
-                className="cursor-pointer flex-1 rounded-xl bg-[#007DFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#00263C] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
-              >
-                Toutes les dates
-              </button>
-            )}
-            <a
-              href="/recherche"
-              className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-600 hover:border-[#007DFF] hover:text-[#007DFF] transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
-            >
-              Nouvelle recherche
-            </a>
-          </div>
-        </div>
+        <ResilientState
+          surface="plain"
+          variant="empty"
+          title="Aucun médecin trouvé"
+          description={
+            filter !== 'all' || exactDate
+              ? 'Aucun praticien n’est disponible avec ces critères. Vos autres options de recherche restent accessibles.'
+              : 'Aucun praticien n’est enregistré dans cette zone pour le moment.'
+          }
+          primaryAction={
+            filter !== 'all' || exactDate
+              ? {
+                  label: 'Toutes les dates',
+                  onClick: () => {
+                    if (onClearAvailability) onClearAvailability()
+                    else onFilterChange?.('all')
+                  },
+                }
+              : undefined
+          }
+          secondaryAction={{ label: 'Nouvelle recherche', href: '/recherche' }}
+        />
       )}
 
       {!nearbyMode && !loading && searchContent.length > 0 && (

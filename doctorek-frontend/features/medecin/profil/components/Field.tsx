@@ -1,15 +1,16 @@
 interface FieldProps {
   label: string
   required?: boolean
+  htmlFor?: string
   children: React.ReactNode
 }
 
-export function Field({ label, required, children }: FieldProps) {
+export function Field({ label, required, htmlFor, children }: FieldProps) {
   return (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-zinc-700">
+    <div className="space-y-2">
+      <label htmlFor={htmlFor} className="block text-[14px] font-medium text-[#35415D]">
         {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
+        {required && <span className="ml-1 text-[#E01E5A]">*</span>}
       </label>
       {children}
     </div>

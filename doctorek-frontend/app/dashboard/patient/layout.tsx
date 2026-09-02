@@ -195,7 +195,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 onClick={() => router.push(item.href)}
                 title={!sidebarOpen ? item.label : undefined}
                 className={`group flex w-full items-center rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                  sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'
+                  sidebarOpen ? 'gap-3 px-3' : 'justify-end px-2'
                 } ${
                   active
                     ? 'bg-[#007DFF] text-white shadow-sm shadow-blue-500/20'
@@ -240,7 +240,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 onClick={() => router.push(item.href)}
                 title={!sidebarOpen ? item.label : undefined}
                 className={`group flex w-full items-center rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                  sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'
+                  sidebarOpen ? 'gap-3 px-3' : 'justify-end px-2'
                 } ${
                   active
                     ? 'bg-[#007DFF] text-white shadow-sm shadow-blue-500/20'
@@ -265,7 +265,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
             onClick={handleLogout}
             title={!sidebarOpen ? 'Déconnexion' : undefined}
             className={`flex w-full items-center rounded-xl py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors ${
-              sidebarOpen ? 'gap-3 px-3' : 'justify-center px-0'
+              sidebarOpen ? 'gap-3 px-3' : 'justify-end px-2'
             }`}
           >
             <LogOut className="h-4 w-4 shrink-0" />

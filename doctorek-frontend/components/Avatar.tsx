@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 /**
  * Teinte stable dérivée du nom : deux personnes différentes gardent des couleurs
@@ -18,6 +19,17 @@ export function initialsFromName(name: string): string {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
   const last = parts.at(-1) ?? ''
   return `${parts[0][0]}${last[0]}`.toUpperCase()
+}
+
+function canUseNextImage(photoUrl: string): boolean {
+  if (photoUrl.startsWith('/')) return true
+
+  try {
+    const url = new URL(photoUrl)
+    return url.protocol === 'https:' && url.hostname === 'lh3.googleusercontent.com'
+  } catch {
+    return false
+  }
 }
 
 interface AvatarProps {
@@ -42,6 +54,24 @@ export function Avatar({ name, photoUrl, size = 40, className = '', ring = false
   const ringCls = ring ? 'ring-2 ring-white' : ''
 
   if (showPhoto) {
+    const imageClassName = `shrink-0 rounded-full bg-[#EDF2F8] object-cover ${ringCls} ${className}`
+
+    if (canUseNextImage(photoUrl)) {
+      return (
+        <Image
+          src={photoUrl}
+          alt={name}
+          width={size}
+          height={size}
+          sizes={`${size}px`}
+          quality={70}
+          onError={() => setFailed(true)}
+          className={imageClassName}
+          style={{ width: size, height: size }}
+        />
+      )
+    }
+
     return (
       // Balise native assumée, et unique point du code où elle l'est pour une photo :
       // les photos téléversées sont stockées en data URI (voir le téléversement du
@@ -55,7 +85,7 @@ export function Avatar({ name, photoUrl, size = 40, className = '', ring = false
         width={size}
         height={size}
         onError={() => setFailed(true)}
-        className={`shrink-0 rounded-full bg-[#EDF2F8] object-cover ${ringCls} ${className}`}
+        className={imageClassName}
         style={{ width: size, height: size }}
       />
     )

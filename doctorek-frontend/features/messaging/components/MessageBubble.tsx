@@ -1,6 +1,7 @@
 import type { Message } from '@/lib/types'
 import { AudioMessage } from './AudioMessage'
 import { DocumentMessage } from './DocumentMessage'
+import { Check, CheckCheck } from 'lucide-react'
 
 interface MessageBubbleProps {
   message: Message
@@ -12,13 +13,9 @@ function formatTime(iso: string) {
 }
 
 function ReadReceipt({ read }: { readonly read: boolean }) {
+  const Icon = read ? CheckCheck : Check
   return (
-    <svg width="15" height="11" viewBox="0 0 18 12" fill="none" role="img"
-         aria-label={read ? 'Lu' : 'Envoyé'}
-         className={read ? 'text-white' : 'text-blue-100/70'}>
-      <path d="M1 6.5L4.2 9.6L10.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7.5 9.4L13.8 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={read ? 1 : 0} />
-    </svg>
+    <Icon className="h-4 w-4 text-[#007DFF]" role="img" aria-label={read ? 'Lu' : 'Envoyé'} />
   )
 }
 
@@ -43,20 +40,20 @@ export function MessageBubble({ message, isMine }: MessageBubbleProps) {
   }
 
   return (
-    <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-1.5`}>
+    <div className={`mb-3 flex ${isMine ? 'justify-end' : 'justify-start'}`}>
       <div
         className={[
-          'group relative max-w-[75%] rounded-2xl text-sm shadow-[0_1px_2px_rgba(1,12,45,0.06)] ring-1',
-          isMedia ? 'px-2.5 py-2' : 'px-3.5 py-2',
+          'group relative max-w-[78%] rounded-2xl text-sm ring-1',
+          isMedia ? 'px-3 py-2.5' : 'px-4 py-2.5',
           isMine
-            ? 'rounded-br-md bg-[#007DFF] text-white ring-[#007DFF]'
-            : 'rounded-bl-md bg-white text-[#1c2733] ring-[#EAEEF3]',
+            ? 'rounded-br-md bg-[#EDF5FF] text-[#17305C] ring-[#CEE1F7]'
+            : 'rounded-bl-md bg-white text-[#1C2733] ring-[#DCE3ED]',
         ].join(' ')}
       >
         {renderContent()}
         <div
           className={`mt-1 flex items-center justify-end gap-1 text-[10.5px] tabular-nums ${
-            isMine ? 'text-blue-50/80' : 'text-[#8A97A6]'
+            isMine ? 'text-[#5E7EA8]' : 'text-[#8A97A6]'
           }`}
         >
           <span>{formatTime(message.sentAt)}</span>

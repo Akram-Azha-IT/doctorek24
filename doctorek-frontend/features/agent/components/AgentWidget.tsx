@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { BookingDrawer } from '@/features/agenda/components/BookingDrawer'
 import { getMedecin } from '@/features/annuaire/api'
 import { useSession } from '@/lib/useSession'
@@ -11,6 +11,12 @@ import { OPEN_AGENT_EVENT } from '../events'
 import { AgentLauncher, type EtatAgent } from './AgentLauncher'
 import { AgentPanel } from './AgentPanel'
 import { finDuCreneau } from './AgentCartes'
+import {
+  buildAgentLoginHref,
+  buildAgentReturnPath,
+  removeAgentReturnMarker,
+  shouldOpenAgent,
+} from '../navigation'
 
 /**
  * Point de montage de l'assistant, posé une fois dans la mise en page racine.
@@ -27,13 +33,19 @@ import { finDuCreneau } from './AgentCartes'
  */
 export function AgentWidget() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const search = searchParams.toString()
+  const ouvrirApresConnexion = shouldOpenAgent(search)
+  const loginHref = buildAgentLoginHref(buildAgentReturnPath(pathname, search))
   const session = useSession()
   const estPatient = session?.role === 'PATIENT'
 
   const { data: statut } = useAgentStatut(true)
   const { tours, envoyer, reinitialiser, enCours } = useAgentConversation()
 
-  const [etat, setEtat] = useState<EtatAgent>(pathname === '/' ? 'minimise' : 'barre')
+  const [etat, setEtat] = useState<EtatAgent>(
+    ouvrirApresConnexion ? 'ouvert' : pathname === '/' ? 'minimise' : 'barre'
+  )
   const [slot, setSlot] = useState<BookingSlot | null>(null)
 
   useEffect(() => {
@@ -41,6 +53,21 @@ export function AgentWidget() {
     window.addEventListener(OPEN_AGENT_EVENT, ouvrir)
     return () => window.removeEventListener(OPEN_AGENT_EVENT, ouvrir)
   }, [])
+
+  useEffect(() => {
+    if (!ouvrirApresConnexion) return
+
+    const ouverture = window.setTimeout(() => {
+      setEtat('ouvert')
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `${removeAgentReturnMarker(pathname, search)}${window.location.hash}`
+      )
+    }, 0)
+
+    return () => window.clearTimeout(ouverture)
+  }, [ouvrirApresConnexion, pathname, search])
 
   const ouvrirEtEnvoyer = useCallback(
     (message: string) => {
@@ -96,6 +123,7 @@ export function AgentWidget() {
         {etat === 'ouvert' && (
           <AgentPanel
             acces={estPatient ? 'patient' : session ? 'autre-role' : 'anonyme'}
+            loginHref={loginHref}
             tours={tours}
             enCours={enCours}
             onEnvoyer={envoyer}
@@ -114,6 +142,7 @@ export function AgentWidget() {
           onEnvoyer={ouvrirEtEnvoyer}
           enCours={enCours}
           peutConverser={estPatient}
+          transcriptionDisponible={Boolean(statut?.transcriptionDisponible)}
         />
       </div>
 

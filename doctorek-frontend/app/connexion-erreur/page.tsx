@@ -1,9 +1,9 @@
 'use client'
 
 import { Suspense } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import LogoLoader from '@/components/LogoLoader'
 
 /**
@@ -40,44 +40,76 @@ function ErreurContenu() {
   const { titre, texte } = MESSAGES[code] ?? MESSAGES.Default
 
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm border border-zinc-100">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFDEDE]">
-        <AlertTriangle className="h-7 w-7 text-[#E01E5A]" />
-      </div>
+    <section
+      aria-labelledby="connexion-error-title"
+      role="alert"
+      className="w-full max-w-[430px] overflow-hidden rounded-lg border border-[#D9E2EC] bg-white shadow-[0_8px_24px_rgba(0,38,60,0.07)]"
+    >
+      <header className="flex h-12 items-center bg-[#007DFF] px-5">
+        <Image
+          src="/logo-white.png"
+          alt="Doctorek"
+          width={90}
+          height={29}
+          preload
+          className="h-auto w-[90px]"
+        />
+      </header>
 
-      <h1 className="text-center text-xl font-bold text-[#010C2D]">{titre}</h1>
-      <p className="mt-3 text-center text-sm leading-relaxed text-[#465058]">{texte}</p>
+      <div className="px-7 py-6 text-center sm:px-10">
+        <Image
+          src="/illustrations/free-day-calendar.webp"
+          alt=""
+          width={68}
+          height={50}
+          quality={70}
+          aria-hidden="true"
+          className="mx-auto h-[50px] w-[68px] object-cover object-center mix-blend-multiply"
+        />
 
-      <div className="mt-7 flex flex-col gap-2.5">
+        <h1
+          id="connexion-error-title"
+          className="font-heading mt-3 text-[18px] font-bold leading-[1.35] tracking-[-0.015em] text-[#00263C]"
+        >
+          {titre}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[13px] leading-5 text-[#465058]">{texte}</p>
+
         <Link
           href="/login"
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#007DFF] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#00263C]"
+          className="mx-auto mt-5 flex min-h-10 w-full max-w-[260px] items-center justify-center rounded-md bg-[#007DFF] px-5 py-2.5 text-[13px] font-bold text-white shadow-[0_3px_10px_rgba(0,125,255,0.18)] transition-colors hover:bg-[#006FE6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] focus-visible:ring-offset-2"
         >
-          <RefreshCw className="h-4 w-4" />
-          Réessayer de me connecter
-        </Link>
-        <Link
-          href="/"
-          className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 px-4 py-2.5 text-sm font-medium text-[#465058] transition-colors hover:border-zinc-300 hover:text-[#010C2D]"
-        >
-          <Home className="h-4 w-4" />
-          Retour à l&apos;accueil
+          Réessayer la connexion
         </Link>
       </div>
 
-      <p className="mt-6 text-center text-xs text-zinc-400">
-        Le problème persiste ? Écrivez-nous à{' '}
-        <a href="mailto:support@doctorek.ma" className="font-medium text-[#1863A9] hover:underline">
-          support@doctorek.ma
-        </a>
-      </p>
-    </div>
+      <div className="border-t border-[#E3E9F0] px-7 py-4 text-center sm:px-10">
+        <h2 className="text-[13px] font-bold text-[#00263C]">Besoin d&apos;aide pour vous connecter&nbsp;?</h2>
+        <p className="mx-auto mt-1.5 max-w-[350px] text-[11px] leading-[1.65] text-[#64748B]">
+          Revenez à{' '}
+          <Link
+            href="/"
+            className="font-semibold text-[#006FE6] underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
+          >
+            l&apos;accueil
+          </Link>{' '}
+          ou écrivez à{' '}
+          <a
+            href="mailto:support@doctorek.ma"
+            className="font-semibold text-[#006FE6] underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
+          >
+            support@doctorek.ma
+          </a>
+          .
+        </p>
+      </div>
+    </section>
   )
 }
 
 export default function ConnexionErreurPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F0F2F5] px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-[#F3F6F9] px-4 py-10 sm:px-6">
       <Suspense fallback={<LogoLoader width={120} label="Chargement…" />}>
         <ErreurContenu />
       </Suspense>

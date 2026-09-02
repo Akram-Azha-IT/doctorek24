@@ -155,7 +155,10 @@ Affichée une fois, pas à chaque tour.
 ### `Composer`
 Champ de saisie ancré en bas, `ring-1 ring-[#EAEEF3]`, ombre montante.
 Suggestions de départ en puces au-dessus du champ, uniquement sur le fil vide : « Cardiologue à Casablanca », « Disponibilités cette semaine », « Médecin près de moi ».
-Bouton micro à droite, prévu pour l'agent vocal (v2), rendu désactivé et non annoncé si la fonctionnalité est absente.
+Bouton micro à droite : dictée vocale de 30 secondes maximum. Pendant l'enregistrement,
+le composeur affiche une onde, un chronomètre, « Annuler » et « Arrêter ». La transcription
+remplit le champ mais n'est jamais envoyée automatiquement. Le bouton reste non annoncé si
+Gemini Transcribe n'est pas configuré.
 
 ---
 

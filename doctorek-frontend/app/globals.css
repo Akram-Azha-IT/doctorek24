@@ -374,6 +374,22 @@
 .agent-pulse {
   animation: agent-pulse 1.4s ease-in-out infinite;
 }
+
+.agent-onde-vocale i {
+  display: block;
+  width: 3px;
+  height: 55%;
+  border-radius: 999px;
+  background: currentColor;
+  animation: agent-onde-vocale 780ms ease-in-out infinite alternate;
+}
+.agent-onde-vocale i:nth-child(2),
+.agent-onde-vocale i:nth-child(4) { animation-delay: -260ms; }
+.agent-onde-vocale i:nth-child(3) { animation-delay: -520ms; }
+@keyframes agent-onde-vocale {
+  from { transform: scaleY(0.38); opacity: 0.48; }
+  to { transform: scaleY(1.25); opacity: 1; }
+}
 @keyframes agent-pulse {
   0%, 100% { opacity: 0.3; }
   50%      { opacity: 1; }
@@ -390,5 +406,8 @@
   .agent-pulse {
     animation: none;
     opacity: 1;
+  }
+  .agent-onde-vocale i {
+    animation: none;
   }
 }
