@@ -83,7 +83,7 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
   const restants = COMMENTAIRE_MAX - commentaire.length
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-4">
       {/* Le fond est un vrai bouton : cliquer a cote ferme la modale, et l'action reste
           atteignable au clavier au lieu d'etre reservee a la souris. */}
       <button
@@ -97,9 +97,9 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
         ref={dialogRef}
         open
         aria-labelledby={titreId}
-        className="relative m-0 w-full max-w-lg overflow-hidden rounded-t-2xl bg-white p-0 text-inherit shadow-2xl sm:rounded-2xl"
+        className="relative m-0 flex max-h-[calc(100dvh-0.75rem)] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white p-0 text-inherit shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl"
       >
-        <div className="flex items-start justify-between border-b border-zinc-100 px-6 py-4">
+        <div className="flex shrink-0 items-start justify-between border-b border-zinc-100 px-6 py-4">
           <div>
             <h2 id={titreId} className="text-base font-bold text-zinc-900">
               Votre avis sur Dr.&nbsp;{medecinNom}
@@ -120,7 +120,11 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-5 px-6 py-5">
+        <form
+          onSubmit={onSubmit}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-5"
+        >
+          <div className="flex flex-col gap-5">
           <div>
             <p id={aideNoteId} className="mb-2.5 text-sm font-semibold text-zinc-700">
               Comment s&apos;est passée votre consultation ?
@@ -173,7 +177,9 @@ export function AvisFormModal({ rdvId, medecinId, medecinNom, onClose, onSuccess
             </p>
           )}
 
-          <div className="flex gap-3">
+          </div>
+
+          <div className="sticky bottom-0 z-10 -mx-6 mt-5 flex gap-3 border-t border-zinc-100 bg-white/95 px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 backdrop-blur-sm">
             <button
               type="button"
               onClick={onClose}

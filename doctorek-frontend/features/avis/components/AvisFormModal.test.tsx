@@ -30,8 +30,20 @@ describe('AvisFormModal', () => {
   test('s’ouvre sur le nom du médecin concerné', () => {
     afficher()
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toHaveClass(
+      'flex',
+      'max-h-[calc(100dvh-0.75rem)]',
+      'overflow-hidden',
+    )
     expect(screen.getByText(/Sara Bennani/)).toBeInTheDocument()
+  })
+
+  test('garde les actions visibles dans une fenêtre mobile courte', () => {
+    afficher()
+
+    const publier = screen.getByRole('button', { name: /publier mon avis/i })
+    expect(publier.parentElement).toHaveClass('sticky', 'bottom-0')
+    expect(screen.getByRole('dialog').parentElement).toHaveClass('z-[80]')
   })
 
   test('la publication est refusée tant qu’aucune note n’est donnée', () => {
