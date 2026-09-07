@@ -43,7 +43,7 @@
 		  Sert le module agent (assistant conversationnel) : ChatClient + boucle d'appel d'outils.
 		-->
 		<spring-ai.version>1.1.8</spring-ai.version>
-		<jacoco.version>0.8.13</jacoco.version>
+		<jacoco.version>0.8.15</jacoco.version>
 	</properties>
 
 	<dependencyManagement>
