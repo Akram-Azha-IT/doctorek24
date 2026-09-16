@@ -37,10 +37,10 @@ import java.util.Map;
 public class GoogleWalletService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String DESIGN_VERSION = "v5-global-care-card-link";
-    private static final String PASS_BACKGROUND_COLOR = "#216ACF";
+    private static final String DESIGN_VERSION = "v6-doctorek-signature";
+    private static final String PASS_BACKGROUND_COLOR = "#042651";
     private static final String WALLET_LOGO_PATH = "/wallet-logo-840.png";
-    private static final String WALLET_HERO_PATH = "/wallet-hero-global-care.png";
+    private static final String WALLET_HERO_PATH = "/wallet-hero-signature-v6.png";
 
     private final GoogleWalletProperties properties;
     private final ResourceLoader resourceLoader;
@@ -117,7 +117,7 @@ public class GoogleWalletService {
         if (isPublicFrontend()) {
             genericObject.put("heroImage", Map.of(
                     "sourceUri", Map.of("uri", frontendUrl + WALLET_HERO_PATH),
-                    "contentDescription", textValue("Parcours de soins Doctorek")
+                    "contentDescription", textValue("Ruban bleu Doctorek, continuité des soins")
             ));
             genericObject.put("appLinkData", Map.of(
                     "webAppLinkInfo", Map.of(

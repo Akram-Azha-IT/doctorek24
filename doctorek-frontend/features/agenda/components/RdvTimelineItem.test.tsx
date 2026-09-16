@@ -19,7 +19,7 @@ function rdv(statut: StatutRdv): RendezVous {
     id: 'r1',
     medecinId: 'm1',
     patientId: 'p1',
-    dateRdv: '2026-09-15',
+    dateRdv: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     heureRdv: '10:00',
     duree: 30,
     statut,

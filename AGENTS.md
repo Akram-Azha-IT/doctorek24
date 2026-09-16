@@ -1,4 +1,12 @@
-# doctorek — Contexte PFE
+# Doctorek — Contexte produit
+
+## Statut produit — règle prioritaire (4 septembre 2026)
+
+- Doctorek n'est plus un PFE, un prototype ou une démonstration : c'est une solution destinée à la production.
+- L'application traite de vraies données personnelles et de vraies données de santé.
+- Toute décision d'architecture, de développement, de test, d'observabilité et de déploiement doit donc être production-grade, avec sécurité et protection des données dès la conception.
+- Les mentions « PFE », « démo » ou « prototype » encore présentes dans les documents historiques décrivent uniquement l'ancien contexte et ne doivent plus guider les décisions actuelles.
+- Aucun service tiers ne doit recevoir de données de santé réelles sans validation juridique, contractuelle et sécurité explicite.
 
 ## Stack technique
 - Spring Boot 3.5.13 · Java 17

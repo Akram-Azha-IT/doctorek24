@@ -60,6 +60,22 @@ describe('buildRectoSvg', () => {
     expect(recto()).toContain('<ellipse')
   })
 
+  test('échappe les données patient et les URL avant insertion dans le SVG', () => {
+    const svg = buildRectoSvg(
+      'Ali</text><script>alert(1)</script>',
+      'A<&1',
+      'CNSS-1',
+      'VMC-1',
+      LOGO,
+      'https://cdn/photo.jpg" onload="alert(1)',
+    )
+    expect(svg).toContain('Ali&lt;/text&gt;&lt;script&gt;alert(1)&lt;/script&gt;')
+    expect(svg).toContain('A&lt;&amp;1')
+    expect(svg).toContain('photo.jpg&quot; onload=&quot;alert(1)')
+    expect(svg).not.toContain('<script>')
+    expect(svg).not.toContain('onload="alert(1)"')
+  })
+
   test('porte le liseré national et la mention officielle bilingue', () => {
     const svg = recto()
     expect(svg).toContain('#C1272D')
@@ -90,6 +106,13 @@ describe('buildVersoSvg', () => {
   test('marque les champs non renseignés', () => {
     const svg = buildVersoSvg('-', '-', '-', '-', '01/01/2026', 'IMM-77', LOGO)
     expect(svg).toContain('Non renseigné')
+  })
+
+  test('échappe les valeurs de la face verso', () => {
+    const svg = buildVersoSvg('BEN<&>', 'Ali', '-', '-', '-', 'IMM<&>', LOGO)
+    expect(svg).toContain('BEN&lt;&amp;&gt;')
+    expect(svg).toContain('IMM&lt;&amp;&gt;')
+    expect(svg).not.toContain('BEN<&>')
   })
 })
 
