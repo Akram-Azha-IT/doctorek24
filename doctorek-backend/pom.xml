@@ -35,8 +35,8 @@
 		  quand un patch Spring Boot 3.5.x embarquera nativement ces versions.
 		-->
 		<postgresql.version>42.7.12</postgresql.version>        <!-- CVE-2026-42198 DoS SCRAM, CVE-2026-54291 MITM -->
-		<tomcat.version>10.1.55</tomcat.version>                 <!-- CVE-2026-41293/43512/43515 (CRITICAL auth bypass, HTTP/2) -->
-		<netty.version>4.1.136.Final</netty.version>             <!-- + CVE-2026-59901 (Bzip2Decoder boucle infinie) -->
+		<tomcat.version>10.1.59</tomcat.version>                 <!-- Correctifs CVE-2026-65182/65905/68525 ; 10.1.58 non publiée -->
+		<netty.version>4.1.138.Final</netty.version>             <!-- Correctif CVE-2026-75595 et patchs 4.1.x ultérieurs -->
 		<jackson-bom.version>2.21.4</jackson-bom.version>        <!-- CVE-2026-54512/54513 (RCE via PolymorphicTypeValidator) -->
 		<!--
 		  Spring AI : ligne 1.1.x, alignée sur Spring Boot 3.5.x (la 2.0.x vise Boot 4.1).
