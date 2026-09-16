@@ -20,8 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +31,7 @@ import java.util.UUID;
 public class DossierService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final long MAX_MEDICAL_FILE_SIZE = 20L * 1024 * 1024;
 
     private final InfosMedicalesRepository infosRepo;
     private final OrdonnanceRepository ordonnanceRepo;
@@ -103,7 +106,7 @@ public class DossierService {
     }
 
     public DocumentMedicalResponse uploadDocument(UUID patientId, String typeDoc, MultipartFile file) throws IOException {
-        if (file.isEmpty()) throw new IllegalArgumentException("Le fichier est vide");
+        validateMedicalFile(file);
 
         String originalName = file.getOriginalFilename() != null
                 ? file.getOriginalFilename().replaceAll("[^a-zA-Z0-9._-]", "_")
@@ -165,6 +168,7 @@ public class DossierService {
 
     @Transactional
     public OrdonnanceResponse uploadOrdonnanceFichier(UUID ordonnanceId, MultipartFile file) throws IOException {
+        validateMedicalFile(file);
         OrdonnanceEntity ord = ordonnanceRepo.findById(ordonnanceId)
             .orElseThrow(() -> new IllegalArgumentException("Ordonnance introuvable: " + ordonnanceId));
 
@@ -176,6 +180,28 @@ public class DossierService {
         ord.setFichierChemin(objectKey);
         ord.setFichierNom(originalName);
         return toOrdonnanceResponse(ordonnanceRepo.save(ord));
+    }
+
+    /** MIME declarations are client-controlled: validate the bounded file signature too. */
+    private void validateMedicalFile(MultipartFile file) throws IOException {
+        if (file.isEmpty()) throw new IllegalArgumentException("Le fichier est vide");
+        if (file.getSize() > MAX_MEDICAL_FILE_SIZE) throw new IllegalArgumentException("Fichier trop volumineux (max 20 MB)");
+        String mime = file.getContentType() != null ? file.getContentType().toLowerCase(Locale.ROOT) : "";
+        String name = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase(Locale.ROOT) : "";
+        byte[] header;
+        try (InputStream input = file.getInputStream()) { header = input.readNBytes(8); }
+        boolean pdf = mime.equals("application/pdf") && name.endsWith(".pdf") && startsWith(header, new int[]{0x25, 0x50, 0x44, 0x46, 0x2D});
+        boolean jpeg = (mime.equals("image/jpeg") || mime.equals("image/jpg")) && (name.endsWith(".jpg") || name.endsWith(".jpeg")) && startsWith(header, new int[]{0xFF, 0xD8, 0xFF});
+        boolean png = mime.equals("image/png") && name.endsWith(".png") && startsWith(header, new int[]{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A});
+        if (!pdf && !jpeg && !png) throw new IllegalArgumentException("Formats acceptés : PDF, JPG ou PNG");
+    }
+
+    private boolean startsWith(byte[] value, int[] expected) {
+        if (value.length < expected.length) return false;
+        for (int index = 0; index < expected.length; index++) {
+            if (Byte.toUnsignedInt(value[index]) != expected[index]) return false;
+        }
+        return true;
     }
 
     public OrdonnanceResponse getOrdonnanceFichierName(UUID ordonnanceId) {

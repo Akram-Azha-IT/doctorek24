@@ -12,9 +12,12 @@ import ma.doctorek.doctorek.dto.OtpChallengeResponse;
 import ma.doctorek.doctorek.dto.OtpVerifyRequest;
 import ma.doctorek.doctorek.entity.PatientDetailEntity;
 import ma.doctorek.doctorek.exception.GoogleWalletDisabledException;
+import ma.doctorek.doctorek.exception.AccesPatientRefuseException;
 import ma.doctorek.doctorek.exception.UserNotFoundException;
 import ma.doctorek.doctorek.repository.PatientDetailRepository;
+import ma.doctorek.doctorek.repository.RendezVousRepository;
 import ma.doctorek.doctorek.repository.UserRepository;
+import ma.doctorek.doctorek.service.AccesPatientService;
 import ma.doctorek.doctorek.service.CarteAccessService;
 import ma.doctorek.doctorek.service.CarteService;
 import ma.doctorek.doctorek.service.GoogleWalletService;
@@ -25,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -40,17 +44,23 @@ public class CarteController {
     private final UserRepository userRepository;
     private final PatientDetailRepository patientDetailRepository;
     private final GoogleWalletService googleWalletService;
+    private final AccesPatientService accesPatientService;
+    private final RendezVousRepository rdvRepository;
 
     public CarteController(CarteService carteService,
                             CarteAccessService carteAccessService,
                             UserRepository userRepository,
                             PatientDetailRepository patientDetailRepository,
-                            GoogleWalletService googleWalletService) {
+                            GoogleWalletService googleWalletService,
+                            AccesPatientService accesPatientService,
+                            RendezVousRepository rdvRepository) {
         this.carteService = carteService;
         this.carteAccessService = carteAccessService;
         this.userRepository = userRepository;
         this.patientDetailRepository = patientDetailRepository;
         this.googleWalletService = googleWalletService;
+        this.accesPatientService = accesPatientService;
+        this.rdvRepository = rdvRepository;
     }
 
     @PreAuthorize("hasRole('PATIENT')")
@@ -65,13 +75,15 @@ public class CarteController {
 
     @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<ApiResponse<CarteVirtuelleResponse>> getByPatient(@PathVariable UUID patientId) {
+    public ResponseEntity<ApiResponse<CarteVirtuelleResponse>> getByPatient(Authentication auth, @PathVariable UUID patientId) {
+        verifierAcces(auth, patientId);
         return ResponseEntity.ok(ApiResponse.ok(carteService.getByPatientId(patientId)));
     }
 
     @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @GetMapping("/patient/{patientId}/exists")
-    public ResponseEntity<ApiResponse<Boolean>> exists(@PathVariable UUID patientId) {
+    public ResponseEntity<ApiResponse<Boolean>> exists(Authentication auth, @PathVariable UUID patientId) {
+        verifierAcces(auth, patientId);
         return ResponseEntity.ok(ApiResponse.ok(carteService.existsByPatientId(patientId)));
     }
 
@@ -145,13 +157,16 @@ public class CarteController {
     @PutMapping("/patient/{patientId}")
     public ResponseEntity<ApiResponse<CarteVirtuelleResponse>> update(
             @PathVariable UUID patientId,
+            Authentication auth,
             @RequestBody CarteVirtuelleRequest req) {
+        verifierAcces(auth, patientId);
         return ResponseEntity.ok(ApiResponse.ok(carteService.update(patientId, req)));
     }
 
     @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @GetMapping("/patient/{patientId}/wallet/google")
-    public ResponseEntity<ApiResponse<GoogleWalletSaveResponse>> getGoogleWalletSaveUrl(@PathVariable UUID patientId) {
+    public ResponseEntity<ApiResponse<GoogleWalletSaveResponse>> getGoogleWalletSaveUrl(Authentication auth, @PathVariable UUID patientId) {
+        verifierAcces(auth, patientId);
         if (!googleWalletService.isEnabled()) {
             throw new GoogleWalletDisabledException();
         }
@@ -176,5 +191,19 @@ public class CarteController {
         return userRepository.findByEmail(principal.getName())
                 .map(u -> u.getId())
                 .orElseThrow(() -> new UserNotFoundException(principal.getName()));
+    }
+
+    private void verifierAcces(Authentication auth, UUID patientId) {
+        if (hasRole(auth, "ADMIN")) return;
+        UUID requesterId = resolvePatientId(auth);
+        if (hasRole(auth, "MEDECIN")) {
+            if (!rdvRepository.existsByMedecinIdAndPatientId(requesterId, patientId)) throw new AccesPatientRefuseException(patientId);
+        } else {
+            accesPatientService.verifierAcces(requesterId, patientId);
+        }
+    }
+
+    private boolean hasRole(Authentication auth, String role) {
+        return auth.getAuthorities().stream().anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role));
     }
 }

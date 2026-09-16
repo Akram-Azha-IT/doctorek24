@@ -29,7 +29,7 @@ class GoogleWalletServiceTest {
     Path tempDir;
 
     @Test
-    void buildSaveUrlUsesGlobalCareDesignWithoutSensitiveModules() throws Exception {
+    void buildSaveUrlUsesSignatureDesignWithoutSensitiveModules() throws Exception {
         GoogleWalletProperties properties = new GoogleWalletProperties();
         properties.setEnabled(true);
         properties.setIssuerId("issuer-123");
@@ -62,7 +62,7 @@ class GoogleWalletServiceTest {
         );
 
         assertEquals("GENERIC_OTHER", walletObject.get("genericType"));
-        assertEquals("#216ACF", walletObject.get("hexBackgroundColor"));
+        assertEquals("#042651", walletObject.get("hexBackgroundColor"));
         assertEquals("Carte santé", localizedValue(walletObject.get("subheader")));
         assertEquals("Akram Benhammou", localizedValue(walletObject.get("header")));
         assertEquals(
@@ -70,7 +70,7 @@ class GoogleWalletServiceTest {
                 nestedUri(walletObject.get("logo"))
         );
         assertEquals(
-                "https://doctorek.ma/wallet-hero-global-care.png",
+                "https://doctorek.ma/wallet-hero-signature-v6.png",
                 nestedUri(walletObject.get("heroImage"))
         );
 

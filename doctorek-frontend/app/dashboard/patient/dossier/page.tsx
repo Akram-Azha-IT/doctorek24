@@ -601,7 +601,7 @@ export default function DossierPage() {
             className="hidden" aria-hidden="true"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) setUploadFile(f) }}
           />
-          <input ref={docFichierRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          <input ref={docFichierRef} type="file" accept=".pdf,.jpg,.jpeg,.png"
             className="hidden" aria-hidden="true"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) setUploadFile(f) }}
           />
