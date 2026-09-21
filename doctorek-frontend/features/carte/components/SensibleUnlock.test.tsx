@@ -26,15 +26,15 @@ describe('SensibleUnlock', () => {
 
   test('affiche le bouton pour recevoir le code', () => {
     render(<SensibleUnlock cardRef="VMC-1" onUnlocked={vi.fn()} />)
-    expect(screen.getByText('Informations protégées')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /recevoir le code/i })).toBeInTheDocument()
+    expect(screen.getByText('Dossier médical protégé')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /demander l’accès au dossier/i })).toBeInTheDocument()
   })
 
   test('envoie le code et affiche la destination masquée', async () => {
     vi.mocked(api.requestCarteOtp).mockResolvedValue({ maskedDestination: 'a***@x.ma', expiresInSec: 300 })
     render(<SensibleUnlock cardRef="VMC-1" onUnlocked={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /recevoir le code/i }))
+    fireEvent.click(screen.getByRole('button', { name: /demander l’accès au dossier/i }))
 
     await waitFor(() => expect(screen.getByText('a***@x.ma')).toBeInTheDocument())
     expect(api.requestCarteOtp).toHaveBeenCalledWith('VMC-1')
@@ -47,7 +47,7 @@ describe('SensibleUnlock', () => {
     const onUnlocked = vi.fn()
     render(<SensibleUnlock cardRef="VMC-1" onUnlocked={onUnlocked} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /recevoir le code/i }))
+    fireEvent.click(screen.getByRole('button', { name: /demander l’accès au dossier/i }))
     await waitFor(() => screen.getByText('a***@x.ma'))
     fireEvent.change(screen.getByPlaceholderText('______'), { target: { value: '123456' } })
     fireEvent.click(screen.getByRole('button', { name: /débloquer/i }))
@@ -62,7 +62,7 @@ describe('SensibleUnlock', () => {
     vi.mocked(api.verifyCarteOtp).mockRejectedValue(new Error('bad'))
     render(<SensibleUnlock cardRef="VMC-1" onUnlocked={vi.fn()} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /recevoir le code/i }))
+    fireEvent.click(screen.getByRole('button', { name: /demander l’accès au dossier/i }))
     await waitFor(() => screen.getByText('a***@x.ma'))
     fireEvent.change(screen.getByPlaceholderText('______'), { target: { value: '000000' } })
     fireEvent.click(screen.getByRole('button', { name: /débloquer/i }))

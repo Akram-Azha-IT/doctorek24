@@ -98,7 +98,8 @@ export function AgentWidget() {
     }
   }, [])
 
-  if (!statut?.disponible) return null
+  // Keep scanned medical records free of the unrelated booking assistant.
+  if (!statut?.disponible || pathname?.startsWith('/carte/')) return null
 
   return (
     <>

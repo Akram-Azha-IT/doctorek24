@@ -10,6 +10,7 @@ import {
 } from '@/features/carte/api'
 import type { CarteDossier } from '@/features/carte/api'
 import { SensibleUnlock } from '@/features/carte/components/SensibleUnlock'
+import { ScanSummary } from '@/features/carte/components/ScanSummary'
 import LogoLoader from '@/components/LogoLoader'
 import { getPatientProfile } from '@/features/patient/api'
 import { getRdvsPatient } from '@/features/agenda/api'
@@ -18,17 +19,12 @@ import { getSession } from '@/lib/session'
 import type { CartePublic, CarteSensible, PatientProfile, RendezVous } from '@/lib/types'
 
 // ── Palette (matches home page) ──────────────────────────────────────────────
-// Horodatage au chargement du module (évite Date.now() pendant le rendu, règle purity).
-const PAGE_LOADED_AT = Date.now()
-
 const C_BLUE    = '#007DFF'
 const C_DARK    = '#00263C'
 const C_NAVY    = '#010C2D'
 const C_BODY    = '#465058'
 const C_TEXT    = '#333333'
 const C_BG      = '#F0F2F5'
-const C_RED     = '#C1272D'
-const C_GREEN   = '#006233'
 const C_HAIRLINE = '#E2E8F0'   // filet institutionnel discret
 
 const STATUT_LABEL: Record<string, string> = {
@@ -85,18 +81,6 @@ function Field({ label, value }: { label: string; value?: string | null }) {
     <div>
       <p className="text-[10px] font-bold uppercase tracking-widest mb-0.5" style={{ color: C_BODY }}>{label}</p>
       <p className="text-sm font-semibold leading-snug" style={{ color: C_NAVY }}>{value}</p>
-    </div>
-  )
-}
-
-// Métrique premium (valeur tabulaire + unité discrète + libellé).
-function Metric({ label, value, unit }: { readonly label: string; readonly value: string; readonly unit: string }) {
-  return (
-    <div className="text-center px-2">
-      <p className="font-extrabold text-base md:text-lg leading-none tabular-nums" style={{ color: C_NAVY }}>
-        {value}<span className="text-[11px] font-semibold ml-0.5" style={{ color: C_BODY }}>{unit}</span>
-      </p>
-      <p className="text-[9px] font-bold uppercase tracking-[0.14em] mt-1.5" style={{ color: `${C_BODY}90` }}>{label}</p>
     </div>
   )
 }
@@ -205,7 +189,7 @@ export default function CarteScanPage() {
           setProfile(prof.status === 'fulfilled' ? prof.value : null)
           setRdvs(appointments.status === 'fulfilled' ? (appointments.value ?? []) : [])
         }
-        if (data?.allergies?.length === 0) setActiveTab('medical')
+        setActiveTab('medical')
       })
       .catch(() => setError('Carte introuvable ou accès refusé.'))
       .finally(() => setLoading(false))
@@ -239,14 +223,6 @@ export default function CarteScanPage() {
   }
 
   // ── Computed values ────────────────────────────────────────────────────────
-  const fullName = [carte.firstName, carte.lastName?.toUpperCase()].filter(Boolean).join(' ') || '-'
-  const age = profile?.dateNaissance
-    ? Math.floor((PAGE_LOADED_AT - new Date(profile.dateNaissance).getTime()) / (365.25 * 24 * 3600 * 1000))
-    : null
-  const bmi =
-    carte.tailleCm && carte.poidsKg
-      ? (carte.poidsKg / Math.pow(carte.tailleCm / 100, 2)).toFixed(1)
-      : null
   const sortedRdvs = [...rdvs].sort(
     (a, b) => new Date(b.dateRdv).getTime() - new Date(a.dateRdv).getTime(),
   )
@@ -290,10 +266,7 @@ export default function CarteScanPage() {
     >
       <style>{`
         @keyframes dkRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        @keyframes dkSheen { 0% { transform: translateX(-140%) skewX(-18deg); } 55%, 100% { transform: translateX(260%) skewX(-18deg); } }
         .dk-rise { animation: dkRise .6s cubic-bezier(.16,1,.3,1) both; }
-        .dk-medallion-sheen::after { content: ''; position: absolute; inset: 0; border-radius: inherit; overflow: hidden; }
-        .dk-medallion-sheen > .dk-sheen { position: absolute; top: 0; bottom: 0; width: 45%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: dkSheen 3.6s ease-in-out 1.2s infinite; }
         .dk-row { transition: background-color .18s ease, transform .18s ease; }
         .dk-press { transition: transform .12s ease, box-shadow .18s ease; }
         .dk-press:active { transform: scale(.98); }
@@ -301,114 +274,15 @@ export default function CarteScanPage() {
         .dk-press:focus-visible { outline: 3px solid ${C_NAVY}; outline-offset: 2px; }
         @media (prefers-reduced-motion: reduce) {
           .dk-rise { animation: none; }
-          .dk-sheen { display: none; }
         }
       `}</style>
 
-      {/* ── En-tête premium : bande dégradée + carte Medical-ID flottante ── */}
-      <header className="relative">
-        {/* Bande dégradée de marque */}
-        <div className="relative overflow-hidden pb-16 md:pb-20" style={{ background: `linear-gradient(135deg, ${C_BLUE} 0%, #0A63C8 55%, ${C_DARK} 100%)` }}>
-          {/* Halo lumineux */}
-          <div className="absolute -top-24 -right-16 w-72 h-72 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.22) 0%, transparent 70%)' }} aria-hidden="true" />
-          {/* Motif zellige marocain (étoile à 8 branches), très discret : touche nationale */}
-          <div className="absolute inset-0 opacity-[0.06] pointer-events-none" aria-hidden="true" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='1.2'%3E%3Cpath d='M30 6 L36 18 L48 12 L42 24 L54 30 L42 36 L48 48 L36 42 L30 54 L24 42 L12 48 L18 36 L6 30 L18 24 L12 12 L24 18 Z'/%3E%3C/g%3E%3C/svg%3E")`,
-            backgroundSize: '54px 54px',
-          }} />
-          {/* Filet tricolore fin (rappel national, discret) */}
-          <div className="absolute top-0 inset-x-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${C_RED} 0 33.3%, #FFFFFF 33.3% 66.6%, ${C_GREEN} 66.6% 100%)`, opacity: 0.9 }} />
-
-          {/* Barre de marque */}
-          <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-8 pt-5 md:pt-6 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo0.png" alt="Doctorek" className="h-5 md:h-6 w-auto brightness-0 invert" />
-              <div className="h-4 w-px bg-white/25" />
-              <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-white/85">Carte Médicale</span>
-            </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-white/15 backdrop-blur-sm text-[10px] font-semibold text-white/90 ring-1 ring-white/20">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              Vérifiée
-            </span>
-          </div>
-        </div>
-
-        {/* Carte Medical-ID flottante */}
-        <div className="relative z-20 max-w-5xl mx-auto px-4 md:px-8 -mt-12 md:-mt-14">
-          <div className="dk-rise rounded-3xl bg-white p-4 md:p-6" style={{ boxShadow: '0 12px 40px -8px rgba(1,12,45,0.22), 0 2px 8px rgba(1,12,45,0.06)' }}>
-            <div className="flex items-center gap-4 md:gap-5">
-              {/* Avatar */}
-              <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden flex items-center justify-center ring-1 ring-black/5" style={{ background: `${C_BLUE}10` }}>
-                  {profile?.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.photoUrl} alt={fullName} width={80} height={80} className="object-cover w-full h-full" />
-                  ) : (
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="8" r="4" fill={C_BLUE} opacity="0.6" />
-                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill={C_BLUE} opacity="0.6" />
-                    </svg>
-                  )}
-                </div>
-                {carte.donneurOrganes && (
-                  <span className="absolute -bottom-1.5 -right-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full ring-2 ring-white" style={{ background: '#16A34A' }} title="Donneur d'organes" aria-label="Donneur d'organes">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </span>
-                )}
-              </div>
-
-              {/* Identité */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] mb-0.5" style={{ color: `${C_BODY}90` }}>Titulaire</p>
-                <h1 className="font-extrabold text-lg md:text-2xl leading-tight tracking-tight truncate" style={{ color: C_NAVY }}>{fullName}</h1>
-                <p className="text-[13px] mt-1 tabular-nums" style={{ color: C_BODY }}>
-                  {[age ? `${age} ans` : null, profile?.numIdentite ? `CIN ${profile.numIdentite}` : null].filter(Boolean).join('  ·  ') || 'Identité protégée'}
-                </p>
-              </div>
-
-              {/* Médaillon groupe sanguin (avec brillance animée) */}
-              {carte.groupeSanguin && (
-                <div className="dk-medallion-sheen relative overflow-hidden flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl text-white" style={{ background: 'linear-gradient(150deg, #E5484D 0%, #B01722 100%)', boxShadow: '0 6px 16px -4px rgba(176,23,34,0.5)' }}>
-                  <span className="dk-sheen" aria-hidden="true" />
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" opacity="0.92"><path d="M12 2C6 10 4 14 4 17a8 8 0 0016 0c0-3-2-7-8-15z" /></svg>
-                  <p className="font-extrabold text-xl md:text-2xl leading-none mt-0.5 tabular-nums relative">{carte.groupeSanguin}</p>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] opacity-90 relative">Groupe</p>
-                </div>
-              )}
-            </div>
-
-            {/* Mensurations : ligne de métriques premium */}
-            {(carte.tailleCm || carte.poidsKg || bmi) && (
-              <div className="mt-4 pt-4 grid grid-cols-3 divide-x" style={{ borderTop: `1px solid ${C_HAIRLINE}`, borderColor: C_HAIRLINE }}>
-                <Metric label="Taille" value={carte.tailleCm ? `${carte.tailleCm}` : '-'} unit="cm" />
-                <Metric label="Poids" value={carte.poidsKg ? `${carte.poidsKg}` : '-'} unit="kg" />
-                <Metric label="IMC" value={bmi ?? '-'} unit="" />
-              </div>
-            )}
-          </div>
-
-          {/* Bannière allergies critiques (surfacée d'emblée, comme Medical ID) */}
-          {carte.allergies.length > 0 && (
-            <div className="dk-rise mt-3 rounded-2xl px-4 py-3 flex items-start gap-3" style={{ background: '#FEF2F2', border: '1px solid #FBD5D5', animationDelay: '.08s' }}>
-              <span className="flex-shrink-0 mt-0.5">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="#FEE2E2" stroke="#DC2626" strokeWidth="2" />
-                  <path d="M12 9v4m0 4h.01" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#B91C1C' }}>Allergies connues</p>
-                <p className="text-[13px] font-semibold mt-0.5" style={{ color: '#991B1B' }}>{carte.allergies.join(' · ')}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
-
+      <ScanSummary carte={carte} />
+      {!sensible && <div className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6"><SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} /></div>}
+      {(sensible || profile) && <>
       {/* ── Barre d'onglets moderne (pilules scrollables, une seule rangée) ── */}
       <div className="sticky top-0 z-50 bg-white/85 backdrop-blur-md mt-5 md:mt-6" style={{ borderBottom: `1px solid ${C_HAIRLINE}` }}>
-        <div className="max-w-5xl mx-auto px-3 md:px-8">
+        <div className="max-w-3xl mx-auto px-3 md:px-8">
           <div className="flex gap-1.5 overflow-x-auto scrollbar-none py-2.5" role="tablist" aria-label="Sections de la carte">
             {tabs.map((tab) => {
               const active = activeTab === tab.id
@@ -438,7 +312,7 @@ export default function CarteScanPage() {
       </div>
 
       {/* ── Contenu de l'onglet (ré-animé à chaque changement) ── */}
-      <div key={activeTab} className="dk-rise flex-1 max-w-5xl mx-auto w-full px-4 md:px-8 py-4 md:py-6">
+      <div key={activeTab} className="dk-rise flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 py-4 md:py-6">
 
         {/* ── ALERTES ── */}
         {activeTab === 'alertes' && (
@@ -472,7 +346,7 @@ export default function CarteScanPage() {
                 </div>
               </div>
             ) : (
-              <EmptyState message="Aucune allergie connue" />
+              <EmptyState message="Allergies non renseignées" />
             )}
           </div>
         )}
@@ -488,7 +362,7 @@ export default function CarteScanPage() {
                   {carte.maladiesChroniques.map((m) => <Tag key={m} color="#7C3AED">{m}</Tag>)}
                 </div>
               ) : (
-                <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
+                <p className="text-xs" style={{ color: C_BODY }}>Non renseigné</p>
               )}
             </Card>
 
@@ -518,11 +392,11 @@ export default function CarteScanPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
+                  <p className="text-xs" style={{ color: C_BODY }}>Non renseigné</p>
                 )}
               </Card>
             ) : (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
+              null
             )}
           </div>
         )}
@@ -530,7 +404,7 @@ export default function CarteScanPage() {
         {/* ── ANTÉCÉDENTS ── (sensible, derrière OTP) */}
         {activeTab === 'antecedents' && (
           <div className="space-y-4">
-            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
+
             {sensible && (antChir.length > 0 || vaccins.length > 0 || antFam.length > 0) && (
               <Card>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -549,7 +423,7 @@ export default function CarteScanPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
+                      <p className="text-xs" style={{ color: C_BODY }}>Non renseigné</p>
                     )}
                   </div>
                   <div className="space-y-5">
@@ -560,7 +434,7 @@ export default function CarteScanPage() {
                           {vaccins.map((v) => <Tag key={v} color="#059669">{v}</Tag>)}
                         </div>
                       ) : (
-                        <p className="text-xs" style={{ color: C_BODY }}>Aucune</p>
+                        <p className="text-xs" style={{ color: C_BODY }}>Non renseigné</p>
                       )}
                     </div>
                     <div>
@@ -570,7 +444,7 @@ export default function CarteScanPage() {
                           {antFam.map((a) => <Tag key={a} color="#D97706">{a}</Tag>)}
                         </div>
                       ) : (
-                        <p className="text-xs" style={{ color: C_BODY }}>Aucun</p>
+                        <p className="text-xs" style={{ color: C_BODY }}>Non renseigné</p>
                       )}
                     </div>
                   </div>
@@ -616,7 +490,7 @@ export default function CarteScanPage() {
                 </Card>
               )
             ) : (
-              <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />
+              null
             )}
 
             {carte.contactsUrgence.length > 0 && (
@@ -688,7 +562,7 @@ export default function CarteScanPage() {
         {/* ── ORDONNANCES ── (dossier, derrière OTP) */}
         {activeTab === 'ordonnances' && (
           <div>
-            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
+
             {sensible && ordonnances.length > 0 && (
               <Card>
                 <CardHead label="Ordonnances" count={ordonnances.length} />
@@ -767,7 +641,7 @@ export default function CarteScanPage() {
         {/* ── DOCUMENTS ── (dossier, derrière OTP) */}
         {activeTab === 'documents' && (
           <div>
-            {!sensible && <SensibleUnlock cardRef={carte.cardRef} onUnlocked={handleUnlocked} />}
+
             {sensible && documents.length > 0 && (
               <Card>
                 <CardHead label="Documents médicaux" count={documents.length} />
@@ -808,21 +682,9 @@ export default function CarteScanPage() {
 
       </div>
 
-      {/* ── Bandeau officiel fixe (toujours visible) ── */}
-      <footer className="sticky bottom-0 z-40 mt-auto" style={{ background: C_NAVY }}>
-        <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, ${C_RED} 0 33.3%, #FFFFFF 33.3% 66.6%, ${C_GREEN} 66.6% 100%)` }} />
-        <div className="max-w-5xl mx-auto px-4 md:px-8 py-2.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo0.png" alt="Doctorek" className="h-4 w-auto brightness-0 invert opacity-90" />
-            <div className="h-3.5 w-px" style={{ background: 'rgba(255,255,255,0.2)' }} />
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
-              Document confidentiel | CNDP Maroc
-            </span>
-          </div>
-          <p className="font-mono text-[10px] tabular-nums flex-shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>{carte.cardRef}</p>
-        </div>
+      </>}
+      <footer className="mx-auto mt-auto w-full max-w-3xl px-5 py-6 text-center text-xs leading-relaxed text-[#465058]">
+        Doctorek · Fiche de partage médical
       </footer>
 
     </div>

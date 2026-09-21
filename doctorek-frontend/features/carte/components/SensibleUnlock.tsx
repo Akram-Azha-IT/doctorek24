@@ -55,11 +55,11 @@ export function SensibleUnlock({ cardRef, onUnlocked }: SensibleUnlockProps) {
 
   return (
     <div
-      className="bg-white rounded-2xl px-6 py-8 text-center"
+      className="bg-white rounded-2xl px-5 py-5 sm:px-6 text-left"
       style={{ border: '1px solid #E5E7EB', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}
     >
       <div
-        className="w-11 h-11 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+        className="w-10 h-10 rounded-xl mb-3 flex items-center justify-center"
         style={{ background: `${C_BLUE}12` }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C_BLUE} strokeWidth="2">
@@ -67,22 +67,22 @@ export function SensibleUnlock({ cardRef, onUnlocked }: SensibleUnlockProps) {
           <path d="M7 11V7a5 5 0 0110 0v4" strokeLinecap="round" />
         </svg>
       </div>
-      <h3 className="font-bold text-base mb-1" style={{ color: C_NAVY }}>Informations protégées</h3>
+      <h2 className="font-bold text-lg mb-1" style={{ color: C_NAVY }}>Dossier médical protégé</h2>
 
       {step === 'idle' ? (
         <>
-          <p className="text-sm mb-5 max-w-xs mx-auto" style={{ color: C_BODY }}>
-            Ces informations (traitements, antécédents, assurance) sont accessibles avec l&apos;accord
-            du patient. Un code lui sera envoyé par email.
+          <p className="text-sm leading-relaxed mb-4" style={{ color: C_BODY }}>
+            Traitements, antécédents et documents : demandez l&apos;accord du patient.
+            Le code d&apos;accès sera envoyé à son adresse email.
           </p>
           <button
             type="button"
             onClick={sendCode}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4"
             style={{ background: C_BLUE }}
           >
-            {loading ? 'Envoi…' : 'Recevoir le code du patient'}
+            {loading ? 'Envoi…' : 'Demander l’accès au dossier'}
           </button>
         </>
       ) : (
@@ -92,6 +92,7 @@ export function SensibleUnlock({ cardRef, onUnlocked }: SensibleUnlockProps) {
             Demandez-le au patient et saisissez-le ci-dessous.
           </p>
           <input
+            aria-label="Code reçu par le patient"
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
