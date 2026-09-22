@@ -35,6 +35,7 @@ public class NotificationService {
     private final EmailService emailService;
     private final NotificationRoutingService notificationRouting;
     private final RappelRdvRegistre rappelRegistre;
+    private final PushDeliveryService pushDelivery;
     private final ZoneId zone;
 
     public NotificationService(NotificationRepository repo,
@@ -45,6 +46,7 @@ public class NotificationService {
                                 EmailService emailService,
                                 NotificationRoutingService notificationRouting,
                                 RappelRdvRegistre rappelRegistre,
+                                PushDeliveryService pushDelivery,
                                 ZoneId zoneApplication) {
         this.repo              = repo;
         this.stomp             = stomp;
@@ -54,6 +56,7 @@ public class NotificationService {
         this.emailService      = emailService;
         this.notificationRouting = notificationRouting;
         this.rappelRegistre    = rappelRegistre;
+        this.pushDelivery      = pushDelivery;
         this.zone              = zoneApplication;
     }
 
@@ -101,6 +104,7 @@ public class NotificationService {
             stomp.convertAndSendToUser(user.getEmail(), "/queue/notifications",
                     NotificationResponse.from(n))
         );
+        pushDelivery.deliverAfterCommit(userId, n.getId(), type);
     }
 
     // ── Scheduled: RDV reminder 30 min before ────────────────────────────────

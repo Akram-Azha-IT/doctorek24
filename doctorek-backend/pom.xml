@@ -94,6 +94,19 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.10.0</version>
+			<exclusions>
+				<!-- Spring Boot utilise spring-jcl ; deux façades de logging provoquent
+				     une découverte ambiguë au démarrage. -->
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<!--
 		  Assistant conversationnel (module agent). L'autoconfiguration Gemini ne
 		  s'active que si spring.ai.model.chat=google-genai : par défaut (=none),

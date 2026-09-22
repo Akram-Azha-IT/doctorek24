@@ -91,6 +91,9 @@ services:
       CORS_ALLOWED_ORIGINS: https://app.${DOMAIN}
       FRONTEND_URL: https://app.${DOMAIN}
       VMC_ENCRYPTION_KEY: ${VMC_ENCRYPTION_KEY}
+      FCM_ENABLED: ${FCM_ENABLED:-false}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/fcm-service-account.json
+      PUSH_TOKEN_ENCRYPTION_KEY: ${PUSH_TOKEN_ENCRYPTION_KEY}
       # Issuer public (doit matcher l'iss des tokens), JWKS en interne
       KEYCLOAK_ISSUER_URI: https://auth.${DOMAIN}/realms/doctorek
       KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/doctorek/protocol/openid-connect/certs

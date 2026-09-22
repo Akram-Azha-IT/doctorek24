@@ -459,6 +459,25 @@ public class AgendaService {
             } catch (Exception e) {
                 log.warn("Notification d'annulation non envoyée pour le rdv {} : {}", rdvId, e.getMessage());
             }
+        } else {
+            // The patient and authorised family managers also need the cancellation.
+            // A failed recipient must not prevent the other recipients being notified.
+            try {
+                notificationRouting.resolveTousComptes(saved.getPatientId()).stream()
+                    .distinct()
+                    .filter(userId -> !userId.equals(requesterUserId))
+                    .forEach(userId -> {
+                        try {
+                            notificationService.push(userId, "RDV_ANNULE_MEDECIN",
+                                "Rendez-vous annulé",
+                                "Un rendez-vous a été annulé par votre médecin. Consultez votre agenda.");
+                        } catch (Exception e) {
+                            log.warn("Une notification d'annulation patient n'a pas pu être enregistrée.");
+                        }
+                    });
+            } catch (Exception e) {
+                log.warn("Les destinataires de l'annulation n'ont pas pu être résolus.");
+            }
         }
         return RendezVousResponse.from(saved);
     }
