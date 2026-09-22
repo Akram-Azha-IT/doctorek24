@@ -38,6 +38,7 @@
 		<tomcat.version>10.1.59</tomcat.version>                 <!-- Correctifs CVE-2026-65182/65905/68525 ; 10.1.58 non publiée -->
 		<netty.version>4.1.138.Final</netty.version>             <!-- Correctif CVE-2026-75595 et patchs 4.1.x ultérieurs -->
 		<jackson-bom.version>2.21.4</jackson-bom.version>        <!-- CVE-2026-54512/54513 (RCE via PolymorphicTypeValidator) -->
+		<httpcore5.version>5.4.3</httpcore5.version>              <!-- Correctifs CVE-2026-54399/54428 (DoS HTTP/1.1 et HTTP/2) -->
 		<!--
 		  Spring AI : ligne 1.1.x, alignée sur Spring Boot 3.5.x (la 2.0.x vise Boot 4.1).
 		  Sert le module agent (assistant conversationnel) : ChatClient + boucle d'appel d'outils.
@@ -48,6 +49,17 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- firebase-admin 9.10.0 -> httpclient5 5.5.2 déclare encore Core 5.3.6. -->
+			<dependency>
+				<groupId>org.apache.httpcomponents.core5</groupId>
+				<artifactId>httpcore5</artifactId>
+				<version>${httpcore5.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.httpcomponents.core5</groupId>
+				<artifactId>httpcore5-h2</artifactId>
+				<version>${httpcore5.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>org.springframework.ai</groupId>
 				<artifactId>spring-ai-bom</artifactId>
