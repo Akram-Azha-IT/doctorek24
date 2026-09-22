@@ -49,6 +49,13 @@
 }
 
 :root {
+  /* Polices embarquées dans le bundle : aucun téléchargement Google au build. */
+  --font-geist: 'Geist Variable';
+  --font-geist-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  --font-jakarta: 'Plus Jakarta Sans Variable';
+  --font-figtree: 'Figtree Variable';
+  --font-outfit: 'Outfit Variable';
+
   /* Canevas des espaces de travail (voir la classe .dk-canvas plus bas). */
   --dk-canvas: #F1F6FD;
   --dk-canvas-dot: #DCE9FA;
