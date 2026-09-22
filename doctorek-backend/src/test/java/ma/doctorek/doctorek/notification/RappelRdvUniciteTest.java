@@ -53,6 +53,7 @@ class RappelRdvUniciteTest {
     @Mock private UserRepository userRepo;
     @Mock private EmailService emailService;
     @Mock private NotificationRoutingService notificationRouting;
+    @Mock private PushDeliveryService pushDelivery;
 
     private NotificationService notificationService;
 
@@ -72,7 +73,7 @@ class RappelRdvUniciteTest {
 
         RappelRdvRegistre registre = new RappelRdvRegistre(rdvRepo);
         notificationService = new NotificationService(repo, stomp, rdvRepo, patientDetailRepo,
-            userRepo, emailService, notificationRouting, registre, ZONE);
+            userRepo, emailService, notificationRouting, registre, pushDelivery, ZONE);
 
         when(userRepo.findById(MEDECIN)).thenReturn(Optional.of(User.builder()
             .id(MEDECIN).email("doc@test.ma").password("x")

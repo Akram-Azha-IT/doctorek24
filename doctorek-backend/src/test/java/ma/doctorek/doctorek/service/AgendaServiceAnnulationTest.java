@@ -23,6 +23,8 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -164,6 +166,34 @@ class AgendaServiceAnnulationTest {
         var res = agendaService.annulerRdv(RDV_ID, PATIENT);
 
         assertThat(res.statut()).isEqualTo(StatutRdv.ANNULE.name());
+    }
+
+    @Test
+    void annuler_parLeMedecin_notifiePatientEtFamille() {
+        givenRdv(StatutRdv.CONFIRME);
+        when(notificationRouting.resolveTousComptes(PATIENT)).thenReturn(Set.of(PATIENT, TITULAIRE, MEDECIN));
+
+        agendaService.annulerRdv(RDV_ID, MEDECIN);
+
+        verify(notificationService, times(1)).push(eq(PATIENT), eq("RDV_ANNULE_MEDECIN"), anyString(), anyString());
+        verify(notificationService, times(1)).push(eq(TITULAIRE), eq("RDV_ANNULE_MEDECIN"), anyString(), anyString());
+        verify(notificationService, never()).push(eq(MEDECIN), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void annuler_echecPremierDestinataire_continuePourLaFamille() {
+        givenRdv(StatutRdv.CONFIRME);
+        var recipients = new LinkedHashSet<UUID>();
+        recipients.add(PATIENT);
+        recipients.add(TITULAIRE);
+        when(notificationRouting.resolveTousComptes(PATIENT)).thenReturn(recipients);
+        doThrow(new IllegalStateException("offline")).when(notificationService)
+            .push(eq(PATIENT), anyString(), anyString(), anyString());
+
+        var res = agendaService.annulerRdv(RDV_ID, MEDECIN);
+
+        assertThat(res.statut()).isEqualTo(StatutRdv.ANNULE.name());
+        verify(notificationService).push(eq(TITULAIRE), eq("RDV_ANNULE_MEDECIN"), anyString(), anyString());
     }
 
     @Test

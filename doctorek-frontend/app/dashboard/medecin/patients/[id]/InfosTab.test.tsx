@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { InfosTab } from './page'
+import { InfosTab } from './PatientDossierClient'
 
 const updateCarte = vi.fn()
 const createCarte = vi.fn()
