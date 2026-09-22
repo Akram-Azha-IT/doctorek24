@@ -262,14 +262,18 @@ function ReplyToggle({ canReply, togglingReply, onToggle }: ReplyToggleProps) {
         type="button"
         onClick={onToggle}
         disabled={togglingReply}
-        aria-pressed={canReply}
+        role="switch"
+        aria-checked={canReply}
         aria-label={canReply ? 'Désactiver les réponses du patient' : 'Activer les réponses du patient'}
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007DFF]/15 disabled:opacity-50 ${
           canReply ? 'bg-[#1688F8]' : 'bg-[#C8D1DC]'
         }`}
         title="Autoriser ou bloquer les réponses du patient"
       >
-        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${canReply ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        <span
+          aria-hidden="true"
+          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${canReply ? 'translate-x-5' : 'translate-x-0'}`}
+        />
       </button>
     </div>
   )
