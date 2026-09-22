@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # ── Doctorek backend (Spring Boot) ────────────────────────────────
 # Build stage
 FROM eclipse-temurin:17-jdk-jammy AS build
@@ -6,11 +7,18 @@ WORKDIR /app
 COPY doctorek-backend/mvnw .
 COPY doctorek-backend/.mvn .mvn
 COPY doctorek-backend/pom.xml .
-# Warm the dependency cache before copying sources (layer caching)
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -q
+RUN chmod +x mvnw
 COPY doctorek-backend/src src
 
-RUN ./mvnw package -DskipTests -q
+# Un seul passage Maven résout les dépendances et construit le JAR. Le dépôt
+# Maven est conservé par BuildKit entre deux builds sur la VM ; les délais
+# empêchent qu'une connexion au dépôt Central bloque le déploiement sans fin.
+RUN --mount=type=cache,id=doctorek-maven,target=/root/.m2,sharing=locked \
+    ./mvnw -B --no-transfer-progress \
+      -Daether.connector.connectTimeout=30000 \
+      -Daether.connector.requestTimeout=120000 \
+      -Dmaven.wagon.http.retryHandler.count=3 \
+      -DskipTests package
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-jammy
