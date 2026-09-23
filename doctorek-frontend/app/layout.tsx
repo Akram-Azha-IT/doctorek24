@@ -41,8 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AutoRefreshProvider>
               <StompProvider>
                 {children}
-                {/* Ne s'affiche que pour un patient connecté, et seulement si un
-                    modèle est configuré côté serveur (voir AgentWidget). */}
+                {/* Politique de rôle et de route centralisée dans AgentWidget ;
+                    rendu seulement si un modèle est configuré côté serveur. */}
                 <AgentWidget />
                 <Toaster position="top-right" richColors />
               </StompProvider>

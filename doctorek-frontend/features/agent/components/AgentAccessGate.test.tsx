@@ -11,14 +11,15 @@ describe('AgentAccessGate', () => {
       />
     )
 
-    expect(screen.getByRole('link', { name: 'Se connecter pour commencer' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Se connecter' })).toHaveAttribute(
       'href',
       '/login?redirect=%2Frecherche%3Fassistant%3Douvert'
     )
     expect(screen.getByRole('link', { name: 'Créer un compte patient' })).toHaveAttribute('href', '/inscription')
-    expect(screen.getByText('Décrivez votre besoin')).toBeInTheDocument()
-    expect(screen.getByText('Comparez les disponibilités')).toBeInTheDocument()
-    expect(screen.getByText('Confirmez votre rendez-vous')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Trouver un médecin/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Repérer un créneau disponible')).not.toBeInTheDocument()
+    expect(screen.queryByText('Écrivez votre demande…')).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   })
 
   test('explique le rôle requis à un utilisateur non patient', () => {

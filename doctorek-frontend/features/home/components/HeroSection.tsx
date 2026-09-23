@@ -9,6 +9,7 @@ import Logo from '@/components/Logo'
 import { CityInput } from '@/components/CityInput'
 import { openAgent } from '@/features/agent/events'
 import type { DisponibiliteFilter } from '@/lib/disponibilite'
+import { useSession } from '@/lib/useSession'
 import { AvailabilityDatePicker } from './AvailabilityDatePicker'
 
 const LANGS = [
@@ -25,6 +26,8 @@ export function HeroSection() {
   const [lang, setLang] = useState('FR')
   const [langOpen, setLangOpen] = useState(false)
   const router = useRouter()
+  const session = useSession()
+  const peutOuvrirAgentPatient = !session || session.role === 'PATIENT'
 
   function handleSearch(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -208,7 +211,7 @@ export function HeroSection() {
             </div>
           </form>
 
-          <button
+          {peutOuvrirAgentPatient && <button
             type="button"
             onClick={openAgent}
             className="mt-4 flex min-h-[62px] w-full items-center gap-3 rounded-full border border-[#B9DAFA] bg-white/95 px-3 py-2 text-left shadow-[0_10px_28px_rgba(0,45,120,0.08)] transition-all hover:border-[#83C2FF] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF]"
@@ -220,7 +223,7 @@ export function HeroSection() {
               Demander à l’assistant Doctorek
             </span>
             <ChevronRight className="mr-1 h-5 w-5 shrink-0 text-[#007DFF]" aria-hidden="true" />
-          </button>
+          </button>}
         </div>
       </section>
 
@@ -326,7 +329,7 @@ export function HeroSection() {
             </div>
           </form>
 
-          <button
+          {peutOuvrirAgentPatient && <button
             type="button"
             onClick={openAgent}
             className="group mt-3 flex w-full max-w-[590px] items-center gap-3 rounded-full border border-[#D0E8FF] bg-white/85 p-2 pr-4 text-left shadow-[0_8px_24px_rgba(0,45,120,0.09)] transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_30px_rgba(0,45,120,0.13)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#EBF4FF]"
@@ -339,7 +342,7 @@ export function HeroSection() {
               Demandez à l’assistant Doctorek.
             </span>
             <ChevronRight className="h-5 w-5 shrink-0 text-[#007DFF] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </button>
+          </button>}
         </div>
       </div>
     </div>

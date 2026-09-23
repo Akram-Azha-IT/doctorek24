@@ -93,7 +93,7 @@ export function AgentLauncher({
       }}
       className={`agent-barre ${etat === 'ouvert' ? 'agent-barre-ouverte' : ''} pointer-events-auto relative flex origin-center items-center gap-2 transition-[width,transform,box-shadow] duration-300 ease-out focus-within:shadow-[0_18px_46px_rgba(1,12,45,0.24)] ${
         etat === 'ouvert'
-          ? 'h-[4.5rem] w-[min(100%,31.5rem)] rounded-b-[1.6rem] border border-t-0 border-[#D8E3EE] bg-white px-3 pb-3 pt-1 shadow-[0_18px_50px_rgba(1,12,45,0.18)] sm:px-3.5'
+          ? 'h-[4.5rem] w-[min(100%,28rem)] rounded-b-[1.6rem] border border-t-0 border-[#D8E3EE] bg-white px-3 pb-3 pt-1 shadow-[0_18px_50px_rgba(1,12,45,0.18)] sm:px-3.5'
           : 'h-16 w-[min(100%,22rem)] rounded-[1.35rem] border border-white/20 p-2 shadow-[0_14px_38px_rgba(1,12,45,0.28)] hover:w-[min(100%,31rem)] hover:scale-[1.015] hover:shadow-[0_18px_46px_rgba(1,12,45,0.34)] focus-within:w-[min(100%,31rem)] focus-within:scale-[1.015]'
       }`}
     >
