@@ -25,7 +25,7 @@ describe('AgentPanel', () => {
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: "Réduire l'assistant" }))
+    fireEvent.click(screen.getByRole('button', { name: "Fermer l'assistant" }))
     expect(onFermer).toHaveBeenCalledOnce()
     expect(screen.queryByRole('button', { name: 'Nouvelle conversation' })).not.toBeInTheDocument()
   })

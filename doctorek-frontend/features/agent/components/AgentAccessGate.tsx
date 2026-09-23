@@ -1,77 +1,52 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import { CalendarDays, CircleCheckBig, MessageCircleMore, ShieldCheck } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
 interface AgentAccessGateProps {
   readonly estConnecte: boolean
   readonly loginHref: string
 }
 
-const ETAPES = [
-  { icone: MessageCircleMore, libelle: 'Décrivez votre besoin' },
-  { icone: CalendarDays, libelle: 'Comparez les disponibilités' },
-  { icone: CircleCheckBig, libelle: 'Confirmez votre rendez-vous' },
-] as const
-
-/** Point d’entrée rassurant vers le parcours patient, sans simuler une conversation. */
+/** L’accueil public ne collecte aucune demande avant authentification. */
 export function AgentAccessGate({ estConnecte, loginHref }: AgentAccessGateProps) {
+  const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] focus-visible:ring-offset-2'
+
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
-      <section className="shrink-0 bg-[#00263C] px-6 py-4 text-center sm:px-8 sm:py-5">
-        <div className="mx-auto flex w-full max-w-[26rem] flex-col items-center">
-          <h3 className="font-heading text-[17px] font-semibold leading-[1.3] tracking-[-0.012em] text-white sm:text-[18px] sm:leading-[1.3]">
-            {estConnecte
-              ? 'Un compte patient est nécessaire'
-              : 'Votre rendez-vous, sans complication'}
-          </h3>
-          <p className="mt-1.5 max-w-[23rem] font-sans text-[12px] font-normal leading-[1.5] text-white/85 sm:text-[13px] sm:leading-[1.5]">
-            {estConnecte
-              ? 'Connectez-vous avec votre compte patient pour utiliser l’assistant.'
-              : 'Je vous guide vers le bon médecin et le bon créneau.'}
-          </p>
+    <div className="agent-accueil flex min-h-0 flex-col bg-white">
+      <div className="min-h-0 overflow-y-auto bg-gradient-to-b from-[#EBF5FF] via-white to-white px-5 pb-3 pt-5 sm:px-8 sm:pt-6">
+        <div className="relative grid grid-cols-[1fr_100px] items-center gap-2 sm:grid-cols-[1.15fr_1fr] sm:gap-4">
+          <div className="relative z-10">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[#007DFF] sm:text-xs">Bienvenue sur Doctorek</p>
+            <h3 className="font-heading text-[25px] font-semibold leading-[1.12] tracking-[-0.035em] text-[#010C2D] sm:text-[36px]">
+              {estConnecte ? 'Un compte patient est nécessaire' : <>Bonjour,<br />comment puis-je<br />vous aider ?</>}
+            </h3>
+            <p className="mt-3 text-[13px] leading-5 text-[#465058] sm:text-[15px] sm:leading-6">
+              {estConnecte
+                ? 'Connectez-vous avec votre compte patient pour utiliser l’assistant.'
+                : 'Trouvez un médecin et ses disponibilités, simplement en discutant.'}
+            </p>
+          </div>
+          <div className="relative isolate" aria-hidden="true">
+            <div className="absolute inset-x-0 inset-y-5 -z-10 rounded-full bg-[#DFEFFE]/70" />
+            <div className="absolute -right-1 -top-3 z-10 hidden rounded-2xl bg-white/95 px-3 py-2 text-xs leading-5 text-[#007DFF] shadow-[0_6px_24px_rgba(0,125,255,0.06)] sm:block">
+              <span className="font-semibold">Une question ?</span><br />Je suis là pour vous.
+            </div>
+            <Image src="/agent-robot-welcome-v1.png" alt="" width={280} height={280} sizes="(max-width: 639px) 100px, 250px" className="h-auto w-full object-contain" />
+          </div>
         </div>
-      </section>
 
-      <div className={`flex min-h-0 flex-1 flex-col px-5 py-3 sm:px-8 sm:py-3.5 ${estConnecte ? 'justify-center' : ''}`}>
+      </div>
+      <div className="shrink-0 px-5 pb-1 pt-1 sm:px-8">
+        {!estConnecte && <p className="mb-2 text-center text-[11px] text-[#53677B]">Connectez-vous pour discuter avec l’assistant.</p>}
+        <a href={loginHref} className={`mx-auto flex min-h-11 max-w-72 items-center justify-center gap-3 rounded-full bg-[#007DFF] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#006FE6] ${focus}`}>
+          {estConnecte ? 'Changer de compte' : 'Se connecter'}
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </a>
         {!estConnecte && (
-          <ol className="relative mx-auto w-full max-w-[22rem] space-y-0 sm:space-y-1" aria-label="Étapes du parcours">
-            <span
-              aria-hidden="true"
-              className="absolute bottom-5 left-[1.1rem] top-5 w-[2px] rounded-full bg-[#007DFF] sm:bottom-6 sm:left-[1.34rem] sm:top-6"
-            />
-            {ETAPES.map(({ icone: Icone, libelle }) => (
-              <li key={libelle} className="relative flex min-h-10 items-center gap-3 sm:min-h-12 sm:gap-4">
-                <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EBF5FF] text-[#007DFF] ring-[3px] ring-white sm:h-11 sm:w-11 sm:ring-4">
-                  <Icone className="h-[18px] w-[18px] sm:h-5 sm:w-5" strokeWidth={2} aria-hidden="true" />
-                </span>
-                <span className="font-heading text-[12.5px] font-semibold leading-5 tracking-[-0.005em] text-[#010C2D] sm:text-[13px]">
-                  {libelle}
-                </span>
-              </li>
-            ))}
-          </ol>
+          <Link href="/inscription" className={`mt-1 flex min-h-11 items-center justify-center rounded-xl text-sm font-medium text-[#0070DF] hover:underline ${focus}`}>
+            Créer un compte patient
+          </Link>
         )}
-
-        <div className={`${estConnecte ? '' : 'mt-3 sm:mt-3.5'} flex w-full flex-col gap-2`}>
-          <a
-            href={loginHref}
-            className="flex min-h-11 items-center justify-center rounded-xl bg-[#007DFF] px-5 font-heading text-[12.5px] font-semibold text-white shadow-[0_4px_12px_rgba(0,125,255,0.16)] transition-colors hover:bg-[#006FE6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] focus-visible:ring-offset-2 sm:min-h-12 sm:text-[13px]"
-          >
-            {estConnecte ? 'Changer de compte' : 'Se connecter pour commencer'}
-          </a>
-          {!estConnecte && (
-            <Link
-              href="/inscription"
-              className="flex min-h-10 items-center justify-center rounded-xl border border-[#C9D9E8] bg-white px-5 font-heading text-[12px] font-semibold text-[#010C2D] transition-colors hover:border-[#AFCBE4] hover:bg-[#F7FAFD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007DFF] sm:min-h-11 sm:text-[12.5px]"
-            >
-              Créer un compte patient
-            </Link>
-          )}
-        </div>
-
-        <p className="mt-2.5 flex items-center justify-center gap-1.5 text-center text-[10.5px] leading-4 text-[#53677B] sm:mt-3 sm:text-[11px]">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-[#2EB67D]" strokeWidth={2} aria-hidden="true" />
-          Espace patient privé et sécurisé.
-        </p>
       </div>
     </div>
   )
