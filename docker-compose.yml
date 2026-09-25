@@ -57,7 +57,7 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME:-localhost}
       KC_HTTP_PORT: 9080
       KC_HEALTH_ENABLED: "true"
       KEYCLOAK_ADMIN: admin
@@ -105,7 +105,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      KEYCLOAK_ISSUER_URI: http://localhost:9080/realms/doctorek
+      KEYCLOAK_ISSUER_URI: http://${KEYCLOAK_HOSTNAME:-localhost}:9080/realms/doctorek
       KEYCLOAK_JWK_SET_URI: http://keycloak:9080/realms/doctorek/protocol/openid-connect/certs
       KEYCLOAK_URL: http://keycloak:9080
       KEYCLOAK_REALM: doctorek
