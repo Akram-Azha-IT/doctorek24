@@ -1,6 +1,8 @@
 package ma.doctorek.doctorek.agent;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -31,8 +33,9 @@ class GeminiAgentTranscriptionClientTest {
         }
     }
 
-    @Test
-    void televerseAudioAvecVocabulaireExtraitLeTextePuisSupprimeLeFichier() {
+    @ParameterizedTest
+    @CsvSource({"audio/wav,audio/wav", "audio/mp4,audio/m4a", "audio/m4a,audio/m4a", "video/webm,audio/webm", "audio/x-wav,audio/wav"})
+    void televerseAudioAvecVocabulaireExtraitLeTextePuisSupprimeLeFichier(String inputMime, String providerMime) {
         AgentTranscriptionProperties properties = new AgentTranscriptionProperties();
         properties.setApiKey("secret-test");
         RestClient.Builder builder = RestClient.builder();
@@ -45,13 +48,14 @@ class GeminiAgentTranscriptionClientTest {
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("x-goog-api-key", "secret-test"))
                 .andExpect(header("X-Goog-Upload-Protocol", "resumable"))
-                .andExpect(header("X-Goog-Upload-Header-Content-Type", "audio/wav"))
+                .andExpect(header("X-Goog-Upload-Header-Content-Type", providerMime))
                 .andRespond(withSuccess()
                         .header("X-Goog-Upload-URL", "https://generativelanguage.googleapis.com/upload/session-test"));
 
         server.expect(once(), requestTo("https://generativelanguage.googleapis.com/upload/session-test"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("X-Goog-Upload-Command", "upload, finalize"))
+                .andExpect(content().contentType(providerMime))
                 .andExpect(content().bytes(new byte[]{1, 2, 3}))
                 .andRespond(withSuccess("""
                         {"file":{"name":"files/audio-test","uri":"https://generativelanguage.googleapis.com/v1beta/files/audio-test"}}
@@ -64,7 +68,7 @@ class GeminiAgentTranscriptionClientTest {
                 .andExpect(jsonPath("$.model").value("gemini-3.5-transcribe"))
                 .andExpect(jsonPath("$.input[0].type").value("audio"))
                 .andExpect(jsonPath("$.input[0].mime_type")
-                        .value("audio/wav"))
+                        .value(providerMime))
                 .andExpect(jsonPath("$.input[0].uri")
                         .value("https://generativelanguage.googleapis.com/v1beta/files/audio-test"))
                 .andExpect(jsonPath("$.generation_config.transcription_config.mode.type")
@@ -84,7 +88,7 @@ class GeminiAgentTranscriptionClientTest {
                 .andExpect(header("x-goog-api-key", "secret-test"))
                 .andRespond(withSuccess());
 
-        String result = client.transcrire(new byte[]{1, 2, 3}, "audio/wav");
+        String result = client.transcrire(new byte[]{1, 2, 3}, inputMime);
 
         assertThat(result).isEqualTo("Salam 3alaykom, bghit chi dentiste f Casa");
         server.verify();

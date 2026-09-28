@@ -55,7 +55,7 @@ public class AgentController {
     @PostMapping(value = "/transcriptions", consumes = "multipart/form-data")
     @Operation(summary = "Transcrit une courte dictée du patient",
                description = "Envoie l'audio à Gemini Transcribe et renvoie un texte modifiable. "
-                       + "La dictée n'est jamais envoyée automatiquement à l'agent.")
+                       + "Retourne le texte ; l'envoi au chat est une requête distincte du client.")
     public ResponseEntity<ApiResponse<AgentTranscriptionResponse>> transcrire(
             Principal principal,
             @RequestPart("audio") MultipartFile audio,
