@@ -49,6 +49,14 @@ public class GeminiAgentTranscriptionClient implements AgentTranscriptionClient 
 
     @Override
     public String transcrire(byte[] audio, String mimeType) {
+        // Expo's M4A recorder and browser MediaRecorder use MIME aliases that
+        // are accepted by our API but not by the transcription provider.
+        mimeType = switch (mimeType) {
+            case "audio/mp4" -> "audio/m4a";
+            case "audio/x-wav" -> "audio/wav";
+            case "video/webm" -> "audio/webm";
+            default -> mimeType;
+        };
         GeminiFile fichier = televerser(audio, mimeType);
         try {
             Map<String, Object> body = Map.of(
